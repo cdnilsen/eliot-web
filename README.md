@@ -1,0 +1,1 @@
+Minimal demo project showing how to connect a client, server, and database. Nothing here should be taken as in any way good practice. I'm not even sure about the routes - it's been a while since I last designed an API from scratch.

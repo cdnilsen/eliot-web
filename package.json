@@ -1,0 +1,29 @@
+{
+  "name": "eliotweb",
+  "version": "1.0.0",
+  "description": "Word-counting skeleton - change this later!",
+  "main": "build/index.js",
+  "scripts": {
+    "start": "tsc && node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cdnilsen/eliotweb.git"
+  },
+  "author": "cdnilsen (ft. defseg)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cdnilsen/eliotweb/issues"
+  },
+  "homepage": "https://github.com/cdnilsen/eliotweb#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.5",
+    "@types/pg": "^8.10.9",
+    "typescript": "^5.3.3"
+  }
+}
