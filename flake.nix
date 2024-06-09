@@ -21,6 +21,7 @@
       devShells.${system}.default = pkgs.mkShell {
         name = "eliot-web";
         buildInputs = with pkgs; [
+			nodejs_22
 			nodePackages.npm
 			typescript
         ];
