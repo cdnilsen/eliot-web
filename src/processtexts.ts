@@ -1,6 +1,3 @@
-
-
-
 type Verse = {
     firstText: string,
     secondText: string,

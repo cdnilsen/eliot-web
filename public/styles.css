@@ -283,7 +283,6 @@ button {
 .ketiv {
     position: relative;
     display: inline-block;
-    color: red;
     border-bottom: 1px dotted black;
     border-color: black;
 }
