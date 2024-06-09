@@ -1,8 +1,310 @@
 @font-face {
-    font-family: GentiumPlusW;
-    src: url('./Gentium/web/GentiumBookPlus-Regular.woff');
+    font-family: 'Gentium';
+    src: url('./Gentium/GentiumPlus-Regular.ttf') format('truetype');
 }
+
 body {
-    font-family: GentiumPlusW, sans-serif;
-      /* fall back to sans serif so that it's really obvious if the fonts don't load */
+    font-family: Gentium, serif;
+    font-size: 16px;
+    line-height: 1.5;
+    text-align: left;
+}
+
+table {
+    table-layout: fixed;
+    width: 100%;
+    border-spacing: 0px;
+    align-items: center;
+}
+
+tbody {
+    overflow-y: scroll;
+}
+
+.scrollingGrids {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.navGrid {
+    display: grid;
+    grid-template-columns: 20% 30% 30% 20%;
+    gap: 10px;
+    grid-auto-rows: minmax(50px, auto);
+}
+
+.navButton button {
+    font-size: 30px;
+    height: 50px;
+    vertical-align: top;
+}
+
+.editionHeaderGrid {
+    display: grid;
+    width: 100%;
+}
+
+.firstColumnHeader {
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    background-color: #FFF;
+}
+
+.columnHeader {
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    border-left:2px solid rgba(255, 0, 0, 0.4);
+    background-color: #FFF;
+}
+
+.textColumns {
+    display: grid;
+    z-index: 500;
+    top: 1000;
+    background-color: #FFF;
+    grid-auto-rows: minmax(50px, auto);
+}
+
+.verseRow {
+    display: grid;
+}
+
+.verseColumn {
+    border-left: 2px solid #FF0000;
+    padding-bottom:20px;
+    padding-left:5px;
+    padding-right:5px;
+    padding-top:5px;
+    padding-bottom:20px;
+    vertical-align:top;
+    text-align:left;
+    position: sticky;
+    top: 10;
+    z-index: 1;
+}
+
+.firstVerseColumn {
+    padding-bottom:20px;
+    padding-left:5px;
+    padding-right:5px;
+    padding-top:5px;
+    padding-bottom:20px;
+    vertical-align:top;
+    text-align:left;
+    position: sticky;
+    top: 10;
+    z-index: 1;
+}
+
+
+#stickyButtonBar {
+    position: sticky;
+    top: 0px;
+    z-index: 10;
+    background-color: #FFF;
+}
+
+
+.t th {
+    background-color: rgba(255, 255, 255, 1);
+    box-shadow: 0px 4px 2px rgba(0, 0, 0, 0.4);
+    text-align:center;
+    font-size:30px;
+    position: sticky;
+    top: 15;
+    border: 0px white;
+    z-index: 500;
+    padding-top: 0px;
+    vertical-align: bottom;
+    width: auto;
+}
+
+.t .prevChapter {
+    width: 50%;
+}
+
+.verseNumCell {
+    font-size: 25px;
+    text-align: center;
+    vertical-align: top;
+    width: 16%;
+}
+
+.verseNumHeader {
+    font-size: 30px;
+    align-items: center;
+    text-align: center;
+    position: sticky;
+    top: 15;
+    width: 16%;
+    z-index: 500;
+    vertical-align: bottom;
+}
+
+.t th + th {
+    border-left:2px solid rgba(255, 0, 0, 0.4); 
+}
+
+.t td + td { 
+    border-left:2px solid red; 
+}
+
+.t td {
+    padding-bottom:20px;
+    padding-left:5px;
+    padding-right:5px;
+    padding-top:5px;
+    vertical-align:top;
+    text-align:left;
+    position: sticky;
+    top: 10;
+    z-index: 1;
+}
+
+.tab {
+    padding-left: 40px;
+}
+
+.textTab {
+    display: inline-block;
+    margin-left: 2em;
+}
+
+.textTab2 {
+    display: inline-block;
+    margin-left: 4em;
+}
+
+li {
+    text-align: center;
+}
+
+ul.normal li {
+    text-align: left;
+    padding-bottom: 5px;
+}
+
+input[type="text"] {
+    font-family: Gentium, serif;
+    font-style: italic;
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    background-color: #f8f8f8;
+    font-size: 16px;
+}
+
+button {
+    font-family: Gentium, serif;
+    font-style: bold;
+    width: 100%;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.leftColumn {
+    float: left;
+    width: 40%;
+}
+
+.rightColumn {
+    float: right;
+    width: 60%;
+}
+/*
+.hover-tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted;
+    border-color: black; 
+    color: blue;
+    cursor: help; /* Changes the cursor to a question mark
+}
+*/
+
+.cite-span {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    text-decoration-style: dotted;
+}
+
+.show-verse {
+    visibility: hidden;
+    opacity: 0;
+    /* top: -80px;  Place it below the triggering span with 10px offset */
+    /* left: 60px; Set at least 50 pixels away from the left edge */
+    padding: 10px;
+    /*width: 600px;*/
+    background-color: #fff;
+    text-align: center;
+    padding: 5px 10px;
+    position: absolute;
+    z-index: 9999;
+    /*transform: translateX(-50%);*/
+    /*transition: opacity 0.3s ease-in-out;*/
+}
+
+.show-verse.active {
+    visibility: visible;
+    opacity: 1;
+    outline: 2px solid #000;
+}
+
+
+/*
+.cite-span:hover .show-verse {
+    visibility: visible;
+    opacity: 1;
+}
+*/
+
+.tooltip-content:focus {
+    outline: none;
+}
+/*
+.tooltip-content:not(:focus) {
+    visibility: hidden;
+    opacity: 0;
+}
+*/
+
+
+.ketiv {
+    position: relative;
+    display: inline-block;
+    color: red;
+    border-bottom: 1px dotted black;
+    border-color: black;
+}
+  
+.ketiv .hover-tooltip {
+    visibility: hidden;
+    width: 50px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+  
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+    top: 120%;
+    left: 0%;
+    margin-left: 0px;
+  }
+  
+.ketiv:hover .hover-tooltip {
+    visibility: visible;
 }
