@@ -2,3 +2,7 @@
     font-family: GentiumPlusW;
     src: url('./Gentium/web/GentiumBookPlus-Regular.woff');
 }
+body {
+    font-family: GentiumPlusW, sans-serif;
+      /* fall back to sans serif so that it's really obvious if the fonts don't load */
+  }
