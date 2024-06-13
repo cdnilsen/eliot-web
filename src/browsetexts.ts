@@ -36,7 +36,7 @@ function grabBookList(section: string) {
     console.log(bookList)
 }
 
-document.getElementById("searchBookDropdown").addEventListener("change", function () {
-    let selectedSection = (<HTMLSelectElement>document.getElementById("searchBookDropdown")).value;
+document.getElementById("sectionDropdown").addEventListener("change", function () {
+    let selectedSection = (<HTMLSelectElement>document.getElementById("sectionDropdown")).value;
     grabBookList(selectedSection);
 })
