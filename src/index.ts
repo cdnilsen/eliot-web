@@ -1,7 +1,7 @@
 import express from "express"
 import path from "path"
 
-import { client } from './db'
+import client from './db'
 import { wrapAsync } from './utils'
 
 const app = express()
