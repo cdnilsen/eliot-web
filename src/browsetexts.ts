@@ -1,3 +1,4 @@
+import { sectionToBookDict } from "./library"
 
 function tagToSpan(tagName: string, text: string, color: string) {
     text = text.replaceAll('<' + tagName + '>', '<span style="color:' + color + '">')
@@ -23,7 +24,19 @@ function processHebrewLine(rawHTML: string, showHapaxes: boolean) {
 
 function processGreekLine(text: string, showHapaxes: boolean) {
     if (!showHapaxes) {
-        text = text.replaceAll('<span style="color:blue">', '').replaceAll('</span>', '')
+        text = text.replaceAll('<span style="color:blue">', '').replaceAll('</span>', '');
     }
-    return text.split("} ")[1].trim()
+    return text.split("} ")[1].trim();
 }
+
+
+function grabBookList(section: string) {
+    let bookList: string[] = sectionToBookDict[section];
+
+    console.log(bookList)
+}
+
+document.getElementById("searchBookDropdown").addEventListener("change", function () {
+    let selectedSection = (<HTMLSelectElement>document.getElementById("searchBookDropdown")).value;
+    grabBookList(selectedSection);
+})
