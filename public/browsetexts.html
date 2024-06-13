@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Browse the Texts</title>
+    <link rel="stylesheet" type="text/css" href="./styles.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body>
+    <a href="index.html">Back to index</a>
+    <br>
+    <div class="dropdown" id="book-dropdown-container">
+        Select a text in the:
+        <select id="sectionDropdown" name="sectionDropdown" style="padding-right:5px">
+            <option value="blank"></option>
+            <option value="pentateuch">Pentateuch</option>
+            <option value="history">Historical Books</option>
+            <option value="wisdom">Wisdom/Poetry Books</option>
+            <option value="major_prophets">Major Prophets</option>
+            <option value="minor_prophets">Minor Prophets</option>
+            <option value="gospels">Gospels</option>
+            <option value="other_nt">Rest of New Testament</option>
+            <option value="mishnaic" hidden>"Mishnaic" publications</option>
+        </select>
+        
+        <select id="searchBookDropdown" name="searchBookDropdown" style="padding-right:5px" hidden></select>
+    </div>
+
+    <div class="dropdown" id="chapterDropdown">
+        <span id="searchChapterLegend">Select chapter:</span>
+        <select id="chapterSelectionDropdown" name="chapterSelectionDropdown" style="padding-right:5px"></select>
+    </div>
+
+    <div class="dropdown" id="verseDropdown">
+        <span id="searchVerseLegend" hidden>Select verse:</span>
+        <select id="verseSelectionDropdown" name="verseSelectionDropdown" style="padding-right:5px" hidden></select>
+    </div>
+    <br>
+    <span id="queryOptions">
+
+    <div class="checkboxes" id="editionCheckbox">
+        
+        <span id="firstEditionContainer" hidden>
+        <input type="checkbox" name="useFirstEdition" id="useFirstEdition">
+            <label for="useFirstEdition">First Edition (1661/1663)</label>
+        </span>
+
+        <span id="secondEditionContainer" hidden>
+        <input type="checkbox" name="useSecondEdition" id="useSecondEdition">
+            <label for="useSecondEdition">Second Edition (1685)</label>
+        </span>
+
+        <span id="mayhewContainer" hidden>
+        <input type="checkbox" name="useMayhew" id="useMayhew">
+            <label for="useMayhew">Mayhew (1709)</label>
+        </span>
+
+        <span id="zerothContainer" hidden>
+        <input type="checkbox" name="useZerothEdition" id="useZerothEdition">
+            <label for="useZerothEdition">Zeroth Edition (1685)</label>
+        </span>
+
+        <span id="grebrewContainer" hidden>
+        <input type="checkbox" name="useGrebrew" id="useGrebrew">
+            <label for="useGrebrew" id="grebrewLabel"></label>
+        </span>
+    </div>
+
+        <div id="differenceSelection" hidden>
+            <span style="color:red"><b>Highlight</b></span> Differences:
+            <input type="radio" name="show_differences" id="no_show" value = "no" checked>
+                <label for="no_show">No</label>
+
+            <input type="radio" name="show_differences" id="include_casing" value="include_casing">
+                <label for="include_casing">Yes, including letter casing (<i><span style="color:blue"><b>W</b></span>osketomp</i> ≠ <i><span style="color:blue"><b>w</b></span>osketomp</i>) </label>
+
+            <input type="radio" name="show_differences" id="exclude_casing" value = "exclude_casing">
+                <label for="exclude_casing">Yes, ignoring letter casing (<i>Wosketomp</i> = <i>wosketomp</i>)</label>
+
+            <input type="radio" name="show_differences" id="proofreading" value = "proofreading" hidden>
+                <label for="proofreading" hidden>Proofreading mode (<i>Wosketomp</i> ≠ <i>Wos<sup><b><span style="color:#FF6666">k</span></b></sup>etomp</i>)</label>
+        </div>
+
+        <div id="HapaxSelection" hidden>
+            <u>Underline</u> Hapaxes (<span style="color: blue"><b>blue</b></span> in Hebrew):
+            <input type="radio" name="show_hapaxes" id="dont_show" value = "no" checked>
+                <label for="dont_show">No</label>
+
+            <input type="radio" name="show_hapaxes" id="hapaxes_strict" value="hapaxes_strict">
+                <label for="hapaxes_strict">Yes, including diacritics (<i><u>mátta</u></i> even if <i>matta</i>)</label>
+
+            <input type="radio" name="show_hapaxes" id="hapaxes_lax" value="hapaxes_lax">
+                <label for="hapaxes_lax">Yes, lax on diacritics (<i>mátta</i> not counted as a hapax if <i>matta</i>)</label>
+        </div>
+    </span>
+    <br>
+
+    <button type="submit" id="submitBookQuery">View Text</button>
+
+    <div class="scrollingGrids">
+        <div class="navGrid" id="navButtonGrid">
+        </div>
+
+        <div class="editionHeaderGrid" id="editionHeaders">
+        </div>
+    </div>
+
+    <div class="verseText" id="textColumns">
+        
+    </div>
+
+    <br>
+    <p><span style="color: red; text-align: center"><b>This site is a work in progress.</b></span> Do not cite anything without checking against an original copy!</p>
+</body>
+    <script src="browsetexts.js" type="module"></script>
+    <script>
+        function closeIt(){
+            window.location.href = window.location.href.split("?")[0];
+        }
+
+        window.onbeforeunload = closeIt;
+        window.history.pushState({}, '', window.location.href.split("?")[0]);
+    </script>
+</html>
