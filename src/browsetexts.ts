@@ -33,6 +33,9 @@ function processGreekLine(text: string, showHapaxes: boolean) {
 function grabBookList(section: string) {
     let bookList: string[] = sectionToBookDict[section];
 
+    let bookSelection = document.getElementById("bookDropdown");
+    bookSelection.style.visibility = "visible";
+
     console.log(bookList)
 }
 
