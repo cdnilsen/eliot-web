@@ -8,6 +8,8 @@
 
 # built JS
 dist/
+public/*.js
+public/*.js.map
 
 # testing
 /coverage
