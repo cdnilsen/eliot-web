@@ -1,4 +1,4 @@
-import { sectionToBookDict } from "./library"
+import { sectionToBookDict } from "./library.js"
 
 function tagToSpan(tagName: string, text: string, color: string) {
     text = text.replaceAll('<' + tagName + '>', '<span style="color:' + color + '">')
