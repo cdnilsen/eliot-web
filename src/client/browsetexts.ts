@@ -70,18 +70,31 @@ function grabBookList(section: string) {
     })
 }
 
-document.getElementById("sectionDropdown")!.addEventListener("change", function () {
-    let selectedSection = (<HTMLSelectElement>document.getElementById("sectionDropdown")).value;
-    document.getElementById("chapterSelectionDropdown")!.innerHTML = "";
-    grabBookList(selectedSection);
-})
+
+
+type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
+type Hapax = "none" | "strict" | "lax"
+
 
 function main() {
-
     let section: string = ""
     let book: string = ""
     let chapter: string = ""
+    let highlighting: Highlighting = "none"
+    let hapaxes: Hapax = "none"
+    let sectionDropdown = <HTMLSelectElement>document.getElementById("sectionDropdown");
+    let bookDropdown = <HTMLSelectElement>document.getElementById("bookDropdown");
+    let chapterDropdown = <HTMLSelectElement>document.getElementById("chapterSelectionDropdown");
 
-    let sectionDropdown = document.getElementById("sectionDropdown");
+    sectionDropdown!.addEventListener("change", function () {
+        section = sectionDropdown.value;
+        chapterDropdown!.innerHTML = "";
+        grabBookList(section);
+    })
+
+
+    
 
 }
+
+main();
