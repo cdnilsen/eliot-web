@@ -63,6 +63,7 @@ function grabBookList(section: string) {
     }
 
     bookSelection!.addEventListener("change", function() {
+        console.log(bookSelection!.innerHTML);
         addChapterSelection(bookSelection!.innerHTML);
     })
 }
