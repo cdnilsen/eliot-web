@@ -29,7 +29,7 @@ function processGreekLine(text: string, showHapaxes: boolean) {
     return text.split("} ")[1].trim();
 }
 
-function createOption(name, value) {
+function createOption(name: string, value: string) {
     let option = document.createElement("option");
     option.value = value;
     option.innerHTML = name;
