@@ -7,6 +7,11 @@ import { wrapAsync } from './utils'
 const app = express()
 const port = process.env.PORT
 
+// https://expressjs.com/en/starter/static-files.html
+app.use(express.static('public'))
+app.use(express.static('.'))
+
+
 app.get('/dynamicContent', (req, res) => {
     res.send(`Hi! I'm some dynamic content! You loaded this page at millisecond ${new Date().getTime()} of the UNIX 年号.`)
 })
@@ -29,8 +34,6 @@ app.post('/words/:word', wrapAsync(async (req, res) => {
 
 // Default error handling middleware is fine for now
 
-// https://expressjs.com/en/starter/static-files.html
-app.use(express.static('public'))
 
 // Async init - have to wait for the client to connect
 ;(async function () {
