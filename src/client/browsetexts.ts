@@ -34,12 +34,12 @@ function grabBookList(section: string) {
     let bookList: string[] = sectionToBookDict[section];
 
     let bookSelection = document.getElementById("bookDropdown");
-    bookSelection.style.visibility = "visible";
+    bookSelection!.style.visibility = "visible";
 
     console.log(bookList)
 }
 
-document.getElementById("sectionDropdown").addEventListener("change", function () {
+document.getElementById("sectionDropdown")!.addEventListener("change", function () {
     let selectedSection = (<HTMLSelectElement>document.getElementById("sectionDropdown")).value;
     grabBookList(selectedSection);
 })
