@@ -125,7 +125,7 @@ export function getIntersectionAndUnion(list1: any[], list2: any[]) {
 
 export function laxifyWordData(wordList: string[], countDict: stringToIntDict) {
 
-    let laxWordList = [];
+    let laxWordList: string[] = [];
     let laxCountDict: stringToIntDict = {};
 
     for (let i=0; i < wordList.length; i++) {

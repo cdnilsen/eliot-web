@@ -1,1 +1,1 @@
-document.getElementById('hello').style.color='red';
+document.getElementById('hello')!.style.color='red';
