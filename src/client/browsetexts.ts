@@ -39,7 +39,7 @@ function createOption(name: string, value: string) {
 
 function addChapterSelection(book: string) {
     let numChapters: number = bookToChapterDict[book];
-    let chapterSelection = document.getElementById("chapterDropdown");
+    let chapterSelection = document.getElementById("chapterSelectionDropdown");
     chapterSelection!.innerHTML = "";
     for (let i=1; i < numChapters + 1; i++) {
         let chapterOption = createOption(i.toString(), i.toString());
