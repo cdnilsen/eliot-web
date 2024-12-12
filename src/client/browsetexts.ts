@@ -1,5 +1,8 @@
 import { sectionToBookDict, bookToChapterDict } from "./library.js"
 
+
+
+
 function tagToSpan(tagName: string, text: string, color: string) {
     text = text.replaceAll('<' + tagName + '>', '<span style="color:' + color + '">')
     text = text.replaceAll('</' + tagName + '>', '</span>')
@@ -49,7 +52,7 @@ function addChapterSelection(book: string) {
 
 
 function grabBookList(section: string) {
-    let bookSelection = document.getElementById("bookDropdown");
+    let bookSelection = <HTMLSelectElement>document.getElementById("bookDropdown");
     bookSelection!.innerHTML = ""
     bookSelection!.hidden = false;
     bookSelection!.style.visibility = "visible";
@@ -63,8 +66,8 @@ function grabBookList(section: string) {
     }
 
     bookSelection!.addEventListener("change", function() {
-        console.log(bookSelection!.innerHTML);
-        addChapterSelection(bookSelection!.innerHTML);
+        console.log(bookSelection!.value);
+        addChapterSelection(bookSelection!.value);
     })
 }
 
@@ -72,3 +75,13 @@ document.getElementById("sectionDropdown")!.addEventListener("change", function 
     let selectedSection = (<HTMLSelectElement>document.getElementById("sectionDropdown")).value;
     grabBookList(selectedSection);
 })
+
+function main() {
+
+    let section: string = ""
+    let book: string = ""
+    let chapter: string = ""
+
+    let sectionDropdown = document.getElementById("sectionDropdown");
+
+}
