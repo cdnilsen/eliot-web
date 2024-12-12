@@ -60,6 +60,8 @@ function grabBookList(section: string) {
     bookSelection!.style.visibility = "visible";
 
     let bookList: string[] = sectionToBookDict[section];
+
+    //get rid of the blank option here later, somehow
     let blankOption = createOption("", "");
     bookSelection!.appendChild(blankOption);
     for (let i=0; i < bookList.length; i++) {
@@ -90,6 +92,7 @@ function main() {
 
     sectionDropdown!.addEventListener("change", function () {
         section = sectionDropdown.value;
+        bookDropdown!.innerHTML = "";
         chapterDropdown!.innerHTML = "";
         grabBookList(section);
     })
