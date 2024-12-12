@@ -1,4 +1,4 @@
-import { sectionToBookDict } from "./library.js"
+import { sectionToBookDict, bookToChapterDict } from "./library.js"
 
 function tagToSpan(tagName: string, text: string, color: string) {
     text = text.replaceAll('<' + tagName + '>', '<span style="color:' + color + '">')
@@ -37,16 +37,34 @@ function createOption(name: string, value: string) {
 }
 
 
+function addChapterSelection(book: string) {
+    let numChapters: number = bookToChapterDict[book];
+    let chapterSelection = document.getElementById("chapterDropdown");
+    chapterSelection!.innerHTML = "";
+    for (let i=1; i < numChapters + 1; i++) {
+        let chapterOption = createOption(i.toString(), i.toString());
+        chapterSelection!.appendChild(chapterOption);
+    }
+}
+
+
 function grabBookList(section: string) {
-    let bookList: string[] = sectionToBookDict[section];
     let bookSelection = document.getElementById("bookDropdown");
     bookSelection!.innerHTML = ""
     bookSelection!.hidden = false;
     bookSelection!.style.visibility = "visible";
+
+    let bookList: string[] = sectionToBookDict[section];
+    let blankOption = createOption("", "");
+    bookSelection!.appendChild(blankOption);
     for (let i=0; i < bookList.length; i++) {
         let thisOption = createOption(bookList[i], bookList[i]);
         bookSelection!.appendChild(thisOption);
     }
+
+    bookSelection!.addEventListener("change", function() {
+        addChapterSelection(bookSelection!.innerHTML);
+    })
 }
 
 document.getElementById("sectionDropdown")!.addEventListener("change", function () {
