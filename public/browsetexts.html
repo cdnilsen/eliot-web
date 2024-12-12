@@ -36,21 +36,20 @@
         <select id="verseSelectionDropdown" name="verseSelectionDropdown" style="padding-right:5px" hidden></select>
     </div>
     <br>
-    <span id="queryOptions">
 
+    <span id="queryOptions">
     <div class="checkboxes" id="editionCheckbox">
-        
-        <span id="firstEditionContainer" hidden>
+        <span id="firstEditionContainer">
         <input type="checkbox" name="useFirstEdition" id="useFirstEdition">
             <label for="useFirstEdition">First Edition (1661/1663)</label>
         </span>
 
-        <span id="secondEditionContainer" hidden>
+        <span id="secondEditionContainer">
         <input type="checkbox" name="useSecondEdition" id="useSecondEdition">
             <label for="useSecondEdition">Second Edition (1685)</label>
         </span>
 
-        <span id="mayhewContainer" hidden>
+        <span id="mayhewContainer">
         <input type="checkbox" name="useMayhew" id="useMayhew">
             <label for="useMayhew">Mayhew (1709)</label>
         </span>
@@ -60,13 +59,13 @@
             <label for="useZerothEdition">Zeroth Edition (1685)</label>
         </span>
 
-        <span id="grebrewContainer" hidden>
+        <span id="grebrewContainer">
         <input type="checkbox" name="useGrebrew" id="useGrebrew">
-            <label for="useGrebrew" id="grebrewLabel"></label>
+            <label for="useGrebrew" id="grebrewLabel">Show Hebrew/Greek</label>
         </span>
     </div>
 
-        <div id="differenceSelection" hidden>
+        <div id="differenceSelection">
             <span style="color:red"><b>Highlight</b></span> Differences:
             <input type="radio" name="show_differences" id="no_show" value = "no" checked>
                 <label for="no_show">No</label>
@@ -77,12 +76,12 @@
             <input type="radio" name="show_differences" id="exclude_casing" value = "exclude_casing">
                 <label for="exclude_casing">Yes, ignoring letter casing (<i>Wosketomp</i> = <i>wosketomp</i>)</label>
 
-            <input type="radio" name="show_differences" id="proofreading" value = "proofreading" hidden>
+            <input type="radio" name="show_differences" id="proofreading" value = "proofreading">
                 <label for="proofreading" hidden>Proofreading mode (<i>Wosketomp</i> ≠ <i>Wos<sup><b><span style="color:#FF6666">k</span></b></sup>etomp</i>)</label>
         </div>
 
-        <div id="HapaxSelection" hidden>
-            <u>Underline</u> Hapaxes (<span style="color: blue"><b>blue</b></span> in Hebrew):
+        <div id="HapaxSelection">
+            <u>Underline</u> Hapaxes (<span style="color: blue"><b>blue</b></span> in English/Hebrew/Greek):
             <input type="radio" name="show_hapaxes" id="dont_show" value = "no" checked>
                 <label for="dont_show">No</label>
 
