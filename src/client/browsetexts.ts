@@ -29,14 +29,23 @@ function processGreekLine(text: string, showHapaxes: boolean) {
     return text.split("} ")[1].trim();
 }
 
+function createOption(name, value) {
+    let option = document.createElement("option");
+    option.value = value;
+    option.innerHTML = name;
+    return option
+}
+
 
 function grabBookList(section: string) {
     let bookList: string[] = sectionToBookDict[section];
-    console.log(bookList)
     let bookSelection = document.getElementById("bookDropdown");
+    bookSelection!.innerHTML = ""
     bookSelection!.style.visibility = "visible";
-
-    console.log(bookList)
+    for (let i=0; i < bookList.length; i++) {
+        let thisOption = createOption(bookList[i], bookList[i]);
+        bookSelection!.appendChild(thisOption);
+    }
 }
 
 document.getElementById("sectionDropdown")!.addEventListener("change", function () {
