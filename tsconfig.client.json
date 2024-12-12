@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-      "module": "commonjs",
+      "module": "es2022",
       "esModuleInterop": true,
       "allowSyntheticDefaultImports": true,
       "target": "es2022",
