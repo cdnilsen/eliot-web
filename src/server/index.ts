@@ -11,6 +11,12 @@ const port = process.env.PORT
 app.use(express.static('public'))
 app.use(express.static('.'))
 
+app.get('/test-static', (req, res) => {
+    const fs = require('fs');
+    const files = fs.readdirSync('public');
+    res.json(files);
+});
+
 
 app.get('/dynamicContent', (req, res) => {
     res.send(`Hi! I'm some dynamic content! You loaded this page at millisecond ${new Date().getTime()} of the UNIX 年号.`)
