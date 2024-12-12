@@ -52,6 +52,8 @@ function addChapterSelection(book: string) {
 
 
 function grabBookList(section: string) {
+
+    console.log(section);
     let bookSelection = <HTMLSelectElement>document.getElementById("bookDropdown");
     bookSelection!.innerHTML = ""
     bookSelection!.hidden = false;
