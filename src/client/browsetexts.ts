@@ -41,6 +41,7 @@ function grabBookList(section: string) {
     let bookList: string[] = sectionToBookDict[section];
     let bookSelection = document.getElementById("bookDropdown");
     bookSelection!.innerHTML = ""
+    bookSelection!.hidden = false;
     bookSelection!.style.visibility = "visible";
     for (let i=0; i < bookList.length; i++) {
         let thisOption = createOption(bookList[i], bookList[i]);
