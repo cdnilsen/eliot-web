@@ -66,13 +66,13 @@ function grabBookList(section: string) {
     }
 
     bookSelection!.addEventListener("change", function() {
-        console.log(bookSelection!.value);
         addChapterSelection(bookSelection!.value);
     })
 }
 
 document.getElementById("sectionDropdown")!.addEventListener("change", function () {
     let selectedSection = (<HTMLSelectElement>document.getElementById("sectionDropdown")).value;
+    document.getElementById("chapterSelectionDropdown")!.innerHTML = "";
     grabBookList(selectedSection);
 })
 
