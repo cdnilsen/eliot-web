@@ -120,6 +120,15 @@ function sectionListener(state: EditionState) {
             option.innerHTML = allBooks[i];
             bookDropdown.appendChild(option);
         }
+
+        let numChapters = bookToChapterDict[state.book];
+        chapterDropdown.innerHTML = "";
+        for (let i=1; i < numChapters + 1; i++) {
+            let option = document.createElement("option");
+            option.value = i.toString();
+            option.innerHTML = i.toString();
+            chapterDropdown.appendChild(option);
+        }
     });
 
     bookDropdown.addEventListener("change", function() {
