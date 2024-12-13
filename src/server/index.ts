@@ -1,11 +1,54 @@
 import express from "express"
 import path from "path"
+import fs from 'fs'
 
 import client from './db'
 import { wrapAsync } from './utils'
 
 const app = express()
 const port = process.env.PORT
+
+// Add this endpoint to get list of available text files
+app.get('/textfiles', (req, res) => {
+    const textFilesDir = path.join(__dirname, '..', 'texts');  // adjust path as needed
+    try {
+        const files = fs.readdirSync(textFilesDir)
+            .filter(file => file.endsWith('.txt'));
+        res.json(files);
+    } catch (err) {
+        res.status(500).json({ error: 'Error reading text files directory' });
+    }
+});
+
+// Add endpoint to process a specific file
+app.post('/process-file', express.json(), wrapAsync(async (req, res) => {
+    const { filename } = req.body;
+    const textFilesDir = path.join(__dirname, '..', 'texts');
+    const filePath = path.join(textFilesDir, filename);
+    
+    try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        // Here you'll add your text processing logic
+        // For example, splitting into words and inserting into database:
+        const words = content.split(/\s+/)
+            .map(word => word.trim())
+            .filter(word => word.length > 0);
+            
+        for (const word of words) {
+            await client.query(
+                `INSERT INTO words_diacritics (word, total_count)
+                 VALUES ($1, 1)
+                 ON CONFLICT (word) 
+                 DO UPDATE SET total_count = words_diacritics.total_count + 1`,
+                [word]
+            );
+        }
+        
+        res.json({ status: 'success', wordsProcessed: words.length });
+    } catch (err) {
+        res.status(500).json({ error: 'Error processing file' });
+    }
+}));
 
 // https://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'))

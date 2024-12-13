@@ -105,7 +105,9 @@ type Hapax = "none" | "strict" | "lax"
 type EditionState = {
     editions: number,
     highlighting: Highlighting,
-    hapaxes: Hapax
+    hapaxes: Hapax,
+    book: string,
+    chapter: number
 }
 
 function editionNumberListener(docID: string, p: number, state: EditionState) {
@@ -152,7 +154,9 @@ function main() {
     let editionState: EditionState = { 
         editions: 1,
         highlighting: "none",
-        hapaxes: "none"
+        hapaxes: "none",
+        book: "",
+        chapter: 1
     };
 
     let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew"]
