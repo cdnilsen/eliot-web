@@ -104,6 +104,7 @@ function editionNumberListener(docID: string, p: number, editionNumber: number) 
 
     if (checkbox.checked) {
         editionNumber = editionNumber * p
+        console.log(docID)
     }
 
     checkbox.addEventListener("change", function() {
@@ -118,6 +119,7 @@ function editionNumberListener(docID: string, p: number, editionNumber: number) 
 type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
 type Hapax = "none" | "strict" | "lax"
 
+
 function main() {
     let section: string = "";
     let book: string = "";
@@ -127,6 +129,9 @@ function main() {
     let hapaxes: Hapax = "none"
 
     let editionNumber = 1
+
+    let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew"]
+    let primesList = [2, 3, 5, 7, 11]
 
     editionNumberListener("useFirstEdition", 2, editionNumber)
     editionNumberListener("useSecondEdition", 3, editionNumber)
