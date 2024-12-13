@@ -56,9 +56,9 @@ app.post('/login', (req, res) => {
     
     if (bcrypt.compareSync(password, TEXT_PROCESSING_HASH)) {
         req.session.authenticated = true;
-        res.redirect('/protected-page.html');
+        res.redirect('/processtexts.html');
     } else {
-        res.redirect('/login.html');
+        res.redirect('/processtextslogin.html');
     }
 });
 
@@ -66,11 +66,11 @@ app.post('/login', (req, res) => {
 // Logout route
 app.get('/logout', (req, res) => {
     req.session.destroy(err => {
-        res.redirect('/login.html');
+        res.redirect('/processtextslogin.html');
     });
 });
 
-app.get('/processtexts.html', requireAuth, (req, res, next) => {
+app.get('/processtextslogin.html', requireAuth, (req, res, next) => {
     next();
 });
 
