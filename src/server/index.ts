@@ -1,16 +1,80 @@
 import express from "express"
 import path from "path"
 import fs from 'fs'
+import session from 'express-session'
+import bcrypt from "bcrypt"
 
 import client from './db'
 import { wrapAsync } from './utils'
+import { Request, Response, NextFunction } from 'express';
+
+
+declare module 'express-session' {
+    interface SessionData {
+        authenticated?: boolean;
+    }
+}
 
 const app = express()
 const port = process.env.PORT
 
+// The hashed password - you should generate this and store in environment variables
+const HASHED_PASSWORD = '$2b$10$YOUR_HASHED_PASSWORD'; // Replace with actual hashed password
+
+// Add this before your routes, but after other middleware like express.static
+app.use(express.urlencoded({ extended: true })); // For parsing form data
+app.use(express.json()); // For parsing JSON data
+
 // Make sure these are at the top of your routes
 app.use(express.static('public'));
 app.use(express.static('.')); // This line is important for serving files from root directory
+
+app.use(session({
+    secret: 'your-secret-key',  // Change this to something secure
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true
+    }
+}));
+
+
+// Middleware to check authentication
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+    if (req.session.authenticated) {
+        next();
+    } else {
+        res.redirect('/login.html');
+    }
+}
+
+// Login endpoint
+app.post('/login', (req, res) => {
+    const { password } = req.body;
+    
+    if (bcrypt.compareSync(password, HASHED_PASSWORD)) {
+        req.session.authenticated = true;
+        res.redirect('/protected-page.html');
+    } else {
+        res.redirect('/login.html');
+    }
+});
+
+
+// Logout route
+app.get('/logout', (req, res) => {
+    req.session.destroy(err => {
+        res.redirect('/login.html');
+    });
+});
+
+
+// Use this middleware for protected routes
+app.get('/protected-page.html', requireAuth, (req, res, next) => {
+    next();
+});
+
 
 // Add this endpoint to get list of available text files
 app.get('/textfiles', (req, res) => {
@@ -54,10 +118,6 @@ app.post('/process-file', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
-// https://expressjs.com/en/starter/static-files.html
-app.use(express.static('public'))
-app.use(express.static('.'))
-
 app.get('/test-static', (req, res) => {
     const fs = require('fs');
     const files = fs.readdirSync('public');
@@ -85,8 +145,6 @@ app.post('/words/:word', wrapAsync(async (req, res) => {
     res.json(insert)
 }))
 
-// Default error handling middleware is fine for now
-
 
 // Async init - have to wait for the client to connect
 ;(async function () {
@@ -95,4 +153,3 @@ app.post('/words/:word', wrapAsync(async (req, res) => {
         console.log(`Example app listening on port ${port}`)
     })    
 })()
-
