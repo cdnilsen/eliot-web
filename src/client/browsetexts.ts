@@ -32,46 +32,6 @@ function processGreekLine(text: string, showHapaxes: boolean) {
     return text.split("} ")[1].trim();
 }
 
-function createOption(name: string, value: string) {
-    let option = document.createElement("option");
-    option.value = value;
-    option.innerHTML = name;
-    return option
-}
-
-
-function addChapterSelection(book: string) {
-    let numChapters: number = bookToChapterDict[book];
-    let chapterSelection = document.getElementById("chapterSelectionDropdown");
-    chapterSelection!.innerHTML = "";
-    for (let i=1; i < numChapters + 1; i++) {
-        let chapterOption = createOption(i.toString(), i.toString());
-        chapterSelection!.appendChild(chapterOption);
-    }
-}
-
-
-function grabBookList(sectionDropdown: HTMLSelectElement, section: string, book: string, chapter: string) {
-    let bookSelection = <HTMLSelectElement>document.getElementById("bookDropdown");
-    sectionDropdown!.innerHTML = ""
-    sectionDropdown!.hidden = false;
-    sectionDropdown!.style.visibility = "visible";
-
-    let bookList: string[] = sectionToBookDict[section];
-
-    //get rid of the blank option here later, somehow, as it causes console-side bugs
-    let blankOption = createOption("", "");
-    sectionDropdown!.appendChild(blankOption);
-    for (let i=0; i < bookList.length; i++) {
-        let thisOption = createOption(bookList[i], bookList[i]);
-        sectionDropdown!.appendChild(thisOption);
-    }
-
-    sectionDropdown!.addEventListener("change", function() {
-        addChapterSelection(bookSelection!.value);
-    })
-}
-
 */
 
 
@@ -84,11 +44,6 @@ type EditionState = {
     hapaxes: Hapax,
     book: string,
     chapter: number
-}
-
-function stateToNumber(edition: EditionState) {
-
-
 }
 
 function refreshSectionDropdown() {
@@ -111,6 +66,8 @@ function refreshSectionDropdown() {
 
 }
 
+
+//This has a bug where I have the gospels as options in the Pentateuch. Fix at some point?
 function sectionListener(state: EditionState) {
     let sectionDropdown = <HTMLSelectElement>document.getElementById("sectionDropdown");
     let bookDropdown = <HTMLSelectElement>document.getElementById("bookDropdown");
@@ -165,24 +122,18 @@ function sectionListener(state: EditionState) {
     });
 }
 
-
-
 function editionNumberListener(docID: string, p: number, state: EditionState) {
     let checkbox = <HTMLInputElement>document.getElementById(docID);
 
     if (checkbox.checked) {
         state.editions = state.editions * p;
-        console.log(docID);
     }
-
-    //this doesn't work for the radio buttons...
     checkbox.addEventListener("change", function() {
         if (checkbox.checked) {
             state.editions = state.editions * p;
         } else {
             state.editions = state.editions / p;
         }
-        console.log(state.editions);
     });
 }
 
