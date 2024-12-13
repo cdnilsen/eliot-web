@@ -100,7 +100,7 @@ function grabBookList(state: EditionState) {
 function sectionListener(state: EditionState) {
     let sectionDropdown = <HTMLSelectElement>document.getElementById("sectionDropdown");
     let bookDropdown = <HTMLSelectElement>document.getElementById("bookDropdown");
-    let chapterDropdown = <HTMLSelectElement>document.getElementById("chapterDropdown");
+    let chapterDropdown = <HTMLSelectElement>document.getElementById("chapterSelectionDropdown");
     
     sectionDropdown.addEventListener("change", function() {
         bookDropdown.innerHTML = "";
@@ -184,13 +184,6 @@ function submitButtonListener(state: EditionState) {
 }
 
 function main() {
-    let section: string = "";
-    let book: string = "";
-    let chapter: string = "";
-
-    let highlighting: Highlighting = "none"
-    let hapaxes: Hapax = "none"
-
     let editionState: EditionState = { 
         editions: 1,
         highlighting: "none",
