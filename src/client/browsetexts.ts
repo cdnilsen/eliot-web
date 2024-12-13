@@ -86,6 +86,11 @@ type EditionState = {
     chapter: number
 }
 
+function stateToNumber(edition: EditionState) {
+
+
+}
+
 function grabBookList(state: EditionState) {
 
 
@@ -95,8 +100,11 @@ function grabBookList(state: EditionState) {
 function sectionListener(state: EditionState) {
     let sectionDropdown = <HTMLSelectElement>document.getElementById("sectionDropdown");
     let bookDropdown = <HTMLSelectElement>document.getElementById("bookDropdown");
+    let chapterDropdown = <HTMLSelectElement>document.getElementById("chapterDropdown");
     
     sectionDropdown.addEventListener("change", function() {
+        bookDropdown.innerHTML = "";
+        chapterDropdown.innerHTML = "";
         let section = sectionDropdown.value;
         let book = bookDropdown.value;
         let chapter = 1;
@@ -104,11 +112,33 @@ function sectionListener(state: EditionState) {
         state.chapter = chapter;
         grabBookList(state);
         bookDropdown.hidden = false;
+
+        let allBooks = sectionToBookDict[section];
+        for (let i=0; i < allBooks.length; i++) {
+            let option = document.createElement("option");
+            option.value = allBooks[i];
+            option.innerHTML = allBooks[i];
+            bookDropdown.appendChild(option);
+        }
     });
 
-    
-    //bookDropdown.hidden = false;
+    bookDropdown.addEventListener("change", function() {
+        let book = bookDropdown.value;
+        state.book = book;
+        let numChapters = bookToChapterDict[book];
+        chapterDropdown.innerHTML = "";
+        for (let i=1; i < numChapters + 1; i++) {
+            let option = document.createElement("option");
+            option.value = i.toString();
+            option.innerHTML = i.toString();
+            chapterDropdown.appendChild(option);
+        }
+    });
 
+    chapterDropdown.addEventListener("change", function() {
+        let chapter = parseInt(chapterDropdown.value);
+        state.chapter = chapter;
+    });
 }
 
 
@@ -144,6 +174,13 @@ function hapaxListener(docID: string, setting: Hapax, state: EditionState) {
     if (button.checked) {
         state.hapaxes = setting;
     }
+}
+
+function submitButtonListener(state: EditionState) {
+    let submitButton = <HTMLButtonElement>document.getElementById("submitBookQuery");
+    submitButton.addEventListener("click", function() {
+        console.log(state);
+    });
 }
 
 function main() {
@@ -184,6 +221,8 @@ function main() {
     }
 
     sectionListener(editionState);
+
+    submitButtonListener(editionState);
 }
 
 main();
