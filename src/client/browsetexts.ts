@@ -97,11 +97,32 @@ function grabBookList(state: EditionState) {
 
 }
 
+function refreshSectionDropdown() {
+    let valuesList = ["pentateuch", "history", "wisdom", "major_prophets", "minor-prophets", "gospels_acts", "other_nt", "mishnaic"]
+    let labelsList = ["Pentateuch", "Historical Books", "Wisdom/Poetry Books", "Major Prophets", "Minor Prophets", "Gospels/Acts", "Rest of New Testament", '"Mishnaic" publications']
+
+    let sectionDropdown = <HTMLSelectElement>document.getElementById("sectionDropdown");
+
+    sectionDropdown.innerHTML = "";
+    for (let i=0; i < valuesList.length; i++) {
+        let option = document.createElement("option");
+        option.value = valuesList[i];
+        option.innerHTML = labelsList[i];
+        sectionDropdown.appendChild(option);
+
+        if (valuesList[i] == "mishnaic") {
+            option.hidden = true;
+        }
+    }
+
+}
+
 function sectionListener(state: EditionState) {
     let sectionDropdown = <HTMLSelectElement>document.getElementById("sectionDropdown");
     let bookDropdown = <HTMLSelectElement>document.getElementById("bookDropdown");
     let chapterDropdown = <HTMLSelectElement>document.getElementById("chapterSelectionDropdown");
     
+    //Remove the blank option...
     sectionDropdown.addEventListener("change", function() {
         bookDropdown.innerHTML = "";
         chapterDropdown.innerHTML = "";
@@ -130,6 +151,7 @@ function sectionListener(state: EditionState) {
             option.innerHTML = i.toString();
             chapterDropdown.appendChild(option);
         }
+        refreshSectionDropdown();
     });
 
     bookDropdown.addEventListener("change", function() {
