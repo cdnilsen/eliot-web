@@ -134,11 +134,9 @@ function main() {
     let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew"]
     let primesList = [2, 3, 5, 7, 11]
 
-    editionNumberListener("useFirstEdition", 2, editionNumber)
-    editionNumberListener("useSecondEdition", 3, editionNumber)
-    editionNumberListener("useMayhew", 5, editionNumber)
-    editionNumberListener("useZerothEdition", 7 , editionNumber)
-    editionNumberListener("useGrebrew", 11, editionNumber)
+    for (let i=0; i < primesList.length; i++) { 
+        editionNumberListener(editionListenerIDs[i], primesList[i], editionNumber)
+    }
 
     console.log(editionNumber);
 }
