@@ -99,46 +99,48 @@ function main() {
 */
 
 
-function editionNumberListener(docID: string, p: number, editionNumber: number) {
+type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
+type Hapax = "none" | "strict" | "lax"
+type EditionState = {
+    value: number;
+}
+
+function editionNumberListener(docID: string, p: number, state: EditionState) {
     let checkbox = <HTMLInputElement>document.getElementById(docID);
 
     if (checkbox.checked) {
-        editionNumber = editionNumber * p
-        console.log(docID)
+        state.value = state.value * p;
+        console.log(docID);
     }
 
     checkbox.addEventListener("change", function() {
         if (checkbox.checked) {
-            editionNumber = editionNumber * p
+            state.value = state.value * p;
         } else {
-            editionNumber = editionNumber / p
+            state.value = state.value / p;
         }
-        console.log(editionNumber);
-    })
+        console.log(state.value);
+    });
 }
-
-type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
-type Hapax = "none" | "strict" | "lax"
-
 
 function main() {
     let section: string = "";
     let book: string = "";
-    let chapter: string = ""; // should maybe be a number but...
+    let chapter: string = "";
 
     let highlighting: Highlighting = "none"
     let hapaxes: Hapax = "none"
 
-    let editionNumber = 1
+    let editionState: EditionState = { value: 1 };
 
     let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew"]
     let primesList = [2, 3, 5, 7, 11]
 
     for (let i=0; i < primesList.length; i++) { 
-        editionNumberListener(editionListenerIDs[i], primesList[i], editionNumber)
+        editionNumberListener(editionListenerIDs[i], primesList[i], editionState);
     }
 
-    console.log(editionNumber);
+    console.log(editionState.value);
 }
 
 main();
