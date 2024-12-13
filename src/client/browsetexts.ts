@@ -91,12 +91,6 @@ function stateToNumber(edition: EditionState) {
 
 }
 
-function grabBookList(state: EditionState) {
-
-
-
-}
-
 function refreshSectionDropdown() {
     let valuesList = ["pentateuch", "history", "wisdom", "major_prophets", "minor-prophets", "gospels_acts", "other_nt", "mishnaic"]
     let labelsList = ["Pentateuch", "Historical Books", "Wisdom/Poetry Books", "Major Prophets", "Minor Prophets", "Gospels/Acts", "Rest of New Testament", '"Mishnaic" publications']
@@ -122,7 +116,6 @@ function sectionListener(state: EditionState) {
     let bookDropdown = <HTMLSelectElement>document.getElementById("bookDropdown");
     let chapterDropdown = <HTMLSelectElement>document.getElementById("chapterSelectionDropdown");
     
-    //Remove the blank option...
     sectionDropdown.addEventListener("change", function() {
         bookDropdown.innerHTML = "";
         chapterDropdown.innerHTML = "";
@@ -131,7 +124,6 @@ function sectionListener(state: EditionState) {
         let chapter = 1;
         state.book = book;
         state.chapter = chapter;
-        grabBookList(state);
         bookDropdown.hidden = false;
 
         let allBooks = sectionToBookDict[section];
@@ -199,6 +191,11 @@ function highlightingListener(docID: string, setting: Highlighting, state: Editi
     if (button.checked) {
         state.highlighting = setting;
     }
+    button.addEventListener("change", function() {
+        if (button.checked) {
+            state.highlighting = setting;
+        }
+    });
 }
 
 function hapaxListener(docID: string, setting: Hapax, state: EditionState) {
@@ -206,6 +203,12 @@ function hapaxListener(docID: string, setting: Hapax, state: EditionState) {
     if (button.checked) {
         state.hapaxes = setting;
     }
+
+    button.addEventListener("change", function() {
+        if (button.checked) {
+            state.hapaxes = setting;
+        }
+    });
 }
 
 function submitButtonListener(state: EditionState) {
