@@ -1,6 +1,6 @@
 import { sectionToBookDict, bookToChapterDict } from "./library.js"
 
-
+/*
 
 
 function tagToSpan(tagName: string, text: string, color: string) {
@@ -51,25 +51,23 @@ function addChapterSelection(book: string) {
 }
 
 
-function grabBookList(section: string) {
-
-    console.log(section);
+function grabBookList(sectionDropdown: HTMLSelectElement, section: string, book: string, chapter: string) {
     let bookSelection = <HTMLSelectElement>document.getElementById("bookDropdown");
-    bookSelection!.innerHTML = ""
-    bookSelection!.hidden = false;
-    bookSelection!.style.visibility = "visible";
+    sectionDropdown!.innerHTML = ""
+    sectionDropdown!.hidden = false;
+    sectionDropdown!.style.visibility = "visible";
 
     let bookList: string[] = sectionToBookDict[section];
 
-    //get rid of the blank option here later, somehow
+    //get rid of the blank option here later, somehow, as it causes console-side bugs
     let blankOption = createOption("", "");
-    bookSelection!.appendChild(blankOption);
+    sectionDropdown!.appendChild(blankOption);
     for (let i=0; i < bookList.length; i++) {
         let thisOption = createOption(bookList[i], bookList[i]);
-        bookSelection!.appendChild(thisOption);
+        sectionDropdown!.appendChild(thisOption);
     }
 
-    bookSelection!.addEventListener("change", function() {
+    sectionDropdown!.addEventListener("change", function() {
         addChapterSelection(bookSelection!.value);
     })
 }
@@ -94,12 +92,32 @@ function main() {
         section = sectionDropdown.value;
         bookDropdown!.innerHTML = "";
         chapterDropdown!.innerHTML = "";
-        grabBookList(section);
+        grabBookList(section, book, chapter);
     })
+}
+
+*/
 
 
+function editionNumberListener(docID: string, p: number) {
     
 
+
+
+}
+
+type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
+type Hapax = "none" | "strict" | "lax"
+
+function main() {
+    let section: string = "";
+    let book: string = "";
+    let chapter: string = ""; // should maybe be a number but...
+
+    let highlighting: Highlighting = "none"
+    let hapaxes: Hapax = "none"
+
+    let editionNumber = 1
 }
 
 main();
