@@ -133,8 +133,8 @@ function main() {
 
     let editionState: EditionState = { value: 1 };
 
-    let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew"]
-    let primesList = [2, 3, 5, 7, 11]
+    let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew", "include_casing", "exclude_casing", "proofreading", "hapaxes_strict", "hapaxes_lax"]
+    let primesList = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
 
     for (let i=0; i < primesList.length; i++) { 
         editionNumberListener(editionListenerIDs[i], primesList[i], editionState);
