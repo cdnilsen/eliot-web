@@ -113,6 +113,7 @@ function editionNumberListener(docID: string, p: number, state: EditionState) {
         console.log(docID);
     }
 
+    //this doesn't work for the radio buttons...
     checkbox.addEventListener("change", function() {
         if (checkbox.checked) {
             state.value = state.value * p;
@@ -133,8 +134,8 @@ function main() {
 
     let editionState: EditionState = { value: 1 };
 
-    let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew", "include_casing", "exclude_casing", "proofreading", "hapaxes_strict", "hapaxes_lax"]
-    let primesList = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+    let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew"]
+    let primesList = [2, 3, 5, 7, 11]
 
     for (let i=0; i < primesList.length; i++) { 
         editionNumberListener(editionListenerIDs[i], primesList[i], editionState);
