@@ -99,11 +99,20 @@ function main() {
 */
 
 
-function editionNumberListener(docID: string, p: number) {
-    
+function editionNumberListener(docID: string, p: number, editionNumber: number) {
+    let checkbox = <HTMLInputElement>document.getElementById(docID);
 
+    if (checkbox.checked) {
+        editionNumber = editionNumber * p
+    }
 
-
+    checkbox.addEventListener("change", function() {
+        if (checkbox.checked) {
+            editionNumber = editionNumber * p
+        } else {
+            editionNumber = editionNumber / p
+        }
+    })
 }
 
 type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
@@ -118,6 +127,14 @@ function main() {
     let hapaxes: Hapax = "none"
 
     let editionNumber = 1
+
+    editionNumberListener("useFirstEdition", 2, editionNumber)
+    editionNumberListener("useSecondEdition", 3, editionNumber)
+    editionNumberListener("useMayhew", 5, editionNumber)
+    editionNumberListener("useZerothEdition", 7 , editionNumber)
+    editionNumberListener("useGrebrew", 11, editionNumber)
+
+    console.log(editionNumber);
 }
 
 main();
