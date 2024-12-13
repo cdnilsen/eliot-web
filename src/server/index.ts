@@ -8,6 +8,10 @@ import { wrapAsync } from './utils'
 const app = express()
 const port = process.env.PORT
 
+// Make sure these are at the top of your routes
+app.use(express.static('public'));
+app.use(express.static('.')); // This line is important for serving files from root directory
+
 // Add this endpoint to get list of available text files
 app.get('/textfiles', (req, res) => {
     const textFilesDir = path.join(__dirname, '..', 'texts');  // adjust path as needed
