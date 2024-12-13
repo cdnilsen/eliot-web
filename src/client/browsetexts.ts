@@ -183,7 +183,7 @@ function main() {
         hapaxListener(hapaxIDs[i], hapaxSettings[i], editionState)
     }
 
-    console.log(editionState);
+    sectionListener(editionState);
 }
 
 main();
