@@ -5,11 +5,11 @@ async function loadFileList() {
     const fileList = document.getElementById('fileList');
     if (!fileList) return;
     
-    fileList.innerHTML = files.map(file => `
-        <div>
-            <input type="checkbox" id="${file}" name="textfile" value="${file}">
-            <label for="${file}">${file}</label>
-        </div>
+    fileList.innerHTML = files.map((file: string) => `
+    <div>
+        <input type="checkbox" id="${file}" name="textfile" value="${file}">
+        <label for="${file}">${file}</label>
+    </div>
     `).join('');
 }
 
