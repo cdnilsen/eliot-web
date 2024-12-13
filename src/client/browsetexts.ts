@@ -72,30 +72,6 @@ function grabBookList(sectionDropdown: HTMLSelectElement, section: string, book:
     })
 }
 
-
-
-type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
-type Hapax = "none" | "strict" | "lax"
-
-
-function main() {
-    let section: string = ""
-    let book: string = ""
-    let chapter: string = ""
-    let highlighting: Highlighting = "none"
-    let hapaxes: Hapax = "none"
-    let sectionDropdown = <HTMLSelectElement>document.getElementById("sectionDropdown");
-    let bookDropdown = <HTMLSelectElement>document.getElementById("bookDropdown");
-    let chapterDropdown = <HTMLSelectElement>document.getElementById("chapterSelectionDropdown");
-
-    sectionDropdown!.addEventListener("change", function () {
-        section = sectionDropdown.value;
-        bookDropdown!.innerHTML = "";
-        chapterDropdown!.innerHTML = "";
-        grabBookList(section, book, chapter);
-    })
-}
-
 */
 
 
@@ -109,6 +85,33 @@ type EditionState = {
     book: string,
     chapter: number
 }
+
+function grabBookList(state: EditionState) {
+
+
+
+}
+
+function sectionListener(state: EditionState) {
+    let sectionDropdown = <HTMLSelectElement>document.getElementById("sectionDropdown");
+    let bookDropdown = <HTMLSelectElement>document.getElementById("bookDropdown");
+    
+    sectionDropdown.addEventListener("change", function() {
+        let section = sectionDropdown.value;
+        let book = bookDropdown.value;
+        let chapter = 1;
+        state.book = book;
+        state.chapter = chapter;
+        grabBookList(state);
+        bookDropdown.hidden = false;
+    });
+
+    
+    //bookDropdown.hidden = false;
+
+}
+
+
 
 function editionNumberListener(docID: string, p: number, state: EditionState) {
     let checkbox = <HTMLInputElement>document.getElementById(docID);
