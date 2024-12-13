@@ -101,27 +101,44 @@ function main() {
 
 type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
 type Hapax = "none" | "strict" | "lax"
+
 type EditionState = {
-    value: number;
+    editions: number,
+    highlighting: Highlighting,
+    hapaxes: Hapax
 }
 
 function editionNumberListener(docID: string, p: number, state: EditionState) {
     let checkbox = <HTMLInputElement>document.getElementById(docID);
 
     if (checkbox.checked) {
-        state.value = state.value * p;
+        state.editions = state.editions * p;
         console.log(docID);
     }
 
     //this doesn't work for the radio buttons...
     checkbox.addEventListener("change", function() {
         if (checkbox.checked) {
-            state.value = state.value * p;
+            state.editions = state.editions * p;
         } else {
-            state.value = state.value / p;
+            state.editions = state.editions / p;
         }
-        console.log(state.value);
+        console.log(state.editions);
     });
+}
+
+function highlightingListener(docID: string, setting: Highlighting, state: EditionState) {
+    let button = <HTMLInputElement>document.getElementById(docID);
+    if (button.checked) {
+        state.highlighting = setting;
+    }
+}
+
+function hapaxListener(docID: string, setting: Hapax, state: EditionState) {
+    let button = <HTMLInputElement>document.getElementById(docID);
+    if (button.checked) {
+        state.hapaxes = setting;
+    }
 }
 
 function main() {
@@ -132,7 +149,11 @@ function main() {
     let highlighting: Highlighting = "none"
     let hapaxes: Hapax = "none"
 
-    let editionState: EditionState = { value: 1 };
+    let editionState: EditionState = { 
+        editions: 1,
+        highlighting: "none",
+        hapaxes: "none"
+    };
 
     let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew"]
     let primesList = [2, 3, 5, 7, 11]
@@ -141,7 +162,21 @@ function main() {
         editionNumberListener(editionListenerIDs[i], primesList[i], editionState);
     }
 
-    console.log(editionState.value);
+    let highlightingIDs = ["no_show", "include_casing", "exclude_casing", "proofreading"];
+    let highlightingSettings: Highlighting[] = ["none", "includeCasing", "ignoreCasing", "proofreading"];
+    
+    for (let i=0; i < highlightingIDs.length; i++) {
+        highlightingListener(highlightingIDs[i], highlightingSettings[i], editionState)
+    }
+
+    let hapaxIDs = ["dont_show", "hapaxes_strict", "hapaxes_lax"];
+    let hapaxSettings: Hapax[] = ["none", "strict", "lax"]
+
+    for (let i=0; i < hapaxIDs.length; i++) {
+        hapaxListener(hapaxIDs[i], hapaxSettings[i], editionState)
+    }
+
+    console.log(editionState);
 }
 
 main();
