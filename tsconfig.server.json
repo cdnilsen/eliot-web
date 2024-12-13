@@ -15,7 +15,10 @@
               "src/types/*"
           ]
       },
-      "types": ["express-session", "node"]
+      "typeRoots": [
+        "./node_modules/@types",
+        "./types"
+      ]
   },
   "include": [
       "src/server/**/*",
