@@ -19,7 +19,9 @@ const app = express()
 const port = process.env.PORT
 
 // The hashed password - you should generate this and store in environment variables
-const HASHED_PASSWORD = '$2b$10$YOUR_HASHED_PASSWORD'; // Replace with actual hashed password
+const TEXT_PROCESSING_HASH = '$2b$10$Voh5WI17TJIGvtfRlbrAaOOtaZSNkgZvu5aXupMP2xYnKTWB5BNuu'; // Replace with actual hashed password
+
+const SHAWNEE_HASH = '$2b$10$EDrdbxxX8OC6YJoxfjzyBOc/iQA/vi8Ln4aEvUV/ZU75VP4.ldH16';
 
 // Add this before your routes, but after other middleware like express.static
 app.use(express.urlencoded({ extended: true })); // For parsing form data
@@ -53,7 +55,7 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
 app.post('/login', (req, res) => {
     const { password } = req.body;
     
-    if (bcrypt.compareSync(password, HASHED_PASSWORD)) {
+    if (bcrypt.compareSync(password, TEXT_PROCESSING_HASH)) {
         req.session.authenticated = true;
         res.redirect('/protected-page.html');
     } else {
@@ -70,8 +72,7 @@ app.get('/logout', (req, res) => {
 });
 
 
-// Use this middleware for protected routes
-app.get('/protected-page.html', requireAuth, (req, res, next) => {
+app.get('/processtexts.html', requireAuth, (req, res, next) => {
     next();
 });
 
