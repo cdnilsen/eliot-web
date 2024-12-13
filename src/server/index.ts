@@ -27,9 +27,7 @@ const SHAWNEE_HASH = '$2b$10$EDrdbxxX8OC6YJoxfjzyBOc/iQA/vi8Ln4aEvUV/ZU75VP4.ldH
 app.use(express.urlencoded({ extended: true })); // For parsing form data
 app.use(express.json()); // For parsing JSON data
 
-// Make sure these are at the top of your routes
-app.use(express.static('public'));
-app.use(express.static('.')); // This line is important for serving files from root directory
+
 
 app.use(session({
     secret: 'your-secret-key',  // Change this to something secure
@@ -51,6 +49,7 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
     }
 }
 
+
 // Login endpoint
 app.post('/login', (req, res) => {
     const { password } = req.body;
@@ -71,10 +70,13 @@ app.get('/logout', (req, res) => {
     });
 });
 
-
 app.get('/processtexts.html', requireAuth, (req, res, next) => {
     next();
 });
+
+// Make sure these are at the top of your routes
+app.use(express.static('public'));
+app.use(express.static('.')); // This line is important for serving files from root directory
 
 
 // Add this endpoint to get list of available text files
