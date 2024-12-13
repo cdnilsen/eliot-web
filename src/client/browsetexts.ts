@@ -113,6 +113,7 @@ function editionNumberListener(docID: string, p: number, editionNumber: number) 
         } else {
             editionNumber = editionNumber / p
         }
+        console.log(editionNumber);
     })
 }
 
