@@ -114,6 +114,7 @@ function sectionListener(state: EditionState) {
         bookDropdown.hidden = false;
 
         let allBooks = sectionToBookDict[section];
+        state.book = allBooks[0];
         for (let i=0; i < allBooks.length; i++) {
             let option = document.createElement("option");
             option.value = allBooks[i];
