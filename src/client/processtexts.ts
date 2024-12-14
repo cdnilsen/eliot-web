@@ -212,6 +212,8 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
                 for (let i=0; i < lines.length; i++) {
                     obj.contentDiv.innerHTML += processLine(lines[i], filename, shorthand);
                     obj.contentDiv.innerHTML += "<br>";
+
+                    previewDiv!.appendChild(obj.contentDiv);
                 }
                 /*
                 const firstLine = content.split('\n')[0];
