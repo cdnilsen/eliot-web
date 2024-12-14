@@ -1,4 +1,5 @@
-//import { stringToStringListDict } from './library';
+import { StringLiteral } from 'typescript';
+import { stringToStringListDict, bookToIDDict } from './library';
 
 
 type StringToStringDict = {
@@ -18,9 +19,6 @@ type FileCheckboxDict = {
     [key: string]: CheckboxObject
 }
 
-
-
-
 let editionToShorthandDict: Record<Edition, string> = {
     "first": "α",
     "second": "β",
@@ -28,6 +26,53 @@ let editionToShorthandDict: Record<Edition, string> = {
     "zeroth": "א",
     "kjv": "E",
     "grebrew": "G"
+}
+
+let editionToNumberDict: Record<Edition, string> = {
+    "first": "2",
+    "second": "3",
+    "mayew": "4",
+    "zeroth": "5",
+    "kjv": "6",
+    "grebrew": "7"
+}
+
+
+function chapterStringLengthManager(address: string) {
+    if (address.length == 1) {
+        return "00" + address;
+    } else if (address.length == 2) {
+        return "0" + address;
+    } else {
+        return address;
+    }
+}
+
+function getLinesFromFile(content: string) {
+    let lines = content.split("\n");
+    for (let i=0; i < lines.length; i++) {
+        lines[i] = lines[i].trim();
+    }
+    return lines;
+}
+
+function getVerseID(bookName: string, verseAddress: string, editionShorthand: string, prefixWithShorthand: boolean = false): string {
+    if (!verseAddress.includes(".")) {
+        console.log("Check verse address format in " + bookName + " " + editionShorthand + "." + verseAddress);	
+    }
+
+    let splitAddress = verseAddress.split(".");
+    let chapterNum = splitAddress[0];
+    let verseNum = splitAddress[1];
+
+    let leadingDigit = "1";
+    if (prefixWithShorthand) {
+        leadingDigit = editionToNumberDict[editionShorthand];
+    }
+
+    let id = leadingDigit + bookToIDDict[bookName] + chapterStringLengthManager(chapterNum) + chapterStringLengthManager(verseNum);
+
+    return id;
 }
 
 
@@ -148,11 +193,23 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
     for (const [filename, obj] of Object.entries(allFileObjects)) {
         if (obj.checkbox.checked && obj.contentDiv) {
             let shorthand = editionToShorthandDict[obj.edition];
+
+            let bookName = filename.split(".")[0];
+            if (bookName ! in bookToIDDict) {
+                console.log("Check book name in " + filename);
+            }
             const content = await processFile(filename);
             if (content) {
+                let lines = getLinesFromFile(content);
+                for (let i=0; i < lines.length; i++) {
+                    obj.contentDiv.innerHTML += processLine(lines[i], filename, shorthand);
+                    obj.contentDiv.innerHTML += "<br>";
+                }
+                /*
                 const firstLine = content.split('\n')[0];
                 obj.contentDiv.innerHTML = processLine(firstLine, filename, shorthand);
                 previewDiv!.appendChild(obj.contentDiv);
+                */
             }
         }
     }
