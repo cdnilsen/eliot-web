@@ -21,6 +21,8 @@ function processLine(line: string, verseID: string) {
     let verseAddress = splitLine[0];
     let lineText = splitLine.slice(1).join(" ");
 
+    lineText = lineText.replaceAll("8", "ꝏ̄");
+
     return lineText;
 
 }
