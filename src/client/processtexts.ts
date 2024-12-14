@@ -1,6 +1,10 @@
 //import { stringToStringListDict } from './library';
 
 
+type StringToStringDict = {
+    [key: string]: string
+}
+
 type CheckboxObject = {
     div: HTMLDivElement,
     checkbox: HTMLInputElement,
@@ -63,7 +67,7 @@ async function processFile(filename: string) {
 function getEdition(fileName: string): string {
     let edition = "error";
 
-    let endingToEditionDict = {
+    let endingToEditionDict: StringToStringDict = {
         "First Edition.txt": "first",
         "Second Edition.txt": "second",
         "Mayew.txt": "mayew",
@@ -74,7 +78,7 @@ function getEdition(fileName: string): string {
 
     let endingList = Object.keys(endingToEditionDict);
 
-    for (let i=0; i<endingList.length; i++) {
+    for (let i=0; i < endingList.length; i++) {
         let ending = endingList[i];
         if (fileName.endsWith(ending)) {
             edition = endingToEditionDict[ending];
