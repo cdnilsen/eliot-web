@@ -17,6 +17,7 @@ async function loadTextFiles() {
     try {
         const response = await fetch('/textfiles');
         const files = await response.json();
+        console.log('Called loadTextFiles()');
         for (const file of files) {
             processFile(file);
         }
