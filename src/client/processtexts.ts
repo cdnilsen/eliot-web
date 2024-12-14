@@ -266,9 +266,9 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
                 let lineDict = getLinesFromFile(content, bookName, edition);
                 for (let i=0; i < lineDict.addresses.length; i++) {
                     let address = lineDict.addresses[i];
-                    //let line = lineDict.lines[address];
-                    //obj.contentDiv.innerHTML += address + ": " + line;
-                    obj.contentDiv.innerHTML += address
+                    let line = lineDict.lines[address];
+                    obj.contentDiv.innerHTML += address + ": " + line;
+                    //obj.contentDiv.innerHTML += address
                     obj.contentDiv.innerHTML += "<br>";
 
                     previewDiv!.appendChild(obj.contentDiv);
