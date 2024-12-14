@@ -61,6 +61,8 @@ function displayFiles(files: string[]) {
 // Call this when page loads
 //document.addEventListener('DOMContentLoaded', loadTextFiles);
 
+console.log("is this thing on?");
+
 function main() {
     console.log('main() called...');
     document.addEventListener('DOMContentLoaded', () => {
@@ -72,7 +74,6 @@ function main() {
             processButton.addEventListener('click', loadTextFiles);
         }
     });
-
 }
 
 main();
