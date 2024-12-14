@@ -1,5 +1,5 @@
 import { StringLiteral } from 'typescript';
-import { stringToStringListDict, bookToIDDict } from './library';
+import { stringToStringListDict, BookName, bookToIDDict } from './library';
 
 
 type StringToStringDict = {
@@ -35,6 +35,11 @@ let editionToNumberDict: Record<Edition, string> = {
     "zeroth": "5",
     "kjv": "6",
     "grebrew": "7"
+}
+
+
+function isBookName(name: string): name is BookName {
+    return name in bookToIDDict;
 }
 
 
@@ -197,8 +202,9 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
             let shorthand = editionToShorthandDict[obj.edition];
 
             let bookName = filename.split(".")[0];
-            if (bookName ! in bookToIDDict) {
+            if (!isBookName(bookName)) {
                 console.log("Check book name in " + filename);
+                continue;
             }
             const content = await processFile(filename);
             if (content) {
