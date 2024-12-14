@@ -115,12 +115,13 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
     const { verseID, text, edition } = req.body;
     
     try {
+        // Using a dynamic column name requires a different query structure
         const insert = await client.query(
-            `INSERT INTO all_verses (verse_id, text, edition) 
-                VALUES ($1, $2, $3)
-                ON CONFLICT (verse_id, edition) 
-                DO UPDATE SET text = EXCLUDED.text`,
-            [verseID, text, edition]
+            `INSERT INTO verses (id, ${edition}) 
+             VALUES ($1, $2)
+             ON CONFLICT (id) 
+             DO UPDATE SET ${edition} = $2`,
+            [verseID, text]
         );
         res.json({ status: 'success', insert });
     } catch (err) {
