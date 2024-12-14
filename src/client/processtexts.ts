@@ -19,7 +19,7 @@ async function loadTextFiles() {
         const files = await response.json();
         console.log('Called loadTextFiles()');
         for (const file of files) {
-            processFile(file);
+            //processFile(file);
         }
         displayFiles(files);
     } catch (error) {
@@ -61,16 +61,14 @@ function displayFiles(files: string[]) {
 // Call this when page loads
 //document.addEventListener('DOMContentLoaded', loadTextFiles);
 
-console.log("is this thing on?");
 
 function main() {
-    console.log('main() called...');
+    // Called successfully.
     document.addEventListener('DOMContentLoaded', () => {
         loadTextFiles();
         
         const processButton = document.getElementById('processFiles');
         if (processButton) {
-            console.log('button exists...');
             processButton.addEventListener('click', loadTextFiles);
         }
     });
