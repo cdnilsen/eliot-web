@@ -72,7 +72,10 @@ function getEdition(fileName: string): string {
         "Grebrew.txt": "grebrew"
     }
 
-    for (let [ending, edition] of Object.entries(endingToEditionDict)) {
+    let endingList = Object.keys(endingToEditionDict);
+
+    for (let i=0; i<endingList.length; i++) {
+        let ending = endingList[i];
         if (fileName.endsWith(ending)) {
             edition = endingToEditionDict[ending];
             return edition;
