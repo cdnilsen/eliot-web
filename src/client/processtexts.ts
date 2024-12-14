@@ -124,14 +124,16 @@ function processLine(line: string, bookName: BookName, edition: Edition): LineOb
 
 type LineDict = {
     lines: StringToStringDict,
-    addresses: string[]
+    addresses: string[],
+    allLinesValid: boolean
 }
 
 function getLinesFromFile(content: string, bookName: BookName, edition: Edition) {
     let rawLines = content.split("\n");
     let lineDict: LineDict = {
         lines: {},
-        addresses: []
+        addresses: [],
+        allLinesValid: true
     };
 
     for (let i=0; i < rawLines.length; i++) {
@@ -140,6 +142,8 @@ function getLinesFromFile(content: string, bookName: BookName, edition: Edition)
         if (lineObject.isValid) {
             lineDict.addresses.push(lineObject.verseAddress);
             lineDict.lines[lineObject.verseAddress] = lineObject.lineText;
+        } else {
+            console.log("Error in " + bookName + " " + edition + " at line " + i + ": " + trimmedLine);
         }
     }
     return lineDict;
@@ -268,7 +272,6 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
                     let address = lineDict.addresses[i];
                     let line = lineDict.lines[address];
                     obj.contentDiv.innerHTML += address + ": " + line;
-                    //obj.contentDiv.innerHTML += address
                     obj.contentDiv.innerHTML += "<br>";
 
                     previewDiv!.appendChild(obj.contentDiv);
