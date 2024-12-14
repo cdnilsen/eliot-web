@@ -1,5 +1,6 @@
 import { StringLiteral } from 'typescript';
 import { stringToStringListDict, BookName, bookToIDDict, bookToChapterDict } from './library.js';
+import { get } from 'http';
 
 
 type StringToStringDict = {
@@ -53,16 +54,7 @@ function chapterStringLengthManager(address: string) {
     }
 }
 
-function getVerseID(bookName: BookName, verseAddress: string, edition: Edition, prefixWithShorthand: boolean = false): string {
-
-    if (!verseAddress.includes(".")) {
-        let editionShorthand = editionToShorthandDict[edition];
-        console.log("Check verse address format in " + bookName + " " + editionShorthand + "." + verseAddress);	
-    }
-
-    let splitAddress = verseAddress.split(".");
-    let chapterNum = splitAddress[0];
-    let verseNum = splitAddress[1];
+function getVerseID(bookName: BookName, chapterNum: string, verseNum: string, edition: Edition, prefixWithShorthand: boolean = false): string {
 
     let leadingDigit = "1";
     if (prefixWithShorthand) {
@@ -75,8 +67,6 @@ function getVerseID(bookName: BookName, verseAddress: string, edition: Edition, 
 }
 
 
-
-
 function processWord(word: string) {
     
 
@@ -86,43 +76,50 @@ function colorSpan(text: string, color: string) {
     return `<span style="color: ${color}">${text}</span>`;
 }
 
-type lineObject = {
+type LineObject = {
     verseAddress: string,
-    lineText: string
+    lineText: string,
+    isValid: boolean
 }
 
-function isProperAddress(address: string) {
-    if (!address.includes(".")) {
-        return false;
+
+function processLine(line: string, bookName: BookName, edition: Edition): LineObject {
+
+    let object: LineObject = {
+        verseAddress: "",
+        lineText: "",
+        isValid: false
     }
 
-    let splitAddress = address.split(".");
-    let chapter = splitAddress[0];
-    let verse = splitAddress[1];
-
-    if (isNaN(parseInt(chapter)) || isNaN(parseInt(verse))) {
-        return false;
+    if (line.length == 0) {
+        return object;
     }
 
-    return true;
-}
-
-function processLine(line: string, bookName: BookName, shorthand: string): lineObject {
     let splitLine = line.split(" ");
-    let verseAddress = splitLine[0];
+    let address = splitLine[0];
     let lineText = splitLine.slice(1).join(" ").trim();
 
-    if (!isProperAddress(verseAddress)) {
-        console.log("Error in " + bookName + " " + shorthand + "." + verseAddress + "\n" + lineText);
+    if (!address.includes(".")) {
+        let shorthand = editionToShorthandDict[edition];
+        console.log("Error in " + bookName + " " + shorthand + "." + address + "\n" + lineText);
+        return object;
+    }
+    
+    let splitAddress = address.split(".");
+    let chapterNum = splitAddress[0];
+    let verseNum = splitAddress[1];
+
+    if (isNaN(parseInt(chapterNum)) || isNaN(parseInt(verseNum))) {
+        let shorthand = editionToShorthandDict[edition];
+        console.log("Error in " + bookName + " " + shorthand + "." + address + "\n" + lineText);
+        return object;
     }
 
-    let object = {
-        verseAddress: verseAddress,
-        lineText: lineText
-    }
+    object.lineText = lineText;
+    object.verseAddress = getVerseID(bookName, chapterNum, verseNum, edition);
+    object.isValid = true;
 
     return object;
-
 }
 
 type LineDict = {
@@ -130,7 +127,7 @@ type LineDict = {
     addresses: string[]
 }
 
-function getLinesFromFile(content: string, bookName: BookName, shorthand: string) {
+function getLinesFromFile(content: string, bookName: BookName, edition: Edition) {
     let rawLines = content.split("\n");
     let lineDict: LineDict = {
         lines: {},
@@ -139,8 +136,8 @@ function getLinesFromFile(content: string, bookName: BookName, shorthand: string
 
     for (let i=0; i < rawLines.length; i++) {
         let trimmedLine = rawLines[i].trim();
-        if (trimmedLine.length > 0) {
-            let lineObject = processLine(trimmedLine, bookName, shorthand);
+        let lineObject = processLine(trimmedLine, bookName, edition);
+        if (lineObject.isValid) {
             lineDict.addresses.push(lineObject.verseAddress);
             lineDict.lines[lineObject.verseAddress] = lineObject.lineText;
         }
@@ -257,7 +254,7 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
 
     for (const [filename, obj] of Object.entries(allFileObjects)) {
         if (obj.checkbox.checked && obj.contentDiv) {
-            let shorthand = editionToShorthandDict[obj.edition];
+            let edition = obj.edition;
 
             let bookName = filename.split(".")[0];
             if (!isBookName(bookName)) {
@@ -266,20 +263,16 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
             }
             const content = await processFile(filename);
             if (content) {
-                let lineDict = getLinesFromFile(content, bookName, shorthand);
+                let lineDict = getLinesFromFile(content, bookName, edition);
                 for (let i=0; i < lineDict.addresses.length; i++) {
                     let address = lineDict.addresses[i];
-                    let line = lineDict.lines[address];
-                    obj.contentDiv.innerHTML += address + ": " + line;
+                    //let line = lineDict.lines[address];
+                    //obj.contentDiv.innerHTML += address + ": " + line;
+                    obj.contentDiv.innerHTML += address
                     obj.contentDiv.innerHTML += "<br>";
 
                     previewDiv!.appendChild(obj.contentDiv);
                 }
-                /*
-                const firstLine = content.split('\n')[0];
-                obj.contentDiv.innerHTML = processLine(firstLine, filename, shorthand);
-                previewDiv!.appendChild(obj.contentDiv);
-                */
             }
         }
     }
