@@ -170,7 +170,7 @@ async function addVerseToDatabase(dict: LineDict) {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    verseID: verseID,
+                    verseID: parseInt(verseID),
                     text: dict.lines[verseID],
                     edition: editionColumn
                 })

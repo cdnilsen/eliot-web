@@ -114,13 +114,25 @@ app.post('/process-file', express.json(), wrapAsync(async (req, res) => {
 app.post('/verses', express.json(), wrapAsync(async (req, res) => {
     const { verseID, text, edition } = req.body;
     
+    const validColumns = [
+        'first_edition_text',
+        'second_edition_text',
+        'other_edition_text',
+        'kjv_text',
+        'grebrew_text'
+    ];
+    
+    if (!validColumns.includes(edition)) {
+        return res.status(400).json({ error: 'Invalid edition column' });
+    }
+    
     try {
-        // Using a dynamic column name requires a different query structure
+        // Wrap the text in an array
         const insert = await client.query(
             `INSERT INTO all_verses (id, ${edition}) 
-             VALUES ($1, $2)
+             VALUES ($1, ARRAY[$2])
              ON CONFLICT (id) 
-             DO UPDATE SET ${edition} = $2`,
+             DO UPDATE SET ${edition} = ARRAY[$2]`,
             [verseID, text]
         );
         res.json({ status: 'success', insert });
