@@ -1,13 +1,30 @@
 //import { stringToStringListDict } from './library';
 
+type Edition = "first" | "second" | "mayew" | "zeroth" | "kjv" | "grebrew" | "error"
+
+type StringToEditionDict = {
+    [key: string]: Edition
+}
+
+
 type CheckboxObject = {
     div: HTMLDivElement,
     checkbox: HTMLInputElement,
+    edition: Edition,
     contentDiv?: HTMLDivElement
 }
 
 type FileCheckboxDict = {
     [key: string]: CheckboxObject
+}
+
+let editionToShorthandDict = {
+    "first": "α",
+    "second": "β",
+    "mayew": "M",
+    "zeroth": "א",
+    "kjv": "E",
+    "grebrew": "G"
 }
 
 
@@ -16,12 +33,16 @@ function processWord(word: string) {
 
 }
 
-function processLine(line: string, verseID: string) {
+function colorSpan(text: string, color: string) {
+    return `<span style="color: ${color}">${text}</span>`;
+}
+
+function processLine(line: string, verseID: string, shorthand: string) {
     let splitLine = line.split(" ");
     let verseAddress = splitLine[0];
     let lineText = splitLine.slice(1).join(" ");
 
-    lineText = lineText.replaceAll("8", "ꝏ̄");
+    lineText = colorSpan(shorthand, "#FF0000") + " " + lineText.replaceAll("8", "ꝏ̄");
 
     return lineText;
 
@@ -45,7 +66,30 @@ async function processFile(filename: string) {
     }
 }
 
+function getEdition(fileName: string): Edition {
+    let edition: Edition = "error";
+
+    let endingToEditionDict: StringToEditionDict = {
+        "First Edition.txt": "first",
+        "Second Edition.txt": "second",
+        "Mayew.txt": "mayew",
+        "Zeroth Edition.txt": "zeroth",
+        "KJV.txt": "kjv",
+        "Grebrew.txt": "grebrew"
+    }
+
+    for (let [ending, edition] of Object.entries(endingToEditionDict)) {
+        if (fileName.endsWith(ending)) {
+            edition = endingToEditionDict[ending];
+            return edition;
+        }
+    }
+    return edition; // it shouldn't ever do this
+}
+
 function getFileCheckbox(fileName: string): CheckboxObject {
+
+    let edition = getEdition(fileName);
     let fileDiv: HTMLDivElement = document.createElement('div');
     let fileCheckbox: HTMLInputElement = document.createElement('input');
     fileCheckbox.type = 'checkbox';
@@ -65,6 +109,7 @@ function getFileCheckbox(fileName: string): CheckboxObject {
     return {
         div: fileDiv,
         checkbox: fileCheckbox,
+        edition: edition,
         contentDiv: contentDiv
     };
 }
@@ -76,7 +121,6 @@ function displayFiles(files: string[]): FileCheckboxDict {
 
     let allObjects: FileCheckboxDict = {};
     for (let i=0; i<files.length; i++) {
-        console.log(typeof files[i]);
         let fileObject = getFileCheckbox(files[i]);
         fileList.appendChild(fileObject.div);
         allObjects[files[i]] = fileObject;
@@ -89,7 +133,6 @@ async function loadTextFiles() {
         const response = await fetch('/textfiles');
         const files = await response.json();
         let allFileObjects: FileCheckboxDict = displayFiles(files);
-        console.log("Files loaded: ", files);
         return allFileObjects;
     } catch (error) {
         console.error('Error loading text files:', error);
@@ -101,11 +144,11 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
 
     for (const [filename, obj] of Object.entries(allFileObjects)) {
         if (obj.checkbox.checked && obj.contentDiv) {
-            console.log(`Processing ${filename}...`);
+            let shorthand = editionToShorthandDict[obj.edition.toString()];
             const content = await processFile(filename);
             if (content) {
                 const firstLine = content.split('\n')[0];
-                obj.contentDiv.textContent = processLine(firstLine, filename);
+                obj.contentDiv.textContent = processLine(firstLine, filename, shorthand);
                 previewDiv!.appendChild(obj.contentDiv);
             }
         }
