@@ -151,7 +151,7 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
             const content = await processFile(filename);
             if (content) {
                 const firstLine = content.split('\n')[0];
-                obj.contentDiv.textContent = processLine(firstLine, filename, shorthand);
+                obj.contentDiv.innerHTML = processLine(firstLine, filename, shorthand);
                 previewDiv!.appendChild(obj.contentDiv);
             }
         }
