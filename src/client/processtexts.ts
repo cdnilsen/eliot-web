@@ -1,8 +1,19 @@
 //import { stringToStringListDict } from './library';
 
+type CheckboxObject = {
+    div: HTMLDivElement,
+    checkbox: HTMLInputElement
+}
+
+type FileCheckboxDict = {
+    [key: string]: CheckboxObject
+}
+
+
+
 
 function processWord(word: string) {
-    word = word.toLowerCase();
+    
 
 }
 
@@ -17,11 +28,8 @@ async function loadTextFiles() {
     try {
         const response = await fetch('/textfiles');
         const files = await response.json();
-        console.log('Called loadTextFiles()');
-        for (const file of files) {
-            //processFile(file);
-        }
-        displayFiles(files);
+        let allFileObjects: FileCheckboxDict = displayFiles(files);
+        console.log(files);
     } catch (error) {
         console.error('Error loading text files:', error);
     }
@@ -46,21 +54,40 @@ async function processFile(filename: string) {
     }
 }
 
-function displayFiles(files: string[]) {
-    const fileList = document.getElementById('fileList');
-    if (!fileList) return;
-    
-    fileList.innerHTML = files.map(file => `
-        <div>
-            <input type="checkbox" id="${file}" value="${file}">
-            <label for="${file}">${file}</label>
-        </div>
-    `).join('');
+function getFileCheckbox(fileName: string) {
+    let fileDiv: HTMLDivElement = document.createElement('div');
+    let fileCheckbox: HTMLInputElement = document.createElement('input');
+    fileCheckbox.type = 'checkbox';
+    fileCheckbox.id = fileName;
+    fileCheckbox.value = fileName;
+    fileDiv.appendChild(fileCheckbox);
+    let fileLabel: HTMLLabelElement = document.createElement('label');
+    fileLabel.htmlFor = fileName;
+    fileLabel.innerText = fileName;
+    fileDiv.appendChild(fileLabel);
+
+    let object: CheckboxObject = {
+        div: fileDiv,
+        checkbox: fileCheckbox
+    }
+
+    return object;
 }
 
-// Call this when page loads
-//document.addEventListener('DOMContentLoaded', loadTextFiles);
+function displayFiles(files: string[]): FileCheckboxDict {
+    const fileList = <HTMLDivElement>document.getElementById('fileList');
+    if (!fileList) return {};
+    
 
+    let allObjects: FileCheckboxDict = {};
+    for (let i=0; i<files.length; i++) {
+        console.log(typeof files[i]);
+        let fileObject = getFileCheckbox(files[i]);
+        fileList.appendChild(fileObject.div);
+        allObjects[files[i]] = fileObject;
+    }
+    return allObjects;
+}
 
 function main() {
     // Called successfully.
