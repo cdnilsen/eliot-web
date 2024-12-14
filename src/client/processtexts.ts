@@ -62,6 +62,7 @@ function displayFiles(files: string[]) {
 //document.addEventListener('DOMContentLoaded', loadTextFiles);
 
 function main() {
+    console.log('main() called...');
     document.addEventListener('DOMContentLoaded', () => {
         loadTextFiles();
         
