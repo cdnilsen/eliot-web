@@ -59,7 +59,7 @@ function displayFiles(files: string[]) {
 }
 
 // Call this when page loads
-document.addEventListener('DOMContentLoaded', loadTextFiles);
+//document.addEventListener('DOMContentLoaded', loadTextFiles);
 
 function main() {
     document.addEventListener('DOMContentLoaded', () => {
@@ -67,6 +67,7 @@ function main() {
         
         const processButton = document.getElementById('processFiles');
         if (processButton) {
+            console.log('button exists...');
             processButton.addEventListener('click', loadTextFiles);
         }
     });
