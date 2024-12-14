@@ -61,7 +61,7 @@ function getLinesFromFile(content: string) {
     return lines;
 }
 
-function getVerseID(bookName: string, verseAddress: string, edition: Edition, prefixWithShorthand: boolean = false): string {
+function getVerseID(bookName: BookName, verseAddress: string, edition: Edition, prefixWithShorthand: boolean = false): string {
 
     if (!verseAddress.includes(".")) {
         let editionShorthand = editionToShorthandDict[edition];
