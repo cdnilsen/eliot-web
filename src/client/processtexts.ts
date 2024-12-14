@@ -5,10 +5,12 @@ type StringToStringDict = {
     [key: string]: string
 }
 
+type Edition = "first" | "second" | "mayew" | "zeroth" | "kjv" | "grebrew";
+
 type CheckboxObject = {
     div: HTMLDivElement,
     checkbox: HTMLInputElement,
-    edition: string,
+    edition: Edition,
     contentDiv?: HTMLDivElement
 }
 
@@ -16,7 +18,10 @@ type FileCheckboxDict = {
     [key: string]: CheckboxObject
 }
 
-let editionToShorthandDict = {
+
+
+
+let editionToShorthandDict: Record<Edition, string> = {
     "first": "α",
     "second": "β",
     "mayew": "M",
@@ -64,10 +69,8 @@ async function processFile(filename: string) {
     }
 }
 
-function getEdition(fileName: string): string {
-    let edition = "error";
-
-    let endingToEditionDict: StringToStringDict = {
+function getEdition(fileName: string): Edition {
+    const endingToEditionDict: Record<string, Edition> = {
         "First Edition.txt": "first",
         "Second Edition.txt": "second",
         "Mayew.txt": "mayew",
@@ -81,11 +84,10 @@ function getEdition(fileName: string): string {
     for (let i=0; i < endingList.length; i++) {
         let ending = endingList[i];
         if (fileName.endsWith(ending)) {
-            edition = endingToEditionDict[ending];
-            return edition;
+            return endingToEditionDict[ending];
         }
     }
-    return edition; // it shouldn't ever do this
+    throw new Error(`Unknown edition for file: ${fileName}`); // Better error handling
 }
 
 function getFileCheckbox(fileName: string): CheckboxObject {
