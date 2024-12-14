@@ -1,5 +1,5 @@
 import { StringLiteral } from 'typescript';
-import { stringToStringListDict, BookName, bookToIDDict } from './library';
+import { stringToStringListDict, BookName, bookToIDDict, bookToChapterDict } from './library.js';
 
 
 type StringToStringDict = {
