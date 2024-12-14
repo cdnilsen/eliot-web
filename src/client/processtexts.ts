@@ -125,6 +125,7 @@ function processLine(line: string, bookName: BookName, edition: Edition): LineOb
 type LineDict = {
     lines: StringToStringDict,
     addresses: string[],
+    edition: Edition,
     allLinesValid: boolean
 }
 
@@ -133,6 +134,7 @@ function getLinesFromFile(content: string, bookName: BookName, edition: Edition)
     let lineDict: LineDict = {
         lines: {},
         addresses: [],
+        edition: edition,
         allLinesValid: true
     };
 
@@ -149,17 +151,42 @@ function getLinesFromFile(content: string, bookName: BookName, edition: Edition)
     return lineDict;
 }
 
-
-function getLineList(dict: LineDict): string[] {
-    let list: string[] = [];
-    let addresses = dict.addresses;
-    for (let i=0; i < addresses.length; i++) {
-        let address = addresses[i];
-        let line = dict.lines[address];
-        list.push(line);
+async function addVerseToDatabase(dict: LineDict) {
+    let editionToColumnDict: Record<Edition, string> = {
+        "first": "first_edition_text",
+        "second": "second_edition_text",
+        "mayew": "other_edition_text",
+        "zeroth": "other_edition_text",
+        "kjv": "kjv_text",
+        "grebrew": "grebrew_text"
     }
-    return list;
+
+    let editionColumn = editionToColumnDict[dict.edition];
+    for (const verseID of dict.addresses) {
+        try {
+            const response = await fetch('/verses', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    verseID: verseID,
+                    text: dict.lines[verseID],
+                    edition: editionColumn
+                })
+            });
+            
+            const result = await response.json();
+            if (result.status !== 'success') {
+                console.error(`Error adding verse ${verseID}:`, result.error);
+            }
+        } catch (error) {
+            console.error(`Error adding verse ${verseID}:`, error);
+        }
+    }
 }
+
+
 
 async function processFile(filename: string) {
     try {
@@ -268,13 +295,8 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
             const content = await processFile(filename);
             if (content) {
                 let lineDict = getLinesFromFile(content, bookName, edition);
-                for (let i=0; i < lineDict.addresses.length; i++) {
-                    let address = lineDict.addresses[i];
-                    let line = lineDict.lines[address];
-                    obj.contentDiv.innerHTML += address + ": " + line;
-                    obj.contentDiv.innerHTML += "<br>";
-
-                    previewDiv!.appendChild(obj.contentDiv);
+                if(lineDict.allLinesValid) {
+                    addVerseToDatabase(lineDict);
                 }
             }
         }

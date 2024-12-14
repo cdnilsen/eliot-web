@@ -110,6 +110,25 @@ app.post('/process-file', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
+// Add this with your other endpoints
+app.post('/verses', express.json(), wrapAsync(async (req, res) => {
+    const { verseID, text, edition } = req.body;
+    
+    try {
+        const insert = await client.query(
+            `INSERT INTO all_verses (verse_id, text, edition) 
+                VALUES ($1, $2, $3)
+                ON CONFLICT (verse_id, edition) 
+                DO UPDATE SET text = EXCLUDED.text`,
+            [verseID, text, edition]
+        );
+        res.json({ status: 'success', insert });
+    } catch (err) {
+        console.error('Error inserting verse:', err);
+        res.status(500).json({ error: 'Error inserting verse', details: err.message });
+    }
+}));
+
 app.get('/test-static', (req, res) => {
     const fs = require('fs');
     const files = fs.readdirSync('public');
