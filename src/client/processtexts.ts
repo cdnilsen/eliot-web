@@ -19,6 +19,9 @@ function processWord(word: string) {
 function processLine(line: string, verseID: string) {
     let splitLine = line.split(" ");
     let verseAddress = splitLine[0];
+    let lineText = splitLine.slice(1).join(" ");
+
+    return lineText;
 
 }
 
@@ -56,7 +59,6 @@ function getFileCheckbox(fileName: string): CheckboxObject {
     // Add a div to show content
     let contentDiv: HTMLDivElement = document.createElement('div');
     contentDiv.style.marginLeft = '20px';
-    fileDiv.appendChild(contentDiv);
 
     return {
         div: fileDiv,
@@ -93,13 +95,16 @@ async function loadTextFiles() {
 }
 
 async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
+    let previewDiv = document.getElementById('preview');
+
     for (const [filename, obj] of Object.entries(allFileObjects)) {
         if (obj.checkbox.checked && obj.contentDiv) {
             console.log(`Processing ${filename}...`);
             const content = await processFile(filename);
             if (content) {
                 const firstLine = content.split('\n')[0];
-                obj.contentDiv.textContent = `First line: ${firstLine}`;
+                obj.contentDiv.textContent = processLine(firstLine, filename);
+                previewDiv!.appendChild(obj.contentDiv);
             }
         }
     }
