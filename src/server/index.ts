@@ -98,26 +98,15 @@ app.post('/process-file', express.json(), wrapAsync(async (req, res) => {
     const filePath = path.join(textFilesDir, filename);
     
     try {
+        // Just read and return the file content
         const content = fs.readFileSync(filePath, 'utf8');
-        // Here you'll add your text processing logic
-        // For example, splitting into words and inserting into database:
-        const words = content.split(/\s+/)
-            .map(word => word.trim())
-            .filter(word => word.length > 0);
-            
-        for (const word of words) {
-            await client.query(
-                `INSERT INTO words_diacritics (word, total_count)
-                 VALUES ($1, 1)
-                 ON CONFLICT (word) 
-                 DO UPDATE SET total_count = words_diacritics.total_count + 1`,
-                [word]
-            );
-        }
-        
-        res.json({ status: 'success', wordsProcessed: words.length });
+        res.json({ 
+            status: 'success',
+            content: content    // Send the actual file content
+        });
     } catch (err) {
-        res.status(500).json({ error: 'Error processing file' });
+        console.error('Error reading file:', err);  // Log the actual error
+        res.status(500).json({ error: 'Error reading file', details: err.message });
     }
 }));
 
