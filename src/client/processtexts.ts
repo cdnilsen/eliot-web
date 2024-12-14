@@ -2,14 +2,13 @@
 
 type CheckboxObject = {
     div: HTMLDivElement,
-    checkbox: HTMLInputElement
+    checkbox: HTMLInputElement,
+    contentDiv?: HTMLDivElement
 }
 
 type FileCheckboxDict = {
     [key: string]: CheckboxObject
 }
-
-
 
 
 function processWord(word: string) {
@@ -23,18 +22,6 @@ function processLine(line: string, verseID: string) {
 
 }
 
-
-async function loadTextFiles() {
-    try {
-        const response = await fetch('/textfiles');
-        const files = await response.json();
-        let allFileObjects: FileCheckboxDict = displayFiles(files);
-        console.log(files);
-    } catch (error) {
-        console.error('Error loading text files:', error);
-    }
-}
-
 async function processFile(filename: string) {
     try {
         const response = await fetch('/process-file', {
@@ -46,32 +33,36 @@ async function processFile(filename: string) {
         });
         const result = await response.json();
         
-
-        console.log(`Processed ${filename}`);
-        console.log(`Processed ${result.wordsProcessed} words`);
+        // Return the content instead of just word count
+        return result.content;
     } catch (error) {
         console.error('Error processing file:', error);
     }
 }
 
-function getFileCheckbox(fileName: string) {
+function getFileCheckbox(fileName: string): CheckboxObject {
     let fileDiv: HTMLDivElement = document.createElement('div');
     let fileCheckbox: HTMLInputElement = document.createElement('input');
     fileCheckbox.type = 'checkbox';
     fileCheckbox.id = fileName;
     fileCheckbox.value = fileName;
     fileDiv.appendChild(fileCheckbox);
+    
     let fileLabel: HTMLLabelElement = document.createElement('label');
     fileLabel.htmlFor = fileName;
     fileLabel.innerText = fileName;
     fileDiv.appendChild(fileLabel);
 
-    let object: CheckboxObject = {
-        div: fileDiv,
-        checkbox: fileCheckbox
-    }
+    // Add a div to show content
+    let contentDiv: HTMLDivElement = document.createElement('div');
+    contentDiv.style.marginLeft = '20px';
+    fileDiv.appendChild(contentDiv);
 
-    return object;
+    return {
+        div: fileDiv,
+        checkbox: fileCheckbox,
+        contentDiv: contentDiv
+    };
 }
 
 function displayFiles(files: string[]): FileCheckboxDict {
@@ -89,14 +80,42 @@ function displayFiles(files: string[]): FileCheckboxDict {
     return allObjects;
 }
 
-function main() {
-    // Called successfully.
-    document.addEventListener('DOMContentLoaded', () => {
-        loadTextFiles();
+async function loadTextFiles() {
+    try {
+        const response = await fetch('/textfiles');
+        const files = await response.json();
+        let allFileObjects: FileCheckboxDict = displayFiles(files);
+        console.log("Files loaded: ", files);
+        return allFileObjects;
+    } catch (error) {
+        console.error('Error loading text files:', error);
+    }
+}
+
+async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
+    for (const [filename, obj] of Object.entries(allFileObjects)) {
+        if (obj.checkbox.checked && obj.contentDiv) {
+            console.log(`Processing ${filename}...`);
+            const content = await processFile(filename);
+            if (content) {
+                const firstLine = content.split('\n')[0];
+                obj.contentDiv.textContent = `First line: ${firstLine}`;
+            }
+        }
+    }
+}
+
+async function main() {
+    let allFileObjects: FileCheckboxDict = {};
+    
+    // Wait for DOM to load
+    document.addEventListener('DOMContentLoaded', async () => {
+        allFileObjects = await loadTextFiles() || {};
         
+        // Add process button handler
         const processButton = document.getElementById('processFiles');
         if (processButton) {
-            processButton.addEventListener('click', loadTextFiles);
+            processButton.addEventListener('click', () => processSelectedFiles(allFileObjects));
         }
     });
 }
