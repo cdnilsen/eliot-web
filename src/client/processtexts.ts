@@ -56,8 +56,10 @@ function getLinesFromFile(content: string) {
     return lines;
 }
 
-function getVerseID(bookName: string, verseAddress: string, editionShorthand: string, prefixWithShorthand: boolean = false): string {
+function getVerseID(bookName: string, verseAddress: string, edition: Edition, prefixWithShorthand: boolean = false): string {
+
     if (!verseAddress.includes(".")) {
+        let editionShorthand = editionToShorthandDict[edition];
         console.log("Check verse address format in " + bookName + " " + editionShorthand + "." + verseAddress);	
     }
 
@@ -67,7 +69,7 @@ function getVerseID(bookName: string, verseAddress: string, editionShorthand: st
 
     let leadingDigit = "1";
     if (prefixWithShorthand) {
-        leadingDigit = editionToNumberDict[editionShorthand];
+        leadingDigit = editionToNumberDict[edition];
     }
 
     let id = leadingDigit + bookToIDDict[bookName] + chapterStringLengthManager(chapterNum) + chapterStringLengthManager(verseNum);
