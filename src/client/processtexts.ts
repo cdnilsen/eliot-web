@@ -53,14 +53,6 @@ function chapterStringLengthManager(address: string) {
     }
 }
 
-function getLinesFromFile(content: string) {
-    let lines = content.split("\n");
-    for (let i=0; i < lines.length; i++) {
-        lines[i] = lines[i].trim();
-    }
-    return lines;
-}
-
 function getVerseID(bookName: BookName, verseAddress: string, edition: Edition, prefixWithShorthand: boolean = false): string {
 
     if (!verseAddress.includes(".")) {
@@ -83,6 +75,8 @@ function getVerseID(bookName: BookName, verseAddress: string, edition: Edition, 
 }
 
 
+
+
 function processWord(word: string) {
     
 
@@ -92,15 +86,78 @@ function colorSpan(text: string, color: string) {
     return `<span style="color: ${color}">${text}</span>`;
 }
 
-function processLine(line: string, verseID: string, shorthand: string) {
+type lineObject = {
+    verseAddress: string,
+    lineText: string
+}
+
+function isProperAddress(address: string) {
+    if (!address.includes(".")) {
+        return false;
+    }
+
+    let splitAddress = address.split(".");
+    let chapter = splitAddress[0];
+    let verse = splitAddress[1];
+
+    if (isNaN(parseInt(chapter)) || isNaN(parseInt(verse))) {
+        return false;
+    }
+
+    return true;
+}
+
+function processLine(line: string, bookName: BookName, shorthand: string): lineObject {
     let splitLine = line.split(" ");
     let verseAddress = splitLine[0];
-    let lineText = splitLine.slice(1).join(" ");
+    let lineText = splitLine.slice(1).join(" ").trim();
 
-    lineText = colorSpan(shorthand, "#FF0000") + " " + lineText.replaceAll("8", "ꝏ̄");
+    if (!isProperAddress(verseAddress)) {
+        console.log("Error in " + bookName + " " + shorthand + "." + verseAddress + "\n" + lineText);
+    }
 
-    return lineText;
+    let object = {
+        verseAddress: verseAddress,
+        lineText: lineText
+    }
 
+    return object;
+
+}
+
+type LineDict = {
+    lines: StringToStringDict,
+    addresses: string[]
+}
+
+function getLinesFromFile(content: string, bookName: BookName, shorthand: string) {
+    let rawLines = content.split("\n");
+    let lineDict: LineDict = {
+        lines: {},
+        addresses: []
+    };
+
+    for (let i=0; i < rawLines.length; i++) {
+        let trimmedLine = rawLines[i].trim();
+        if (trimmedLine.length > 0) {
+            let lineObject = processLine(trimmedLine, bookName, shorthand);
+            lineDict.addresses.push(lineObject.verseAddress);
+            lineDict.lines[lineObject.verseAddress] = lineObject.lineText;
+        }
+    }
+    return lineDict;
+}
+
+
+function getLineList(dict: LineDict): string[] {
+    let list: string[] = [];
+    let addresses = dict.addresses;
+    for (let i=0; i < addresses.length; i++) {
+        let address = addresses[i];
+        let line = dict.lines[address];
+        list.push(line);
+    }
+    return list;
 }
 
 async function processFile(filename: string) {
@@ -196,6 +253,7 @@ async function loadTextFiles() {
 
 async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
     let previewDiv = document.getElementById('preview');
+    previewDiv!.innerHTML = "";
 
     for (const [filename, obj] of Object.entries(allFileObjects)) {
         if (obj.checkbox.checked && obj.contentDiv) {
@@ -208,9 +266,11 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
             }
             const content = await processFile(filename);
             if (content) {
-                let lines = getLinesFromFile(content);
-                for (let i=0; i < lines.length; i++) {
-                    obj.contentDiv.innerHTML += processLine(lines[i], filename, shorthand);
+                let lineDict = getLinesFromFile(content, bookName, shorthand);
+                for (let i=0; i < lineDict.addresses.length; i++) {
+                    let address = lineDict.addresses[i];
+                    let line = lineDict.lines[address];
+                    obj.contentDiv.innerHTML += address + ": " + line;
                     obj.contentDiv.innerHTML += "<br>";
 
                     previewDiv!.appendChild(obj.contentDiv);
