@@ -144,7 +144,7 @@ async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
 
     for (const [filename, obj] of Object.entries(allFileObjects)) {
         if (obj.checkbox.checked && obj.contentDiv) {
-            let shorthand = editionToShorthandDict[obj.edition.toString()];
+            let shorthand = editionToShorthandDict[obj.edition];
             const content = await processFile(filename);
             if (content) {
                 const firstLine = content.split('\n')[0];
