@@ -13,3 +13,5 @@ type RawBook = {
     verses: Verse[],
     addresses: string[]
 }
+
+console.log("is this thing on?");
