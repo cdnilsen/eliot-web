@@ -110,7 +110,12 @@ app.post('/process-file', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
-// Add this with your other endpoints
+// Add this helper function
+function delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+//Rewrite this when you redesign the db.
 app.post('/verses', express.json(), wrapAsync(async (req, res) => {
     const { verseID, text, edition } = req.body;
     
@@ -127,7 +132,9 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
     }
     
     try {
-        // Wrap the text in an array
+        // Add delay before the insert (e.g., 100ms)
+        await delay(100);
+        
         const insert = await client.query(
             `INSERT INTO all_verses (id, ${edition}) 
              VALUES ($1, ARRAY[$2])
