@@ -117,7 +117,7 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
     try {
         // Using a dynamic column name requires a different query structure
         const insert = await client.query(
-            `INSERT INTO verses (id, ${edition}) 
+            `INSERT INTO all_verses (id, ${edition}) 
              VALUES ($1, $2)
              ON CONFLICT (id) 
              DO UPDATE SET ${edition} = $2`,
