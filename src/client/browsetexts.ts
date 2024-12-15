@@ -162,10 +162,52 @@ function hapaxListener(docID: string, setting: Hapax, state: EditionState) {
     });
 }
 
+async function fetchChapter(state: EditionState) {
+    try {
+        let editionNumber = state.editions;
+        let book = state.book;
+        let chapter = state.chapter;
+
+        const editionsToFetch: string[] = [];
+        if (editionNumber % 2 === 0) editionsToFetch.push('first_edition');
+        if (editionNumber % 3 === 0) editionsToFetch.push('second_edition');
+        if (editionNumber % 5 === 0) editionsToFetch.push('mayhew');
+        if (editionNumber % 7 === 0) editionsToFetch.push('zeroth_edition');
+        if (editionNumber % 11 === 0) editionsToFetch.push('grebrew');
+
+
+        // Convert editions array to comma-separated string for query parameter
+        const editionsParam = editionsToFetch.join(',');
+        const response = await fetch(`/chapter/${book}/${chapter}?editions=${editionsParam}`);
+        const verses = await response.json();
+        
+        // Get the element where you want to display the text
+        const displayDiv = document.getElementById('textColumns');
+        if (!displayDiv) return;
+        
+        // Clear previous content
+        displayDiv.innerHTML = '';
+        
+        // Display each verse
+        verses.forEach(verse => {
+            const verseDiv = document.createElement('div');
+            editionsToFetch.forEach(edition => {
+                if (verse[edition]) {
+                    verseDiv.innerHTML += `<p>${edition}: ${verse[edition]}</p>`;
+                }
+            });
+            displayDiv.appendChild(verseDiv);
+        });
+        
+    } catch (error) {
+        console.error('Error fetching chapter:', error);
+    }
+}
+
 function submitButtonListener(state: EditionState) {
     let submitButton = <HTMLButtonElement>document.getElementById("submitBookQuery");
     submitButton.addEventListener("click", function() {
-        console.log(state);
+        fetchChapter(state);
     });
 }
 
