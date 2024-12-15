@@ -1,5 +1,104 @@
 import { sectionToBookDict, bookToChapterDict } from "./library.js"
 
+
+
+//All courtesy of Claude
+function findNextMatch(str1: string, str2: string, start1: number, start2: number): [number, number] | null {
+    const maxLookahead = 50; // Limit how far we look ahead to find matches
+    
+    for (let i = start1; i < Math.min(str1.length, start1 + maxLookahead); i++) {
+        for (let j = start2; j < Math.min(str2.length, start2 + maxLookahead); j++) {
+            // Look for next matching character (exact match or both spaces)
+            if (str1[i] === str2[j] || (str1[i] === ' ' && str2[j] === ' ')) {
+                // Verify this isn't just a spurious match by checking a few more chars
+                let matched = true;
+                for (let k = 0; k < 3; k++) {
+                    if (i + k < str1.length && j + k < str2.length) {
+                        if (str1[i + k] !== str2[j + k]) {
+                            matched = false;
+                            break;
+                        }
+                    }
+                }
+                if (matched) {
+                    return [i, j];
+                }
+            }
+        }
+    }
+    return null;
+}
+
+type highlightedObject = {
+    str1: string,
+    str2: string
+}
+
+function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean): highlightedObject {
+    let result1 = '';
+    let result2 = '';
+    let i = 0;
+    let j = 0;
+
+    while (i < str1.length || j < str2.length) {
+        if (i >= str1.length) {
+            // String 2 is longer, highlight remaining chars in red
+            result2 += `<span style="color: red">${str2.slice(j)}</span>`;
+            break;
+        }
+        if (j >= str2.length) {
+            // String 1 is longer, highlight remaining chars in red
+            result1 += `<span style="color: red">${str1.slice(i)}</span>`;
+            break;
+        }
+
+        let char1 = str1[i];
+        let char2 = str2[j];
+
+        if (char1 === char2) {
+            // Characters match exactly
+            result1 += char1;
+            result2 += char2;
+            i++;
+            j++;
+        } else if (char1.toLowerCase() === char2.toLowerCase() && highlightCaseDiffs) {
+            // Only case differs and we're highlighting case differences
+            result1 += `<span style="color: blue">${char1}</span>`;
+            result2 += `<span style="color: blue">${char2}</span>`;
+            i++;
+            j++;
+        } else if (char1 === ' ' && char2 === ' ') {
+            // Both are spaces, treat as match
+            result1 += ' ';
+            result2 += ' ';
+            i++;
+            j++;
+        } else {
+            // Try to find next matching point
+            let nextMatch = findNextMatch(str1, str2, i, j);
+            if (nextMatch) {
+                // Add the unmatched portions in red
+                result1 += `<span style="color: red">${str1.slice(i, nextMatch[0])}</span>`;
+                result2 += `<span style="color: red">${str2.slice(j, nextMatch[1])}</span>`;
+                i = nextMatch[0];
+                j = nextMatch[1];
+            } else {
+                // No more matches found, highlight rest in red
+                result1 += `<span style="color: red">${str1.slice(i)}</span>`;
+                result2 += `<span style="color: red">${str2.slice(j)}</span>`;
+                break;
+            }
+        }
+    }
+
+    let object: highlightedObject = {
+        str1: result1,
+        str2: result2
+    }
+
+    return object;
+}
+
 /*
 
 
@@ -270,10 +369,25 @@ function createDummyVerse(editions: Edition[]) {
     }
     return verse;
 }
+
+// We'll need to create a proofreading version later...
+function processHighlighting(verse: Verse, highlighting: Highlighting) {
+    if ((verse.first_edition && verse.second_edition) && highlighting != "none") {
+        let firstText = verse.first_edition;
+        let secondText = verse.second_edition;
+        let result = highlightDifferences(firstText, secondText, highlighting == "includeCasing");
+        verse.first_edition = result.str1;
+        verse.second_edition = result.str2;
+    }
+}
     
-function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string, isDummy: boolean = false) {
+function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string, highlighting: Highlighting, isDummy: boolean = false) {
     const row = document.createElement('tr');
 
+    if (!isDummy) {
+        processHighlighting(verse, highlighting);
+    }
+    
     let leftSideEditions = editions.left;
     let rightSideEditions = editions.right;
     let leftWidth = editions.leftWidth;
@@ -401,17 +515,20 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     // Create a dummy verse object to get the shorthands.
     let dummyHeaderVerse = createDummyVerse(editionsToFetch);
     
-    let headerRow = createVerseRow(dummyHeaderVerse, columnWidthObject, 'th', true);
+    let headerRow = createVerseRow(dummyHeaderVerse, columnWidthObject, 'th', 'none', true);
 
     // Create separate thead element
     const thead = document.createElement('thead');
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
+    //get highlighting setting (and hapax settings, eventually)
+    let highlighting = state.highlighting;
+
     // Create tbody for the verses
     const tbody = document.createElement('tbody');
     verses.forEach((verse: Verse) => {
-        let row = createVerseRow(verse, columnWidthObject, 'td');
+        let row = createVerseRow(verse, columnWidthObject, 'td', highlighting);
 
         tbody.appendChild(row);
     });
