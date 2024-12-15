@@ -186,6 +186,7 @@ async function fetchChapter(state: EditionState) {
         if (editionNumber % 5 === 0) editionsToFetch.push('mayhew');
         if (editionNumber % 7 === 0) editionsToFetch.push('zeroth_edition');
         if (editionNumber % 11 === 0) editionsToFetch.push('grebrew');
+        editionsToFetch.push('kjv');
 
 
         // Convert editions array to comma-separated string for query parameter
