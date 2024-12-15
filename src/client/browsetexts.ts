@@ -40,6 +40,8 @@ function findLCS(str1: string, str2: string): string {
     return lcs;
 }
 
+
+//Still a bit bugged, proofreading mode doesn't work, and case-mismatches are highlighted in 'ignore casing' mode.
 function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean = false, proofreading: boolean = false): HighlightedObject {
     if (str1 === str2) {
         return { str1, str2 };
@@ -53,27 +55,57 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
     while (k < lcs.length) {
         // Handle non-LCS characters in str1
         while (i < str1.length && str1[i] !== lcs[k]) {
-            if (highlightCaseDiffs && j < str2.length && str1[i].toLowerCase() === str2[j].toLowerCase()) {
-                result1 += `<span style="color: blue">${str1[i]}</span>`;
-                result2 += `<span style="color: blue">${str2[j]}</span>`;
+            // If we're ignoring case or highlighting case diffs, check for case matches
+            if (j < str2.length && str1[i].toLowerCase() === str2[j].toLowerCase()) {
+                if (str1[i] !== str2[j] && highlightCaseDiffs) {
+                    // Only highlight if we're specifically highlighting case differences
+                    result1 += `<span style="color: blue">${str1[i]}</span>`;
+                    result2 += `<span style="color: blue">${str2[j]}</span>`;
+                } else {
+                    // Otherwise treat as matching
+                    result1 += str1[i];
+                    result2 += str2[j];
+                }
                 i++;
                 j++;
-            } else {
-                // In proofreading mode, check if there's a character in str2 that should be here
-                if (proofreading && j < str2.length && j + 1 < str2.length && 
-                    str1[i] === str2[j + 1] && str1[i - 1] === str2[j - 1]) {
-                    result1 += str1[i - 1] + `<sup><b><span style="color:#FF6666">${str2[j]}</span></b></sup>` + str1[i];
+            } else if (proofreading && j < str2.length) {
+                // Check for potentially missing characters in proofreading mode
+                let lookAhead = 1;
+                while (j + lookAhead < str2.length && 
+                       i < str1.length && 
+                       str1[i] !== str2[j + lookAhead]) {
+                    lookAhead++;
+                }
+                if (j + lookAhead < str2.length && 
+                    i < str1.length && 
+                    str1[i] === str2[j + lookAhead]) {
+                    // Found a potential missing character
+                    let missingChars = '';
+                    for (let m = 0; m < lookAhead; m++) {
+                        missingChars += `<sup><b><span style="color:#FF6666">${str2[j + m]}</span></b></sup>`;
+                        j++;
+                    }
+                    result1 += missingChars + str1[i];
                     i++;
                 } else {
                     result1 += `<span style="color: red">${str1[i]}</span>`;
                     i++;
                 }
+            } else {
+                result1 += `<span style="color: red">${str1[i]}</span>`;
+                i++;
             }
         }
         
         // Handle non-LCS characters in str2
         while (j < str2.length && str2[j] !== lcs[k]) {
-            if (!highlightCaseDiffs || i >= str1.length || str1[i].toLowerCase() !== str2[j].toLowerCase()) {
+            if (i < str1.length && str1[i].toLowerCase() === str2[j].toLowerCase()) {
+                if (!highlightCaseDiffs) {
+                    result2 += str2[j];
+                } else {
+                    result2 += `<span style="color: blue">${str2[j]}</span>`;
+                }
+            } else {
                 result2 += `<span style="color: red">${str2[j]}</span>`;
             }
             j++;
@@ -81,9 +113,14 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
         
         // Add the matching character
         if (i < str1.length && j < str2.length) {
-            if (highlightCaseDiffs && str1[i] !== str2[j] && str1[i].toLowerCase() === str2[j].toLowerCase()) {
-                result1 += `<span style="color: blue">${str1[i]}</span>`;
-                result2 += `<span style="color: blue">${str2[j]}</span>`;
+            if (str1[i] !== str2[j] && str1[i].toLowerCase() === str2[j].toLowerCase()) {
+                if (highlightCaseDiffs) {
+                    result1 += `<span style="color: blue">${str1[i]}</span>`;
+                    result2 += `<span style="color: blue">${str2[j]}</span>`;
+                } else {
+                    result1 += str1[i];
+                    result2 += str2[j];
+                }
             } else {
                 result1 += str1[i];
                 result2 += str2[j];
@@ -96,9 +133,14 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
     
     // Handle remaining characters
     while (i < str1.length) {
-        if (highlightCaseDiffs && j < str2.length && str1[i].toLowerCase() === str2[j].toLowerCase()) {
-            result1 += `<span style="color: blue">${str1[i]}</span>`;
-            result2 += `<span style="color: blue">${str2[j]}</span>`;
+        if (j < str2.length && str1[i].toLowerCase() === str2[j].toLowerCase()) {
+            if (str1[i] !== str2[j] && highlightCaseDiffs) {
+                result1 += `<span style="color: blue">${str1[i]}</span>`;
+                result2 += `<span style="color: blue">${str2[j]}</span>`;
+            } else {
+                result1 += str1[i];
+                result2 += str2[j];
+            }
             i++;
             j++;
         } else {
@@ -107,9 +149,7 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
         }
     }
     while (j < str2.length) {
-        if (!highlightCaseDiffs || i >= str1.length || str1[i].toLowerCase() !== str2[j].toLowerCase()) {
-            result2 += `<span style="color: red">${str2[j]}</span>`;
-        }
+        result2 += `<span style="color: red">${str2[j]}</span>`;
         j++;
     }
 
