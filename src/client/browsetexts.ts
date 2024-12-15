@@ -9,51 +9,38 @@ type HighlightedObject = {
 }
 
 function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean = false): HighlightedObject {
-    console.log("String 1:", str1);
-    console.log("String 2:", str2);
-    console.log("Lengths:", str1.length, str2.length);
-    console.log("First difference at index:", [...str1].findIndex((char, i) => char !== str2[i]));
-
     let result1 = '';
     let result2 = '';
     let i = 0;
-    let j = 0;
 
-    while (i < str1.length && j < str2.length) {
-        let char1 = str1[i];
-        let char2 = str2[j];
-
-        // Exact match or both spaces
-        if (char1 === char2 || (char1 === ' ' && char2 === ' ')) {
-            result1 += char1;
-            result2 += char2;
-            i++;
-            j++;
-        }
-        // Case difference
-        else if (char1.toLowerCase() === char2.toLowerCase() && highlightCaseDiffs) {
-            result1 += `<span style="color: blue">${char1}</span>`;
-            result2 += `<span style="color: blue">${char2}</span>`;
-            i++;
-            j++;
-        }
-        // Different characters
-        else {
-            result1 += `<span style="color: red">${char1}</span>`;
-            result2 += `<span style="color: red">${char2}</span>`;
-            i++;
-            j++;
-        }
-    }
-
-    // Handle any remaining characters in either string
-    while (i < str1.length) {
-        result1 += `<span style="color: red">${str1[i]}</span>`;
+    // First add all matching characters before first difference
+    while (i < str1.length && i < str2.length && str1[i] === str2[i]) {
+        result1 += str1[i];
+        result2 += str2[i];
         i++;
     }
-    while (j < str2.length) {
-        result2 += `<span style="color: red">${str2[j]}</span>`;
-        j++;
+
+    // Now process the rest character by character
+    while (i < str1.length || i < str2.length) {
+        // Get current characters (or empty string if beyond length)
+        const char1 = i < str1.length ? str1[i] : '';
+        const char2 = i < str2.length ? str2[i] : '';
+
+        // If characters are different
+        if (char1 !== char2) {
+            if (highlightCaseDiffs && char1.toLowerCase() === char2.toLowerCase()) {
+                result1 += `<span style="color: blue">${char1}</span>`;
+                result2 += `<span style="color: blue">${char2}</span>`;
+            } else {
+                if (char1) result1 += `<span style="color: red">${char1}</span>`;
+                if (char2) result2 += `<span style="color: red">${char2}</span>`;
+            }
+        } else {
+            // Characters are the same
+            result1 += char1;
+            result2 += char2;
+        }
+        i++;
     }
 
     return {
