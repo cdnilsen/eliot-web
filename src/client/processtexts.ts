@@ -126,6 +126,7 @@ type LineDict = {
     lines: StringToStringDict,
     addresses: string[],
     edition: Edition,
+    bookName: BookName,
     allLinesValid: boolean
 }
 
@@ -135,6 +136,7 @@ function getLinesFromFile(content: string, bookName: BookName, edition: Edition)
         lines: {},
         addresses: [],
         edition: edition,
+        bookName: bookName,
         allLinesValid: true
     };
 
@@ -162,6 +164,7 @@ async function addVerseToDatabase(dict: LineDict) {
     }
 
     let editionColumn = editionToColumnDict[dict.edition];
+    let bookName = dict.bookName;
     for (const verseID of dict.addresses) {
         try {
             const response = await fetch('/verses', {
@@ -172,6 +175,7 @@ async function addVerseToDatabase(dict: LineDict) {
                 body: JSON.stringify({
                     verseID: parseInt(verseID),
                     text: dict.lines[verseID],
+                    book: bookName,
                     edition: editionColumn
                 })
             });
