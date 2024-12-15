@@ -40,7 +40,7 @@ function findLCS(str1: string, str2: string): string {
     return lcs;
 }
 
-function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean = false): HighlightedObject {
+function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean = false, proofreading: boolean = false): HighlightedObject {
     if (str1 === str2) {
         return { str1, str2 };
     }
@@ -51,21 +51,27 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
     let i = 0, j = 0, k = 0;
 
     while (k < lcs.length) {
-        // Add characters from str1 until we hit the next LCS character
+        // Handle non-LCS characters in str1
         while (i < str1.length && str1[i] !== lcs[k]) {
-            // Check if this character might case-match with the current position in str2
             if (highlightCaseDiffs && j < str2.length && str1[i].toLowerCase() === str2[j].toLowerCase()) {
                 result1 += `<span style="color: blue">${str1[i]}</span>`;
                 result2 += `<span style="color: blue">${str2[j]}</span>`;
                 i++;
                 j++;
             } else {
-                result1 += `<span style="color: red">${str1[i]}</span>`;
-                i++;
+                // In proofreading mode, check if there's a character in str2 that should be here
+                if (proofreading && j < str2.length && j + 1 < str2.length && 
+                    str1[i] === str2[j + 1] && str1[i - 1] === str2[j - 1]) {
+                    result1 += str1[i - 1] + `<sup><b><span style="color:#FF6666">${str2[j]}</span></b></sup>` + str1[i];
+                    i++;
+                } else {
+                    result1 += `<span style="color: red">${str1[i]}</span>`;
+                    i++;
+                }
             }
         }
         
-        // Add characters from str2 until we hit the next LCS character
+        // Handle non-LCS characters in str2
         while (j < str2.length && str2[j] !== lcs[k]) {
             if (!highlightCaseDiffs || i >= str1.length || str1[i].toLowerCase() !== str2[j].toLowerCase()) {
                 result2 += `<span style="color: red">${str2[j]}</span>`;
@@ -75,7 +81,6 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
         
         // Add the matching character
         if (i < str1.length && j < str2.length) {
-            // Check for case differences
             if (highlightCaseDiffs && str1[i] !== str2[j] && str1[i].toLowerCase() === str2[j].toLowerCase()) {
                 result1 += `<span style="color: blue">${str1[i]}</span>`;
                 result2 += `<span style="color: blue">${str2[j]}</span>`;
@@ -89,9 +94,8 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
         }
     }
     
-    // Add any remaining characters
+    // Handle remaining characters
     while (i < str1.length) {
-        // Check for case differences in remaining characters
         if (highlightCaseDiffs && j < str2.length && str1[i].toLowerCase() === str2[j].toLowerCase()) {
             result1 += `<span style="color: blue">${str1[i]}</span>`;
             result2 += `<span style="color: blue">${str2[j]}</span>`;
@@ -387,7 +391,9 @@ function processHighlighting(verse: Verse, highlighting: Highlighting) {
     if ((verse.first_edition && verse.second_edition) && highlighting != "none") {
         let firstText = verse.first_edition;
         let secondText = verse.second_edition;
-        let result = highlightDifferences(firstText, secondText, highlighting == "includeCasing");
+        let proofreading = (highlighting == "proofreading");
+        let checkCasing = (proofreading || highlighting == "includeCasing");
+        let result = highlightDifferences(firstText, secondText, checkCasing, proofreading);
         verse.first_edition = result.str1;
         verse.second_edition = result.str2;
     }
