@@ -34,6 +34,18 @@ function processGreekLine(text: string, showHapaxes: boolean) {
 
 */
 
+type Edition = "first" | "second" | "mayhew" | "zeroth" | "kjv" | "grebrew";
+
+let editionToShorthandDict: Record<Edition, string> = {
+    "first": "α",
+    "second": "β",
+    "mayhew": "M",
+    "zeroth": "א",
+    "kjv": "E",
+    "grebrew": "G"
+}
+
+
 
 type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
 type Hapax = "none" | "strict" | "lax"
@@ -174,6 +186,63 @@ function hapaxListener(docID: string, setting: Hapax, state: EditionState) {
     });
 }
 
+
+function displayVerse(verse: Verse, state: EditionState) {
+    let verseString: string = "<b>" + verse.chapter.toString() + ":" + verse.verse.toString() + "</b>";
+
+}
+
+function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
+    const displayDiv = document.getElementById('chapterText');
+    if (!displayDiv) return;
+
+    // Clear previous content
+    displayDiv.innerHTML = '';
+
+    // Create grid container for headers
+    const headerGrid = document.createElement('div');
+    headerGrid.className = 'editionHeaderGrid';
+
+    // Create header cells
+    editionsToFetch.forEach((edition, index) => {
+        const headerCell = document.createElement('div');
+        headerCell.className = index === 0 ? 'firstColumnHeader' : 'columnHeader';
+        headerCell.textContent = editionToShorthandDict[edition as Edition];
+        headerGrid.appendChild(headerCell);
+    });
+
+    // Create grid container for verses
+    const textColumns = document.createElement('div');
+    textColumns.className = 'textColumns';
+
+    // Set grid template columns based on number of editions
+    const columnTemplate = `repeat(${editionsToFetch.length}, 1fr)`;
+    headerGrid.style.gridTemplateColumns = columnTemplate;
+    textColumns.style.gridTemplateColumns = columnTemplate;
+
+    // Create verse rows
+    verses.forEach((verse: Verse) => {
+        const verseRow = document.createElement('div');
+        verseRow.className = 'verseRow';
+
+        editionsToFetch.forEach((edition, index) => {
+            const verseCell = document.createElement('div');
+            verseCell.className = index === 0 ? 'firstVerseColumn' : 'verseColumn';
+            if (verse[edition as keyof Verse]) {
+                verseCell.textContent = verse[edition as keyof Verse] as string;
+            }
+            verseRow.appendChild(verseCell);
+        });
+
+        textColumns.appendChild(verseRow);
+    });
+
+    // Add both grids to display
+    displayDiv.appendChild(headerGrid);
+    displayDiv.appendChild(textColumns);
+}
+
+
 async function fetchChapter(state: EditionState) {
     try {
         let editionNumber = state.editions;
@@ -193,21 +262,7 @@ async function fetchChapter(state: EditionState) {
         const editionsParam = editionsToFetch.join(',');const response = await fetch(`/chapter/${book}/${chapter}?editions=${editionsParam}`);
         const verses: Verse[] = await response.json();
         
-        const displayDiv = document.getElementById('textColumns');
-        if (!displayDiv) return;
-        
-        displayDiv.innerHTML = '';
-        
-        verses.forEach((verse: Verse) => {
-            console.log(verse);
-            const verseDiv = document.createElement('div');
-            editionsToFetch.forEach(edition => {
-                if (verse[edition as keyof Verse]) {
-                    verseDiv.innerHTML += `<p>${edition}: ${verse[edition as keyof Verse]}</p>`;
-                }
-            });
-            displayDiv.appendChild(verseDiv);
-        });
+        createVerseGrid(verses, editionsToFetch);
         
     } catch (error) {
         console.error('Error fetching chapter:', error);
