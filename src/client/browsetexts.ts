@@ -3,11 +3,11 @@ import { sectionToBookDict, bookToChapterDict } from "./library.js"
 
 
 //All courtesy of Claude
-type highlightedObject = {
+type HighlightedObject = {
     str1: string,
     str2: string
 }
-function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean = false): highlightedObject {
+function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean = false): HighlightedObject {
     let result1 = '';
     let result2 = '';
     let i = 0;
@@ -63,12 +63,10 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
             }
         }
     }
-
-    let object: highlightedObject = {
+    let object: HighlightedObject = {
         str1: result1,
         str2: result2
     }
-
     return object;
 }
 
