@@ -115,16 +115,18 @@ function delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+
 //Rewrite this when you redesign the db.
 app.post('/verses', express.json(), wrapAsync(async (req, res) => {
     const { verseID, text, edition } = req.body;
     
     const validColumns = [
-        'first_edition_text',
-        'second_edition_text',
-        'other_edition_text',
-        'kjv_text',
-        'grebrew_text'
+        'first_edition',
+        'second_edition', 
+        'mayhew',
+        'zeroth_edition',
+        'kjv',
+        'grebrew'
     ];
     
     if (!validColumns.includes(edition)) {
@@ -132,14 +134,14 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
     }
     
     try {
-        // Add delay before the insert (e.g., 100ms)
+        // Add delay before the insert
         await delay(100);
         
         const insert = await client.query(
             `INSERT INTO all_verses (id, ${edition}) 
-             VALUES ($1, ARRAY[$2])
+             VALUES ($1, $2)
              ON CONFLICT (id) 
-             DO UPDATE SET ${edition} = ARRAY[$2]`,
+             DO UPDATE SET ${edition} = $2`,
             [verseID, text]
         );
         res.json({ status: 'success', insert });

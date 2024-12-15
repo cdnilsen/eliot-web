@@ -7,7 +7,7 @@ type StringToStringDict = {
     [key: string]: string
 }
 
-type Edition = "first" | "second" | "mayew" | "zeroth" | "kjv" | "grebrew";
+type Edition = "first" | "second" | "mayhew" | "zeroth" | "kjv" | "grebrew";
 
 type CheckboxObject = {
     div: HTMLDivElement,
@@ -23,7 +23,7 @@ type FileCheckboxDict = {
 let editionToShorthandDict: Record<Edition, string> = {
     "first": "α",
     "second": "β",
-    "mayew": "M",
+    "mayhew": "M",
     "zeroth": "א",
     "kjv": "E",
     "grebrew": "G"
@@ -32,7 +32,7 @@ let editionToShorthandDict: Record<Edition, string> = {
 let editionToNumberDict: Record<Edition, string> = {
     "first": "2",
     "second": "3",
-    "mayew": "4",
+    "mayhew": "4",
     "zeroth": "5",
     "kjv": "6",
     "grebrew": "7"
@@ -153,12 +153,12 @@ function getLinesFromFile(content: string, bookName: BookName, edition: Edition)
 
 async function addVerseToDatabase(dict: LineDict) {
     let editionToColumnDict: Record<Edition, string> = {
-        "first": "first_edition_text",
-        "second": "second_edition_text",
-        "mayew": "other_edition_text",
-        "zeroth": "other_edition_text",
-        "kjv": "kjv_text",
-        "grebrew": "grebrew_text"
+        "first": "first_edition",
+        "second": "second_edition",
+        "mayhew": "mayhew",
+        "zeroth": "zeroth_edition",
+        "kjv": "kjv",
+        "grebrew": "grebrew"
     }
 
     let editionColumn = editionToColumnDict[dict.edition];
@@ -210,7 +210,7 @@ function getEdition(fileName: string): Edition {
     const endingToEditionDict: Record<string, Edition> = {
         "First Edition.txt": "first",
         "Second Edition.txt": "second",
-        "Mayew.txt": "mayew",
+        "Mayhew.txt": "mayhew",
         "Zeroth Edition.txt": "zeroth",
         "KJV.txt": "kjv",
         "Grebrew.txt": "grebrew"
