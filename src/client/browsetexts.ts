@@ -303,8 +303,8 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
     verseNumCell.style.width = '10%';
     if (isDummy) {
         verseString = "Verse";
-        verseNumCell.style.textAlign = "center";
     }
+    verseNumCell.style.textAlign = "center";
     verseNumCell.textContent = verseString;
     row.appendChild(verseNumCell);
 
