@@ -357,9 +357,13 @@ function createNavBar(state: EditionState) {
     chapterIndicator.innerHTML = `Chapter ${state.chapter}`;
     chapterIndicator.className = 'chapter-indicator';
 
-    navBar.appendChild(prevButton);
-    navBar.appendChild(chapterIndicator);
-    navBar.appendChild(nextButton);
+    if (state.chapter > 1) {
+        navBar.appendChild(prevButton);
+    }
+    //navBar.appendChild(chapterIndicator);
+    if (state.chapter < bookToChapterDict[state.book]) {
+        navBar.appendChild(nextButton);
+    }
     return navBar;
 }
 
