@@ -61,10 +61,10 @@ type Verse = {
     book: string;
     chapter: number;
     verse: number;
-    first_edition?: string;
-    second_edition?: string;
+    first?: string;
+    second?: string;
     mayhew?: string;
-    zeroth_edition?: string;
+    zeroth?: string;
     kjv?: string;
     grebrew?: string;
 }
