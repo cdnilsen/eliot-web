@@ -118,7 +118,7 @@ function delay(ms: number): Promise<void> {
 
 //Rewrite this when you redesign the db.
 app.post('/verses', express.json(), wrapAsync(async (req, res) => {
-    const { verseID, text, book, edition } = req.body;
+    const { verseID, text, book, chapter, verse, edition } = req.body;
     
     const validColumns = [
         'first_edition',
@@ -138,11 +138,11 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
         await delay(100);
         
         const insert = await client.query(
-            `INSERT INTO all_verses (verse_id, book, ${edition}) 
-             VALUES ($1, $2, $3)
+            `INSERT INTO all_verses (verse_id, book, chapter, verse, ${edition}) 
+             VALUES ($1, $2, $3, $4, $5)
              ON CONFLICT (verse_id) 
-             DO UPDATE SET ${edition} = $3`,
-            [verseID, book, text]
+             DO UPDATE SET ${edition} = $5`,
+            [verseID, book, chapter, verse, text]
         );
         res.json({ status: 'success', insert });
     } catch (err) {

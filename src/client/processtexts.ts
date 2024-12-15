@@ -77,7 +77,8 @@ function colorSpan(text: string, color: string) {
 }
 
 type LineObject = {
-    verseAddress: string,
+    verseID: string,
+    address: VerseAddress,
     lineText: string,
     isValid: boolean
 }
@@ -86,7 +87,11 @@ type LineObject = {
 function processLine(line: string, bookName: BookName, edition: Edition): LineObject {
 
     let object: LineObject = {
-        verseAddress: "",
+        verseID: "",
+        address: {
+            chapter: 0,
+            verse: 0
+        },
         lineText: "",
         isValid: false
     }
@@ -116,15 +121,29 @@ function processLine(line: string, bookName: BookName, edition: Edition): LineOb
     }
 
     object.lineText = lineText;
-    object.verseAddress = getVerseID(bookName, chapterNum, verseNum, edition);
+    object.verseID = getVerseID(bookName, chapterNum, verseNum, edition);
+    object.address = {
+        chapter: parseInt(chapterNum),
+        verse: parseInt(verseNum)
+    }
     object.isValid = true;
 
     return object;
 }
 
+type VerseAddress = {
+    chapter: number,
+    verse: number
+}
+
+type IDtoVerseAddressDict = {
+    [key: string]: VerseAddress
+}
+
 type LineDict = {
     lines: StringToStringDict,
-    addresses: string[],
+    ids: string[],
+    addresses: IDtoVerseAddressDict,
     edition: Edition,
     bookName: BookName,
     allLinesValid: boolean
@@ -134,7 +153,8 @@ function getLinesFromFile(content: string, bookName: BookName, edition: Edition)
     let rawLines = content.split("\n");
     let lineDict: LineDict = {
         lines: {},
-        addresses: [],
+        ids: [],
+        addresses: {},
         edition: edition,
         bookName: bookName,
         allLinesValid: true
@@ -144,8 +164,10 @@ function getLinesFromFile(content: string, bookName: BookName, edition: Edition)
         let trimmedLine = rawLines[i].trim();
         let lineObject = processLine(trimmedLine, bookName, edition);
         if (lineObject.isValid) {
-            lineDict.addresses.push(lineObject.verseAddress);
-            lineDict.lines[lineObject.verseAddress] = lineObject.lineText;
+            let id = lineObject.verseID;
+            lineDict.ids.push(id);
+            lineDict.addresses[id] = lineObject.address;
+            lineDict.lines[lineObject.verseID] = lineObject.lineText;
         } else {
             console.log("Error in " + bookName + " " + edition + " at line " + i + ": " + trimmedLine);
         }
@@ -165,7 +187,7 @@ async function addVerseToDatabase(dict: LineDict) {
 
     let editionColumn = editionToColumnDict[dict.edition];
     let bookName = dict.bookName;
-    for (const verseID of dict.addresses) {
+    for (const verseID of dict.ids) {
         try {
             const response = await fetch('/verses', {
                 method: 'POST',
@@ -176,6 +198,8 @@ async function addVerseToDatabase(dict: LineDict) {
                     verseID: parseInt(verseID),
                     text: dict.lines[verseID],
                     book: bookName,
+                    chapter: dict.addresses[verseID].chapter,
+                    verse: dict.addresses[verseID].verse,
                     edition: editionColumn
                 })
             });
