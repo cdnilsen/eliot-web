@@ -135,7 +135,7 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
     
     try {
         // Add delay before the insert
-        await delay(100);
+        await delay(250);
         
         const insert = await client.query(
             `INSERT INTO all_verses (verse_id, book, chapter, verse, ${edition}) 

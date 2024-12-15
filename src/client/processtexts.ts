@@ -188,6 +188,9 @@ async function addVerseToDatabase(dict: LineDict) {
     let editionColumn = editionToColumnDict[dict.edition];
     let bookName = dict.bookName;
     for (const verseID of dict.ids) {
+        let chapter = dict.addresses[verseID].chapter;
+        let verse = dict.addresses[verseID].verse;
+        let text = dict.lines[verseID];
         try {
             const response = await fetch('/verses', {
                 method: 'POST',
@@ -196,10 +199,10 @@ async function addVerseToDatabase(dict: LineDict) {
                 },
                 body: JSON.stringify({
                     verseID: parseInt(verseID),
-                    text: dict.lines[verseID],
+                    text: text,
                     book: bookName,
-                    chapter: dict.addresses[verseID].chapter,
-                    verse: dict.addresses[verseID].verse,
+                    chapter: chapter,
+                    verse: verse,
                     edition: editionColumn
                 })
             });
@@ -207,6 +210,8 @@ async function addVerseToDatabase(dict: LineDict) {
             const result = await response.json();
             if (result.status !== 'success') {
                 console.error(`Error adding verse ${verseID}:`, result.error);
+            } else {
+                console.log("Added verse" + chapter.toString() + ":" + verse.toString() + " to " + editionColumn);
             }
         } catch (error) {
             console.error(`Error adding verse ${verseID}:`, error);
