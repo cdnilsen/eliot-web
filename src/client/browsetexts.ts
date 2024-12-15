@@ -354,6 +354,7 @@ function processMassText(text: string) {
     return text.replaceAll('8', 'ꝏ̄').replaceAll("$", " ")
 }
 
+//bugged, presumably hapaxes aren't actually being changed?
 function processText(text: string, state: EditionState, edition: Edition, isDummy: boolean) {
     if (isDummy) {
         return text;
@@ -499,6 +500,7 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
     verseNumCell.textContent = verseString;
     row.appendChild(verseNumCell);
 
+    //shouldn't this happen on the left side too
     for (let i=0; i < rightSideEditions.length; i++) {
         let cell = document.createElement(cellType);
         cell.style.width = rightWidth.toString() + "%";
