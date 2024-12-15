@@ -36,7 +36,7 @@ function processGreekLine(text: string, showHapaxes: boolean) {
 
 type Edition = "first" | "second" | "mayhew" | "zeroth" | "kjv" | "grebrew";
 
-let editionToShorthandDict: Record<Edition, string> = {
+let editionToShorthandDict = {
     "first": "α",
     "second": "β",
     "mayhew": "M",
@@ -44,7 +44,6 @@ let editionToShorthandDict: Record<Edition, string> = {
     "kjv": "E",
     "grebrew": "G"
 }
-
 
 
 type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
