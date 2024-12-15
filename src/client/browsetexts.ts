@@ -193,7 +193,7 @@ function displayVerse(verse: Verse, state: EditionState) {
 }
 
 function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
-    const displayDiv = document.getElementById('verseText');
+    const displayDiv = document.getElementById('textColumns');
     if (!displayDiv) {
         console.error('Could not find display div');
         return;
