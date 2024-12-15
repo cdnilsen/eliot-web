@@ -196,11 +196,81 @@ function displayVerse(verse: Verse, state: EditionState) {
 }
 
 
-function createVerseGrid(
-    verses: Verse[], 
-    editionsToFetch: Edition[], 
-    editionToShorthandDict: EditionToShorthandDict
-) {
+function createVerseRow(verse: Verse, editions: Edition[]) {
+    const row = document.createElement('tr');
+
+    let leftHandSideEditions: Edition[] = []
+    let rightHandSideEditions: Edition[] = []
+
+    let secondEditionOnRight = false;
+    if (editions.includes("zeroth_edition") && editions.includes("first_edition")) {
+        leftHandSideEditions.push("zeroth_edition");
+        secondEditionOnRight = true;
+    }
+
+    if (editions.includes("first_edition")) {
+        leftHandSideEditions.push("first_edition");
+    }
+    
+    if (editions.includes("second_edition")) {
+        if (secondEditionOnRight) {
+            rightHandSideEditions.push("second_edition");
+        } else {
+            leftHandSideEditions.push("second_edition");
+        }
+    }
+
+    if (editions.includes("mayhew")) {
+        if (leftHandSideEditions.length < 2) {
+            leftHandSideEditions.push("mayhew");
+        } else {
+            rightHandSideEditions.push("mayhew");
+        }
+    }
+
+    if (editions.includes("kjv")) {
+            rightHandSideEditions.push("kjv");
+    }
+
+    if (editions.includes("grebrew")) {
+        rightHandSideEditions.push("grebrew");
+    }
+
+    let rightHandSideWidth = 45 / rightHandSideEditions.length;
+    let leftHandSideWidth = 45 / leftHandSideEditions.length;
+
+    for (let i=0; i < leftHandSideEditions.length; i++) {
+        let td = document.createElement('td');
+        td.style.width = leftHandSideWidth.toString() + "%";
+        const edition = leftHandSideEditions[i];
+        const verseText = verse[edition];
+        if (verseText && typeof verseText === 'string') {
+            td.innerHTML = verseText;
+        }
+        row.appendChild(td);
+    }
+
+    // Add verse number
+    const verseNumCell = document.createElement('td');
+    verseNumCell.className = 'verse-number';
+    verseNumCell.textContent = `${verse.chapter}:${verse.verse}`;
+
+    for (let i=0; i < rightHandSideEditions.length; i++) {
+        let td = document.createElement('td');
+        td.style.width = rightHandSideWidth.toString() + "%";
+        const edition = rightHandSideEditions[i];
+        const verseText = verse[edition];
+        if (verseText && typeof verseText === 'string') {
+            td.innerHTML = verseText;
+        }
+        row.appendChild(td);
+    }
+
+    return row;
+}
+
+
+function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToShorthandDict: EditionToShorthandDict) {
     const displayDiv = document.getElementById('textColumns');
     if (!displayDiv) return;
 
@@ -229,23 +299,7 @@ function createVerseGrid(
 
     // Create verse rows
     verses.forEach((verse: Verse) => {
-        const row = document.createElement('tr');
-
-        // Add text for each edition
-        editionsToFetch.forEach((edition) => {
-            const td = document.createElement('td');
-            const verseText = verse[edition];
-            if (verseText && typeof verseText === 'string') {
-                td.textContent = verseText;
-            }
-            row.appendChild(td);
-        });
-
-        // Add verse number
-        const verseNumCell = document.createElement('td');
-        verseNumCell.className = 'verse-number';
-        verseNumCell.textContent = `${verse.chapter}:${verse.verse}`;
-        row.appendChild(verseNumCell);
+        let row = createVerseRow(verse, editionsToFetch);
 
         table.appendChild(row);
     });
