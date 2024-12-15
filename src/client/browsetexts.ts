@@ -266,7 +266,7 @@ function createDummyVerse(editions: Edition[]) {
     return verse;
 }
     
-function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string) {
+function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string, isDummy: boolean = false) {
     const row = document.createElement('tr');
 
     let leftSideEditions = editions.left;
@@ -279,6 +279,9 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
         cell.style.width = leftWidth.toString() + "%";
         const edition = leftSideEditions[i];
         const verseText = verse[edition];
+        if (isDummy) {
+            cell.style.textAlign = "center";
+        }
         if (verseText && typeof verseText === 'string') {
             cell.innerHTML = verseText;
         }
@@ -286,10 +289,16 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
     }
 
     // Add verse number
+    let verseString = verse.chapter.toString() + ":" + verse.verse.toString();
+
     const verseNumCell = document.createElement(cellType);
     verseNumCell.className = 'verse-number';
     verseNumCell.style.width = '10%';
-    verseNumCell.textContent = `${verse.chapter}:${verse.verse}`;
+    if (isDummy) {
+        verseString = "Verse";
+        verseNumCell.style.textAlign = "center";
+    }
+    verseNumCell.textContent = verseString;
     row.appendChild(verseNumCell);
 
     for (let i=0; i < rightSideEditions.length; i++) {
@@ -297,6 +306,9 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
         cell.style.width = rightWidth.toString() + "%";
         const edition = rightSideEditions[i];
         const verseText = verse[edition];
+        if (isDummy) {
+            cell.style.textAlign = "center";
+        }
         if (verseText && typeof verseText === 'string') {
             cell.innerHTML = verseText;
         }
