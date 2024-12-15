@@ -71,12 +71,9 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
 }
 
 function findNextMatch(str1: string, str2: string, start1: number, start2: number): [number, number] | null {
-    // Only look at the very next character position
+    // Simply move forward one position in both strings
     if (start1 + 1 < str1.length && start2 + 1 < str2.length) {
-        if (str1[start1 + 1] === str2[start2 + 1] || 
-            (str1[start1 + 1] === ' ' && str2[start2 + 1] === ' ')) {
-            return [start1 + 1, start2 + 1];
-        }
+        return [start1 + 1, start2 + 1];
     }
     return null;
 }
