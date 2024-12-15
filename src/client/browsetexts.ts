@@ -13,61 +13,47 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
     let i = 0;
     let j = 0;
 
-    while (i < str1.length || j < str2.length) {
-        if (i >= str1.length) {
-            // String 2 is longer, highlight remaining chars in red
-            result2 += `<span style="color: red">${str2.slice(j)}</span>`;
-            break;
-        }
-        if (j >= str2.length) {
-            // String 1 is longer, highlight remaining chars in red
-            result1 += `<span style="color: red">${str1.slice(i)}</span>`;
-            break;
-        }
-
+    while (i < str1.length && j < str2.length) {
         let char1 = str1[i];
         let char2 = str2[j];
 
-        if (char1 === char2) {
-            // Characters match exactly
+        // Exact match or both spaces
+        if (char1 === char2 || (char1 === ' ' && char2 === ' ')) {
             result1 += char1;
             result2 += char2;
             i++;
             j++;
-        } else if (char1.toLowerCase() === char2.toLowerCase() && highlightCaseDiffs) {
-            // Only case differs and we're highlighting case differences
+        }
+        // Case difference
+        else if (char1.toLowerCase() === char2.toLowerCase() && highlightCaseDiffs) {
             result1 += `<span style="color: blue">${char1}</span>`;
             result2 += `<span style="color: blue">${char2}</span>`;
             i++;
             j++;
-        } else if (char1 === ' ' && char2 === ' ') {
-            // Both are spaces, treat as match
-            result1 += ' ';
-            result2 += ' ';
+        }
+        // Different characters
+        else {
+            result1 += `<span style="color: red">${char1}</span>`;
+            result2 += `<span style="color: red">${char2}</span>`;
             i++;
             j++;
-        } else {
-            // Try to find next matching point
-            let nextMatch = findNextMatch(str1, str2, i, j);
-            if (nextMatch) {
-                // Add the unmatched portions in red
-                result1 += `<span style="color: red">${str1.slice(i, nextMatch[0])}</span>`;
-                result2 += `<span style="color: red">${str2.slice(j, nextMatch[1])}</span>`;
-                i = nextMatch[0];
-                j = nextMatch[1];
-            } else {
-                // No more matches found, highlight rest in red
-                result1 += `<span style="color: red">${str1.slice(i)}</span>`;
-                result2 += `<span style="color: red">${str2.slice(j)}</span>`;
-                break;
-            }
         }
     }
-    let object: HighlightedObject = {
+
+    // Handle any remaining characters in either string
+    while (i < str1.length) {
+        result1 += `<span style="color: red">${str1[i]}</span>`;
+        i++;
+    }
+    while (j < str2.length) {
+        result2 += `<span style="color: red">${str2[j]}</span>`;
+        j++;
+    }
+
+    return {
         str1: result1,
         str2: result2
-    }
-    return object;
+    };
 }
 
 function findNextMatch(str1: string, str2: string, start1: number, start2: number): [number, number] | null {
