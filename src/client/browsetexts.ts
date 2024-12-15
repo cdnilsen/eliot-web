@@ -275,6 +275,7 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
     // Add verse number
     const verseNumCell = document.createElement(cellType);
     verseNumCell.className = 'verse-number';
+    verseNumCell.style.width = '10%';
     verseNumCell.textContent = `${verse.chapter}:${verse.verse}`;
     row.appendChild(verseNumCell);
 
@@ -316,6 +317,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     // Add verse number header
     const verseHeader = document.createElement('th');
     verseHeader.textContent = 'Verse';
+    verseHeader.style.width = '10%';
     headerRow.appendChild(verseHeader);
 
     table.appendChild(headerRow);
