@@ -192,7 +192,7 @@ async function fetchChapter(state: EditionState) {
         const editionsParam = editionsToFetch.join(',');const response = await fetch(`/chapter/${book}/${chapter}?editions=${editionsParam}`);
         const verses: Verse[] = await response.json();
         
-        const displayDiv = document.getElementById('chapterText');
+        const displayDiv = document.getElementById('textColumns');
         if (!displayDiv) return;
         
         displayDiv.innerHTML = '';
