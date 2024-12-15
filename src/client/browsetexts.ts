@@ -192,42 +192,37 @@ function displayVerse(verse: Verse, state: EditionState) {
 
 }
 
+
 function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
     const displayDiv = document.getElementById('textColumns');
     if (!displayDiv) return;
 
     displayDiv.innerHTML = '';
 
-    // Create grid container for headers
+    // Create header row
     const headerGrid = document.createElement('div');
     headerGrid.className = 'editionHeaderGrid';
 
-    // Calculate middle point for verse numbers
-    const midPoint = Math.ceil(editionsToFetch.length / 2);
+    // Create verse number header first
+    const verseNumHeader = document.createElement('div');
+    verseNumHeader.className = 'verseNumberHeader columnHeader';
+    verseNumHeader.textContent = 'Verse';
+    headerGrid.appendChild(verseNumHeader);
 
-    // Create header cells
+    // Create edition headers
     editionsToFetch.forEach((edition, index) => {
         const headerCell = document.createElement('div');
-        headerCell.className = index === 0 ? 'firstColumnHeader' : 'columnHeader';
-        headerCell.textContent = editionToShorthandDict[edition as Edition];
+        headerCell.className = 'columnHeader';
+        headerCell.textContent = editionToShorthandDict[edition];
         headerGrid.appendChild(headerCell);
-
-        // Insert verse number header in the middle
-        if (index === midPoint - 1) {
-            const verseNumHeader = document.createElement('div');
-            verseNumHeader.className = 'verseNumberHeader columnHeader';
-            verseNumHeader.textContent = 'Verse';
-            headerGrid.appendChild(verseNumHeader);
-        }
     });
 
     // Create grid container for verses
     const textColumns = document.createElement('div');
     textColumns.className = 'textColumns';
 
-    // Set grid template columns with extra column for verse numbers
-    const columnCount = editionsToFetch.length + 1; // +1 for verse numbers
-    const columnTemplate = `repeat(${midPoint}, 1fr) auto repeat(${columnCount - midPoint - 1}, 1fr)`;
+    // Set grid template columns
+    const columnTemplate = `auto repeat(${editionsToFetch.length}, 1fr)`;
     headerGrid.style.gridTemplateColumns = columnTemplate;
     textColumns.style.gridTemplateColumns = columnTemplate;
 
@@ -236,21 +231,20 @@ function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
         const verseRow = document.createElement('div');
         verseRow.className = 'verseRow';
 
-        editionsToFetch.forEach((edition, index) => {
+        // Add verse number first
+        const verseNumCell = document.createElement('div');
+        verseNumCell.className = 'verseNumberColumn';
+        verseNumCell.textContent = `${verse.chapter}:${verse.verse}`;
+        verseRow.appendChild(verseNumCell);
+
+        // Add verse text for each edition
+        editionsToFetch.forEach((edition) => {
             const verseCell = document.createElement('div');
-            verseCell.className = index === 0 ? 'firstVerseColumn' : 'verseColumn';
-            if (verse[edition as keyof Verse]) {
-                verseCell.textContent = verse[edition as keyof Verse] as string;
+            verseCell.className = 'verseColumn';
+            if (verse[edition]) {
+                verseCell.textContent = verse[edition] as string;
             }
             verseRow.appendChild(verseCell);
-
-            // Insert verse number in the middle
-            if (index === midPoint - 1) {
-                const verseNumCell = document.createElement('div');
-                verseNumCell.className = 'verseNumberColumn';
-                verseNumCell.textContent = `${verse.chapter}:${verse.verse}`;
-                verseRow.appendChild(verseNumCell);
-            }
         });
 
         textColumns.appendChild(verseRow);
@@ -259,7 +253,6 @@ function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
     displayDiv.appendChild(headerGrid);
     displayDiv.appendChild(textColumns);
 }
-
 
 async function fetchChapter(state: EditionState) {
     try {
