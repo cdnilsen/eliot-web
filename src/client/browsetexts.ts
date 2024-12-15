@@ -71,14 +71,11 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
 }
 
 function findNextMatch(str1: string, str2: string, start1: number, start2: number): [number, number] | null {
-    const maxLookahead = 50; // Limit how far we look ahead to find matches
-    
-    for (let i = start1; i < Math.min(str1.length, start1 + maxLookahead); i++) {
-        for (let j = start2; j < Math.min(str2.length, start2 + maxLookahead); j++) {
-            // Look for next matching character (exact match or both spaces)
-            if (str1[i] === str2[j] || (str1[i] === ' ' && str2[j] === ' ')) {
-                return [i, j];
-            }
+    // Only look at the very next character position
+    if (start1 + 1 < str1.length && start2 + 1 < str2.length) {
+        if (str1[start1 + 1] === str2[start2 + 1] || 
+            (str1[start1 + 1] === ' ' && str2[start2 + 1] === ' ')) {
+            return [start1 + 1, start2 + 1];
         }
     }
     return null;
