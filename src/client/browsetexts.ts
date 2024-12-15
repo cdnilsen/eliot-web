@@ -345,6 +345,8 @@ function createNavBar(state: EditionState) {
 
     const nextButton = document.createElement('button');
     nextButton.innerHTML = 'Next Chapter →';
+    nextButton.style.width = '45%';
+    nextButton.style.float = 'right';
     nextButton.onclick = () => {
         state.chapter += 1;
         if (state.chapter <= bookToChapterDict[state.book]) {
@@ -371,6 +373,7 @@ function createNavBar(state: EditionState) {
     } else {
         let blankSpan = document.createElement('span');
         blankSpan.style.width = '45%';
+        blankSpan.style.float = 'right';
         navBar.appendChild(blankSpan);
     }
     return navBar;
