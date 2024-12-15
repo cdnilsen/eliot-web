@@ -206,60 +206,75 @@ function createVerseGrid(
 
     displayDiv.innerHTML = '';
 
+    // Create table element
+    const table = document.createElement('table');
+    table.className = 'verse-table';
+
     // Create header row
-    const headerGrid = document.createElement('div');
-    headerGrid.className = 'editionHeaderGrid';
-
-    // Create verse number header first
-    const verseNumHeader = document.createElement('div');
-    verseNumHeader.className = 'verseNumberHeader columnHeader';
-    verseNumHeader.textContent = 'Verse';
-    headerGrid.appendChild(verseNumHeader);
-
-    // Create edition headers
+    const headerRow = document.createElement('tr');
+    
+    // Add headers for each edition
     editionsToFetch.forEach((edition) => {
-        const headerCell = document.createElement('div');
-        headerCell.className = 'columnHeader';
-        headerCell.textContent = editionToShorthandDict[edition];
-        headerGrid.appendChild(headerCell);
+        const th = document.createElement('th');
+        th.textContent = editionToShorthandDict[edition];
+        headerRow.appendChild(th);
     });
 
-    // Create grid container for verses
-    const textColumns = document.createElement('div');
-    textColumns.className = 'textColumns';
+    // Add verse number header
+    const verseHeader = document.createElement('th');
+    verseHeader.textContent = 'Verse';
+    headerRow.appendChild(verseHeader);
 
-    // Set grid template columns
-    const columnTemplate = `auto repeat(${editionsToFetch.length}, 1fr)`;
-    headerGrid.style.gridTemplateColumns = columnTemplate;
-    textColumns.style.gridTemplateColumns = columnTemplate;
+    table.appendChild(headerRow);
 
     // Create verse rows
     verses.forEach((verse: Verse) => {
-        const verseRow = document.createElement('div');
-        verseRow.className = 'verseRow';
+        const row = document.createElement('tr');
 
-        // Add verse number first
-        const verseNumCell = document.createElement('div');
-        verseNumCell.className = 'verseNumberColumn';
-        verseNumCell.textContent = `${verse.chapter}:${verse.verse}`;
-        verseRow.appendChild(verseNumCell);
-
-        // Add verse text for each edition
+        // Add text for each edition
         editionsToFetch.forEach((edition) => {
-            const verseCell = document.createElement('div');
-            verseCell.className = 'verseColumn';
+            const td = document.createElement('td');
             const verseText = verse[edition];
             if (verseText && typeof verseText === 'string') {
-                verseCell.textContent = verseText;
+                td.textContent = verseText;
             }
-            verseRow.appendChild(verseCell);
+            row.appendChild(td);
         });
 
-        textColumns.appendChild(verseRow);
+        // Add verse number
+        const verseNumCell = document.createElement('td');
+        verseNumCell.className = 'verse-number';
+        verseNumCell.textContent = `${verse.chapter}:${verse.verse}`;
+        row.appendChild(verseNumCell);
+
+        table.appendChild(row);
     });
 
-    displayDiv.appendChild(headerGrid);
-    displayDiv.appendChild(textColumns);
+    displayDiv.appendChild(table);
+
+    // Add CSS style
+    const style = document.createElement('style');
+    style.textContent = `
+        .verse-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+        }
+        .verse-table th, .verse-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .verse-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .verse-number {
+            font-weight: bold;
+            text-align: right;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 async function fetchChapter(state: EditionState) {
