@@ -253,6 +253,19 @@ function getColumnWidths(editions: Edition[]): EditionColumns {
     return object;
 }
 
+function createDummyVerse(editions: Edition[]) {
+    let verse: Verse = {
+        book: "Genesis",
+        chapter: 1,
+        verse: 1
+    }
+
+    for (let i=0; i < editions.length; i++) {
+        verse[editions[i]] = editionToShorthandDict[editions[i]];
+    }
+    return verse;
+}
+    
 function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string) {
     const row = document.createElement('tr');
 
@@ -303,22 +316,13 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     const table = document.createElement('table');
     table.className = 'verse-table';
 
-    // Create header row
-    const headerRow = document.createElement('tr');
-    
+       
     const columnWidthObject = getColumnWidths(editionsToFetch);
-    // Add headers for each edition
-    editionsToFetch.forEach((edition) => {
-        const th = document.createElement('th');
-        th.textContent = editionToShorthandDict[edition];
-        headerRow.appendChild(th);
-    });
-
-    // Add verse number header
-    const verseHeader = document.createElement('th');
-    verseHeader.textContent = 'Verse';
-    verseHeader.style.width = '10%';
-    headerRow.appendChild(verseHeader);
+    
+    // Create a dummy verse object to get the shorthands.
+    let dummyHeaderVerse = createDummyVerse(editionsToFetch);
+    
+    let headerRow = createVerseRow(dummyHeaderVerse, columnWidthObject, 'th');
 
     table.appendChild(headerRow);
 
