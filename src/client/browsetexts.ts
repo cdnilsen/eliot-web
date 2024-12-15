@@ -46,6 +46,18 @@ type EditionState = {
     chapter: number
 }
 
+type Verse = {
+    book: string;
+    chapter: number;
+    verse: number;
+    first_edition?: string;
+    second_edition?: string;
+    mayhew?: string;
+    zeroth_edition?: string;
+    kjv?: string;
+    grebrew?: string;
+}
+
 function refreshSectionDropdown() {
     let valuesList = ["pentateuch", "history", "wisdom", "major_prophets", "minor-prophets", "gospels_acts", "other_nt", "mishnaic"]
     let labelsList = ["Pentateuch", "Historical Books", "Wisdom/Poetry Books", "Major Prophets", "Minor Prophets", "Gospels/Acts", "Rest of New Testament", '"Mishnaic" publications']
@@ -177,23 +189,19 @@ async function fetchChapter(state: EditionState) {
 
 
         // Convert editions array to comma-separated string for query parameter
-        const editionsParam = editionsToFetch.join(',');
-        const response = await fetch(`/chapter/${book}/${chapter}?editions=${editionsParam}`);
-        const verses = await response.json();
+        const editionsParam = editionsToFetch.join(',');const response = await fetch(`/chapter/${book}/${chapter}?editions=${editionsParam}`);
+        const verses: Verse[] = await response.json();
         
-        // Get the element where you want to display the text
-        const displayDiv = document.getElementById('textColumns');
+        const displayDiv = document.getElementById('chapterText');
         if (!displayDiv) return;
         
-        // Clear previous content
         displayDiv.innerHTML = '';
         
-        // Display each verse
-        verses.forEach(verse => {
+        verses.forEach((verse: Verse) => {
             const verseDiv = document.createElement('div');
             editionsToFetch.forEach(edition => {
-                if (verse[edition]) {
-                    verseDiv.innerHTML += `<p>${edition}: ${verse[edition]}</p>`;
+                if (verse[edition as keyof Verse]) {
+                    verseDiv.innerHTML += `<p>${edition}: ${verse[edition as keyof Verse]}</p>`;
                 }
             });
             displayDiv.appendChild(verseDiv);
