@@ -327,11 +327,49 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
 }
 
 
-function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToShorthandDict: EditionToShorthandDict) {
+function createNavBar(state: EditionState) {
+    const navBar = document.createElement('div');
+    navBar.className = 'chapter-navigation';
+
+    const prevButton = document.createElement('button');
+    prevButton.innerHTML = '← Previous Chapter';
+    prevButton.onclick = () => {
+        state.chapter -= 1;
+        if (state.chapter >= 1) {
+            fetchChapter(state);
+        } else {
+            state.chapter = 1; // Reset if we went too low
+        }
+    };
+
+    const nextButton = document.createElement('button');
+    nextButton.innerHTML = 'Next Chapter →';
+    nextButton.onclick = () => {
+        state.chapter += 1;
+        if (state.chapter <= bookToChapterDict[state.book]) {
+            fetchChapter(state);
+        } else {
+            state.chapter = bookToChapterDict[state.book]; // Reset if we went too high
+        }
+    };
+
+    const chapterIndicator = document.createElement('span');
+    chapterIndicator.innerHTML = `Chapter ${state.chapter}`;
+    chapterIndicator.className = 'chapter-indicator';
+
+    navBar.appendChild(prevButton);
+    navBar.appendChild(chapterIndicator);
+    navBar.appendChild(nextButton);
+    return navBar;
+}
+
+function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToShorthandDict: EditionToShorthandDict, state: EditionState) {
     const displayDiv = document.getElementById('textColumns');
     if (!displayDiv) return;
 
     displayDiv.innerHTML = '';
+    let navBar = createNavBar(state);
+    displayDiv.appendChild(navBar);
 
     // Create container for the table
     const tableContainer = document.createElement('div');
@@ -369,8 +407,42 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     // Add CSS style
     const style = document.createElement('style');
     style.textContent = `
+        .chapter-navigation {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            z-index: 2;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .chapter-navigation button {
+            padding: 5px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .chapter-navigation button:hover {
+            background: #f5f5f5;
+        }
+
+        .chapter-navigation button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .chapter-indicator {
+            font-weight: bold;
+        }
+
         .table-container {
-            max-height: 80vh; /* Adjust this value as needed */
+            max-height: calc(80vh - 50px); /* Adjust this value as needed */
             overflow-y: auto;
             position: relative;
         }
@@ -426,7 +498,7 @@ async function fetchChapter(state: EditionState) {
         const response = await fetch(`/chapter/${book}/${chapter}?editions=${editionsParam}`);
         const verses: Verse[] = await response.json();
         
-        createVerseGrid(verses, editionsToFetch, editionToShorthandDict);
+        createVerseGrid(verses, editionsToFetch, editionToShorthandDict, state);
         
     } catch (error) {
         console.error('Error fetching chapter:', error);
