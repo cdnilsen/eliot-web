@@ -196,9 +196,14 @@ function displayVerse(verse: Verse, state: EditionState) {
 }
 
 
-function createVerseRow(verse: Verse, editions: Edition[]) {
-    const row = document.createElement('tr');
+type EditionColumns = {
+    right: Edition[],
+    left: Edition[],
+    rightWidth: number,
+    leftWidth: number
+}
 
+function getColumnWidths(editions: Edition[]): EditionColumns {
     let leftHandSideEditions: Edition[] = []
     let rightHandSideEditions: Edition[] = []
 
@@ -229,7 +234,7 @@ function createVerseRow(verse: Verse, editions: Edition[]) {
     }
 
     if (editions.includes("kjv")) {
-            rightHandSideEditions.push("kjv");
+        rightHandSideEditions.push("kjv");
     }
 
     if (editions.includes("grebrew")) {
@@ -239,34 +244,50 @@ function createVerseRow(verse: Verse, editions: Edition[]) {
     let rightHandSideWidth = 45 / rightHandSideEditions.length;
     let leftHandSideWidth = 45 / leftHandSideEditions.length;
 
-    for (let i=0; i < leftHandSideEditions.length; i++) {
-        let td = document.createElement('td');
-        td.style.width = leftHandSideWidth.toString() + "%";
-        const edition = leftHandSideEditions[i];
+    let object: EditionColumns = {
+        right: rightHandSideEditions,
+        left: leftHandSideEditions,
+        rightWidth: rightHandSideWidth,
+        leftWidth: leftHandSideWidth
+    }
+    return object;
+}
+
+function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string) {
+    const row = document.createElement('tr');
+
+    let leftSideEditions = editions.left;
+    let rightSideEditions = editions.right;
+    let leftWidth = editions.leftWidth;
+    let rightWidth = editions.rightWidth;
+
+    for (let i=0; i < leftSideEditions.length; i++) {
+        let cell = document.createElement(cellType);
+        cell.style.width = leftWidth.toString() + "%";
+        const edition = leftSideEditions[i];
         const verseText = verse[edition];
         if (verseText && typeof verseText === 'string') {
-            td.innerHTML = verseText;
+            cell.innerHTML = verseText;
         }
-        row.appendChild(td);
+        row.appendChild(cell);
     }
 
     // Add verse number
-    const verseNumCell = document.createElement('td');
+    const verseNumCell = document.createElement(cellType);
     verseNumCell.className = 'verse-number';
     verseNumCell.textContent = `${verse.chapter}:${verse.verse}`;
     row.appendChild(verseNumCell);
 
-    for (let i=0; i < rightHandSideEditions.length; i++) {
-        let td = document.createElement('td');
-        td.style.width = rightHandSideWidth.toString() + "%";
-        const edition = rightHandSideEditions[i];
+    for (let i=0; i < rightSideEditions.length; i++) {
+        let cell = document.createElement(cellType);
+        cell.style.width = rightWidth.toString() + "%";
+        const edition = rightSideEditions[i];
         const verseText = verse[edition];
         if (verseText && typeof verseText === 'string') {
-            td.innerHTML = verseText;
+            cell.innerHTML = verseText;
         }
-        row.appendChild(td);
+        row.appendChild(cell);
     }
-
     return row;
 }
 
@@ -284,6 +305,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     // Create header row
     const headerRow = document.createElement('tr');
     
+    const columnWidthObject = getColumnWidths(editionsToFetch);
     // Add headers for each edition
     editionsToFetch.forEach((edition) => {
         const th = document.createElement('th');
@@ -300,7 +322,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
 
     // Create verse rows
     verses.forEach((verse: Verse) => {
-        let row = createVerseRow(verse, editionsToFetch);
+        let row = createVerseRow(verse, columnWidthObject, 'td');
 
         table.appendChild(row);
     });
