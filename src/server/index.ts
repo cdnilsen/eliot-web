@@ -146,7 +146,7 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
         );
         res.json({ status: 'success', insert });
     } catch (err) {
-        console.error('Error inserting verse:', err);
+        console.error('Error inserting verse into ' + edition + ':', err);
         res.status(500).json({ error: 'Error inserting verse', details: err.message });
     }
 }));
