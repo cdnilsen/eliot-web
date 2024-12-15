@@ -138,9 +138,9 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
         await delay(100);
         
         const insert = await client.query(
-            `INSERT INTO all_verses (id, ${edition}) 
+            `INSERT INTO all_verses (verse_id, ${edition}) 
              VALUES ($1, $2)
-             ON CONFLICT (id) 
+             ON CONFLICT (verse_id) 
              DO UPDATE SET ${edition} = $2`,
             [verseID, text]
         );
