@@ -367,21 +367,31 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
             overflow-y: auto;
             position: relative;
         }
-            
+
         .verse-table {
             width: 100%;
             border-collapse: collapse;
             margin: 1em 0;
         }
+
+        .verse-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .verse-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+        }
+
         .verse-table th, .verse-table td {
             padding: 8px;
             border: 1px solid #ddd;
             text-align: left;
         }
-        .verse-table th {
-            background-color: #f5f5f5;
-            font-weight: bold;
-        }
+
         .verse-number {
             font-weight: bold;
             text-align: right;
