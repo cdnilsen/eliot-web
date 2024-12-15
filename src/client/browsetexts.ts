@@ -3,38 +3,11 @@ import { sectionToBookDict, bookToChapterDict } from "./library.js"
 
 
 //All courtesy of Claude
-function findNextMatch(str1: string, str2: string, start1: number, start2: number): [number, number] | null {
-    const maxLookahead = 50; // Limit how far we look ahead to find matches
-    
-    for (let i = start1; i < Math.min(str1.length, start1 + maxLookahead); i++) {
-        for (let j = start2; j < Math.min(str2.length, start2 + maxLookahead); j++) {
-            // Look for next matching character (exact match or both spaces)
-            if (str1[i] === str2[j] || (str1[i] === ' ' && str2[j] === ' ')) {
-                // Verify this isn't just a spurious match by checking a few more chars
-                let matched = true;
-                for (let k = 0; k < 3; k++) {
-                    if (i + k < str1.length && j + k < str2.length) {
-                        if (str1[i + k] !== str2[j + k]) {
-                            matched = false;
-                            break;
-                        }
-                    }
-                }
-                if (matched) {
-                    return [i, j];
-                }
-            }
-        }
-    }
-    return null;
-}
-
 type highlightedObject = {
     str1: string,
     str2: string
 }
-
-function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean): highlightedObject {
+function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean = false): highlightedObject {
     let result1 = '';
     let result2 = '';
     let i = 0;
@@ -97,6 +70,20 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
     }
 
     return object;
+}
+
+function findNextMatch(str1: string, str2: string, start1: number, start2: number): [number, number] | null {
+    const maxLookahead = 50; // Limit how far we look ahead to find matches
+    
+    for (let i = start1; i < Math.min(str1.length, start1 + maxLookahead); i++) {
+        for (let j = start2; j < Math.min(str2.length, start2 + maxLookahead); j++) {
+            // Look for next matching character (exact match or both spaces)
+            if (str1[i] === str2[j] || (str1[i] === ' ' && str2[j] === ' ')) {
+                return [i, j];
+            }
+        }
+    }
+    return null;
 }
 
 /*
@@ -387,7 +374,7 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
     if (!isDummy) {
         processHighlighting(verse, highlighting);
     }
-    
+
     let leftSideEditions = editions.left;
     let rightSideEditions = editions.right;
     let leftWidth = editions.leftWidth;
