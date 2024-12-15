@@ -193,7 +193,7 @@ function displayVerse(verse: Verse, state: EditionState) {
 }
 
 function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
-    const displayDiv = document.getElementById('chapterText');
+    const displayDiv = document.getElementById('verseText');
     if (!displayDiv) return;
 
     // Clear previous content
