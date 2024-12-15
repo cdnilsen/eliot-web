@@ -191,11 +191,14 @@ function hapaxListener(docID: string, setting: Hapax, state: EditionState) {
     });
 }
 
-
-function displayVerse(verse: Verse, state: EditionState) {
-    let verseString: string = "<b>" + verse.chapter.toString() + ":" + verse.verse.toString() + "</b>";
-
+function isMassachusett(edition: Edition) {
+    return (edition == "first_edition" || edition == "second_edition" || edition == "mayhew" || edition == "zeroth_edition")
 }
+
+function processMassText(text: string) {
+    return text.replaceAll('8', 'ꝏ̄').replaceAll("$", " ")
+}
+
 
 
 type EditionColumns = {
@@ -280,9 +283,11 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
         let cell = document.createElement(cellType);
         cell.style.width = leftWidth.toString() + "%";
         const edition = leftSideEditions[i];
-        const verseText = verse[edition];
+        let verseText = verse[edition];
         if (isDummy) {
             cell.style.textAlign = "center";
+        } else if (isMassachusett(edition) && verseText) {
+            verseText = processMassText(verseText);
         }
         if (verseText && typeof verseText === 'string') {
             cell.innerHTML = verseText;
@@ -307,9 +312,11 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
         let cell = document.createElement(cellType);
         cell.style.width = rightWidth.toString() + "%";
         const edition = rightSideEditions[i];
-        const verseText = verse[edition];
+        let verseText = verse[edition];
         if (isDummy) {
             cell.style.textAlign = "center";
+        } else if (isMassachusett(edition) && verseText) {
+            verseText = processMassText(verseText);
         }
         if (verseText && typeof verseText === 'string') {
             cell.innerHTML = verseText;
