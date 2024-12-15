@@ -333,6 +333,7 @@ function createNavBar(state: EditionState) {
 
     const prevButton = document.createElement('button');
     prevButton.innerHTML = '← Previous Chapter';
+    prevButton.style.width = '45%'; 
     prevButton.onclick = () => {
         state.chapter -= 1;
         if (state.chapter >= 1) {
@@ -359,10 +360,18 @@ function createNavBar(state: EditionState) {
 
     if (state.chapter > 1) {
         navBar.appendChild(prevButton);
+    } else {
+        let blankSpan = document.createElement('span');
+        blankSpan.style.width = '45%';
+        navBar.appendChild(blankSpan);
     }
     //navBar.appendChild(chapterIndicator);
     if (state.chapter < bookToChapterDict[state.book]) {
         navBar.appendChild(nextButton);
+    } else {
+        let blankSpan = document.createElement('span');
+        blankSpan.style.width = '45%';
+        navBar.appendChild(blankSpan);
     }
     return navBar;
 }
