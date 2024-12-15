@@ -127,7 +127,9 @@ function sectionListener(state: EditionState) {
             option.innerHTML = i.toString();
             chapterDropdown.appendChild(option);
         }
+        let currentSection = sectionDropdown.value;
         refreshSectionDropdown();
+        sectionDropdown.value = currentSection;
     });
 
     bookDropdown.addEventListener("change", function() {
@@ -324,6 +326,10 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
 
     displayDiv.innerHTML = '';
 
+    // Create container for the table
+    const tableContainer = document.createElement('div');
+    tableContainer.className = 'table-container';
+
     // Create table element
     const table = document.createElement('table');
     table.className = 'verse-table';
@@ -336,20 +342,32 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     
     let headerRow = createVerseRow(dummyHeaderVerse, columnWidthObject, 'th', true);
 
-    table.appendChild(headerRow);
+    // Create separate thead element
+    const thead = document.createElement('thead');
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
 
-    // Create verse rows
+    // Create tbody for the verses
+    const tbody = document.createElement('tbody');
     verses.forEach((verse: Verse) => {
         let row = createVerseRow(verse, columnWidthObject, 'td');
 
-        table.appendChild(row);
+        tbody.appendChild(row);
     });
+    table.appendChild(tbody);
 
+    tableContainer.appendChild(table);
     displayDiv.appendChild(table);
 
     // Add CSS style
     const style = document.createElement('style');
     style.textContent = `
+        .table-container {
+            max-height: 80vh; /* Adjust this value as needed */
+            overflow-y: auto;
+            position: relative;
+        }
+            
         .verse-table {
             width: 100%;
             border-collapse: collapse;
