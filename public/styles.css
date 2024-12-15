@@ -99,6 +99,26 @@ tbody {
     z-index: 1;
 }
 
+.verseColumn, .firstVerseColumn {
+    word-wrap: break-word;
+    word-break: normal;
+    hyphens: auto;
+}
+
+.verseNumberColumn {
+    text-align: center;
+    font-weight: bold;
+    padding: 5px;
+    border-left: 2px solid #FF0000;
+    border-right: 2px solid #FF0000;
+}
+
+.verseNumberHeader {
+    text-align: center;
+    font-weight: bold;
+    background-color: #FFF;
+}
+
 
 #stickyButtonBar {
     position: sticky;

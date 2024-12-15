@@ -193,18 +193,17 @@ function displayVerse(verse: Verse, state: EditionState) {
 }
 
 function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
-    const displayDiv = document.getElementById('textColumns');
-    if (!displayDiv) {
-        console.error('Could not find display div');
-        return;
-    };
+    const displayDiv = document.getElementById('chapterText');
+    if (!displayDiv) return;
 
-    // Clear previous content
     displayDiv.innerHTML = '';
 
     // Create grid container for headers
     const headerGrid = document.createElement('div');
     headerGrid.className = 'editionHeaderGrid';
+
+    // Calculate middle point for verse numbers
+    const midPoint = Math.ceil(editionsToFetch.length / 2);
 
     // Create header cells
     editionsToFetch.forEach((edition, index) => {
@@ -212,14 +211,23 @@ function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
         headerCell.className = index === 0 ? 'firstColumnHeader' : 'columnHeader';
         headerCell.textContent = editionToShorthandDict[edition as Edition];
         headerGrid.appendChild(headerCell);
+
+        // Insert verse number header in the middle
+        if (index === midPoint - 1) {
+            const verseNumHeader = document.createElement('div');
+            verseNumHeader.className = 'verseNumberHeader columnHeader';
+            verseNumHeader.textContent = 'Verse';
+            headerGrid.appendChild(verseNumHeader);
+        }
     });
 
     // Create grid container for verses
     const textColumns = document.createElement('div');
     textColumns.className = 'textColumns';
 
-    // Set grid template columns based on number of editions
-    const columnTemplate = `repeat(${editionsToFetch.length}, 1fr)`;
+    // Set grid template columns with extra column for verse numbers
+    const columnCount = editionsToFetch.length + 1; // +1 for verse numbers
+    const columnTemplate = `repeat(${midPoint}, 1fr) auto repeat(${columnCount - midPoint - 1}, 1fr)`;
     headerGrid.style.gridTemplateColumns = columnTemplate;
     textColumns.style.gridTemplateColumns = columnTemplate;
 
@@ -235,12 +243,19 @@ function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
                 verseCell.textContent = verse[edition as keyof Verse] as string;
             }
             verseRow.appendChild(verseCell);
+
+            // Insert verse number in the middle
+            if (index === midPoint - 1) {
+                const verseNumCell = document.createElement('div');
+                verseNumCell.className = 'verseNumberColumn';
+                verseNumCell.textContent = `${verse.chapter}:${verse.verse}`;
+                verseRow.appendChild(verseNumCell);
+            }
         });
 
         textColumns.appendChild(verseRow);
     });
 
-    // Add both grids to display
     displayDiv.appendChild(headerGrid);
     displayDiv.appendChild(textColumns);
 }
