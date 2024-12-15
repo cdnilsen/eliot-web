@@ -34,16 +34,20 @@ function processGreekLine(text: string, showHapaxes: boolean) {
 
 */
 
-type Edition = "first" | "second" | "mayhew" | "zeroth" | "kjv" | "grebrew";
+type Edition = 'first_edition' | 'second_edition' | 'mayhew' | 'zeroth_edition' | 'kjv' | 'grebrew';
 
-let editionToShorthandDict = {
-    "first": "α",
-    "second": "β",
+type EditionToShorthandDict = {
+    [K in Edition]: string;
+};
+
+const editionToShorthandDict: EditionToShorthandDict = {
+    "first_edition": "α",
+    "second_edition": "β",
     "mayhew": "M",
-    "zeroth": "א",
+    "zeroth_edition": "א",
     "kjv": "E",
     "grebrew": "G"
-}
+};
 
 
 type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
@@ -61,10 +65,10 @@ type Verse = {
     book: string;
     chapter: number;
     verse: number;
-    first?: string;
-    second?: string;
+    first_edition?: string;
+    second_edition?: string;
     mayhew?: string;
-    zeroth?: string;
+    zeroth_edition?: string;
     kjv?: string;
     grebrew?: string;
 }
@@ -192,7 +196,11 @@ function displayVerse(verse: Verse, state: EditionState) {
 }
 
 
-function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
+function createVerseGrid(
+    verses: Verse[], 
+    editionsToFetch: Edition[], 
+    editionToShorthandDict: EditionToShorthandDict
+) {
     const displayDiv = document.getElementById('textColumns');
     if (!displayDiv) return;
 
@@ -209,7 +217,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
     headerGrid.appendChild(verseNumHeader);
 
     // Create edition headers
-    editionsToFetch.forEach((edition, index) => {
+    editionsToFetch.forEach((edition) => {
         const headerCell = document.createElement('div');
         headerCell.className = 'columnHeader';
         headerCell.textContent = editionToShorthandDict[edition];
@@ -240,8 +248,9 @@ function createVerseGrid(verses: Verse[], editionsToFetch: string[]) {
         editionsToFetch.forEach((edition) => {
             const verseCell = document.createElement('div');
             verseCell.className = 'verseColumn';
-            if (verse[edition]) {
-                verseCell.textContent = verse[edition] as string;
+            const verseText = verse[edition];
+            if (verseText && typeof verseText === 'string') {
+                verseCell.textContent = verseText;
             }
             verseRow.appendChild(verseCell);
         });
@@ -259,7 +268,7 @@ async function fetchChapter(state: EditionState) {
         let book = state.book;
         let chapter = state.chapter;
 
-        const editionsToFetch: string[] = [];
+        const editionsToFetch: Edition[] = [];
         if (editionNumber % 2 === 0) editionsToFetch.push('first_edition');
         if (editionNumber % 3 === 0) editionsToFetch.push('second_edition');
         if (editionNumber % 5 === 0) editionsToFetch.push('mayhew');
@@ -267,12 +276,12 @@ async function fetchChapter(state: EditionState) {
         if (editionNumber % 11 === 0) editionsToFetch.push('grebrew');
         editionsToFetch.push('kjv');
 
-
         // Convert editions array to comma-separated string for query parameter
-        const editionsParam = editionsToFetch.join(',');const response = await fetch(`/chapter/${book}/${chapter}?editions=${editionsParam}`);
+        const editionsParam = editionsToFetch.join(',');
+        const response = await fetch(`/chapter/${book}/${chapter}?editions=${editionsParam}`);
         const verses: Verse[] = await response.json();
         
-        createVerseGrid(verses, editionsToFetch);
+        createVerseGrid(verses, editionsToFetch, editionToShorthandDict);
         
     } catch (error) {
         console.error('Error fetching chapter:', error);
