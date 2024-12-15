@@ -7,7 +7,13 @@ type HighlightedObject = {
     str1: string,
     str2: string
 }
+
 function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean = false): HighlightedObject {
+    console.log("String 1:", str1);
+    console.log("String 2:", str2);
+    console.log("Lengths:", str1.length, str2.length);
+    console.log("First difference at index:", [...str1].findIndex((char, i) => char !== str2[i]));
+
     let result1 = '';
     let result2 = '';
     let i = 0;
