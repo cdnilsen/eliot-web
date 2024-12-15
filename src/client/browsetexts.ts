@@ -354,6 +354,24 @@ function processMassText(text: string) {
     return text.replaceAll('8', 'ꝏ̄').replaceAll("$", " ")
 }
 
+function processText(text: string, state: EditionState, edition: Edition, isDummy: boolean) {
+    if (isDummy) {
+        return text;
+    }
+    if (edition == "first_edition" || edition == "second_edition" || edition == "mayhew" || edition == "zeroth_edition") {
+        return processMassText(text); //deal with hapaxes later
+    }
+
+    if (edition == "grebrew" || edition == "kjv") {
+        if (state.hapaxes == "none") {
+            return text.replaceAll('<span style="color:blue">', '').replaceAll('</span>', '');
+        } else {
+            return text;
+        }
+    }
+    
+}
+
 
 
 type EditionColumns = {
@@ -439,9 +457,10 @@ function processHighlighting(verse: Verse, highlighting: Highlighting) {
     }
 }
     
-function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string, highlighting: Highlighting, isDummy: boolean = false) {
+function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string, state: EditionState, isDummy: boolean = false) {
     const row = document.createElement('tr');
 
+    let highlighting = state.highlighting;
     if (!isDummy) {
         processHighlighting(verse, highlighting);
     }
@@ -458,8 +477,8 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
         let verseText = verse[edition];
         if (isDummy) {
             cell.style.textAlign = "center";
-        } else if (isMassachusett(edition) && verseText) {
-            verseText = processMassText(verseText);
+        } else if (verseText) {
+            verseText = processText(verseText, state, edition, isDummy);
         }
         if (verseText && typeof verseText === 'string') {
             cell.innerHTML = verseText;
@@ -573,7 +592,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     // Create a dummy verse object to get the shorthands.
     let dummyHeaderVerse = createDummyVerse(editionsToFetch);
     
-    let headerRow = createVerseRow(dummyHeaderVerse, columnWidthObject, 'th', 'none', true);
+    let headerRow = createVerseRow(dummyHeaderVerse, columnWidthObject, 'th', state, true);
 
     // Create separate thead element
     const thead = document.createElement('thead');
@@ -586,7 +605,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     // Create tbody for the verses
     const tbody = document.createElement('tbody');
     verses.forEach((verse: Verse) => {
-        let row = createVerseRow(verse, columnWidthObject, 'td', highlighting);
+        let row = createVerseRow(verse, columnWidthObject, 'td', state);
 
         tbody.appendChild(row);
     });
