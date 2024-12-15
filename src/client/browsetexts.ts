@@ -198,6 +198,7 @@ async function fetchChapter(state: EditionState) {
         displayDiv.innerHTML = '';
         
         verses.forEach((verse: Verse) => {
+            console.log(verse);
             const verseDiv = document.createElement('div');
             editionsToFetch.forEach(edition => {
                 if (verse[edition as keyof Verse]) {
