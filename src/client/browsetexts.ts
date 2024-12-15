@@ -334,7 +334,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     // Create a dummy verse object to get the shorthands.
     let dummyHeaderVerse = createDummyVerse(editionsToFetch);
     
-    let headerRow = createVerseRow(dummyHeaderVerse, columnWidthObject, 'th');
+    let headerRow = createVerseRow(dummyHeaderVerse, columnWidthObject, 'th', true);
 
     table.appendChild(headerRow);
 
