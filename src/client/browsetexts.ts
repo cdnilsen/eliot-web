@@ -7,15 +7,12 @@ type HighlightedObject = {
     str1: string,
     str2: string
 }
-
 function findLCS(str1: string, str2: string): string {
     if (!str1 || !str2) return '';
     
-    // Create DP table
     const dp: number[][] = Array(str1.length + 1).fill(null)
         .map(() => Array(str2.length + 1).fill(0));
     
-    // Fill DP table
     for (let i = 1; i <= str1.length; i++) {
         for (let j = 1; j <= str2.length; j++) {
             if (str1[i - 1] === str2[j - 1]) {
@@ -26,7 +23,6 @@ function findLCS(str1: string, str2: string): string {
         }
     }
     
-    // Reconstruct the LCS
     let lcs = '';
     let i = str1.length, j = str2.length;
     while (i > 0 && j > 0) {
@@ -57,13 +53,23 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
     while (k < lcs.length) {
         // Add characters from str1 until we hit the next LCS character
         while (i < str1.length && str1[i] !== lcs[k]) {
-            result1 += `<span style="color: red">${str1[i]}</span>`;
-            i++;
+            // Check if this character might case-match with the current position in str2
+            if (highlightCaseDiffs && j < str2.length && str1[i].toLowerCase() === str2[j].toLowerCase()) {
+                result1 += `<span style="color: blue">${str1[i]}</span>`;
+                result2 += `<span style="color: blue">${str2[j]}</span>`;
+                i++;
+                j++;
+            } else {
+                result1 += `<span style="color: red">${str1[i]}</span>`;
+                i++;
+            }
         }
         
         // Add characters from str2 until we hit the next LCS character
         while (j < str2.length && str2[j] !== lcs[k]) {
-            result2 += `<span style="color: red">${str2[j]}</span>`;
+            if (!highlightCaseDiffs || i >= str1.length || str1[i].toLowerCase() !== str2[j].toLowerCase()) {
+                result2 += `<span style="color: red">${str2[j]}</span>`;
+            }
             j++;
         }
         
@@ -85,17 +91,26 @@ function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: bo
     
     // Add any remaining characters
     while (i < str1.length) {
-        result1 += `<span style="color: red">${str1[i]}</span>`;
-        i++;
+        // Check for case differences in remaining characters
+        if (highlightCaseDiffs && j < str2.length && str1[i].toLowerCase() === str2[j].toLowerCase()) {
+            result1 += `<span style="color: blue">${str1[i]}</span>`;
+            result2 += `<span style="color: blue">${str2[j]}</span>`;
+            i++;
+            j++;
+        } else {
+            result1 += `<span style="color: red">${str1[i]}</span>`;
+            i++;
+        }
     }
     while (j < str2.length) {
-        result2 += `<span style="color: red">${str2[j]}</span>`;
+        if (!highlightCaseDiffs || i >= str1.length || str1[i].toLowerCase() !== str2[j].toLowerCase()) {
+            result2 += `<span style="color: red">${str2[j]}</span>`;
+        }
         j++;
     }
 
     return { str1: result1, str2: result2 };
 }
-
 /*
 
 
