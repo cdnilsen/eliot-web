@@ -141,7 +141,7 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
             `INSERT INTO all_verses (verse_id, book, ${edition}) 
              VALUES ($1, $2, $3)
              ON CONFLICT (verse_id) 
-             DO UPDATE SET ${edition} = $2`,
+             DO UPDATE SET ${edition} = $3`,
             [verseID, book, text]
         );
         res.json({ status: 'success', insert });
