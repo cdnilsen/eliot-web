@@ -254,6 +254,7 @@ function createVerseRow(verse: Verse, editions: Edition[]) {
     const verseNumCell = document.createElement('td');
     verseNumCell.className = 'verse-number';
     verseNumCell.textContent = `${verse.chapter}:${verse.verse}`;
+    row.appendChild(verseNumCell);
 
     for (let i=0; i < rightHandSideEditions.length; i++) {
         let td = document.createElement('td');
