@@ -8,53 +8,92 @@ type HighlightedObject = {
     str2: string
 }
 
-function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean = false): HighlightedObject {
-    let result1 = '';
-    let result2 = '';
-    let i = 0;
-
-    // First add all matching characters before first difference
-    while (i < str1.length && i < str2.length && str1[i] === str2[i]) {
-        result1 += str1[i];
-        result2 += str2[i];
-        i++;
-    }
-
-    // Now process the rest character by character
-    while (i < str1.length || i < str2.length) {
-        // Get current characters (or empty string if beyond length)
-        const char1 = i < str1.length ? str1[i] : '';
-        const char2 = i < str2.length ? str2[i] : '';
-
-        // If characters are different
-        if (char1 !== char2) {
-            if (highlightCaseDiffs && char1.toLowerCase() === char2.toLowerCase()) {
-                result1 += `<span style="color: blue">${char1}</span>`;
-                result2 += `<span style="color: blue">${char2}</span>`;
+function findLCS(str1: string, str2: string): string {
+    if (!str1 || !str2) return '';
+    
+    // Create DP table
+    const dp: number[][] = Array(str1.length + 1).fill(null)
+        .map(() => Array(str2.length + 1).fill(0));
+    
+    // Fill DP table
+    for (let i = 1; i <= str1.length; i++) {
+        for (let j = 1; j <= str2.length; j++) {
+            if (str1[i - 1] === str2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
             } else {
-                if (char1) result1 += `<span style="color: red">${char1}</span>`;
-                if (char2) result2 += `<span style="color: red">${char2}</span>`;
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
             }
-        } else {
-            // Characters are the same
-            result1 += char1;
-            result2 += char2;
         }
-        i++;
     }
-
-    return {
-        str1: result1,
-        str2: result2
-    };
+    
+    // Reconstruct the LCS
+    let lcs = '';
+    let i = str1.length, j = str2.length;
+    while (i > 0 && j > 0) {
+        if (str1[i - 1] === str2[j - 1]) {
+            lcs = str1[i - 1] + lcs;
+            i--;
+            j--;
+        } else if (dp[i - 1][j] > dp[i][j - 1]) {
+            i--;
+        } else {
+            j--;
+        }
+    }
+    
+    return lcs;
 }
 
-function findNextMatch(str1: string, str2: string, start1: number, start2: number): [number, number] | null {
-    // Simply move forward one position in both strings
-    if (start1 + 1 < str1.length && start2 + 1 < str2.length) {
-        return [start1 + 1, start2 + 1];
+function highlightDifferences(str1: string, str2: string, highlightCaseDiffs: boolean = false): HighlightedObject {
+    if (str1 === str2) {
+        return { str1, str2 };
     }
-    return null;
+
+    const lcs = findLCS(str1, str2);
+    let result1 = '';
+    let result2 = '';
+    let i = 0, j = 0, k = 0;
+
+    while (k < lcs.length) {
+        // Add characters from str1 until we hit the next LCS character
+        while (i < str1.length && str1[i] !== lcs[k]) {
+            result1 += `<span style="color: red">${str1[i]}</span>`;
+            i++;
+        }
+        
+        // Add characters from str2 until we hit the next LCS character
+        while (j < str2.length && str2[j] !== lcs[k]) {
+            result2 += `<span style="color: red">${str2[j]}</span>`;
+            j++;
+        }
+        
+        // Add the matching character
+        if (i < str1.length && j < str2.length) {
+            // Check for case differences
+            if (highlightCaseDiffs && str1[i] !== str2[j] && str1[i].toLowerCase() === str2[j].toLowerCase()) {
+                result1 += `<span style="color: blue">${str1[i]}</span>`;
+                result2 += `<span style="color: blue">${str2[j]}</span>`;
+            } else {
+                result1 += str1[i];
+                result2 += str2[j];
+            }
+            i++;
+            j++;
+            k++;
+        }
+    }
+    
+    // Add any remaining characters
+    while (i < str1.length) {
+        result1 += `<span style="color: red">${str1[i]}</span>`;
+        i++;
+    }
+    while (j < str2.length) {
+        result2 += `<span style="color: red">${str2[j]}</span>`;
+        j++;
+    }
+
+    return { str1: result1, str2: result2 };
 }
 
 /*
