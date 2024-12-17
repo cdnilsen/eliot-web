@@ -268,6 +268,7 @@ function getFileCheckbox(fileName: string): CheckboxObject {
     fileCheckbox.type = 'checkbox';
     fileCheckbox.id = fileName;
     fileCheckbox.value = fileName;
+    fileCheckbox.checked = true;
     fileDiv.appendChild(fileCheckbox);
     
     let fileLabel: HTMLLabelElement = document.createElement('label');
@@ -295,7 +296,7 @@ function getAvailableSections(files: string[]) {
         let fileName = files[i].split(".")[0];
         for (let j=0; j<allSections.length; j++) {
             let section = allSections[j];
-            if (sectionToBookDict[section].includes(fileName)) {
+            if (sectionToBookDict[section].includes(fileName) && !availableSections.includes(section)) {
                 availableSections.push(section);
             }
         }
