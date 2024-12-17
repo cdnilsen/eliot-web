@@ -186,6 +186,18 @@ const validEditions: EditionName[] = [
     "Grebrew"
 ];
 
+
+//OK, start in on the word processing
+
+function editionIDNumber(id: string, edition: EditionName): string {
+    let strippedID = id.slice(1);
+    return editionToNumberDict[edition] + strippedID;
+}
+
+
+
+
+
 // Update type checking function
 function isValidEdition(edition: string): edition is EditionName {
     return validEditions.includes(edition as EditionName);
