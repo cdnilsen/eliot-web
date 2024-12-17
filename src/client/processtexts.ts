@@ -291,9 +291,11 @@ function processFile(fileContent: string, edition: string, book: string) {
         }
 
         if (edition in editionToColumnDict) {
-            let column = editionToColumnDict[edition];
-            let lineDict = getLinesFromFile(fileContent, book, column);
-            console.log(lineDict);
+            console.log(edition);
+            console.log(editionToColumnDict[edition]);
+            //let column = editionToColumnDict[edition];
+            //let lineDict = getLinesFromFile(fileContent, book, column);
+            //console.log(lineDict);
         }
     }  
 }
