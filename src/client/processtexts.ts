@@ -104,8 +104,11 @@ function populateBookDropdown(dict: BookSectionDict, section: string) {
 }
 
 
+// Define a type for the section keys
+type SectionKey = 'pentateuch' | 'history' | 'wisdom' | 'major_prophets' | 'minor_prophets' | 'gospels_acts' | 'other_nt';
+
 function populateSectionDropdown(dict: BookSectionDict) {
-    let dropdownValueDict = {
+    const dropdownValueDict: Record<SectionKey, string> = {
         "pentateuch": "Pentateuch",
         "history": "Historical Books",
         "wisdom": "Wisdom/Poetic Books",
@@ -113,13 +116,14 @@ function populateSectionDropdown(dict: BookSectionDict) {
         "minor_prophets": "Minor Prophets",
         "gospels_acts": "Gospels and Acts",
         "other_nt": "Other New Testament Books"
-    }
-    let sectionOrder = ["pentateuch", "history", "wisdom", "major_prophets", "minor_prophets", "gospels_acts", "other_nt"];
+    };
+
+    const sectionOrder: SectionKey[] = ["pentateuch", "history", "wisdom", "major_prophets", "minor_prophets", "gospels_acts", "other_nt"];
 
     let sectionDropdown = document.getElementById('sectionDropdown');
     if (sectionDropdown) {
         sectionDropdown.innerHTML = "";
-        for (let i=0; i < sectionOrder.length; i++) {
+        for (let i = 0; i < sectionOrder.length; i++) {
             let thisSection = sectionOrder[i];
             if (thisSection in dict && thisSection in dropdownValueDict) {
                 let sectionName = dropdownValueDict[thisSection];
@@ -127,13 +131,13 @@ function populateSectionDropdown(dict: BookSectionDict) {
                 option.value = thisSection;
                 option.text = sectionName;
                 sectionDropdown.appendChild(option);
-                if (i==0) {
+                if (i == 0) {
                     populateBookDropdown(dict, thisSection);
                 }
             }
         }
         sectionDropdown.addEventListener('change', (event) => {
-            let section = (<HTMLSelectElement>event.target).value;
+            let section = (event.target as HTMLSelectElement).value as SectionKey;
             populateBookDropdown(dict, section);
         });
     }
