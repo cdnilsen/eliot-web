@@ -290,11 +290,11 @@ function processFile(fileContent: string, edition: string, book: string) {
             "Grebrew": "grebrew"
         }
 
-        console.log(edition);
-
-        //let column = editionToColumnDict[edition];
-        //let lineDict = getLinesFromFile(fileContent, book, column);
-        //console.log(lineDict);
+        if (edition in editionToColumnDict) {
+            let column = editionToColumnDict[edition];
+            let lineDict = getLinesFromFile(fileContent, book, column);
+            console.log(lineDict);
+        }
     }  
 }
 
