@@ -172,7 +172,31 @@ type LineObject = {
     isValid: boolean
 }
 
-function processLine(line: string, columnName: string, bookName: string): LineObject {
+// Update edition to column mapping
+const editionToColumnDict: Record<EditionName, ColumnName> = {
+    "First Edition": "first_edition",
+    "Second Edition": "second_edition",
+    "Mayhew": "mayhew",
+    "Zeroth Edition": "zeroth_edition",
+    "KJV": "kjv",
+    "Grebrew": "grebrew"
+};
+
+const validEditions: EditionName[] = [
+    "First Edition",
+    "Second Edition",
+    "Mayhew",
+    "Zeroth Edition",
+    "KJV",
+    "Grebrew"
+];
+
+// Update type checking function
+function isValidEdition(edition: string): edition is EditionName {
+    return validEditions.includes(edition as EditionName);
+}
+
+function processLine(line: string, columnName: ColumnName, bookName: string): LineObject {
     let object: LineObject = {
         verseID: "",
         address: {
@@ -183,17 +207,8 @@ function processLine(line: string, columnName: string, bookName: string): LineOb
         isValid: false
     }
 
-    if (line.length == 0 || !(bookName in bookToChapterDict)) {
+    if (line.length == 0 || !(bookName in bookToIDDict)) {
         return object;
-    }
-
-    let shorthandDict = {
-        "first_edition": "α",
-        "second_edition": "β",
-        "mayhew": "M",
-        "zeroth_edition": "א",
-        "kjv": "E",
-        "grebrew": "G"
     }
 
     let shorthand = shorthandDict[columnName];
@@ -247,7 +262,7 @@ type LineDict = {
     allLinesValid: boolean
 }
 
-function getLinesFromFile(content: string, bookName: string, column: string) {
+function getLinesFromFile(content: string, bookName: string, column: ColumnName): LineDict {
     let rawLines = content.split("\n");
     let lineDict: LineDict = {
         lines: {},
@@ -273,31 +288,33 @@ function getLinesFromFile(content: string, bookName: string, column: string) {
     return lineDict;
 }
 
-function processFile(fileContent: string, edition: string, book: string) {
+// Add types for the editions and columns
+type EditionName = "First Edition" | "Second Edition" | "Mayhew" | "Zeroth Edition" | "KJV" | "Grebrew";
+type ColumnName = "first_edition" | "second_edition" | "mayhew" | "zeroth_edition" | "kjv" | "grebrew";
 
-    let validEditions = ["First Edition", "Second Edition", "Mayhew", "Zeroth Edition", "KJV", "Grebrew"];
+// Update shorthand dictionary with type
+const shorthandDict: Record<ColumnName, string> = {
+    "first_edition": "α",
+    "second_edition": "β",
+    "mayhew": "M",
+    "zeroth_edition": "א",
+    "kjv": "E",
+    "grebrew": "G"
+};
 
+function processFile(fileContent: string, edition: EditionName, book: string) {
     if (!validEditions.includes(edition)) {
         console.log("Invalid edition: " + edition);
         return;
-    } else {
-        let editionToColumnDict = {
-            "First Edition": "first_edition",
-            "Second Edition": "second_edition",
-            "Mayhew": "mayhew",
-            "Zeroth Edition": "zeroth_edition",
-            "KJV": "kjv",
-            "Grebrew": "grebrew"
-        }
-
-        if (edition in editionToColumnDict) {
-            console.log(edition);
-            console.log(editionToColumnDict[edition]);
-            //let column = editionToColumnDict[edition];
-            //let lineDict = getLinesFromFile(fileContent, book, column);
-            //console.log(lineDict);
-        }
-    }  
+    }
+    
+    const column = editionToColumnDict[edition];
+    console.log(edition);
+    console.log(column);
+    
+    // Proceed with getLinesFromFile if needed
+    let lineDict = getLinesFromFile(fileContent, book, column);
+    console.log(lineDict);
 }
 
 async function fetchFile(filename: string) {
@@ -340,7 +357,7 @@ async function processSelectedFiles(bookDict: BookSectionDict) {
                         if (fileName == bookFileName) {
                             let content = await fetchFile(fileName);
                             if (content) {
-                                processFile(content, edition, book);
+                                processFile(content, edition as EditionName, book);
                             }
                         }
                     }
