@@ -95,6 +95,7 @@ function populateBookDropdown(dict: BookSectionDict, section: string) {
         bookDropdown.innerHTML = "";
         if (section in sectionToBookDict) {
             for (let book in sectionToBookDict[section]) {
+                console.log(book);
                 let option = document.createElement('option');
                 option.value = book;
                 option.text = book;
