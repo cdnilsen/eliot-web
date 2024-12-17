@@ -39,6 +39,42 @@ let editionToNumberDict: Record<Edition, string> = {
 }
 
 
+
+async function loadTextFiles() {
+    try {
+        const response = await fetch('/textfiles');
+        const files = await response.json();
+        for (let i=0; i < files.length; i++) { 
+            console.log(files[i]);
+        }
+        //displayFiles(files);
+    } catch (error) {
+        console.error('Error loading text files:', error);
+    }
+}
+
+
+function main() {
+
+    let currentBook: string = "";
+
+    // Wait for DOM to load
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadTextFiles() || {};
+        
+        // Add process button handler
+        const processButton = document.getElementById('processFiles');
+        if (processButton) {
+           //processButton.addEventListener('click', () => //processSelectedFiles(currentBook));
+        }
+    });
+
+}
+
+main();
+
+
+/*
 function isBookName(name: string): name is BookName {
     return name in bookToIDDict;
 }
@@ -441,3 +477,5 @@ async function main() {
 }
 
 main();
+
+*/
