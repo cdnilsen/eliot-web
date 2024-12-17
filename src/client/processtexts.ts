@@ -145,7 +145,20 @@ function populateSectionDropdown(dict: BookSectionDict) {
     }
 }
 
-async function processFile(filename: string) {
+
+function processFile(fileContent: string, edition: string) {
+
+    let validEditions = ["First Edition", "Second Edition", "Mayhew", "Zeroth Edition", "KJV", "Grebrew"];
+
+    if (!validEditions.includes(edition)) {
+        console.log("Invalid edition: " + edition);
+        return;
+    }
+    let lines = fileContent.split("\n");
+    console.log(lines[0])
+}
+
+async function fetchFile(filename: string) {
     try {
         const response = await fetch('/process-file', {
             method: 'POST',
@@ -165,8 +178,6 @@ async function processFile(filename: string) {
 
 async function processSelectedFiles(bookDict: BookSectionDict) {
     let book = (<HTMLSelectElement>document.getElementById('bookDropdown')).value;
-    console.log(book);
-
     let keyList = Object.keys(bookDict);
     for (let i=0; i < keyList.length; i++) {
         let section = keyList[i];
@@ -183,9 +194,9 @@ async function processSelectedFiles(bookDict: BookSectionDict) {
                     for (let l=0; l < files.length; l++) {
                         let fileName = files[l];
                         if (fileName == bookFileName) {
-                            let content = await processFile(fileName);
+                            let content = await fetchFile(fileName);
                             if (content) {
-                                console.log(typeof content);
+                                processFile(content, edition);
                             }
                         }
                     }
