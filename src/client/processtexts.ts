@@ -347,9 +347,9 @@ async function addVersesToDatabase(dict: LineDict) {
     let editionColumn = dict.column;
     let bookName = dict.bookName;
 
-    console.log(editionColumn);
-    console.log(bookName);
-    /*
+    //console.log(editionColumn);
+    //console.log(bookName);
+    
     for (const verseID of dict.ids) {
         let chapter = dict.addresses[verseID].chapter;
         let verse = dict.addresses[verseID].verse;
@@ -380,7 +380,6 @@ async function addVersesToDatabase(dict: LineDict) {
             console.error(`Error adding verse ${verseID}:`, error);
         }
     }
-    */
 }
 
 
