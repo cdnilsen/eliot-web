@@ -146,16 +146,154 @@ function populateSectionDropdown(dict: BookSectionDict) {
 }
 
 
-function processFile(fileContent: string, edition: string) {
+function isBookName(name: string): name is BookName {
+    return name in bookToIDDict;
+}
+
+function chapterStringLengthManager(address: string) {
+    if (address.length == 1) {
+        return "00" + address;
+    } else if (address.length == 2) {
+        return "0" + address;
+    } else {
+        return address;
+    }
+}
+
+type VerseAddress = {
+    chapter: number,
+    verse: number
+}
+
+type LineObject = {
+    verseID: string,
+    address: VerseAddress,
+    lineText: string,
+    isValid: boolean
+}
+
+function processLine(line: string, columnName: string, bookName: string): LineObject {
+    let object: LineObject = {
+        verseID: "",
+        address: {
+            chapter: 0,
+            verse: 0
+        },
+        lineText: "",
+        isValid: false
+    }
+
+    if (line.length == 0 || !(bookName in bookToChapterDict)) {
+        return object;
+    }
+
+    let shorthandDict = {
+        "first_edition": "α",
+        "second_edition": "β",
+        "mayhew": "M",
+        "zeroth_edition": "א",
+        "kjv": "E",
+        "grebrew": "G"
+    }
+
+    let shorthand = shorthandDict[columnName];
+
+    let splitLine = line.split(" ");
+    let address = splitLine[0];
+    let lineText = splitLine.slice(1).join(" ").trim();
+
+    if (!address.includes(".")) {
+        console.log("Error in " + bookName + " " + shorthand + "." + address + "\n" + lineText);
+        return object;
+    }
+
+    let splitAddress = address.split(".");
+    let chapterNum = splitAddress[0];
+    let verseNum = splitAddress[1];
+
+    if (isNaN(parseInt(chapterNum)) || isNaN(parseInt(verseNum))) {
+        console.log("Error in " + bookName + " " + shorthand + "." + address + "\n" + lineText);
+        return object;
+    }
+
+    
+    object.lineText = lineText;
+
+    let IDLeadingDigit = "1";
+
+    let id = IDLeadingDigit + bookToIDDict[bookName] + chapterStringLengthManager(chapterNum) + chapterStringLengthManager(verseNum);
+
+    object.verseID = id;
+    object.address = {
+        chapter: parseInt(chapterNum),
+        verse: parseInt(verseNum)
+    }
+
+    object.isValid = true;
+
+    return object;
+}
+
+type IDtoVerseAddressDict = {
+    [key: string]: VerseAddress
+}
+
+type LineDict = {
+    lines: StringToStringDict,
+    ids: string[],
+    addresses: IDtoVerseAddressDict,
+    column: string,
+    bookName: string,
+    allLinesValid: boolean
+}
+
+function getLinesFromFile(content: string, bookName: string, column: string) {
+    let rawLines = content.split("\n");
+    let lineDict: LineDict = {
+        lines: {},
+        ids: [],
+        addresses: {},
+        column: column,
+        bookName: bookName,
+        allLinesValid: true
+    };
+
+    for (let i=0; i < rawLines.length; i++) {
+        let trimmedLine = rawLines[i].trim();
+        let lineObject = processLine(trimmedLine, column, bookName);
+        if (lineObject.isValid) {
+            let id = lineObject.verseID;
+            lineDict.ids.push(id);
+            lineDict.addresses[id] = lineObject.address;
+            lineDict.lines[lineObject.verseID] = lineObject.lineText;
+        } else {
+            console.log("Error in " + bookName + " " + column + " at line " + i + ": " + trimmedLine);
+        }
+    }
+    return lineDict;
+}
+
+function processFile(fileContent: string, edition: string, book: string) {
 
     let validEditions = ["First Edition", "Second Edition", "Mayhew", "Zeroth Edition", "KJV", "Grebrew"];
 
     if (!validEditions.includes(edition)) {
         console.log("Invalid edition: " + edition);
         return;
-    }
-    let lines = fileContent.split("\n");
-    console.log(lines[0])
+    } else {
+        let editionToColumnDict = {
+            "First Edition": "first_edition",
+            "Second Edition": "second_edition",
+            "Mayhew": "mayhew",
+            "Zeroth Edition": "zeroth_edition",
+            "KJV": "kjv",
+            "Grebrew": "grebrew"
+        }
+
+        let column = editionToColumnDict[edition];
+        let lineDict = getLinesFromFile(fileContent, book, column);
+        console.log(lineDict);
+    }  
 }
 
 async function fetchFile(filename: string) {
@@ -176,6 +314,8 @@ async function fetchFile(filename: string) {
     }
 }
 
+
+//ugly ugly ugly
 async function processSelectedFiles(bookDict: BookSectionDict) {
     let book = (<HTMLSelectElement>document.getElementById('bookDropdown')).value;
     let keyList = Object.keys(bookDict);
@@ -196,7 +336,7 @@ async function processSelectedFiles(bookDict: BookSectionDict) {
                         if (fileName == bookFileName) {
                             let content = await fetchFile(fileName);
                             if (content) {
-                                processFile(content, edition);
+                                processFile(content, edition, book);
                             }
                         }
                     }
