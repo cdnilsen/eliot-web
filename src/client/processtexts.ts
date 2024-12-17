@@ -209,6 +209,12 @@ function processLine(line: string, columnName: ColumnName, bookName: string): Li
 
     // Early return if line is empty or book is invalid
     if (line.length == 0 || !isBookName(bookName)) {
+        console.log("Error in " + bookName + " " + columnName + ": ");
+        if (line.length == 0) {
+            console.log("Empty line");
+        } else {
+            console.log("Invalid book name");
+        }
         return object;
     }
 
@@ -219,7 +225,7 @@ function processLine(line: string, columnName: ColumnName, bookName: string): Li
     let lineText = splitLine.slice(1).join(" ").trim();
 
     if (!address.includes(".")) {
-        console.log("Error in " + bookName + " " + shorthand + "." + address + "\n" + lineText);
+        console.log("Error in " + bookName + " " + shorthand + "." + address + ": address doesn't have a period");
         return object;
     }
 
@@ -228,7 +234,7 @@ function processLine(line: string, columnName: ColumnName, bookName: string): Li
     let verseNum = splitAddress[1];
 
     if (isNaN(parseInt(chapterNum)) || isNaN(parseInt(verseNum))) {
-        console.log("Error in " + bookName + " " + shorthand + "." + address + "\n" + lineText);
+        console.log("Error in " + bookName + " " + shorthand + "." + address + ": chapter or verse is not a number");
         return object;
     }
 
