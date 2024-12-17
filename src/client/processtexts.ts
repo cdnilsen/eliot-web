@@ -95,7 +95,7 @@ function main() {
     // Wait for DOM to load
     document.addEventListener('DOMContentLoaded', async () => {
         let bookDict = await loadTextFiles();
-        //console.log(bookDict);
+        console.log(bookDict);
         const processButton = document.getElementById('processFiles');
         if (processButton && bookDict) {
            //processButton.addEventListener('click', () => //processSelectedFiles(currentBook));
