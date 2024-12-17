@@ -308,7 +308,7 @@ const shorthandDict: Record<ColumnName, string> = {
     "grebrew": "G"
 };
 
-function processFile(fileContent: string, edition: EditionName, book: string) {
+function processFile(fileContent: string, edition: EditionName, book: string): LineDict | undefined {
     if (!validEditions.includes(edition)) {
         console.log("Invalid edition: " + edition);
         return;
@@ -320,7 +320,9 @@ function processFile(fileContent: string, edition: EditionName, book: string) {
     
     // Proceed with getLinesFromFile if needed
     let lineDict = getLinesFromFile(fileContent, book, column);
-    console.log(lineDict);
+    if (lineDict) {
+        return lineDict;
+    }
 }
 
 async function fetchFile(filename: string) {
@@ -339,6 +341,46 @@ async function fetchFile(filename: string) {
     } catch (error) {
         console.error('Error processing file:', error);
     }
+}
+
+async function addVersesToDatabase(dict: LineDict) {
+    let editionColumn = dict.column;
+    let bookName = dict.bookName;
+
+    console.log(editionColumn);
+    console.log(bookName);
+    /*
+    for (const verseID of dict.ids) {
+        let chapter = dict.addresses[verseID].chapter;
+        let verse = dict.addresses[verseID].verse;
+        let text = dict.lines[verseID];
+        try {
+            const response = await fetch('/verses', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    verseID: parseInt(verseID),
+                    text: text,
+                    book: bookName,
+                    chapter: chapter,
+                    verse: verse,
+                    edition: editionColumn
+                })
+            });
+            
+            const result = await response.json();
+            if (result.status !== 'success') {
+                console.error(`Error adding verse ${verseID}:`, result.error);
+            } else {
+                console.log("Added verse " + chapter.toString() + ":" + verse.toString() + " to " + editionColumn);
+            }
+        } catch (error) {
+            console.error(`Error adding verse ${verseID}:`, error);
+        }
+    }
+    */
 }
 
 
@@ -363,7 +405,11 @@ async function processSelectedFiles(bookDict: BookSectionDict) {
                         if (fileName == bookFileName) {
                             let content = await fetchFile(fileName);
                             if (content) {
-                                processFile(content, edition as EditionName, book);
+                                let lineDict = processFile(content, edition as EditionName, book);
+                                if (lineDict && lineDict.allLinesValid) {
+                                    await addVersesToDatabase(lineDict);
+                                    
+                                }
                             }
                         }
                     }
