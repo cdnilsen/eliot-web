@@ -39,10 +39,26 @@ let editionToNumberDict: Record<Edition, string> = {
 }
 
 
+type BookSectionDict = {
+    [key: string]: stringToStringListDict
+}
+
+function getBookSection(bookName: string) {
+    let allSections = Object.keys(sectionToBookDict);
+    for (let i=0; i<allSections.length; i++) {
+        if (sectionToBookDict[allSections[i]].includes(bookName)) {
+            return allSections[i];
+        }
+    }
+    console.log(bookName + " not found in sectionToBookDict");
+}
+
 function assignFileToBook(fileName: string, dict: stringToStringListDict) {
     let splitName = fileName.split(".");
     let bookName = splitName[0];
     let editionName = splitName[1];
+
+    getBookSection(bookName);
 
     if (bookName in dict) {
         dict[bookName].push(editionName);
@@ -68,21 +84,17 @@ async function loadTextFiles() {
 
 
 function main() {
-
     let currentBook: string = "";
 
     // Wait for DOM to load
     document.addEventListener('DOMContentLoaded', async () => {
         let bookDict = await loadTextFiles();
-        console.log(bookDict);
-        
-        // Add process button handler
+        //console.log(bookDict);
         const processButton = document.getElementById('processFiles');
-        if (processButton) {
+        if (processButton && bookDict) {
            //processButton.addEventListener('click', () => //processSelectedFiles(currentBook));
         }
     });
-
 }
 
 main();
