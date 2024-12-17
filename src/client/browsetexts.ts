@@ -619,75 +619,75 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     // Add CSS style
     const style = document.createElement('style');
     style.textContent = `
-        .chapter-navigation {
-            position: sticky;
-            top: 0;
-            background: white;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            z-index: 3;  /* Increased z-index */
-            border-bottom: 1px solid #ddd;
-        }
+    .chapter-navigation {
+        position: sticky;
+        top: 0;
+        background: white;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        z-index: 3;  /* Increased z-index */
+        border-bottom: 1px solid #ddd;
+    }
 
-        .chapter-navigation button {
-            padding: 5px 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: white;
-            cursor: pointer;
-        }
+    .chapter-navigation button {
+        padding: 5px 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+    }
 
-        .chapter-navigation button:hover {
-            background: #f5f5f5;
-        }
+    .chapter-navigation button:hover {
+        background: #f5f5f5;
+    }
 
-        .chapter-navigation button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+    .chapter-navigation button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 
-        .chapter-indicator {
-            font-weight: bold;
-        }
+    .chapter-indicator {
+        font-weight: bold;
+    }
 
-        .table-container {
-            max-height: calc(80vh - 50px);
-            overflow-y: auto;
-            position: relative;
-        }
+    .table-container {
+        max-height: calc(80vh - 50px);
+        overflow-y: auto;
+        position: relative;
+    }
 
-        .verse-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1em 0;
-        }
+    .verse-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1em 0;
+    }
 
-        .verse-table thead {
-            position: sticky;
-            top: 52px;  /* Height of navbar (including padding and border) */
-            z-index: 2;
-            background: white;  /* Ensure the header has a background */
-        }
+    .verse-table thead {
+        position: sticky;
+        top: 52px;  /* Height of navbar (including padding and border) */
+        z-index: 2;
+        background: white;  /* Ensure the header has a background */
+    }
 
-        .verse-table th {
-            background-color: #f5f5f5;
-            font-weight: bold;
-            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
-        }
+    .verse-table th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+    }
 
-        .verse-table th, .verse-table td {
-            padding: 8px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
+    .verse-table th, .verse-table td {
+        padding: 8px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
 
-        .verse-number {
-            font-weight: bold;
-            text-align: right;
-        }
+    .verse-number {
+        font-weight: bold;
+        text-align: right;
+    }
     `;
     document.head.appendChild(style);
 }
