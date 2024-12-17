@@ -145,11 +145,6 @@ function populateSectionDropdown(dict: BookSectionDict) {
     }
 }
 
-
-function isBookName(name: string): name is BookName {
-    return name in bookToIDDict;
-}
-
 function chapterStringLengthManager(address: string) {
     if (address.length == 1) {
         return "00" + address;
@@ -196,6 +191,11 @@ function isValidEdition(edition: string): edition is EditionName {
     return validEditions.includes(edition as EditionName);
 }
 
+function isBookName(name: string): name is BookName {
+    return name in bookToIDDict;
+}
+
+
 function processLine(line: string, columnName: ColumnName, bookName: string): LineObject {
     let object: LineObject = {
         verseID: "",
@@ -207,7 +207,8 @@ function processLine(line: string, columnName: ColumnName, bookName: string): Li
         isValid: false
     }
 
-    if (line.length == 0 || !(bookName in bookToIDDict)) {
+    // Early return if line is empty or book is invalid
+    if (line.length == 0 || !isBookName(bookName)) {
         return object;
     }
 
@@ -231,11 +232,10 @@ function processLine(line: string, columnName: ColumnName, bookName: string): Li
         return object;
     }
 
-    
     object.lineText = lineText;
 
     let IDLeadingDigit = "1";
-
+    // Now TypeScript knows bookName is definitely of type BookName
     let id = IDLeadingDigit + bookToIDDict[bookName] + chapterStringLengthManager(chapterNum) + chapterStringLengthManager(verseNum);
 
     object.verseID = id;
