@@ -145,7 +145,25 @@ function populateSectionDropdown(dict: BookSectionDict) {
     }
 }
 
-function processSelectedFiles(bookDict: BookSectionDict) {
+async function processFile(filename: string) {
+    try {
+        const response = await fetch('/process-file', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ filename })
+        });
+        const result = await response.json();
+        
+        // Return the content instead of just word count
+        return result.content;
+    } catch (error) {
+        console.error('Error processing file:', error);
+    }
+}
+
+async function processSelectedFiles(bookDict: BookSectionDict) {
     let book = (<HTMLSelectElement>document.getElementById('bookDropdown')).value;
     console.log(book);
 
@@ -159,7 +177,18 @@ function processSelectedFiles(bookDict: BookSectionDict) {
                 let editionList = bookDict[section][thisBook];
                 for (let k=0; k < editionList.length; k++) {
                     let edition = editionList[k];
-                    console.log(section + " " + thisBook + " " + edition);
+                    let bookFileName = thisBook + "." + edition + ".txt";
+                    const response = await fetch('/textfiles');
+                    const files = await response.json();
+                    for (let n=0; n < files.length; n++) {
+                        let fileName = files[n];
+                        if (fileName == bookFileName) {
+                            let content = await processFile(fileName);
+                            if (content) {
+                                console.log(content);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -587,5 +616,4 @@ async function main() {
 }
 
 main();
-
 */
