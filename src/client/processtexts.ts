@@ -1,5 +1,5 @@
 import { StringLiteral } from 'typescript';
-import { stringToStringListDict, BookName, bookToIDDict, bookToChapterDict } from './library.js';
+import { stringToStringListDict, BookName, bookToIDDict, bookToChapterDict, sectionToBookDict } from './library.js';
 import { get } from 'http';
 
 
@@ -287,65 +287,154 @@ function getFileCheckbox(fileName: string): CheckboxObject {
     };
 }
 
-function displayFiles(files: string[]): FileCheckboxDict {
-    const fileList = <HTMLDivElement>document.getElementById('fileList');
-    if (!fileList) return {};
-    
-    let allObjects: FileCheckboxDict = {};
+function getAvailableSections(files: string[]) {
+    let availableSections: string[] = [];
+    let allSections = Object.keys(sectionToBookDict);
+
     for (let i=0; i<files.length; i++) {
-        let fileObject = getFileCheckbox(files[i]);
-        fileList.appendChild(fileObject.div);
-        allObjects[files[i]] = fileObject;
+        let fileName = files[i].split(".")[0];
+        for (let j=0; j<allSections.length; j++) {
+            let section = allSections[j];
+            if (sectionToBookDict[section].includes(fileName)) {
+                availableSections.push(section);
+            }
+        }
     }
-    return allObjects;
+    return availableSections;
 }
 
-async function loadTextFiles() {
+function dropdownPopulator(availableSections: string[], currentBook: string, div: HTMLDivElement) {
+    div.innerHTML = "";
+    let sectionDropdown = document.createElement('select');
+    sectionDropdown.id = "sectionDropdown";
+    for (let i=0; i<availableSections.length; i++) {
+        let option = document.createElement('option');
+        option.value = availableSections[i];
+        option.text = availableSections[i];
+        sectionDropdown.appendChild(option);
+    }
+
+    let bookDropdown = document.createElement('select');
+    bookDropdown.id = "bookDropdown";
+
+    sectionDropdown.addEventListener('change', async (event) => {
+        let section = (<HTMLSelectElement>event.target).value;
+        let books = sectionToBookDict[section];
+        bookDropdown.innerHTML = "";
+        for (let i=0; i<books.length; i++) {
+            let option = document.createElement('option');
+            option.value = books[i];
+            option.text = books[i];
+            if (i==0) {
+                currentBook = books[i];
+            }
+            bookDropdown.appendChild(option);
+        }
+        // Refresh file display when section changes
+        const response = await fetch('/textfiles');
+        const files = await response.json();
+        const filesDiv = document.getElementById('filesDiv');
+        if (filesDiv) filesDiv.remove();
+        displayFiles(files, currentBook);
+    });
+
+    bookDropdown.addEventListener('change', async (event) => {
+        currentBook = (<HTMLSelectElement>event.target).value;
+        // Refresh file display when book changes
+        const response = await fetch('/textfiles');
+        const files = await response.json();
+        const filesDiv = document.getElementById('filesDiv');
+        if (filesDiv) filesDiv.remove();
+        displayFiles(files, currentBook);
+    });
+
+    div.appendChild(sectionDropdown);
+    div.appendChild(bookDropdown);
+}
+
+
+function displayFiles(files: string[], currentBook: string) {
+    const fileList = <HTMLDivElement>document.getElementById('fileList');
+    if (!fileList) return {};
+
+    let availableSections = getAvailableSections(files);
+    dropdownPopulator(availableSections, currentBook, fileList);
+    
+    // Create checkboxes for files matching the current book
+    const filesDiv = document.createElement('div');
+    filesDiv.id = 'filesDiv';
+    files.forEach(filename => {
+        if (filename.startsWith(currentBook + ".")) {
+            const checkboxObj = getFileCheckbox(filename);
+            allFileObjects[filename] = checkboxObj;
+            filesDiv.appendChild(checkboxObj.div);
+            if (checkboxObj.contentDiv) {
+                filesDiv.appendChild(checkboxObj.contentDiv);
+            }
+        }
+    });
+    fileList.appendChild(filesDiv);
+}
+
+async function loadTextFiles(currentBook: string) {
     try {
         const response = await fetch('/textfiles');
         const files = await response.json();
-        let allFileObjects: FileCheckboxDict = displayFiles(files);
-        return allFileObjects;
+        displayFiles(files, currentBook);
     } catch (error) {
         console.error('Error loading text files:', error);
     }
 }
 
-async function processSelectedFiles(allFileObjects: FileCheckboxDict) {
+async function processSelectedFiles(currentBook: string) {
+    if (!currentBook) {
+        console.error("No book selected");
+        return;
+    }
+
     let previewDiv = document.getElementById('preview');
-    previewDiv!.innerHTML = "";
+    if (previewDiv) previewDiv.innerHTML = "";
 
-    for (const [filename, obj] of Object.entries(allFileObjects)) {
-        if (obj.checkbox.checked && obj.contentDiv) {
-            let edition = obj.edition;
-
-            let bookName = filename.split(".")[0];
+    // Get all files for current book
+    const response = await fetch('/textfiles');
+    const files = await response.json();
+    
+    for (const filename of files) {
+        if (filename.startsWith(currentBook + ".")) {
+            let edition = getEdition(filename);
+            let bookName = currentBook;
+            
             if (!isBookName(bookName)) {
                 console.log("Check book name in " + filename);
                 continue;
             }
+
             const content = await processFile(filename);
             if (content) {
                 let lineDict = getLinesFromFile(content, bookName, edition);
                 if(lineDict.allLinesValid) {
-                    addVerseToDatabase(lineDict);
+                    await addVerseToDatabase(lineDict);
                 }
             }
         }
     }
 }
 
+let allFileObjects: FileCheckboxDict = {};
+
+
 async function main() {
-    let allFileObjects: FileCheckboxDict = {};
+
+    let currentBook: string = "";
     
     // Wait for DOM to load
     document.addEventListener('DOMContentLoaded', async () => {
-        allFileObjects = await loadTextFiles() || {};
+        loadTextFiles(currentBook) || {};
         
         // Add process button handler
         const processButton = document.getElementById('processFiles');
         if (processButton) {
-            processButton.addEventListener('click', () => processSelectedFiles(allFileObjects));
+            processButton.addEventListener('click', () => processSelectedFiles(currentBook));
         }
     });
 }
