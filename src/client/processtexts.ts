@@ -145,10 +145,25 @@ function populateSectionDropdown(dict: BookSectionDict) {
     }
 }
 
-function processSelectedFiles() {
+function processSelectedFiles(bookDict: BookSectionDict) {
     let book = (<HTMLSelectElement>document.getElementById('bookDropdown')).value;
     console.log(book);
 
+    let keyList = Object.keys(bookDict);
+    for (let i=0; i < keyList.length; i++) {
+        let section = keyList[i];
+        let bookList = Object.keys(bookDict[section]);
+        for (let j=0; j < bookList.length; j++) {
+            let thisBook = bookList[j];
+            if (thisBook == book) {
+                let editionList = bookDict[section][thisBook];
+                for (let k=0; k < editionList.length; k++) {
+                    let edition = editionList[k];
+                    console.log(section + " " + thisBook + " " + edition);
+                }
+            }
+        }
+    }
 }
 
 function main() {
@@ -161,7 +176,7 @@ function main() {
         const processButton = document.getElementById('processFiles');
         if (processButton && bookDict) {
             populateSectionDropdown(bookDict);
-           processButton.addEventListener('click', () => processSelectedFiles());
+            processButton.addEventListener('click', () => processSelectedFiles(bookDict));
         }
     });
 }
