@@ -93,16 +93,16 @@ function populateBookDropdown(dict: BookSectionDict, section: string) {
     let bookDropdown = document.getElementById('bookDropdown');
     if (bookDropdown) {
         bookDropdown.innerHTML = "";
-        let books = dict[section];
-        for (let book in books) {
-            let option = document.createElement('option');
-            option.value = book;
-            option.text = book;
-            bookDropdown.appendChild(option);
+        if (section in sectionToBookDict) {
+            for (let book in sectionToBookDict[section]) {
+                let option = document.createElement('option');
+                option.value = book;
+                option.text = book;
+                bookDropdown.appendChild(option);
+            }
         }
     }
 }
-
 
 // Define a type for the section keys
 type SectionKey = 'pentateuch' | 'history' | 'wisdom' | 'major_prophets' | 'minor_prophets' | 'gospels_acts' | 'other_nt';
