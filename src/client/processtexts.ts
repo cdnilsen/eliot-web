@@ -180,12 +180,12 @@ async function processSelectedFiles(bookDict: BookSectionDict) {
                     let bookFileName = thisBook + "." + edition + ".txt";
                     const response = await fetch('/textfiles');
                     const files = await response.json();
-                    for (let n=0; n < files.length; n++) {
-                        let fileName = files[n];
+                    for (let l=0; l < files.length; l++) {
+                        let fileName = files[l];
                         if (fileName == bookFileName) {
                             let content = await processFile(fileName);
                             if (content) {
-                                console.log(content);
+                                console.log(typeof content);
                             }
                         }
                     }
