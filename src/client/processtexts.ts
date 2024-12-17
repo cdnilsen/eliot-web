@@ -89,6 +89,56 @@ async function loadTextFiles() {
 }
 
 
+function populateBookDropdown(dict: BookSectionDict, section: string) {
+    let bookDropdown = document.getElementById('bookDropdown');
+    if (bookDropdown) {
+        bookDropdown.innerHTML = "";
+        let books = dict[section];
+        for (let book in books) {
+            let option = document.createElement('option');
+            option.value = book;
+            option.text = book;
+            bookDropdown.appendChild(option);
+        }
+    }
+}
+
+
+function populateSectionDropdown(dict: BookSectionDict) {
+    let dropdownValueDict = {
+        "pentateuch": "Pentateuch",
+        "history": "Historical Books",
+        "wisdom": "Wisdom/Poetic Books",
+        "major_prophets": "Major Prophets",
+        "minor_prophets": "Minor Prophets",
+        "gospels_acts": "Gospels and Acts",
+        "other_nt": "Other New Testament Books"
+    }
+    let sectionOrder = ["pentateuch", "history", "wisdom", "major_prophets", "minor_prophets", "gospels_acts", "other_nt"];
+
+    let sectionDropdown = document.getElementById('sectionDropdown');
+    if (sectionDropdown) {
+        sectionDropdown.innerHTML = "";
+        for (let i=0; i < sectionOrder.length; i++) {
+            let thisSection = sectionOrder[i];
+            if (thisSection in dict) {
+                let sectionName = dropdownValueDict[thisSection];
+                let option = document.createElement('option');
+                option.value = thisSection;
+                option.text = sectionName;
+                sectionDropdown.appendChild(option);
+                if (i==0) {
+                    populateBookDropdown(dict, thisSection);
+                }
+            }
+        }
+        sectionDropdown.addEventListener('change', (event) => {
+            let section = (<HTMLSelectElement>event.target).value;
+            populateBookDropdown(dict, section);
+        });
+    }
+}
+
 function main() {
     let currentBook: string = "";
 
@@ -98,6 +148,7 @@ function main() {
         console.log(bookDict);
         const processButton = document.getElementById('processFiles');
         if (processButton && bookDict) {
+            populateSectionDropdown(bookDict);
            //processButton.addEventListener('click', () => //processSelectedFiles(currentBook));
         }
     });
