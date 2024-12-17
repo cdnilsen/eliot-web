@@ -51,25 +51,31 @@ function getBookSection(bookName: string) {
         }
     }
     console.log(bookName + " not found in sectionToBookDict");
+    return "";
 }
 
-function assignFileToBook(fileName: string, dict: stringToStringListDict) {
+function assignFileToBook(fileName: string, dict: BookSectionDict) {
     let splitName = fileName.split(".");
     let bookName = splitName[0];
     let editionName = splitName[1];
 
-    getBookSection(bookName);
+    let sectionName = getBookSection(bookName);
 
-    if (bookName in dict) {
-        dict[bookName].push(editionName);
+    if (sectionName in dict) {
+        let sectionDict = dict[sectionName];
+        if (bookName in sectionDict) {
+            sectionDict[bookName].push(editionName);
+        } else {
+            sectionDict[bookName] = [editionName];
+        }
     } else {
-        dict[bookName] = [editionName];
+        dict[sectionName] = { [bookName]: [editionName] };
     }
 }
 
 async function loadTextFiles() {
     try {
-        let dict: stringToStringListDict = {};
+        let dict: BookSectionDict = {};
         const response = await fetch('/textfiles');
         const files = await response.json();
         for (let i=0; i < files.length; i++) { 
