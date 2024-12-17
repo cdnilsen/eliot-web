@@ -134,7 +134,7 @@ function populateSectionDropdown(dict: BookSectionDict) {
                 option.text = sectionName;
                 sectionDropdown.appendChild(option);
                 if (i == 0) {
-                    populateBookDropdown(dict, thisSection);
+                    populateBookDropdown(dict, sectionName);
                 }
             }
         }
