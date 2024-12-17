@@ -39,15 +39,28 @@ let editionToNumberDict: Record<Edition, string> = {
 }
 
 
+function assignFileToBook(fileName: string, dict: stringToStringListDict) {
+    let splitName = fileName.split(".");
+    let bookName = splitName[0];
+    let editionName = splitName[1];
+
+    if (bookName in dict) {
+        dict[bookName].push(editionName);
+    } else {
+        dict[bookName] = [editionName];
+    }
+}
 
 async function loadTextFiles() {
     try {
+        let dict: stringToStringListDict = {};
         const response = await fetch('/textfiles');
         const files = await response.json();
         for (let i=0; i < files.length; i++) { 
-            console.log(files[i]);
+            let fileName = files[i];
+            assignFileToBook(fileName, dict);
         }
-        //displayFiles(files);
+        return dict;
     } catch (error) {
         console.error('Error loading text files:', error);
     }
@@ -60,7 +73,8 @@ function main() {
 
     // Wait for DOM to load
     document.addEventListener('DOMContentLoaded', async () => {
-        loadTextFiles() || {};
+        let bookDict = await loadTextFiles();
+        console.log(bookDict);
         
         // Add process button handler
         const processButton = document.getElementById('processFiles');
