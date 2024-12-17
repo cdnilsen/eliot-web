@@ -628,7 +628,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
             justify-content: center;
             align-items: center;
             gap: 20px;
-            z-index: 2;
+            z-index: 3;  /* Increased z-index */
             border-bottom: 1px solid #ddd;
         }
 
@@ -654,7 +654,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
         }
 
         .table-container {
-            max-height: calc(80vh - 50px); /* Adjust this value as needed */
+            max-height: calc(80vh - 50px);
             overflow-y: auto;
             position: relative;
         }
@@ -667,8 +667,9 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
 
         .verse-table thead {
             position: sticky;
-            top: 0;
-            z-index: 1;
+            top: 52px;  /* Height of navbar (including padding and border) */
+            z-index: 2;
+            background: white;  /* Ensure the header has a background */
         }
 
         .verse-table th {

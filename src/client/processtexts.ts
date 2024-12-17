@@ -211,7 +211,7 @@ async function addVerseToDatabase(dict: LineDict) {
             if (result.status !== 'success') {
                 console.error(`Error adding verse ${verseID}:`, result.error);
             } else {
-                console.log("Added verse" + chapter.toString() + ":" + verse.toString() + " to " + editionColumn);
+                console.log("Added verse " + chapter.toString() + ":" + verse.toString() + " to " + editionColumn);
             }
         } catch (error) {
             console.error(`Error adding verse ${verseID}:`, error);
@@ -291,7 +291,6 @@ function displayFiles(files: string[]): FileCheckboxDict {
     const fileList = <HTMLDivElement>document.getElementById('fileList');
     if (!fileList) return {};
     
-
     let allObjects: FileCheckboxDict = {};
     for (let i=0; i<files.length; i++) {
         let fileObject = getFileCheckbox(files[i]);
