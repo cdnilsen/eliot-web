@@ -96,7 +96,7 @@ function populateBookDropdown(dict: BookSectionDict, section: string) {
         if (section in sectionToBookDict) {
             for (let i=0; i < sectionToBookDict[section].length; i++) {
                 let book = sectionToBookDict[section][i];
-                console.log(book);
+                //console.log(book);
                 let option = document.createElement('option');
                 option.value = book;
                 option.text = book;
@@ -145,6 +145,12 @@ function populateSectionDropdown(dict: BookSectionDict) {
     }
 }
 
+function processSelectedFiles() {
+    let book = (<HTMLSelectElement>document.getElementById('bookDropdown')).value;
+    console.log(book);
+
+}
+
 function main() {
     let currentBook: string = "";
 
@@ -155,7 +161,7 @@ function main() {
         const processButton = document.getElementById('processFiles');
         if (processButton && bookDict) {
             populateSectionDropdown(bookDict);
-           //processButton.addEventListener('click', () => //processSelectedFiles(currentBook));
+           processButton.addEventListener('click', () => processSelectedFiles());
         }
     });
 }
