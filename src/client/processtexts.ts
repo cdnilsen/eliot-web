@@ -121,7 +121,7 @@ function populateSectionDropdown(dict: BookSectionDict) {
         sectionDropdown.innerHTML = "";
         for (let i=0; i < sectionOrder.length; i++) {
             let thisSection = sectionOrder[i];
-            if (thisSection in dict) {
+            if (thisSection in dict && thisSection in dropdownValueDict) {
                 let sectionName = dropdownValueDict[thisSection];
                 let option = document.createElement('option');
                 option.value = thisSection;
