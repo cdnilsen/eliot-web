@@ -188,12 +188,12 @@ const validEditions: EditionName[] = [
 
 
 //OK, start in on the word processing
-
+/*
 function editionIDNumber(id: string, edition: EditionName): string {
     let strippedID = id.slice(1);
     return editionToNumberDict[edition] + strippedID;
 }
-
+*/
 
 
 
