@@ -359,8 +359,12 @@ function isMassachusett(edition: Edition) {
     return (edition == "first_edition" || edition == "second_edition" || edition == "mayhew" || edition == "zeroth_edition")
 }
 
-function processMassText(text: string) {
-    return text.replaceAll('8', 'ꝏ̄').replaceAll("$", " ")
+function processMassText(text: string, edition: Edition) {
+    text = text.replaceAll('8', 'ꝏ̄').replaceAll("$", " ")
+    if (edition == "mayhew") {
+        text = text.replaceAll('{', '<i>').replaceAll('}', '</i>');
+    }
+    return text
 }
 
 //bugged, presumably hapaxes aren't actually being changed?
@@ -369,7 +373,7 @@ function processText(text: string, state: EditionState, edition: Edition, isDumm
         return text;
     }
     if (edition == "first_edition" || edition == "second_edition" || edition == "mayhew" || edition == "zeroth_edition") {
-        return processMassText(text); //deal with hapaxes later
+        return processMassText(text, edition); //deal with hapaxes later
     }
 
     if (edition == "grebrew" || edition == "kjv") {
@@ -518,7 +522,7 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
         if (isDummy) {
             cell.style.textAlign = "center";
         } else if (isMassachusett(edition) && verseText) {
-            verseText = processMassText(verseText);
+            verseText = processMassText(verseText, edition);
         }
         if (verseText && typeof verseText === 'string') {
             cell.innerHTML = verseText;
