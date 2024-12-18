@@ -298,6 +298,11 @@ function sectionListener(state: EditionState) {
             option.innerHTML = i.toString();
             chapterDropdown.appendChild(option);
         }
+
+        let mayhewCheckbox = document.getElementById("useMayhew")!;
+        if (book == "John" || book == "Psalms") {
+            mayhewCheckbox!.hidden = false;
+        }
     });
 
     chapterDropdown.addEventListener("change", function() {
