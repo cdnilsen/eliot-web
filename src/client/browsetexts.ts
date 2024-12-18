@@ -299,9 +299,11 @@ function sectionListener(state: EditionState) {
             chapterDropdown.appendChild(option);
         }
 
-        let mayhewCheckbox = document.getElementById("useMayhew")!;
+        let mayhewCheckbox = document.getElementById("mayhewContainer")!;
         if (book == "John" || book == "Psalms") {
             mayhewCheckbox!.hidden = false;
+        } else {
+            mayhewCheckbox!.hidden = true;
         }
     });
 
