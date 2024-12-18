@@ -299,11 +299,13 @@ function sectionListener(state: EditionState) {
             chapterDropdown.appendChild(option);
         }
 
-        let mayhewCheckbox = document.getElementById("mayhewContainer")!;
+        let mayhewContainer = document.getElementById("mayhewContainer")!;
+        let mayhewCheckbox = <HTMLInputElement>document.getElementById("useMayhew");
         if (book == "John" || book == "Psalms") {
-            mayhewCheckbox!.hidden = false;
+            mayhewContainer!.hidden = false;
         } else {
-            mayhewCheckbox!.hidden = true;
+            mayhewContainer!.hidden = true;
+            mayhewCheckbox.checked = false;
         }
     });
 
