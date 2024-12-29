@@ -417,6 +417,7 @@ async function addVersesToDatabase(dict: LineDict) {
 
     let massColumns: string[] = ['first_edition', 'second_edition', 'mayhew', 'zeroth_edition'];
     if (editionColumn in massColumns) {
+        console.log(editionColumn + "in database");
         for (const verseID of dict.ids) {
             let newID = reprocessID(verseID, editionColumn);
             let chapter = dict.addresses[verseID].chapter;
