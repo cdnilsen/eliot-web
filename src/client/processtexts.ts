@@ -408,7 +408,7 @@ async function addVersesToDatabase(dict: LineDict) {
             if (result.status !== 'success') {
                 console.error(`Error adding verse ${verseID}:`, result.error);
             } else {
-                console.log("Added verse " + chapter.toString() + ":" + verse.toString() + " to " + editionColumn);
+                //console.log("Added verse " + chapter.toString() + ":" + verse.toString() + " to " + editionColumn);
             }
         } catch (error) {
             console.error(`Error adding verse ${verseID}:`, error);
@@ -421,14 +421,18 @@ async function addVersesToDatabase(dict: LineDict) {
     //console.log(editionColumn.trim());
     //console.log(editionColumn.trim() in massColumns);
     if (massColumns.includes(editionColumn.trim())) {
-        console.log(editionColumn + "in database");
+        console.log(editionColumn + " in database");
         for (const verseID of dict.ids) {
             let newID = reprocessID(verseID, editionColumn);
             let chapter = dict.addresses[verseID].chapter;
             let verse = dict.addresses[verseID].verse;
             let text = dict.lines[verseID];
 
-            console.log(newID + ": "+ text);
+            let splitText = text.split(" ");
+
+            console.log(splitText);
+
+            //console.log(newID + ": "+ text);
         }
     }
 }
