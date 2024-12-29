@@ -207,6 +207,23 @@ function isValidEdition(edition: string): edition is EditionName {
 */
 
 
+function reprocessID(id: string, column: string): string {
+    let strippedID = id.slice(1);
+    let dict = {
+        'first_edition': '2',
+        'second_edition': '3',
+        'mayhew': '4',
+        'zeroth_edition': '5'
+    }
+
+    if (column in dict) {
+        return dict[column] + strippedID;
+    } else {
+        return id;
+    }
+}
+
+
 function isBookName(name: string): name is BookName {
     return name in bookToIDDict;
 }
@@ -366,6 +383,7 @@ async function addVersesToDatabase(dict: LineDict) {
     //console.log(editionColumn);
     //console.log(bookName);
     
+    //Adds verses to the database
     for (const verseID of dict.ids) {
         let chapter = dict.addresses[verseID].chapter;
         let verse = dict.addresses[verseID].verse;
@@ -396,6 +414,18 @@ async function addVersesToDatabase(dict: LineDict) {
             console.error(`Error adding verse ${verseID}:`, error);
         }
     }
+
+    let massColumns: string[] = ['first_edition', 'second_edition', 'mayhew', 'zeroth_edition'];
+    if (editionColumn in massColumns) {
+        for (const verseID of dict.ids) {
+            let newID = reprocessID(verseID, editionColumn);
+            let chapter = dict.addresses[verseID].chapter;
+            let verse = dict.addresses[verseID].verse;
+            let text = dict.lines[verseID];
+
+            console.log(newID + ": "+ text);
+        }
+    }
 }
 
 
@@ -422,7 +452,7 @@ async function processSelectedFiles(bookDict: BookSectionDict) {
                             if (content) {
                                 let lineDict = processFile(content, edition as EditionName, book);
                                 if (lineDict && lineDict.allLinesValid) {
-                                    console.log(lineDict);
+                                    //console.log(lineDict);
                                     await addVersesToDatabase(lineDict);
                                 }
                             }
