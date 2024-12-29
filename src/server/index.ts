@@ -151,6 +151,7 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
+
 app.get('/chapter/:bookID/:chapter', wrapAsync(async (req, res) => {
     const { bookID, chapter } = req.params;
     const { editions } = req.query; // comma-separated list of editions

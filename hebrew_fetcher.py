@@ -1,79 +1,138 @@
-# This is a program to fetch the Hebrew from the old repository and turn it into, more or less, HTML. It is going to be frickin ugly.
-
-import os
+import xml.etree.ElementTree as ET
+import re
 import unicodedata
-
-sourceFolder = '../eliotweb (old)/Hebrew XML/'
-allFiles = os.listdir(sourceFolder)
+import os
 
 
+def normalize_hebrew(text: str) -> str:
+    """
+    Normalize Hebrew text by removing cantillation marks while preserving niqqud (vowel points).
+    Also handles final forms and other normalizations.
+    """
+    # First, decompose the characters to separate base letters from diacritics
+    decomposed = unicodedata.normalize('NFD', text)
+    
+    # Remove only cantillation marks, keeping niqqud
+    # Cantillation marks: 0x0591-0x05AF
+    # Keeping niqqud (0x05B0-0x05BC), dagesh/mapiq/shuruq (0x05BC), meteg (0x05BD), and rafe (0x05BF)
+    cleaned = ''.join(c for c in decomposed if not (0x0591 <= ord(c) <= 0x05AF))
+    
+    # Normalize back to composed form
+    normalized = unicodedata.normalize('NFC', cleaned)
+    
+    # Remove other special characters and whitespace
+    normalized = re.sub(r'[\u0027\u2019\u05BE\u05C0\u05C3\u05C6\s]', '', normalized)
+    
+    # Handle final forms explicitly if needed
+    final_forms = {
+        'ך': 'כ',
+        'ם': 'מ',
+        'ן': 'נ',
+        'ף': 'פ',
+        'ץ': 'צ'
+    }
+    for final, regular in final_forms.items():
+        normalized = normalized.replace(final, regular)
+    
+    return normalized
 
-            
-def normalizeWord(word):
-    return unicodedata.normalize("NFKD", word).encode("ascii", "ignore").decode("utf-8").strip();
 
-def grabHapaxes(book):
-    hapaxDict = {}
-    hapaxList = '../eliotweb (old)/OTHapaxList.txt'
-    hapaxLines = open(hapaxList, 'r', encoding="utf-8").readlines()
+def extract_hebrew(text):
+    text = text.strip()
+    text = text[text.find(">")+1:text.find("<", text.find(">")+1)]
+    return normalize_hebrew(text)
+
+def fetchHapaxLine(book):
+    path = '../eliotweb (old)/OTHapaxList.txt'
+    lines = open(path, 'r', encoding='utf-8').readlines()
+
+    for line in lines:
+        if line.startswith(book):
+            return line.strip().split('|')[1].strip()
+        
+    return None
+
+def fetchHapaxes(book):
+    line = fetchHapaxLine(book)
+    allHapaxes = line.split(',')
 
     finalList = []
-    for line in hapaxLines:
-        splitLine = line.split("|")
-        bookName = splitLine[0].strip()
-    
-        if bookName == book:
-            rawHapaxes = splitLine[1].strip().split(",")
-            for hapax in rawHapaxes:
-                finalList.append(normalizeWord(hapax))
-
+    for hapax in allHapaxes:
+        finalList.append(normalize_hebrew(hapax))
     return finalList
-                
 
-def splitXMLLine(line, hapaxDict, currentChapter, currentVerse):
-    allTags = ["w", "q", "k"]
-    line = line.strip()
-    for tag in allTags:
-        if "<" + tag + ">" in line:
-            splitLine = line.split("<" + tag + ">")
-            for word in splitLine:
-                if "</" + tag + ">" in word:
-                    splitWord = word.split("</" + tag + ">")
-                    word = normalizeWord(splitWord[0])
-                    if word in hapaxDict:
-                        hapaxDict[word] = True
-                        if (tag == "q"):
-                            print(line)
-                            print("Hapax qere at " + currentChapter + "." + currentVerse + ": " + word)
-                        elif (tag == "k"):
-                            print("Hapax ketiv at " + currentChapter + "." + currentVerse + ": " + word)
-    if line.strip().startswith("<c n="):
-        #print(line)
-        currentChapter = line.strip()
-        #print(currentChapter)
-    if line.strip().startswith("<v n="):
-        #print(line)
-        currentVerse = line.strip()
+def fetchHebrew(book):
+    path = '../eliotweb (old)/Hebrew XML/' + book + '.xml'
+    lines = open(path, 'r', encoding='utf-8').readlines()
+    hapaxes = fetchHapaxes(book)
+    originalHapaxList = len(hapaxes)
+    foundHapaxCounter = 0
+    foundHapaxes = []
+    for rawLine in lines:
+        line = rawLine.strip()
+        tags = ["<w>", "<k>", "<q>"]
+        for (i, tag) in enumerate(tags):
+            if line.startswith(tag):
+                line = extract_hebrew(rawLine)
+                for hapax in hapaxes:
+                    if hapax in line:
+                        foundHapaxCounter += 1
+                        foundHapaxes.append(hapax)
+
+    if (len(hapaxes) != foundHapaxCounter):
+        print("Found", foundHapaxCounter, "hapaxes in", book)
+        print("Should have found", len(hapaxes), "hapaxes in", book)
+
+        for hapax in hapaxes:
+            if hapax not in foundHapaxes:
+                print(hapax, "not found in", book)
+                        
 
 
-def grabXML(book):
-    hapaxList = grabHapaxes(book)
-    hapaxDict = {}
-    currentChapter = ""
-    currentVerse = ""
-    for hapax in hapaxList:
-        hapaxDict[hapax] = False
-    for file in allFiles:
-        if book in file:
-            xmlLines = open(sourceFolder + file, 'r', encoding="utf-8").readlines()
-            for line in xmlLines:
-                #print(line)
-                splitXMLLine(line, hapaxDict, currentChapter, currentVerse)
+#fetchHebrew('Song of Songs')
 
-    for hapax in hapaxDict:
-        if hapaxDict[hapax] == False:
-            print(hapax + " is not in the text!")
-                
+allBooks = [
+    "Genesis",
+    "Exodus",
+    "Leviticus",
+    "Numbers",
+    "Deuteronomy",
+    "Joshua",
+    "Judges",
+    "Ruth",
+    "1 Samuel",
+    "2 Samuel",
+    "1 Kings",
+    "2 Kings",
+    "1 Chronicles",
+    "2 Chronicles",
+    "Ezra",
+    "Nehemiah",
+    "Esther",
+    "Job",
+    "Psalms",
+    "Proverbs",
+    "Ecclesiastes",
+    "Song of Songs",
+    "Isaiah",
+    "Jeremiah",
+    "Lamentations",
+    "Ezekiel",
+    "Daniel",
+    "Hosea",
+    "Joel",
+    "Amos",
+    "Obadiah",
+    "Jonah",
+    "Micah",
+    "Nahum",
+    "Habakkuk",
+    "Zephaniah",
+    "Haggai",
+    "Zechariah",
+    "Malachi"
+    ]
 
-grabHapaxes("Song of Songs")
-grabXML("Song of Songs")
+for book in allBooks:
+    fetchHebrew(book)
+    print("\n\n")

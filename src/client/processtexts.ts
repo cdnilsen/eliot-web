@@ -188,12 +188,15 @@ const validEditions: EditionName[] = [
 
 
 //OK, start in on the word processing
-/*
+
 function editionIDNumber(id: string, edition: EditionName): string {
     let strippedID = id.slice(1);
     return editionToNumberDict[edition] + strippedID;
 }
-*/
+
+function processWordsInVerse(verse: string) {
+
+}
 
 
 
@@ -418,8 +421,8 @@ async function processSelectedFiles(bookDict: BookSectionDict) {
                             if (content) {
                                 let lineDict = processFile(content, edition as EditionName, book);
                                 if (lineDict && lineDict.allLinesValid) {
+                                    console.log(lineDict);
                                     await addVersesToDatabase(lineDict);
-                                    
                                 }
                             }
                         }
