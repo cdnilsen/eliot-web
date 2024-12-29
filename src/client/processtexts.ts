@@ -38,6 +38,10 @@ let editionToNumberDict: Record<Edition, string> = {
     "grebrew": "7"
 }
 
+function print(text: string) {
+    console.log(text);
+}
+
 
 type BookSectionDict = {
     [key: string]: stringToStringListDict
@@ -205,6 +209,34 @@ function isValidEdition(edition: string): edition is EditionName {
     return validEditions.includes(edition as EditionName);
 }
 */
+
+
+function cleanWord(word: string) {
+
+    if (word.startsWith("OO")) {
+        word = "8" + word.slice(2);
+    }
+    word = word.toLowerCase();
+    let punctuation = [".", ",", ";", ":", "!", "?", "(", ")", "[", "]", "{", "}", "<", ">", "\"", "'", "“", "”", "‘", "’", "—", "–", "…", "·"];
+    for (let i=0; i < punctuation.length; i++) {
+        word = word.replace(punctuation[i], "");
+    }
+    return word;
+}
+
+function getVerseWordDict(wordList: string[]) {
+    let dict = {};
+
+    for (let i=0; i < wordList.length; i++) {
+        let word = cleanWord(wordList[i]);
+        if (word in dict) {
+            dict[word] += 1;
+        } else {
+            dict[word] = 1;
+        }
+    }
+    return dict;
+}
 
 
 function reprocessID(id: string, column: string): string {
@@ -429,8 +461,10 @@ async function addVersesToDatabase(dict: LineDict) {
             let text = dict.lines[verseID];
 
             let splitText = text.split(" ");
-
             console.log(splitText);
+
+            let cleanedDict = getVerseWordDict(splitText);
+            console.log(cleanedDict);
 
             //console.log(newID + ": "+ text);
         }
