@@ -417,6 +417,7 @@ async function addVersesToDatabase(dict: LineDict) {
 
     let massColumns: string[] = ['first_edition', 'second_edition', 'mayhew', 'zeroth_edition'];
 
+    console.log(typeof editionColumn);
     console.log(editionColumn.trim());
     console.log(editionColumn.trim() in massColumns);
     if (editionColumn in massColumns) {
