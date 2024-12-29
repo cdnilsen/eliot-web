@@ -416,6 +416,9 @@ async function addVersesToDatabase(dict: LineDict) {
     }
 
     let massColumns: string[] = ['first_edition', 'second_edition', 'mayhew', 'zeroth_edition'];
+
+    console.log(editionColumn);
+    console.log(editionColumn in massColumns);
     if (editionColumn in massColumns) {
         console.log(editionColumn + "in database");
         for (const verseID of dict.ids) {
