@@ -208,15 +208,15 @@ function isValidEdition(edition: string): edition is EditionName {
 
 
 function reprocessID(id: string, column: string): string {
-    let strippedID = id.slice(1);
     let dict = {
         'first_edition': '2',
         'second_edition': '3',
         'mayhew': '4',
         'zeroth_edition': '5'
     }
-
-    if (column in dict) {
+    
+    if ((column in dict) && (id.length > 0)) {
+        let strippedID = id.slice(1);
         return dict[column] + strippedID;
     } else {
         return id;
