@@ -159,19 +159,17 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
         const query = await client.query(
             `SELECT words, counts 
              FROM verses_to_words 
-             WHERE verseid = $1`,
+             WHERE verseid = $1::bigint`,  // Add explicit type cast
             [verseID]
         );
         
         if (query.rows.length === 0) {
-            // Return empty arrays if no matching verse found
             res.json([{ words: [], counts: [] }]);
         } else {
             res.json(query.rows);
         }
     } catch (err) {
         console.error('Error fetching verse words:', err);
-        // Return empty arrays instead of error response
         res.json([{ words: [], counts: [] }]);
     }
 }));
@@ -192,10 +190,6 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
         const verseExists = checkVerse.rows[0].exists;
         
         if (!verseExists) {
-            // Format arrays properly for PostgreSQL
-            const formattedWords = `{${words.map((w: string) => `"${w}"`).join(',')}}`;
-            const formattedCounts = `{${counts.join(',')}}`;
-            
             await client.query(
                 `INSERT INTO verses_to_words (verseid, words, counts) 
                  VALUES ($1::bigint, $2::varchar[], $3::int[])`,
