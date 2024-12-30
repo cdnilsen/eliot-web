@@ -558,7 +558,7 @@ async function addWordsToTable(object: WordChangeObject) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                verseID: id,
+                verseID: parseInt(id),
                 words: addWords,
                 counts: addWords.map(word => addWordCounts[word] || 1) // Get count for each word
             })
