@@ -417,22 +417,34 @@ type WordCountDict = {
 async function checkVerseWordsCounts(verseID: number): Promise<WordCountDict> {
     try {
         const response = await fetch('/verse_words?verseID=' + verseID);
+        if (!response.ok) {
+            console.error(`Server error ${response.status} checking verse ${verseID}`);
+            return {
+                words: [],
+                counts: []
+            };
+        }
         const result = await response.json();
         
-        // Return the words and counts arrays from the first result
-        // If empty/error, the backend will give us empty arrays
-        let dict: WordCountDict = {
+        // Make sure we have a valid result with the expected structure
+        if (!result || !result[0] || !Array.isArray(result[0].words) || !Array.isArray(result[0].counts)) {
+            console.error(`Invalid response format for verse ${verseID}`);
+            return {
+                words: [],
+                counts: []
+            };
+        }
+
+        return {
             words: result[0].words,
             counts: result[0].counts
-        }
-        return dict;
-
+        };
     } catch (error) {
         console.error(`Error checking verse ${verseID}:`, error);
         return {
             words: [],
             counts: []
-        }; // Return empty arrays in case of error
+        };
     }
 }
 
