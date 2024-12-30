@@ -184,30 +184,30 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
         const checkVerse = await client.query(
             `SELECT EXISTS (
                 SELECT 1 FROM verses_to_words 
-                WHERE verseid = $1
+                WHERE verseid = $1::bigint
             )`,
-            [verseID.toString()]  // Ensure verseID is a string
+            [verseID]
         );
         
         const verseExists = checkVerse.rows[0].exists;
         
         if (!verseExists) {
             // Format arrays properly for PostgreSQL
-            const formattedWords = `{${words.map(w => `"${w}"`).join(',')}}`;
+            const formattedWords = `{${words.map((w: string) => `"${w}"`).join(',')}}`;
             const formattedCounts = `{${counts.join(',')}}`;
             
             await client.query(
                 `INSERT INTO verses_to_words (verseid, words, counts) 
-                 VALUES ($1, $2::varchar[], $3::int[])`,
-                [verseID.toString(), words, counts]
+                 VALUES ($1::bigint, $2::varchar[], $3::int[])`,
+                [verseID, words, counts]
             );
         } else {
             // Get current words and counts
             const currentArrays = await client.query(
                 `SELECT words, counts 
                  FROM verses_to_words 
-                 WHERE verseid = $1`,
-                [verseID.toString()]
+                 WHERE verseid = $1::bigint`,
+                [verseID]
             );
             
             let currentWords = currentArrays.rows[0].words;
@@ -227,8 +227,8 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
             await client.query(
                 `UPDATE verses_to_words 
                  SET words = $1::varchar[], counts = $2::int[] 
-                 WHERE verseid = $3`,
-                [currentWords, currentCounts, verseID.toString()]
+                 WHERE verseid = $3::bigint`,
+                [currentWords, currentCounts, verseID]
             );
         }
 
