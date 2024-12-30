@@ -152,7 +152,6 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
 }));
 
 
-// Update verse_words endpoint to properly handle array types
 app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
     const { verseID } = req.query;
     
@@ -161,7 +160,7 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
             `SELECT words, counts 
              FROM verses_to_words 
              WHERE verseid = $1`,
-            [parseInt(verseID as string, 10)]
+            [verseID]  // No type conversion needed for the WHERE clause
         );
         
         if (query.rows.length === 0) {
@@ -175,7 +174,6 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
-// Update add_mass_word endpoint with proper array handling
 app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words, counts } = req.body;
     
@@ -189,8 +187,12 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
 
         if (!verseExists) {
             await client.query(
-                'INSERT INTO verses_to_words (verseid, words, counts) VALUES ($1, $2::varchar[], $3::int2[])',
-                [verseID.toString(), words, counts.map((c: number) => parseInt(c.toString()))]
+                'INSERT INTO verses_to_words (verseid, words, counts) VALUES ($1, $2, $3)',
+                [
+                    verseID,
+                    `{${words.map(w => `"${w}"`).join(',')}}`,
+                    `{${counts.join(',')}}`
+                ]
             );
         } else {
             const currentArrays = await client.query(
@@ -205,15 +207,19 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
                 const existingIndex = currentWords.indexOf(word);
                 if (existingIndex === -1) {
                     currentWords.push(word);
-                    currentCounts.push(parseInt(counts[index]));
+                    currentCounts.push(parseInt(counts[index].toString()));
                 } else {
-                    currentCounts[existingIndex] += parseInt(counts[index]);
+                    currentCounts[existingIndex] += parseInt(counts[index].toString());
                 }
             });
 
             await client.query(
-                'UPDATE verses_to_words SET words = $1::varchar[], counts = $2::int2[] WHERE verseid = $3',
-                [currentWords, currentCounts, verseID]
+                'UPDATE verses_to_words SET words = $1, counts = $2 WHERE verseid = $3',
+                [
+                    `{${currentWords.map(w => `"${w}"`).join(',')}}`,
+                    `{${currentCounts.join(',')}}`,
+                    verseID
+                ]
             );
         }
 
@@ -225,7 +231,6 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
-// Update remove_mass_word endpoint with proper array handling
 app.post('/remove_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words } = req.body;
     
@@ -258,9 +263,13 @@ app.post('/remove_mass_word', express.json(), wrapAsync(async (req, res) => {
 
         await client.query(
             `UPDATE verses_to_words 
-             SET words = $1::varchar[], counts = $2::int2[] 
+             SET words = $1, counts = $2 
              WHERE verseid = $3`,
-            [currentWords, currentCounts, verseID]
+            [
+                `{${currentWords.map(w => `"${w}"`).join(',')}}`,
+                `{${currentCounts.join(',')}}`,
+                verseID
+            ]
         );
 
         res.json({ status: 'success' });
