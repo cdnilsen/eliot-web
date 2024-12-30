@@ -152,6 +152,42 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
 }));
 
 
+app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
+    const { verseID } = req.query;
+    
+    try {
+        const query = await client.query(
+            `SELECT words, counts 
+             FROM verses_to_words 
+             WHERE verseid = $1`,
+            [verseID]
+        );
+        
+        if (query.rows.length === 0) {
+            // Return empty arrays if no matching verse found
+            res.json([{ words: [], counts: [] }]);
+        } else {
+            res.json(query.rows);
+        }
+    } catch (err) {
+        console.error('Error fetching verse words:', err);
+        // Return empty arrays instead of error response
+        res.json([{ words: [], counts: [] }]);
+    }
+}));
+
+app.post('/words_mass', express.json(), wrapAsync(async (req, res) => {
+    const { wordDict } = req.body;
+    
+    try {
+
+    } catch (err) {
+    
+    
+    }
+
+}));
+
 app.get('/chapter/:bookID/:chapter', wrapAsync(async (req, res) => {
     const { bookID, chapter } = req.params;
     const { editions } = req.query; // comma-separated list of editions

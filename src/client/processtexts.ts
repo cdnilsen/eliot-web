@@ -217,6 +217,7 @@ function cleanWord(word: string) {
         word = "8" + word.slice(2);
     }
     word = word.toLowerCase();
+    word = word.replace("ᴏᴅ", "od");
     let punctuation = [".", ",", ";", ":", "!", "?", "(", ")", "[", "]", "{", "}", "<", ">", "\"", "'", "“", "”", "‘", "’", "—", "–", "…", "·"];
     for (let i=0; i < punctuation.length; i++) {
         word = word.replace(punctuation[i], "");
@@ -408,6 +409,54 @@ async function fetchFile(filename: string) {
     }
 }
 
+type WordCountDict = {
+    words: string[],
+    counts: number[]
+}
+
+async function checkVerseWordsCounts(verseID: number): Promise<WordCountDict> {
+    try {
+        const response = await fetch('/verse_words?verseID=' + verseID);
+        const result = await response.json();
+        
+        // Return the words and counts arrays from the first result
+        // If empty/error, the backend will give us empty arrays
+        let dict: WordCountDict = {
+            words: result[0].words,
+            counts: result[0].counts
+        }
+        return dict;
+
+    } catch (error) {
+        console.error(`Error checking verse ${verseID}:`, error);
+        return {
+            words: [],
+            counts: []
+        }; // Return empty arrays in case of error
+    }
+}
+
+
+function checkVerseChanges(oldVerseDict: WordCountDict, newVerseDict: stringToIntDict): boolean {
+    let oldVerseWords = oldVerseDict.words;
+    if (oldVerseWords.length != Object.keys(newVerseDict).length) {
+        return true;
+    } else {
+        for (let i=0; i < oldVerseWords.length; i++) {
+            let word = oldVerseWords[i];
+            if (word in newVerseDict) {
+                if (oldVerseDict.counts[i] != newVerseDict[word]) {
+                    return true;
+                }
+            } else {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
 async function addVersesToDatabase(dict: LineDict) {
     let editionColumn = dict.column;
     let bookName = dict.bookName;
@@ -455,6 +504,7 @@ async function addVersesToDatabase(dict: LineDict) {
     if (massColumns.includes(editionColumn.trim())) {
         console.log(editionColumn + " in database");
         for (const verseID of dict.ids) {
+            let existingCountDict = await checkVerseWordsCounts(parseInt(verseID));
             let newID = reprocessID(verseID, editionColumn);
             let chapter = dict.addresses[verseID].chapter;
             let verse = dict.addresses[verseID].verse;
@@ -465,6 +515,15 @@ async function addVersesToDatabase(dict: LineDict) {
 
             let cleanedDict = getVerseWordDict(splitText);
             console.log(cleanedDict);
+
+            let changedWords = checkVerseChanges(existingCountDict, cleanedDict);
+
+            if (changedWords) {
+                console.log("Words changed in " + newID);
+
+            } else {
+
+            }
 
             //console.log(newID + ": "+ text);
         }
