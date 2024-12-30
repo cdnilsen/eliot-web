@@ -180,15 +180,18 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words, counts } = req.body;
     
     try {
-        // First, get the current arrays
-        const currentArrays = await client.query(
-            `SELECT words, counts 
-             FROM verses_to_words 
-             WHERE verseid = $1`,
+        // First, check if the verse exists
+        const checkVerse = await client.query(
+            `SELECT EXISTS (
+                SELECT 1 FROM verses_to_words 
+                WHERE verseid = $1
+            )`,
             [verseID]
         );
         
-        if (currentArrays.rows.length === 0) {
+        const verseExists = checkVerse.rows[0].exists;
+        
+        if (!verseExists) {
             // If verse doesn't exist, create new entry
             await client.query(
                 `INSERT INTO verses_to_words (verseid, words, counts) 
@@ -197,6 +200,13 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
             );
         } else {
             // Get current words and counts
+            const currentArrays = await client.query(
+                `SELECT words, counts 
+                 FROM verses_to_words 
+                 WHERE verseid = $1`,
+                [verseID]
+            );
+            
             let currentWords = currentArrays.rows[0].words;
             let currentCounts = currentArrays.rows[0].counts;
 
