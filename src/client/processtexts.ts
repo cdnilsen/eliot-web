@@ -436,24 +436,47 @@ async function checkVerseWordsCounts(verseID: number): Promise<WordCountDict> {
     }
 }
 
+type WordChangeObject = {
+    id: string,
+    removeWords: string[],
+    addWords: stringToIntDict,
+    changeWordCounts: stringToIntDict,
+    changeStuff: boolean
+}
 
-function checkVerseChanges(oldVerseDict: WordCountDict, newVerseDict: stringToIntDict): boolean {
+function getWordChanges(oldVerseDict: WordCountDict, newVerseDict: stringToIntDict, id: string): WordChangeObject {
+    let object: WordChangeObject = {
+        id: id,
+        removeWords: [],
+        addWords: {},
+        changeWordCounts: {},
+        changeStuff: false
+    }
+
     let oldVerseWords = oldVerseDict.words;
-    if (oldVerseWords.length != Object.keys(newVerseDict).length) {
-        return true;
-    } else {
-        for (let i=0; i < oldVerseWords.length; i++) {
-            let word = oldVerseWords[i];
-            if (word in newVerseDict) {
-                if (oldVerseDict.counts[i] != newVerseDict[word]) {
-                    return true;
-                }
-            } else {
-                return true;
+    let newVerseWords = Object.keys(newVerseDict);
+    for (let i=0; i < oldVerseWords.length; i++) {
+        let word = oldVerseWords[i];
+        if (word in newVerseDict) {
+            if (oldVerseDict.counts[i] != newVerseDict[word]) {
+                object.changeWordCounts[word] = newVerseDict[word];
+                object.changeStuff = true;
             }
+        } else {
+            object.removeWords.push(word);
+            object.changeStuff = true;
         }
     }
-    return false;
+
+    for (let j=0; j < newVerseWords.length; j++) {
+        let word = newVerseWords[j];
+        if (!(word in oldVerseDict.words)) {
+            object.addWords[word] = newVerseDict[word];
+            object.changeStuff = true;
+        }
+    }
+
+    return object;
 }
 
 
@@ -495,12 +518,40 @@ async function addVersesToDatabase(dict: LineDict) {
             console.error(`Error adding verse ${verseID}:`, error);
         }
     }
+}
 
+async function removeWordsFromTable(object: WordChangeObject) {
+    let removeWords = object.removeWords;
+    let verseID = object.id;
+    try {
+        const response = await fetch('/remove_mass_word', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                verseID: verseID,
+                words: removeWords
+            })
+        });
+        const result = await response.json();
+        if (result.status !== 'success') {
+            console.error(`Error removing words from verse ${verseID}:`, result.error);
+        } else {
+            console.log("Removed words from verse " + verseID);
+        }
+    } catch (error) {
+        console.error(`Error removing words from verse ${verseID}:`, error);
+    }
+}
+
+async function addWordsToTable() {
+
+}
+
+async function updateWordTable(dict: LineDict) {
     let massColumns: string[] = ['first_edition', 'second_edition', 'mayhew', 'zeroth_edition'];
-
-    //console.log(typeof editionColumn);
-    //console.log(editionColumn.trim());
-    //console.log(editionColumn.trim() in massColumns);
+    let editionColumn = dict.column;
     if (massColumns.includes(editionColumn.trim())) {
         console.log(editionColumn + " in database");
         for (const verseID of dict.ids) {
@@ -516,10 +567,20 @@ async function addVersesToDatabase(dict: LineDict) {
             let cleanedDict = getVerseWordDict(splitText);
             console.log(cleanedDict);
 
-            let changedWords = checkVerseChanges(existingCountDict, cleanedDict);
+            let changedWords = getWordChanges(existingCountDict, cleanedDict, newID);
 
-            if (changedWords) {
-                console.log("Words changed in " + newID);
+            if (changedWords.changeStuff) {
+                if (changedWords.removeWords.length > 0) {
+                    await removeWordsFromTable(changedWords);
+                }
+
+                let addWordList = Object.keys(changedWords.addWords);
+                if (addWordList.length > 0) {
+                    
+                }
+
+                console.log(changedWords);
+                
 
             } else {
 
@@ -528,6 +589,13 @@ async function addVersesToDatabase(dict: LineDict) {
             //console.log(newID + ": "+ text);
         }
     }
+
+}
+
+//Probably doesn't really need to  be its own function, but w/e
+async function processTextIntoDB(dict: LineDict) {
+    await addVersesToDatabase(dict);
+    await updateWordTable(dict);
 }
 
 
@@ -555,7 +623,7 @@ async function processSelectedFiles(bookDict: BookSectionDict) {
                                 let lineDict = processFile(content, edition as EditionName, book);
                                 if (lineDict && lineDict.allLinesValid) {
                                     //console.log(lineDict);
-                                    await addVersesToDatabase(lineDict);
+                                    await processTextIntoDB(lineDict);
                                 }
                             }
                         }

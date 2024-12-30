@@ -176,6 +176,61 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
+app.post('/remove_mass_word', express.json(), wrapAsync(async (req, res) => {
+    const { verseID, words } = req.body;
+    
+    try {
+        // First, get the current arrays
+        const currentArrays = await client.query(
+            `SELECT words, counts 
+             FROM verses_to_words 
+             WHERE verseid = $1`,
+            [verseID]
+        );
+        
+        if (currentArrays.rows.length === 0) {
+            res.status(404).json({ 
+                status: 'error', 
+                error: 'Verse not found' 
+            });
+            return;
+        }
+
+        // Get current words and counts
+        let currentWords = currentArrays.rows[0].words;
+        let currentCounts = currentArrays.rows[0].counts;
+
+        // Remove the specified words and their corresponding counts
+        words.forEach((word: string) => {
+            const index = currentWords.indexOf(word);
+            if (index !== -1) {
+                currentWords.splice(index, 1);
+                currentCounts.splice(index, 1);
+            }
+        });
+
+        //actually needs to update the mass_words table as well
+
+        // Update the database with the new arrays
+        await client.query(
+            `UPDATE verses_to_words 
+             SET words = $1, counts = $2 
+             WHERE verseid = $3`,
+            [currentWords, currentCounts, verseID]
+        );
+
+        res.json({ status: 'success' });
+        
+    } catch (err) {
+        console.error('Error removing words:', err);
+        res.status(500).json({ 
+            status: 'error', 
+            error: 'Error removing words', 
+            details: err.message 
+        });
+    }
+}));
+
 app.post('/words_mass', express.json(), wrapAsync(async (req, res) => {
     const { wordDict } = req.body;
     
