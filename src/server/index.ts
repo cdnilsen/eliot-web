@@ -155,40 +155,22 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
 app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
     const { verseID } = req.query;
     
-    if (!verseID) {
-        res.status(400).json([{ words: [], counts: [] }]);
-        return;
-    }
-    
     try {
         const query = await client.query(
             `SELECT words, counts 
              FROM verses_to_words 
              WHERE verseid = $1`,
-            [verseID]
+            [verseID]  // Just pass the number directly
         );
         
-        // Always return in the expected format
         if (query.rows.length === 0) {
-            res.json([{ 
-                words: [], 
-                counts: [] 
-            }]);
+            res.json([{ words: [], counts: [] }]);
         } else {
-            // Ensure the response has arrays even if the database returned nulls
-            const row = query.rows[0];
-            res.json([{
-                words: row.words || [],
-                counts: row.counts || []
-            }]);
+            res.json(query.rows);
         }
     } catch (err) {
         console.error('Error fetching verse words:', err);
-        // Return empty arrays on error
-        res.status(500).json([{ 
-            words: [], 
-            counts: [] 
-        }]);
+        res.json([{ words: [], counts: [] }]);
     }
 }));
 
