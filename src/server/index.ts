@@ -152,6 +152,7 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
 }));
 
 
+// Update verse_words endpoint to properly handle array types
 app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
     const { verseID } = req.query;
     
@@ -159,8 +160,8 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
         const query = await client.query(
             `SELECT words, counts 
              FROM verses_to_words 
-             WHERE verseid = $1::bigint`,  // Parse string to bigint
-            [parseInt(verseID as string, 10)]  // Explicitly parse string to number
+             WHERE verseid = $1`,
+            [parseInt(verseID as string, 10)]
         );
         
         if (query.rows.length === 0) {
@@ -174,22 +175,22 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
+// Update add_mass_word endpoint with proper array handling
 app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words, counts } = req.body;
     
     try {
-        // Simple check first
         const checkVerse = await client.query(
             'SELECT verseid FROM verses_to_words WHERE verseid = $1',
-            [verseID]  // Already a number from the client
+            [verseID]
         );
         
-        const verseExists = (checkVerse.rowCount ?? 0) > 0; 
+        const verseExists = (checkVerse.rowCount ?? 0) > 0;
 
         if (!verseExists) {
             await client.query(
-                'INSERT INTO verses_to_words (verseid, words, counts) VALUES ($1, $2, $3)',
-                [verseID, words, counts]
+                'INSERT INTO verses_to_words (verseid, words, counts) VALUES ($1, $2::varchar[], $3::int2[])',
+                [verseID.toString(), words, counts.map((c: number) => parseInt(c.toString()))]
             );
         } else {
             const currentArrays = await client.query(
@@ -204,15 +205,15 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
                 const existingIndex = currentWords.indexOf(word);
                 if (existingIndex === -1) {
                     currentWords.push(word);
-                    currentCounts.push(counts[index]);
+                    currentCounts.push(parseInt(counts[index]));
                 } else {
-                    currentCounts[existingIndex] += counts[index];
+                    currentCounts[existingIndex] += parseInt(counts[index]);
                 }
             });
 
             await client.query(
-                'UPDATE verses_to_words SET words = $2, counts = $3 WHERE verseid = $1',
-                [verseID, currentWords, currentCounts]
+                'UPDATE verses_to_words SET words = $1::varchar[], counts = $2::int2[] WHERE verseid = $3',
+                [currentWords, currentCounts, verseID]
             );
         }
 
@@ -224,12 +225,11 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
-
+// Update remove_mass_word endpoint with proper array handling
 app.post('/remove_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words } = req.body;
     
     try {
-        // First, get the current arrays
         const currentArrays = await client.query(
             `SELECT words, counts 
              FROM verses_to_words 
@@ -245,11 +245,9 @@ app.post('/remove_mass_word', express.json(), wrapAsync(async (req, res) => {
             return;
         }
 
-        // Get current words and counts
         let currentWords = currentArrays.rows[0].words;
         let currentCounts = currentArrays.rows[0].counts;
 
-        // Remove the specified words and their corresponding counts
         words.forEach((word: string) => {
             const index = currentWords.indexOf(word);
             if (index !== -1) {
@@ -258,12 +256,9 @@ app.post('/remove_mass_word', express.json(), wrapAsync(async (req, res) => {
             }
         });
 
-        //actually needs to update the mass_words table as well
-
-        // Update the database with the new arrays
         await client.query(
             `UPDATE verses_to_words 
-             SET words = $1, counts = $2 
+             SET words = $1::varchar[], counts = $2::int2[] 
              WHERE verseid = $3`,
             [currentWords, currentCounts, verseID]
         );
