@@ -184,7 +184,7 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
                 SELECT 1 FROM verses_to_words 
                 WHERE verseid = $1
             )`,
-            [verseID]  // Remove ::bigint cast here since we're comparing single values
+            [verseID]
         );
         
         const verseExists = checkVerse.rows[0].exists;
@@ -192,11 +192,10 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
         if (!verseExists) {
             await client.query(
                 `INSERT INTO verses_to_words (verseid, words, counts) 
-                 VALUES ($1, $2, $3)`,
+                 VALUES ($1, ARRAY[$2]::varchar[], ARRAY[$3]::int[])`,
                 [verseID, words, counts]
             );
         } else {
-            // Get current words and counts
             const currentArrays = await client.query(
                 `SELECT words, counts 
                  FROM verses_to_words 
@@ -207,7 +206,6 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
             let currentWords = currentArrays.rows[0].words;
             let currentCounts = currentArrays.rows[0].counts;
 
-            // Add each new word with its count
             words.forEach((word: string, index: number) => {
                 const existingIndex = currentWords.indexOf(word);
                 if (existingIndex === -1) {
@@ -220,7 +218,7 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
 
             await client.query(
                 `UPDATE verses_to_words 
-                 SET words = $1, counts = $2 
+                 SET words = $1::varchar[], counts = $2::int[] 
                  WHERE verseid = $3`,
                 [currentWords, currentCounts, verseID]
             );
