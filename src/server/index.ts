@@ -160,7 +160,7 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
             `SELECT words, counts 
              FROM verses_to_words 
              WHERE verseid = $1`,
-            [verseID]  // No type conversion needed for the WHERE clause
+            [verseID]
         );
         
         if (query.rows.length === 0) {
@@ -190,7 +190,7 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
                 'INSERT INTO verses_to_words (verseid, words, counts) VALUES ($1, $2, $3)',
                 [
                     verseID,
-                    `{${words.map(w => `"${w}"`).join(',')}}`,
+                    `{${words.map((w: string) => `"${w}"`).join(',')}}`,
                     `{${counts.join(',')}}`
                 ]
             );
@@ -216,7 +216,7 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
             await client.query(
                 'UPDATE verses_to_words SET words = $1, counts = $2 WHERE verseid = $3',
                 [
-                    `{${currentWords.map(w => `"${w}"`).join(',')}}`,
+                    `{${currentWords.map((w: string) => `"${w}"`).join(',')}}`,
                     `{${currentCounts.join(',')}}`,
                     verseID
                 ]
@@ -266,7 +266,7 @@ app.post('/remove_mass_word', express.json(), wrapAsync(async (req, res) => {
              SET words = $1, counts = $2 
              WHERE verseid = $3`,
             [
-                `{${currentWords.map(w => `"${w}"`).join(',')}}`,
+                `{${currentWords.map((w: string) => `"${w}"`).join(',')}}`,
                 `{${currentCounts.join(',')}}`,
                 verseID
             ]
