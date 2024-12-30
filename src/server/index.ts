@@ -184,7 +184,7 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
 
 app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words, counts } = req.body;
-    
+
     try {
         console.log('Adding words:', {
             verseID,
@@ -193,22 +193,20 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
             counts: counts.length
         });
         
+        // Simplify the EXISTS query
         const checkVerse = await client.query(
-            `SELECT EXISTS (
-                SELECT 1 FROM verses_to_words 
-                WHERE verseid = $1::int8
-            )`,
+            'SELECT 1 FROM verses_to_words WHERE verseid = $1',
             [verseID]
         );
         
-        const verseExists = checkVerse.rows[0].exists;
+        const verseExists = (checkVerse.rowCount ?? 0) > 0;
         console.log('Verse exists:', verseExists);
 
         if (!verseExists) {
             console.log('Inserting new verse with words');
             const query = `
                 INSERT INTO verses_to_words (verseid, words, counts) 
-                VALUES ($1::int8, $2::varchar[], $3::smallint[])
+                VALUES ($1, $2, $3)
             `;
             
             await client.query(query, [verseID, words, counts]);
