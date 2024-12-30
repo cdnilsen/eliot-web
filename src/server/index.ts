@@ -176,11 +176,10 @@ type MassWordsCountObject = {
     editions: number
 }
 
+type EditionKey = "first" | "second" | "mayhew" | "zeroth";
+
 type MassEditionTable = {
-    "first": number[],
-    "second": number[],
-    "mayhew": number[],
-    "zeroth": number[]
+    [K in EditionKey]: number[]
 }
 
 type stringToStringDict = {
@@ -198,7 +197,7 @@ function zipMassWordsLists(object: MassWordsTableResult): MassWordsCountObject {
         editions: object.editions
     };
 
-    let numToEditionTable: stringToStringDict = {
+    const numToEditionTable: Record<string, EditionKey> = {
         "2": "first",
         "3": "second",
         "4": "mayhew",
@@ -217,10 +216,11 @@ function zipMassWordsLists(object: MassWordsTableResult): MassWordsCountObject {
         let counts = object.counts[i];
 
         let verseEdition = numToEditionTable[verse.toString()[0]];
-        editionTable[verseEdition].push(verse);
-        result.counts[verseEdition][verse.toString()] = counts;
+        if (verseEdition) {
+            editionTable[verseEdition].push(verse);
+            result.counts[verseEdition][verse.toString()] = counts;
+        }
     }
-
 
     return result;
 }
