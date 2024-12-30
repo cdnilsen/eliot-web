@@ -156,20 +156,28 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
     const { verseID } = req.query;
     
     try {
+        console.log('Fetching verse words for ID:', verseID, 'Type:', typeof verseID);
+        
         const query = await client.query(
-            `SELECT words, counts 
+            `SELECT words::varchar[], counts::smallint[] 
              FROM verses_to_words 
-             WHERE verseid = $1::bigint`,
+             WHERE verseid = $1::int8`,
             [verseID]
         );
         
         if (query.rows.length === 0) {
+            console.log('No rows found for verse ID:', verseID);
             res.json([{ words: [], counts: [] }]);
         } else {
+            console.log('Found data:', query.rows[0]);
             res.json(query.rows);
         }
     } catch (err) {
-        console.error('Error fetching verse words:', err);
+        console.error('Error fetching verse words:', {
+            verseID,
+            typeOfVerseID: typeof verseID,
+            error: err
+        });
         res.json([{ words: [], counts: [] }]);
     }
 }));
@@ -178,34 +186,48 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words, counts } = req.body;
     
     try {
-        // First, check if the verse exists
+        console.log('Adding words:', {
+            verseID,
+            typeOfVerseID: typeof verseID,
+            words: words.length,
+            counts: counts.length
+        });
+        
         const checkVerse = await client.query(
             `SELECT EXISTS (
                 SELECT 1 FROM verses_to_words 
-                WHERE verseid = $1::bigint
+                WHERE verseid = $1::int8
             )`,
             [verseID]
         );
         
         const verseExists = checkVerse.rows[0].exists;
-        
+        console.log('Verse exists:', verseExists);
+
         if (!verseExists) {
+            console.log('Inserting new verse with words');
             const query = `
                 INSERT INTO verses_to_words (verseid, words, counts) 
-                VALUES ($1::bigint, $2::text[], $3::integer[])
+                VALUES ($1::int8, $2::varchar[], $3::smallint[])
             `;
             
             await client.query(query, [verseID, words, counts]);
         } else {
+            console.log('Updating existing verse');
             const currentArrays = await client.query(
-                `SELECT words, counts 
+                `SELECT words::varchar[], counts::smallint[] 
                  FROM verses_to_words 
-                 WHERE verseid = $1::bigint`,
+                 WHERE verseid = $1::int8`,
                 [verseID]
             );
             
             let currentWords = currentArrays.rows[0].words;
             let currentCounts = currentArrays.rows[0].counts;
+
+            console.log('Current state:', {
+                wordCount: currentWords.length,
+                countLength: currentCounts.length
+            });
 
             words.forEach((word: string, index: number) => {
                 const existingIndex = currentWords.indexOf(word);
@@ -217,10 +239,15 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
                 }
             });
 
+            console.log('Updated state:', {
+                wordCount: currentWords.length,
+                countLength: currentCounts.length
+            });
+
             const updateQuery = `
                 UPDATE verses_to_words 
-                SET words = $2::text[], counts = $3::integer[]
-                WHERE verseid = $1::bigint
+                SET words = $2::varchar[], counts = $3::smallint[]
+                WHERE verseid = $1::int8
             `;
             
             await client.query(updateQuery, [verseID, currentWords, currentCounts]);
@@ -229,9 +256,16 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
         res.json({ status: 'success' });
         
     } catch (err) {
-        console.error('Error adding words (full details):', {
+        console.error('Detailed error:', {
             error: err,
-            input: { verseID, words, counts }
+            input: {
+                verseID,
+                typeOfVerseID: typeof verseID,
+                wordCount: words.length,
+                countLength: counts.length,
+                sampleWords: words.slice(0, 3),
+                sampleCounts: counts.slice(0, 3)
+            }
         });
         res.status(500).json({ 
             status: 'error', 
