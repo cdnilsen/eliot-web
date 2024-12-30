@@ -184,7 +184,7 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
 
 app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words, counts } = req.body;
-
+    
     try {
         console.log('Adding words:', {
             verseID,
@@ -193,9 +193,9 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
             counts: counts.length
         });
         
-        // Simplify the EXISTS query
+        // Cast verseID explicitly in the query
         const checkVerse = await client.query(
-            'SELECT 1 FROM verses_to_words WHERE verseid = $1',
+            'SELECT 1 FROM verses_to_words WHERE verseid = CAST($1 AS BIGINT)',
             [verseID]
         );
         
@@ -206,26 +206,21 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
             console.log('Inserting new verse with words');
             const query = `
                 INSERT INTO verses_to_words (verseid, words, counts) 
-                VALUES ($1, $2, $3)
+                VALUES (CAST($1 AS BIGINT), $2, $3)
             `;
             
             await client.query(query, [verseID, words, counts]);
         } else {
             console.log('Updating existing verse');
             const currentArrays = await client.query(
-                `SELECT words::varchar[], counts::smallint[] 
+                `SELECT words, counts 
                  FROM verses_to_words 
-                 WHERE verseid = $1::int8`,
+                 WHERE verseid = CAST($1 AS BIGINT)`,
                 [verseID]
             );
             
             let currentWords = currentArrays.rows[0].words;
             let currentCounts = currentArrays.rows[0].counts;
-
-            console.log('Current state:', {
-                wordCount: currentWords.length,
-                countLength: currentCounts.length
-            });
 
             words.forEach((word: string, index: number) => {
                 const existingIndex = currentWords.indexOf(word);
@@ -237,18 +232,12 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
                 }
             });
 
-            console.log('Updated state:', {
-                wordCount: currentWords.length,
-                countLength: currentCounts.length
-            });
-
-            const updateQuery = `
-                UPDATE verses_to_words 
-                SET words = $2::varchar[], counts = $3::smallint[]
-                WHERE verseid = $1::int8
-            `;
-            
-            await client.query(updateQuery, [verseID, currentWords, currentCounts]);
+            await client.query(
+                `UPDATE verses_to_words 
+                 SET words = $2, counts = $3 
+                 WHERE verseid = CAST($1 AS BIGINT)`,
+                [verseID, currentWords, currentCounts]
+            );
         }
 
         res.json({ status: 'success' });
@@ -272,7 +261,6 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
         });
     }
 }));
-
 app.post('/remove_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words } = req.body;
     
