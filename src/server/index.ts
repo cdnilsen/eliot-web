@@ -159,8 +159,8 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
         const query = await client.query(
             `SELECT words, counts 
              FROM verses_to_words 
-             WHERE verseid = $1`,
-            [verseID]  // Just pass the number directly
+             WHERE verseid = $1::bigint`,
+            [verseID]
         );
         
         if (query.rows.length === 0) {
@@ -178,14 +178,11 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words, counts } = req.body;
     
     try {
-        // Log the incoming data to verify format
-        console.log('Received:', { verseID, words, counts });
-        
         // First, check if the verse exists
         const checkVerse = await client.query(
             `SELECT EXISTS (
                 SELECT 1 FROM verses_to_words 
-                WHERE verseid = $1
+                WHERE verseid = $1::bigint
             )`,
             [verseID]
         );
@@ -193,30 +190,22 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
         const verseExists = checkVerse.rows[0].exists;
         
         if (!verseExists) {
-            // Format arrays explicitly for PostgreSQL
             const query = `
                 INSERT INTO verses_to_words (verseid, words, counts) 
-                VALUES ($1, $2::text[], $3::integer[])
+                VALUES ($1::bigint, $2::text[], $3::integer[])
             `;
-            
-            // Log the query and parameters we're about to execute
-            console.log('Query:', query);
-            console.log('Parameters:', [verseID, words, counts]);
             
             await client.query(query, [verseID, words, counts]);
         } else {
             const currentArrays = await client.query(
                 `SELECT words, counts 
                  FROM verses_to_words 
-                 WHERE verseid = $1`,
+                 WHERE verseid = $1::bigint`,
                 [verseID]
             );
             
             let currentWords = currentArrays.rows[0].words;
             let currentCounts = currentArrays.rows[0].counts;
-
-            // Log current state
-            console.log('Current state:', { currentWords, currentCounts });
 
             words.forEach((word: string, index: number) => {
                 const existingIndex = currentWords.indexOf(word);
@@ -228,16 +217,13 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
                 }
             });
 
-            // Log updated state
-            console.log('Updated state:', { currentWords, currentCounts });
-
             const updateQuery = `
                 UPDATE verses_to_words 
-                SET words = $1::text[], counts = $2::integer[]
-                WHERE verseid = $3
+                SET words = $2::text[], counts = $3::integer[]
+                WHERE verseid = $1::bigint
             `;
             
-            await client.query(updateQuery, [currentWords, currentCounts, verseID]);
+            await client.query(updateQuery, [verseID, currentWords, currentCounts]);
         }
 
         res.json({ status: 'success' });
