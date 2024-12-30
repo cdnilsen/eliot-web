@@ -152,15 +152,21 @@ app.post('/verses', express.json(), wrapAsync(async (req, res) => {
 }));
 
 
+type VerseWordResult = {
+    words: string[];
+    counts: number[];
+}
+
 app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
     const { verseID } = req.query;
+    const numericVerseID = parseInt(verseID as string, 10);
     
     try {
-        const query = await client.query(
+        const query = await client.query<VerseWordResult>(
             `SELECT words, counts 
              FROM verses_to_words 
              WHERE verseid = $1`,
-            [verseID]
+            [numericVerseID]
         );
         
         if (query.rows.length === 0) {
@@ -176,11 +182,12 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
 
 app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words, counts } = req.body;
+    const numericVerseID = parseInt(verseID as string, 10);
     
     try {
         const checkVerse = await client.query(
             'SELECT verseid FROM verses_to_words WHERE verseid = $1',
-            [verseID]
+            [numericVerseID]
         );
         
         const verseExists = (checkVerse.rowCount ?? 0) > 0;
@@ -189,15 +196,15 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
             await client.query(
                 'INSERT INTO verses_to_words (verseid, words, counts) VALUES ($1, $2, $3)',
                 [
-                    verseID,
+                    numericVerseID,
                     `{${words.map((w: string) => `"${w}"`).join(',')}}`,
-                    `{${counts.join(',')}}`
+                    `{${counts.map(c => parseInt(c.toString())).join(',')}}`
                 ]
             );
         } else {
-            const currentArrays = await client.query(
+            const currentArrays = await client.query<VerseWordResult>(
                 'SELECT words, counts FROM verses_to_words WHERE verseid = $1',
-                [verseID]
+                [numericVerseID]
             );
             
             let currentWords = currentArrays.rows[0].words;
@@ -218,7 +225,7 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
                 [
                     `{${currentWords.map((w: string) => `"${w}"`).join(',')}}`,
                     `{${currentCounts.join(',')}}`,
-                    verseID
+                    numericVerseID
                 ]
             );
         }
@@ -233,13 +240,14 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
 
 app.post('/remove_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words } = req.body;
+    const numericVerseID = parseInt(verseID as string, 10);
     
     try {
-        const currentArrays = await client.query(
+        const currentArrays = await client.query<VerseWordResult>(
             `SELECT words, counts 
              FROM verses_to_words 
              WHERE verseid = $1`,
-            [verseID]
+            [numericVerseID]
         );
         
         if (currentArrays.rows.length === 0) {
@@ -268,7 +276,7 @@ app.post('/remove_mass_word', express.json(), wrapAsync(async (req, res) => {
             [
                 `{${currentWords.map((w: string) => `"${w}"`).join(',')}}`,
                 `{${currentCounts.join(',')}}`,
-                verseID
+                numericVerseID
             ]
         );
 
