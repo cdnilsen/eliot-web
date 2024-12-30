@@ -439,7 +439,8 @@ async function checkVerseWordsCounts(verseID: number): Promise<WordCountDict> {
 type WordChangeObject = {
     id: string,
     removeWords: string[],
-    addWords: stringToIntDict,
+    addWords: string[],
+    addWordCounts: stringToIntDict,
     changeWordCounts: stringToIntDict,
     changeStuff: boolean
 }
@@ -448,7 +449,8 @@ function getWordChanges(oldVerseDict: WordCountDict, newVerseDict: stringToIntDi
     let object: WordChangeObject = {
         id: id,
         removeWords: [],
-        addWords: {},
+        addWords: [],
+        addWordCounts: {},
         changeWordCounts: {},
         changeStuff: false
     }
@@ -471,7 +473,8 @@ function getWordChanges(oldVerseDict: WordCountDict, newVerseDict: stringToIntDi
     for (let j=0; j < newVerseWords.length; j++) {
         let word = newVerseWords[j];
         if (!(word in oldVerseDict.words)) {
-            object.addWords[word] = newVerseDict[word];
+            object.addWords.push(word);
+            object.addWordCounts[word] = newVerseDict[word];
             object.changeStuff = true;
         }
     }
@@ -574,8 +577,7 @@ async function updateWordTable(dict: LineDict) {
                     await removeWordsFromTable(changedWords);
                 }
 
-                let addWordList = Object.keys(changedWords.addWords);
-                if (addWordList.length > 0) {
+                if (changedWords.addWords.length > 0) {
                     
                 }
 
