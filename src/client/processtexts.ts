@@ -548,8 +548,31 @@ async function removeWordsFromTable(object: WordChangeObject) {
     }
 }
 
-async function addWordsToTable() {
+async function addWordsToTable(object: WordChangeObject) {
+    const { id, addWords, addWordCounts } = object;
+    
+    try {
+        const response = await fetch('/add_mass_word', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                verseID: id,
+                words: addWords,
+                counts: addWords.map(word => addWordCounts[word] || 1) // Get count for each word
+            })
+        });
 
+        const result = await response.json();
+        if (result.status !== 'success') {
+            console.error(`Error adding words to verse ${id}:`, result.error);
+        } else {
+            console.log("Added words to verse " + id);
+        }
+    } catch (error) {
+        console.error(`Error adding words to verse ${id}:`, error);
+    }
 }
 
 async function updateWordTable(dict: LineDict) {
@@ -578,7 +601,7 @@ async function updateWordTable(dict: LineDict) {
                 }
 
                 if (changedWords.addWords.length > 0) {
-                    
+                    await addWordsToTable(changedWords);
                 }
 
                 console.log(changedWords);
