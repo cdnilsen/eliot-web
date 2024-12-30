@@ -178,6 +178,9 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words, counts } = req.body;
     
     try {
+        // Log the incoming data to verify format
+        console.log('Received:', { verseID, words, counts });
+        
         // First, check if the verse exists
         const checkVerse = await client.query(
             `SELECT EXISTS (
@@ -190,11 +193,17 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
         const verseExists = checkVerse.rows[0].exists;
         
         if (!verseExists) {
-            await client.query(
-                `INSERT INTO verses_to_words (verseid, words, counts) 
-                 VALUES ($1, ARRAY[$2]::varchar[], ARRAY[$3]::int[])`,
-                [verseID, words, counts]
-            );
+            // Format arrays explicitly for PostgreSQL
+            const query = `
+                INSERT INTO verses_to_words (verseid, words, counts) 
+                VALUES ($1, $2::text[], $3::integer[])
+            `;
+            
+            // Log the query and parameters we're about to execute
+            console.log('Query:', query);
+            console.log('Parameters:', [verseID, words, counts]);
+            
+            await client.query(query, [verseID, words, counts]);
         } else {
             const currentArrays = await client.query(
                 `SELECT words, counts 
@@ -206,6 +215,9 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
             let currentWords = currentArrays.rows[0].words;
             let currentCounts = currentArrays.rows[0].counts;
 
+            // Log current state
+            console.log('Current state:', { currentWords, currentCounts });
+
             words.forEach((word: string, index: number) => {
                 const existingIndex = currentWords.indexOf(word);
                 if (existingIndex === -1) {
@@ -216,18 +228,25 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
                 }
             });
 
-            await client.query(
-                `UPDATE verses_to_words 
-                 SET words = $1::varchar[], counts = $2::int[] 
-                 WHERE verseid = $3`,
-                [currentWords, currentCounts, verseID]
-            );
+            // Log updated state
+            console.log('Updated state:', { currentWords, currentCounts });
+
+            const updateQuery = `
+                UPDATE verses_to_words 
+                SET words = $1::text[], counts = $2::integer[]
+                WHERE verseid = $3
+            `;
+            
+            await client.query(updateQuery, [currentWords, currentCounts, verseID]);
         }
 
         res.json({ status: 'success' });
         
     } catch (err) {
-        console.error('Error adding words:', err);
+        console.error('Error adding words (full details):', {
+            error: err,
+            input: { verseID, words, counts }
+        });
         res.status(500).json({ 
             status: 'error', 
             error: 'Error adding words', 
