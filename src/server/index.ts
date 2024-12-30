@@ -198,7 +198,7 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
                 [
                     numericVerseID,
                     `{${words.map((w: string) => `"${w}"`).join(',')}}`,
-                    `{${counts.map(c => parseInt(c.toString())).join(',')}}`
+                    `{${counts.map((c: number) => parseInt(c.toString())).join(',')}}`
                 ]
             );
         } else {
