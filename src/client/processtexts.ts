@@ -453,6 +453,7 @@ type WordChangeObject = {
     removeWords: string[],
     addWords: string[],
     addWordCounts: stringToIntDict,
+    countChanges: string[],
     changeWordCounts: stringToIntDict,
     changeStuff: boolean
 }
@@ -463,6 +464,7 @@ function getWordChanges(oldVerseDict: WordCountDict, newVerseDict: stringToIntDi
         removeWords: [],
         addWords: [],
         addWordCounts: {},
+        countChanges: [],
         changeWordCounts: {},
         changeStuff: false
     }
@@ -473,6 +475,7 @@ function getWordChanges(oldVerseDict: WordCountDict, newVerseDict: stringToIntDi
         let word = oldVerseWords[i];
         if (word in newVerseDict) {
             if (oldVerseDict.counts[i] != newVerseDict[word]) {
+                object.countChanges.push(word);
                 object.changeWordCounts[word] = newVerseDict[word];
                 object.changeStuff = true;
             }
@@ -535,56 +538,66 @@ async function addVersesToDatabase(dict: LineDict) {
     }
 }
 
-async function removeWordsFromTable(object: WordChangeObject) {
-    let removeWords = object.removeWords;
-    let verseID = object.id;
-    try {
-        const response = await fetch('/remove_mass_word', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                verseID: verseID,
-                words: removeWords
-            })
-        });
-        const result = await response.json();
-        if (result.status !== 'success') {
-            console.error(`Error removing words from verse ${verseID}:`, result.error);
-        } else {
-            console.log("Removed words from verse " + verseID);
-        }
-    } catch (error) {
-        console.error(`Error removing words from verse ${verseID}:`, error);
-    }
-}
+async function updateVerseToWordsTable(object: WordChangeObject) {
 
-async function addWordsToTable(object: WordChangeObject) {
-    const { id, addWords, addWordCounts } = object;
-    
-    try {
-        const response = await fetch('/add_mass_word', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                verseID: parseInt(id),
-                words: addWords,
-                counts: addWords.map(word => addWordCounts[word] || 1) // Get count for each word
-            })
-        });
-
-        const result = await response.json();
-        if (result.status !== 'success') {
-            console.error(`Error adding words to verse ${id}:`, result.error);
-        } else {
-            console.log("Added words to verse " + id);
+    //We should simplify this. If the verse has been changed, at all, just overwrite it on the backend.
+    if (object.removeWords.length > 0) {
+        let removeWords = object.removeWords;
+        let verseID = object.id;
+        try {
+            const response = await fetch('/remove_mass_word', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    verseID: verseID,
+                    words: removeWords
+                })
+            });
+            const result = await response.json();
+            if (result.status !== 'success') {
+                console.error(`Error removing words from verse ${verseID}:`, result.error);
+            } else {
+                console.log("Removed words from verse " + verseID);
+            }
+        } catch (error) {
+            console.error(`Error removing words from verse ${verseID}:`, error);
         }
-    } catch (error) {
-        console.error(`Error adding words to verse ${id}:`, error);
     }
+
+    if (object.addWords.length > 0) {
+        const { id, addWords, addWordCounts } = object;
+        try {
+            const response = await fetch('/add_mass_word', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    verseID: parseInt(id),
+                    words: addWords,
+                    counts: addWords.map(word => addWordCounts[word] || 1) // Get count for each word
+                })
+            });
+
+            const result = await response.json();
+            if (result.status !== 'success') {
+                console.error(`Error adding words to verse ${id}:`, result.error);
+            } else {
+                console.log("Added words to verse " + id);
+            }
+        } catch (error) {
+            console.error(`Error adding words to verse ${id}:`, error);
+        }
+    }
+
+    if (object.countChanges.length > 0) {
+        const { id, countChanges, changeWordCounts } = object;
+        
+        
+    }
+
 }
 
 async function updateWordTable(dict: LineDict) {
@@ -608,19 +621,7 @@ async function updateWordTable(dict: LineDict) {
             let changedWords = getWordChanges(existingCountDict, cleanedDict, newID);
 
             if (changedWords.changeStuff) {
-                if (changedWords.removeWords.length > 0) {
-                    await removeWordsFromTable(changedWords);
-                }
-
-                if (changedWords.addWords.length > 0) {
-                    await addWordsToTable(changedWords);
-                }
-
-                console.log(changedWords);
-                
-
-            } else {
-
+                await updateVerseToWordsTable(changedWords);
             }
 
             //console.log(newID + ": "+ text);

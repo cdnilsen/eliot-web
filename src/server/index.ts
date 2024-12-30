@@ -157,6 +157,74 @@ type VerseWordResult = {
     counts: number[];
 }
 
+type MassWordsTableResult = {
+    verses: number[];
+    counts: number[];
+    editions: number;
+}
+
+type MassWordsEditionCountDict = {
+    [key: string]: number;
+}
+
+type MassWordsCountDict = {
+    [key: string]: MassWordsEditionCountDict;
+}
+
+type MassWordsCountObject = {
+    counts: MassWordsCountDict,
+    editions: number
+}
+
+type MassEditionTable = {
+    "first": number[],
+    "second": number[],
+    "mayhew": number[],
+    "zeroth": number[]
+}
+
+type stringToStringDict = {
+    [key: string]: string;
+}
+
+function zipMassWordsLists(object: MassWordsTableResult): MassWordsCountObject {
+    let result: MassWordsCountObject = {
+        counts: {
+            "first": {},
+            "second": {},
+            "mayhew": {},
+            "zeroth": {}
+        },
+        editions: object.editions
+    };
+
+    let numToEditionTable: stringToStringDict = {
+        "2": "first",
+        "3": "second",
+        "4": "mayhew",
+        "5": "zeroth"
+    }
+
+    let editionTable: MassEditionTable = {
+        "first": [],
+        "second": [],
+        "mayhew": [],
+        "zeroth": []
+    }
+
+    for (let i = 0; i < object.verses.length; i++) {
+        let verse = object.verses[i];
+        let counts = object.counts[i];
+
+        let verseEdition = numToEditionTable[verse.toString()[0]];
+        editionTable[verseEdition].push(verse);
+        result.counts[verseEdition][verse.toString()] = counts;
+    }
+
+
+    return result;
+}
+
 app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
     const { verseID } = req.query;
     const numericVerseID = parseInt(verseID as string, 10);
@@ -180,9 +248,15 @@ app.get('/verse_words', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
+app.post('/update_mass_word', express.json(), wrapAsync(async (req, res) => {
+    const { verseID, words, counts } = req.body;
+    const numericVerseID = parseInt(verseID as string, 10);
+}));
+
 app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
     const { verseID, words, counts } = req.body;
     const numericVerseID = parseInt(verseID as string, 10);
+    const stringVerseID = verseID as string;
     
     try {
         const checkVerse = await client.query(
@@ -228,10 +302,50 @@ app.post('/add_mass_word', express.json(), wrapAsync(async (req, res) => {
                     numericVerseID
                 ]
             );
-        }
 
-        res.json({ status: 'success' });
+            const editionDict: Record<string, number> = {
+                "2": 2,
+                "3": 3,
+                "4": 5,
+                "5": 7
+            };
+            const editionNum = editionDict[stringVerseID[0]];
+    
+            // Process all words in parallel
+            await Promise.all(words.map(async (word: string, index: number) => {
+                const checkWord = await client.query(
+                    'SELECT headword FROM words_mass WHERE headword = $1',
+                    [word]
+                );
+    
+                const wordExists = (checkWord.rowCount ?? 0) > 0;
+                
+                if (!wordExists) {
+                    await client.query(
+                        'INSERT INTO words_mass (headword, verses, counts, editions) VALUES ($1, $2, $3, $4)',
+                        [
+                            word,
+                            `{${numericVerseID}}`,
+                            `{${counts[index]}}`,
+                            editionNum
+                        ]
+                    );
+                } else {
+                    // Update existing word entry
+                    await client.query(
+                        `UPDATE words_mass 
+                         SET verses = array_append(verses, $1),
+                             counts = array_append(counts, $2),
+                             editions = editions | $3
+                         WHERE headword = $4`,
+                        [numericVerseID, counts[index], editionNum, word]
+                    );
+                }
+            }));
+    
+            res.json({ status: 'success' });
         
+        }
     } catch (err) {
         console.error('Error:', err);
         res.status(500).json({ status: 'error', error: err.message });
@@ -279,6 +393,20 @@ app.post('/remove_mass_word', express.json(), wrapAsync(async (req, res) => {
                 numericVerseID
             ]
         );
+
+        const MassTableResult = await client.query<MassWordsTableResult>(
+            `SELECT verses, counts, editions
+             FROM words_mass 
+             WHERE word = $1`,
+            [numericVerseID]
+        );
+
+        if (MassTableResult.rows.length > 0) {
+            let existingResults = zipMassWordsLists(MassTableResult.rows[0])
+
+            
+        }
+        
 
         res.json({ status: 'success' });
         
