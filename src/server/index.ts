@@ -527,26 +527,26 @@ app.get('/search_mass', wrapAsync(async (req, res) => {
     
     let queryString = `SELECT headword, verses, counts, editions FROM words_mass WHERE `;
     
-    // Match search types with your client-side searchMass.ts logic
+    // Use proper SQL patterns for each search type
     switch (searchType) {
         case 'exact':
-            queryString += `headword SIMILAR TO $1::text`;
+            queryString += `headword = $1`;  // Use exact equality for exact matches
             break;
         case 'contains':
-            queryString += `headword SIMILAR TO '%'||$1||'%'`;
+            queryString += `headword LIKE '%' || $1 || '%'`;  // Use LIKE for substring matching
             break;
         case 'starts':
-            queryString += `headword SIMILAR TO $1||'%'`;
+            queryString += `headword LIKE $1 || '%'`;  // Prefix matching
             break;
         case 'ends':
-            queryString += `headword SIMILAR TO '%'||$1`;
+            queryString += `headword LIKE '%' || $1`;  // Suffix matching
             break;
         default:
-            queryString += `headword SIMILAR TO '%'||$1||'%'`;
+            queryString += `headword LIKE '%' || $1 || '%'`;
     }
     
     try {
-        const query = await client.query<WordMassResult>(queryString, [searchPattern]);
+        const query = await client.query(queryString, [searchPattern]);
         res.json(query.rows);
     } catch (err) {
         console.error('Error searching words:', err);
