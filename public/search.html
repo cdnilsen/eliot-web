@@ -11,6 +11,13 @@
     <form action="/search" method="GET">
         <label for="query">Search:</label>
         <input type="text" id="query" name="query" required>
+        <label for="category">Category:</label>
+        <select id="category" name="category">
+            <option value="all">All</option>
+            <option value="books">Books</option>
+            <option value="electronics">Electronics</option>
+            <option value="clothing">Clothing</option>
+        </select>
         <button type="submit">Search</button>
     </form>
 </body>

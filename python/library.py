@@ -73,3 +73,129 @@ bookToIDDict = {
 # Export the dictionary
 def getBookIDs():
     return bookToIDDict
+
+
+def handleEngma(word):
+    labials = ["p", "b", "m", "P", "B", "M"]
+    for i in range(len(word) - 1):
+        thisChar = word[i]
+        nextChar = word[i + 1]
+        if (thisChar == "ŋ"):
+            replacement = "n"
+            if nextChar in labials:
+                replacement = "m"
+            word = word[:i] + replacement + word[i + 1:]
+        elif (thisChar == "Ŋ"):
+            replacement = "N"
+            if nextChar in labials:
+                replacement = "M"
+            word = word[:i] + replacement + word[i + 1:]
+        else:
+            pass
+    return word
+
+def cleanDiacritics(word):
+    diacriticDict = {
+        "á": "a",
+        "Á": "A",
+        "à": "a",
+        "À": "A",
+        "â": "a",
+        "Â": "A",
+        "ä": "a",
+        "Ä": "A",
+        "ã": "aŋ",
+        "Ã": "AŊ",
+        "ā": "aŋ",
+        "Ā": "AŊ",
+        "é": "e",
+        "É": "E",
+        "è": "e",
+        "È": "E",
+        "ê": "e",
+        "Ê": "E",
+        "ë": "e",
+        "Ë": "E",
+        "ẽ": "eŋ",
+        "Ẽ": "EŊ",
+        "ē": "eŋ",
+        "Ē": "EŊ",
+        "í": "i",
+        "Í": "I",
+        "ì": "i",
+        "Ì": "I",
+        "î": "i",
+        "Î": "I",
+        "ï": "i",
+        "Ï": "I",
+        "ĩ": "iŋ",
+        "Ĩ": "IŊ",
+        "ī": "iŋ",
+        "Ī": "IŊ",
+        "ó": "o",
+        "Ó": "O",
+        "ò": "o",
+        "Ò": "O",
+        "ô": "o",
+        "Ô": "O",
+        "ö": "o",
+        "Ö": "O",
+        "õ": "oŋ",
+        "Õ": "OŊ",
+        "ō": "oŋ",
+        "Ō": "OŊ",
+        "ú": "u",
+        "Ú": "U",
+        "ù": "u",
+        "Ù": "U",
+        "û": "u",
+        "Û": "U",
+        "ü": "u",
+        "Ü": "U",
+        "ũ": "uŋ",
+        "Ũ": "UŊ",
+        "ū": "uŋ",
+        "Ū": "UŊ",
+        "ñ": "nn",
+        "Ñ": "NN",
+        "n⁻": "nn",
+        "N⁻": "NN",
+        "m̃": "mm",
+        "M̃": "MM",
+        "m⁻": "mm",
+        "M⁻": "MM",
+    }
+
+    charList = ["á", "Á", "à", "À", "â", "Â", "ä", "Ä", "ã", "Ã", "ā", "Ā", "é", "É", "è", "È", "ê", "Ê", "ë", "Ë", "ẽ", "Ẽ", "ē", "Ē", "í", "Í", "ì", "Ì", "î", "Î", "ï", "Ï", "ĩ", "Ĩ", "ī", "Ī", "ó", "Ó", "ò", "Ò", "ô", "Ô", "ö", "Ö", "õ", "Õ", "ō", "Ō", "ú", "Ú", "ù", "Ù", "û", "Û", "ü", "Ü", "ũ", "Ũ", "ū", "Ū", "ñ", "Ñ", "n⁻", "N⁻", "m̃", "M̃", "m⁻", "M⁻"]
+
+    for char in charList:
+        word = word.replace(char, diacriticDict[char])
+
+    if ("ŋ" in word or "Ŋ" in word):
+        word = handleEngma(word)
+    
+        
+    return word
+
+def cleanWord(word):    
+    smallCapDict = {
+        "ᴏ": "o",
+        "ʀ": "r",
+        "ᴅ": "d"
+    }
+
+    if (word.startswith("OO") and word.upper() != word):
+        word = "8" + word[2:]
+
+
+    for smallCap in ["ᴏ", "ʀ", "ᴅ"]:
+        word = word.replace(smallCap, smallCapDict[smallCap])
+
+    word = word.lower()
+
+    punctuation = ['.', ',', ';', ':', '!', '?', '(', ')', '[', ']', '{', '}', '"', "'", '“', '”', '‘', '’', '—', '–', '…', '•', '·', '«', '»', '„']
+
+    for char in punctuation:
+        word = word.replace(char, "")
+
+    return word
