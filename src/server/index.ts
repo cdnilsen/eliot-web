@@ -16,7 +16,12 @@ declare module 'express-session' {
 }
 
 const app = express()
-const port = process.env.PORT
+const port = parseInt(process.env.PORT || '3000', 10);
+
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server is running on port ${port}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+});
 
 // The hashed password - you should generate this and store in environment variables
 const TEXT_PROCESSING_HASH = '$2b$10$Voh5WI17TJIGvtfRlbrAaOOtaZSNkgZvu5aXupMP2xYnKTWB5BNuu'; // Replace with actual hashed password
