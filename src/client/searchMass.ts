@@ -42,37 +42,18 @@ async function wordSearch(searchString: string, searchSetting: number): Promise<
     }
 }
 
-
 let submitButton = document.getElementById("submitButton");
 
 submitButton?.addEventListener("click", async () => {
-    let searchSetting = 1;
     let searchInput = document.getElementById("search_bar") as HTMLInputElement;
     let searchInputValue = searchInput.value;
-    let isExactly = document.getElementById("isExactly") as HTMLInputElement;
-    let contains = document.getElementById("contains") as HTMLInputElement;
-    let startsWith = document.getElementById("beginsWith") as HTMLInputElement;
-    let endsWith = document.getElementById("endsWith") as HTMLInputElement;
+    let searchDropdown = document.getElementById("searchWordDropdown") as HTMLSelectElement;
+    let searchType = searchDropdown.value;
     let laxDiacritics = document.getElementById("diacriticsLax") as HTMLInputElement;
+    
+    // Set diacritics mode based on radio button
+    const diacritics = laxDiacritics?.checked ? 'lax' : 'strict';
 
-    if (isExactly?.checked) {
-        searchSetting *= 2;
-    }
-    if (contains?.checked) {
-        searchSetting *= 3;
-    }
-    if (startsWith?.checked) {
-        searchSetting *= 5;
-    }
-    if (endsWith?.checked) {
-        searchSetting *= 7;
-    }
-    if (laxDiacritics?.checked) {
-        searchSetting *= 17;
-    }
-
-
-    const results = await wordSearch(searchInputValue, searchSetting);
+    const results = await wordSearch(searchInputValue, searchType, diacritics);
     console.log('Search results:', results);
-
-})
+});

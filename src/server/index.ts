@@ -514,7 +514,7 @@ app.get('/words_mass/:word', wrapAsync(async (req, res) => {
 
 // Search words with pattern matching
 app.get('/search_mass', wrapAsync(async (req, res) => {
-    const { pattern, searchType } = req.query;
+    const { pattern, searchType, diacritics } = req.query;
     
     if (!pattern || typeof pattern !== 'string') {
         res.status(400).json({ error: 'Search pattern is required' });
@@ -527,22 +527,32 @@ app.get('/search_mass', wrapAsync(async (req, res) => {
     
     let queryString = `SELECT headword, verses, counts, editions FROM words_mass WHERE `;
     
-    // Use proper SQL patterns for each search type
+    // Handle the search type
     switch (searchType) {
         case 'exact':
-            queryString += `headword = $1`;  // Use exact equality for exact matches
+            queryString += diacritics === 'lax' 
+                ? `LOWER(headword) = LOWER($1)` 
+                : `headword = $1`;
             break;
         case 'contains':
-            queryString += `headword LIKE '%' || $1 || '%'`;  // Use LIKE for substring matching
+            queryString += diacritics === 'lax' 
+                ? `LOWER(headword) LIKE LOWER('%' || $1 || '%')` 
+                : `headword LIKE '%' || $1 || '%'`;
             break;
         case 'starts':
-            queryString += `headword LIKE $1 || '%'`;  // Prefix matching
+            queryString += diacritics === 'lax' 
+                ? `LOWER(headword) LIKE LOWER($1 || '%')` 
+                : `headword LIKE $1 || '%'`;
             break;
         case 'ends':
-            queryString += `headword LIKE '%' || $1`;  // Suffix matching
+            queryString += diacritics === 'lax' 
+                ? `LOWER(headword) LIKE LOWER('%' || $1)` 
+                : `headword LIKE '%' || $1`;
             break;
         default:
-            queryString += `headword LIKE '%' || $1 || '%'`;
+            queryString += diacritics === 'lax' 
+                ? `LOWER(headword) LIKE LOWER('%' || $1 || '%')` 
+                : `headword LIKE '%' || $1 || '%'`;
     }
     
     try {
