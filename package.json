@@ -4,10 +4,10 @@
   "description": "Word-counting skeleton - change this later!",
   "main": "build/index.js",
   "scripts": {
-    "start": "node dist/server/index.js",
-    "build": "npm run buildClient && npm run buildServer",
     "buildStart": "npm run build && npm run start",
-    "buildServer": "echo \"Building server...\" && tsc -p tsconfig.server.json && echo \"Server build complete\" && ls -la dist",
+    "buildServer": "echo \"Building server...\" && tsc -p tsconfig.server.json && echo \"Server build complete\" && ls -R dist/",
+    "build": "npm run buildClient && npm run buildServer && ls -R dist/",
+    "start": "ls -R dist/ && node dist/server/index.js",
     "buildClient": "echo \"Building client...\" && tsc -p tsconfig.client.json && echo \"Client build complete\""
   },
   "repository": {
