@@ -7,26 +7,11 @@ type WordMassResult = {
     editions: number;
 }
 
-async function wordSearch(searchString: string, searchSetting: number): Promise<WordMassResult[]> {
+async function wordSearch(searchString: string, searchType: string, diacritics: "lax" | "strict"): Promise<WordMassResult[]> {
     searchString = searchString.split('*').join('%');
     searchString = searchString.split('(').join('');
     searchString = searchString.split(')').join('?');
     
-    let searchType: string;
-    if (searchSetting % 2 === 0) {
-        searchType = 'exact';
-    } else if (searchSetting % 3 === 0) {
-        searchType = 'contains';
-    } else if (searchSetting % 5 === 0) {
-        searchType = 'starts';
-    } else if (searchSetting % 7 === 0) {
-        searchType = 'ends';
-    } else {
-        searchType = 'contains';  // default
-    }
-
-    console.log('searchSetting:', searchSetting);
-    console.log('searchType:', searchType);
     console.log('URL:', `/search_mass?pattern=${encodeURIComponent(searchString)}&searchType=${searchType}`);
 
     try {
