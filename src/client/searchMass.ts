@@ -40,3 +40,36 @@ async function wordSearch(searchString: string, searchSetting: number) {
 }
 
 
+
+let submitButton = document.getElementById("submitButton");
+
+submitButton?.addEventListener("click", async () => {
+    let searchSetting = 1;
+    let searchInput = document.getElementById("search_bar") as HTMLInputElement;
+    let searchInputValue = searchInput.value;
+    let isExactly = document.getElementById("isExactly") as HTMLInputElement;
+    let contains = document.getElementById("contains") as HTMLInputElement;
+    let startsWith = document.getElementById("beginsWith") as HTMLInputElement;
+    let endsWith = document.getElementById("endsWith") as HTMLInputElement;
+    let laxDiacritics = document.getElementById("diacriticsLax") as HTMLInputElement;
+
+    if (isExactly?.checked) {
+        searchSetting *= 2;
+    }
+    if (contains?.checked) {
+        searchSetting *= 3;
+    }
+    if (startsWith?.checked) {
+        searchSetting *= 5;
+    }
+    if (endsWith?.checked) {
+        searchSetting *= 7;
+    }
+    if (laxDiacritics?.checked) {
+        searchSetting *= 17;
+    }
+
+
+    console.log(searchInputValue);
+    console.log(searchSetting);
+})
