@@ -1,12 +1,11 @@
 import { sectionToBookDict, bookToChapterDict } from "./library.js"
 
-
-
 //All courtesy of Claude
 type HighlightedObject = {
     str1: string,
     str2: string
 }
+
 function findLCS(str1: string, str2: string): string {
     if (!str1 || !str2) return '';
     

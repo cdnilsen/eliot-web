@@ -1,37 +1,42 @@
-// imports go here
+import { sectionToBookDict, bookToChapterDict } from "./library.js"
 
-async function wordSearch(searchString: string, searchSetting: number) {
-
-    searchString = searchString.split('*').join('%');
-
-    searchString = searchString.split('(').join('');
-    searchString = searchString.split(')').join('?');
-    console.log(searchString);
-
-    let table: string = 'words_diacritics';
-
-    let queryString = "SELECT * FROM " + table + " WHERE "
-
-    let wordString = "word";
-    if (searchSetting % 17 == 0) {
-        wordString = "corresponding_word";
-    }
-
-    if (searchSetting % 2 == 0) { // is exactly
-        queryString += wordString + " SIMILAR TO $1::text"
-    } else if (searchSetting % 3 == 0) { // contains (placeholder)
-        queryString += wordString + " SIMILAR TO '%'||$1||'%'"
-    } else if (searchSetting % 5 == 0) { // starts with
-        queryString +=wordString +  " SIMILAR TO $1||'%'"
-    } else if (searchSetting % 7 == 0) { //  ends with
-        queryString += wordString + " SIMILAR TO '%'||$1" 
-    }
-
-    //let allQuery = await pool.query(queryString, [searchString]);
-
-    //return allQuery.rows;
+type WordMassResult = {
+    headword: string;
+    verses: number[];
+    counts: number[];
+    editions: number;
 }
 
+async function wordSearch(searchString: string, searchSetting: number): Promise<WordMassResult[]> {
+    searchString = searchString.split('*').join('%');
+    searchString = searchString.split('(').join('');
+    searchString = searchString.split(')').join('?');
+    
+    let searchType: string;
+    if (searchSetting % 2 === 0) {
+        searchType = 'exact';
+    } else if (searchSetting % 3 === 0) {
+        searchType = 'contains';
+    } else if (searchSetting % 5 === 0) {
+        searchType = 'starts';
+    } else if (searchSetting % 7 === 0) {
+        searchType = 'ends';
+    } else {
+        searchType = 'contains';  // default
+    }
+
+    try {
+        const response = await fetch(`/search_mass?pattern=${encodeURIComponent(searchString)}&searchType=${searchType}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error searching words:', error);
+        return [];
+    }
+}
 
 
 let submitButton = document.getElementById("submitButton");
@@ -63,6 +68,7 @@ submitButton?.addEventListener("click", async () => {
     }
 
 
-    console.log(searchInputValue);
-    console.log(searchSetting);
+    const results = await wordSearch(searchInputValue, searchSetting);
+    console.log('Search results:', results);
+
 })

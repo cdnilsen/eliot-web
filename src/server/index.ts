@@ -451,39 +451,103 @@ app.get('/chapter/:bookID/:chapter', wrapAsync(async (req, res) => {
         res.status(500).json({ error: 'Error fetching chapter', details: err.message });
     }
 }));
+// Add these types near your other type definitions
+type WordMassResult = {
+    headword: string;
+    verses: number[];
+    counts: number[];
+    editions: number;
+}
 
-app.get('/test-static', (req, res) => {
-    const fs = require('fs');
-    const files = fs.readdirSync('public');
-    res.json(files);
-});
+// Add these endpoints after your existing endpoints but before the app.listen call
 
+// Get all words with their verse information
+app.get('/words_mass', wrapAsync(async (req, res) => {
+    try {
+        const query = await client.query<WordMassResult>(
+            `SELECT headword, verses, counts, editions 
+             FROM words_mass`
+        );
+        res.json(query.rows);
+    } catch (err) {
+        console.error('Error fetching words and verses:', err);
+        res.status(500).json({ 
+            error: 'Error fetching words and verses', 
+            details: err.message 
+        });
+    }
+}));
 
-app.get('/dynamicContent', (req, res) => {
-    res.send(`Hi! I'm some dynamic content! You loaded this page at millisecond ${new Date().getTime()} of the UNIX 年号.`)
-})
+// Get verse information for a specific word
+app.get('/words_mass/:word', wrapAsync(async (req, res) => {
+    const { word } = req.params;
+    
+    try {
+        const query = await client.query<WordMassResult>(
+            `SELECT headword, verses, counts, editions 
+             FROM words_mass 
+             WHERE headword = $1`,
+            [word]
+        );
+        
+        if (query.rows.length === 0) {
+            res.status(404).json({ 
+                error: 'Word not found' 
+            });
+            return;
+        }
+        
+        res.json(query.rows[0]);
+    } catch (err) {
+        console.error('Error fetching word verses:', err);
+        res.status(500).json({ 
+            error: 'Error fetching word verses', 
+            details: err.message 
+        });
+    }
+}));
 
-app.get('/words', wrapAsync(async (req, res) => {
-    const words = await client.query('SELECT * FROM words_diacritics')
-    res.json(words.rows)
-}))
-
-app.put('/words/:word/increment', wrapAsync(async (req, res) => {
-    const update = await client.query('UPDATE words_diacritics SET total_count = total_count + 1 WHERE word = $1::text', [req.params.word])
-    res.json(update)
-}))
-
-app.post('/words/:word', wrapAsync(async (req, res) => {
-    // TODO: check if the word already exists and return a good error
-    const insert = await client.query("INSERT INTO words_diacritics VALUES ($1::text, 0)", [req.params.word])
-    res.json(insert)
-}))
-
-
-// Async init - have to wait for the client to connect
-;(async function () {
-    await client.connect()
-    app.listen(port, () => {
-        console.log(`Example app listening on port ${port}`)
-    })    
-})()
+// Search words with pattern matching
+app.get('/search_mass', wrapAsync(async (req, res) => {
+    const { pattern, searchType } = req.query;
+    
+    if (!pattern || typeof pattern !== 'string') {
+        res.status(400).json({ error: 'Search pattern is required' });
+        return;
+    }
+    
+    let searchPattern = pattern.split('*').join('%');
+    searchPattern = searchPattern.split('(').join('');
+    searchPattern = searchPattern.split(')').join('?');
+    
+    let queryString = `SELECT headword, verses, counts, editions FROM words_mass WHERE `;
+    
+    // Match search types with your client-side searchMass.ts logic
+    switch (searchType) {
+        case 'exact':
+            queryString += `headword SIMILAR TO $1::text`;
+            break;
+        case 'contains':
+            queryString += `headword SIMILAR TO '%'||$1||'%'`;
+            break;
+        case 'starts':
+            queryString += `headword SIMILAR TO $1||'%'`;
+            break;
+        case 'ends':
+            queryString += `headword SIMILAR TO '%'||$1`;
+            break;
+        default:
+            queryString += `headword SIMILAR TO '%'||$1||'%'`;
+    }
+    
+    try {
+        const query = await client.query<WordMassResult>(queryString, [searchPattern]);
+        res.json(query.rows);
+    } catch (err) {
+        console.error('Error searching words:', err);
+        res.status(500).json({ 
+            error: 'Error searching words', 
+            details: err.message 
+        });
+    }
+}));
