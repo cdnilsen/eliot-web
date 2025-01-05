@@ -25,6 +25,10 @@ async function wordSearch(searchString: string, searchSetting: number): Promise<
         searchType = 'contains';  // default
     }
 
+    console.log('searchSetting:', searchSetting);
+    console.log('searchType:', searchType);
+    console.log('URL:', `/search_mass?pattern=${encodeURIComponent(searchString)}&searchType=${searchType}`);
+
     try {
         const response = await fetch(`/search_mass?pattern=${encodeURIComponent(searchString)}&searchType=${searchType}`);
         if (!response.ok) {
