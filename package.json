@@ -8,7 +8,7 @@
     "build": "npm run buildClient && npm run buildServer",
     "buildStart": "npm run build && npm run start",
     "buildServer": "echo \"Building server...\" && tsc -p tsconfig.server.json && echo \"Server build complete\" && ls -la dist/server",
-    "buildClient": "echo \"Building client...\" && tsc -p tsconfig.client.json && echo \"Client build complete\"",
+    "buildClient": "echo \"Building client...\" && tsc -p tsconfig.client.json && echo \"Client build complete\""
   },
   "repository": {
     "type": "git",
