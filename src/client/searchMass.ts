@@ -147,6 +147,8 @@ function getResultObjectStrict(result: WordMassResult) {
 
     let addressToCountDict = {} as { [key: string]: number };
     for (let i = 0; i < allAddressNums.length; i++) {
+        console.log(allAddressNums[i]);
+        console.log(result.counts[i]);
         addressToCountDict[allAddressNums[i]] = result.counts[i];
     }
 
