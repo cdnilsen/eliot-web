@@ -184,10 +184,10 @@ function getResultObjectStrict(result: WordMassResult) {
             allBooks.push(book);
             addressBook[book] = {};
         }
-        let verse = allAddresses[i].slice(3, 6) + "." + allAddresses[i].slice(6, 9);
+        let verse = allAddresses[i].slice(4, 7) + "." + allAddresses[i].slice(7, 10);
         console.log(verse)
 
-        let edition = allAddresses[i][9];
+        let edition = allAddresses[i][10];
 
         if (verse in addressBook[book]) {
             addressBook[book][verse][edition] = addressToCountDict[allAddresses[i]];
