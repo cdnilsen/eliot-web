@@ -1,4 +1,4 @@
-import { sectionToBookDict, bookToChapterDict } from "./library.js"
+import { sectionToBookDict, bookToChapterDict, IDToBookDict } from "./library.js"
 
 type WordMassResult = {
     headword: string;
@@ -66,7 +66,45 @@ function sortByFrequency(results: WordMassResult[]) {
     return results.sort((a, b) => b.counts.reduce((sum, val) => sum + val, 0) - a.counts.reduce((sum, val) => sum + val, 0));
 }
 
-function displayResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
+
+function createTriangleObject(resultDiv: HTMLDivElement, result: WordMassResult) {
+    let triangleSpan = document.createElement("span");
+    triangleSpan.className = "triangle";
+    triangleSpan.innerHTML = "▶";
+
+    let object = {
+        span: triangleSpan,
+        isClicked: false,
+    }
+
+    triangleSpan.onclick = () => {
+        object.isClicked = !object.isClicked;
+        triangleSpan.innerHTML = object.isClicked ? "▼" : "▶";
+        if (object.isClicked) {
+            resultDiv.style.backgroundColor = "blue";
+        } else {
+            resultDiv.style.backgroundColor = "";
+        }
+    }
+    return object;
+}
+
+function resultDiv(result: WordMassResult): HTMLDivElement {
+
+    let resultDiv = document.createElement("div");
+    resultDiv.className = "result-item";
+    let headwordSpan = document.createElement("span");
+    let totalCount = result.counts.reduce((sum, val) => sum + val, 0);
+    headwordSpan.innerHTML = `<strong>${result.headword} (${totalCount})</strong>`; 
+    resultDiv.appendChild(headwordSpan);
+    let triangleObject = createTriangleObject(resultDiv, result);
+    resultDiv.appendChild(triangleObject.span);
+    
+
+    return resultDiv;
+}
+
+function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
     let resultsContainer = document.getElementById("results-container") as HTMLDivElement;
     resultsContainer.innerHTML = ''; // Clear previous results
 
@@ -79,10 +117,7 @@ function displayResults(results: WordMassResult[], diacritics: "lax" | "strict",
     console.log(results[0])
 
     results.forEach(result => {
-        let resultDiv = document.createElement("div");
-        resultDiv.className = "result-item";
-        resultDiv.innerHTML = `<strong>${result.headword}</strong> - Count: ${result.counts.join(', ')}`;
-        resultsContainer.appendChild(resultDiv);
+        resultsContainer.appendChild(resultDiv(result));
     });
 
 }
@@ -106,7 +141,7 @@ async function search() {
     const results = await sendWordSearch(searchInputValue, searchType, diacritics);
     console.log('Search results:', results);
 
-    displayResults(results, diacritics, sortAlphabetically);
+    displayAllResults(results, diacritics, sortAlphabetically);
 }
 
 
