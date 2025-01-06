@@ -174,8 +174,11 @@ function getResultObjectStrict(result: WordMassResult) {
     }
 
     for (let i=0; i < allAddresses.length; i++) {
+        let address = allAddresses[i];
         console.log(allAddresses[i]);
-        let book = IDToBookDict[allAddresses[i].slice(1, 3) as keyof typeof IDToBookDict];
+        let bookKey = address.slice(1, 3);
+        console.log(bookKey);
+        let book = IDToBookDict[bookKey];
         console.log(book)
         console.log(addressToCountDict[allAddresses[i]])
 
