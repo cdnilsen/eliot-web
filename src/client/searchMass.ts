@@ -53,15 +53,19 @@ submitButton?.addEventListener("click", async () => {
     let searchType = searchDropdown.value;
     let laxDiacritics = document.getElementById("diacriticsLax") as HTMLInputElement;
 
-    let wordSorting
+    let alphabeticalSorting = document.getElementById("sortAlph") as HTMLInputElement
     
     // Set diacritics mode based on radio button
     const diacritics = laxDiacritics?.checked ? 'lax' : 'strict';
 
+    const sortAlphabetically = alphabeticalSorting?.checked ? true : false;
+
     const results = await sendWordSearch(searchInputValue, searchType, diacritics);
     console.log('Search results:', results);
 
+    displayResults(results, diacritics);
+
     //let resultsContainer = document.getElementById("results-container") as HTMLDivElement;
 
-    console.log(typeof results);
+    //console.log(typeof results);
 });
