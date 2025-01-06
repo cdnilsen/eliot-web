@@ -160,6 +160,8 @@ function getResultObjectStrict(result: WordMassResult) {
     let editionDict = {
         '2': 'α',
         '3': 'β',
+        '5': 'M',
+        '7': 'א'
     }
 
     for (let i=0; i < allAddresses.length; i++) {
@@ -182,6 +184,8 @@ function getResultObjectStrict(result: WordMassResult) {
             }
         }
     }
+
+    console.log(addressBook);
 }
 
 function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
