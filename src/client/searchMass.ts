@@ -126,7 +126,24 @@ function rearrangeAddress(addressList: number[]) {
     return rearrangedList;
 }
 
+function killLeadingZeros(address: string) {
+    let newString = ""
+    let hitNonZero = false;
+    for (let i=0; i < address.length; i++) {
+        let char = address[i];
+        if (hitNonZero || char != "0") {
+            newString += char;
+            hitNonZero = true
+        }
+    }
+    return newString
+}
 
+function getVerseAddress(address: string): string {
+    let rawChapter = address.slice(4, 7);
+    let rawVerse = address.slice(7, 10);
+    return killLeadingZeros(rawChapter) + "." + killLeadingZeros(rawVerse)
+}
 
 
 type AddressBook = {
@@ -184,7 +201,7 @@ function getResultObjectStrict(result: WordMassResult) {
             allBooks.push(book);
             addressBook[book] = {};
         }
-        let verse = allAddresses[i].slice(4, 7) + "." + allAddresses[i].slice(7, 10);
+        let verse = getVerseAddress(allAddresses[i]);
         console.log(verse)
 
         let edition = allAddresses[i][10];
