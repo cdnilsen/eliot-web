@@ -1,6 +1,7 @@
 import os
 #from python_dotenv import load_dotenv
 import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from library import bookToIDDict, cleanDiacritics, cleanWord
 import time
 import math
@@ -419,7 +420,7 @@ def grabExistingText(connection, verseGenerics, editions, textObjects):
 
     updateTextSeconds = time.time() - updateTextTime
     updateTextMinutes = math.floor(updateTextSeconds / 60)
-    secondsLeftOver = math.ceiling(updateTextSeconds % 60)
+    secondsLeftOver = math.ceil(updateTextSeconds % 60)
     print(f"Finished updating all_verses ({updateTextMinutes} minutes, {secondsLeftOver} seconds)")
 
     return updateDict
@@ -600,7 +601,7 @@ def updateAllVocab(connection, dict, textRecords):
     stopUpdatingVerseTime = time.time()
     updateVerseSeconds = stopUpdatingVerseTime - startUpdatingVerseTime
     updateVerseMinutes = math.floor(updateVerseSeconds / 60)
-    secondsLeftOver = math.ceiling(updateVerseSeconds % 60)
+    secondsLeftOver = math.ceil(updateVerseSeconds % 60)
 
 
     print(f"Finished updating verses_to_words ({updateVerseMinutes} minutes, {secondsLeftOver} seconds)")
@@ -629,7 +630,7 @@ def updateAllVocab(connection, dict, textRecords):
     stopUpdatingWordTime = time.time()
     updateWordSeconds = stopUpdatingWordTime - startUpdatingWordTime
     updateWordMinutes = math.floor(updateWordSeconds / 60)
-    secondsLeftOver = math.ceiling(updateWordSeconds % 60)
+    secondsLeftOver = math.ceil(updateWordSeconds % 60)
     print(f"Finished updating words_mass ({updateWordMinutes} minutes, {secondsLeftOver} seconds)")
         
                 
@@ -695,4 +696,31 @@ def main(clearTables=False):
         print(f"Connection failed: {e}")
 
 #clear = True
+
+def delete_by_book(table_name: str, book_value: str) -> None:
+    try:
+        # Connect to database using the existing DATABASE_URL
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cur = conn.cursor()
+
+        # Execute delete query
+        delete_query = f"DELETE FROM {table_name} WHERE book = %s"
+        cur.execute(delete_query, (book_value,))
+        
+        print(f"Deleted rows where book = {book_value}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    
+    finally:
+        # Close database connection
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+# Usage example:
+#delete_by_book('all_verses', 'Luke')
 main()
