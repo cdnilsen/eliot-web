@@ -81,9 +81,9 @@ function createTriangleObject(resultDiv: HTMLDivElement, result: WordMassResult)
         object.isClicked = !object.isClicked;
         triangleSpan.innerHTML = object.isClicked ? "▼" : "▶";
         if (object.isClicked) {
-            resultDiv.style.backgroundColor = "blue";
+            triangleSpan.style.backgroundColor = "blue";
         } else {
-            resultDiv.style.backgroundColor = "";
+            triangleSpan.style.backgroundColor = "";
         }
     }
     return object;
