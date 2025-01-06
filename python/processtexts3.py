@@ -8,6 +8,30 @@ import asyncio
 
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:Cb4-D5B2BEEg6*GBBB*Fga*b5FE6CbfF@monorail.proxy.rlwy.net:14224/railway')
 
+def delete_by_book(table_name: str, book_value: str) -> None:
+    try:
+        # Connect to database using the existing DATABASE_URL
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cur = conn.cursor()
+
+        # Execute delete query
+        delete_query = f"DELETE FROM {table_name} WHERE book = %s"
+        cur.execute(delete_query, (book_value,))
+        
+        print(f"Deleted rows where book = {book_value}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    
+    finally:
+        # Close database connection
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
 def addZeros(number):
     while (len(number) < 3):
         number = "0" + number
@@ -214,6 +238,9 @@ def addRawText(connection, bookObject):
 
     idsToAdd = []
     idsToChange = []
+
+    changeAnything = False
+    changeMass = False
     for id in newDataList:
         if id in oldDataDict and id in newDataDict:
             oldTuple = oldDataDict[id]
@@ -221,11 +248,14 @@ def addRawText(connection, bookObject):
             for i in range(len(newTuple)):
                 if newTuple[i] != oldTuple[i]:
                     idsToChange.append(id)
+                    if (i > 3 and i < 8):
+                        changeMass = True
                     break
         elif id in newDataDict:
             idsToAdd.append(id)
 
     if len(idsToAdd) > 0:
+        changeAnything = True
         data = []
         for id in idsToAdd:
             data.append(newDataDict[id])
@@ -272,7 +302,30 @@ def addRawText(connection, bookObject):
         except Exception as e:
             connection.rollback()
             print(f"Error updating rows: {e}")
-    return
+
+
+    returnObject = {
+            "changes": False,
+            "additions": False,
+            "idsToAdd": [],
+            "idsToChange": [],
+            "oldDict": {},
+            "newDict": {}
+    }
+    
+    changeAnything = changeAnything or changeMass
+    if changeAnything:
+        relevantIDs = idsToAdd + idsToChange
+        returnObject = {
+            "changes": True,
+            "additions": changeMass,
+            "idsToAdd": relevantIDs,
+            "idsToChange": idsToChange,
+            "oldDict": oldDataDict,
+            "newDict": newDataDict
+        }
+    
+    return returnObject
 
 
 def processBookToDict(bookName):
@@ -318,25 +371,89 @@ def processBookToDict(bookName):
 
     return object
 
-def main():
+
+def getWordsFromText(text):
+    if text.strip() == "":
+        return {
+            "words": [],
+            "counts": {}
+        }
+    
+    splitText = text.split(" ")
+    wordList = []
+    countDict = {}
+    for word in splitText:
+        word = cleanWord(word)
+        if word not in wordList:
+            wordList.append(word)
+            countDict[word] = 1
+        else:
+            countDict[word] += 1
+    return {
+        "words": wordList,
+        "counts": countDict
+    }
+
+
+def getEditionTextDict(rowTuple):
+    addressTail = str(rowTuple[0])[1:]
+    return {
+        "addresses": ["2 " + addressTail, "3 " + addressTail, "5 " + addressTail, "7 " + addressTail],
+        "2" + addressTail: rowTuple[4],
+        "3" + addressTail: rowTuple[5],
+        "5" + addressTail: rowTuple[6],
+        "7" + addressTail: rowTuple[7],
+    }
+
+def processWordAdditions(connection, object):
+    idList = object["idsToAdd"]
+    allWordList = []
+
+    for key in object["newDict"]:
+        tuple = object["newDict"][key]
+        #print(tuple)
+        textDict = getEditionTextDict(tuple)
+        editionAddresses = textDict["addresses"]
+        
+
+    return 
+
+def processWordChanges(connection, object):
+
+    return
+
+def main(book=""):
     connection = psycopg2.connect(DATABASE_URL)
-    book = input("Enter book name: ")
-    #edition = input("Enter edition: ")
+    if book == "":
+        book = input("Enter book name: ")
 
+    startAddBookTime = time.time()
     bookObject = processBookToDict(book)
+    rawTextChangeObject = addRawText(connection, bookObject)
+    endAddBookTime = time.time()
+    print(f"Finished {book} in {endAddBookTime - startAddBookTime:.2f} seconds")
 
-    addRawText(connection, bookObject)
+    processWordAdditions(connection, rawTextChangeObject)
+
+    startProcessWordsTime = time.time()
+    if rawTextChangeObject["changes"]:
+        if rawTextChangeObject["additions"]:
+            processWordAdditions(rawTextChangeObject)
+        processWordChanges(connection, rawTextChangeObject)
+    endProcessWordsTime = time.time()
+    print(f"Processed words in {endProcessWordsTime - startProcessWordsTime:.2f} seconds")
+
+    if rawTextChangeObject["changes"]:
+        print(f"Total time for {book}: {endProcessWordsTime - startAddBookTime:.2f} seconds")
 
 
-allNTBooks = ["Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"]
+delete_by_book("all_verses", "2 Timothy")
+
+allNTBooks = ["2 Timothy"]
 
 for book in allNTBooks:
+    main(book)
 
-    startBookTime = time.time()
-    connection = psycopg2.connect(DATABASE_URL)
-    bookObject = processBookToDict(book)
-    addRawText(connection, bookObject)
-    endBookTime = time.time()
-    print(f"Finished {book} in {endBookTime - startBookTime:.2f} seconds")
+    
     
 #main()
