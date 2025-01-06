@@ -81,9 +81,9 @@ function createTriangleObject(resultDiv: HTMLDivElement, result: WordMassResult)
         object.isClicked = !object.isClicked;
         triangleSpan.innerHTML = object.isClicked ? "▼" : "▶";
         if (object.isClicked) {
-            triangleSpan.style.backgroundColor = "blue";
+            triangleSpan.style.color = "blue";
         } else {
-            triangleSpan.style.backgroundColor = "";
+            triangleSpan.style.color = "";
         }
     }
     return object;
@@ -95,7 +95,7 @@ function resultDiv(result: WordMassResult): HTMLDivElement {
     resultDiv.className = "result-item";
     let headwordSpan = document.createElement("span");
     let totalCount = result.counts.reduce((sum, val) => sum + val, 0);
-    headwordSpan.innerHTML = `<strong>${result.headword} (${totalCount})</strong>`; 
+    headwordSpan.innerHTML = `<strong>${result.headword} (${totalCount})</strong> `; 
     resultDiv.appendChild(headwordSpan);
     let triangleObject = createTriangleObject(resultDiv, result);
     resultDiv.appendChild(triangleObject.span);
