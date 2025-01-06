@@ -106,7 +106,7 @@ function getResultObjectLax() {
 
 }
 
-function rearrangeAddressList(addressList: number[]) {
+function rearrangeAddress(addressList: number[]) {
 
     let numList = [] as number[];
     let rearrangedList = [] as string[];
@@ -144,15 +144,22 @@ function getResultObjectStrict(result: WordMassResult) {
     topDiv.appendChild(triangleObject.span);
 
     let allAddressNums = result.verses;
+    let allAddresses: string[] = [];
 
     let addressToCountDict = {} as { [key: string]: number };
     for (let i = 0; i < allAddressNums.length; i++) {
-        console.log(allAddressNums[i]);
-        console.log(result.counts[i]);
-        addressToCountDict[allAddressNums[i]] = result.counts[i];
+        let addressNum = allAddressNums[i];
+        let count = result.counts[i];
+
+        let rawAddressString = addressNum.toString();
+        let newAddressString = "1" + rawAddressString.slice(1) + rawAddressString[0];
+        addressToCountDict[newAddressString] = count;
+        allAddresses.push(newAddressString);
     }
 
-    let allAddresses = rearrangeAddressList(allAddressNums);
+    allAddresses.sort((a, b) => parseInt(b) - parseInt(a));
+
+    console.log(allAddresses);
     //console.log(allAddresses[0]) // (e.g. '0430060275')
     //console.log(typeof allAddresses[0]) //(string)
 
