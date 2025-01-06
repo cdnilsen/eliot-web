@@ -108,6 +108,9 @@ function getResultObjectLax() {
 
 function rearrangeAddressList(addressList: number[]) {
 
+    let newAdressList = addressList.slice();
+    addressList.sort((a, b) => a - b);
+
 }
 
 function getResultObjectStrict(result: WordMassResult) {
@@ -123,6 +126,7 @@ function getResultObjectStrict(result: WordMassResult) {
         addressToCountDict[allAddresses[i]] = result.counts[i];
     }
     console.log(allAddresses[0])
+    console.log(typeof allAddresses[0])
 
 }
 
