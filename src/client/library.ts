@@ -86,7 +86,7 @@ export const bookToIDDict: Record<BookName, string> = {
     "Revelation": "066"
 };
 
-export const IDToBookDict = {
+export const IDToBookDict: Record<string, string> = {
     "001": "Genesis",
     "002": "Exodus",
     "003": "Leviticus",
