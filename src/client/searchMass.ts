@@ -1,4 +1,4 @@
-import { sectionToBookDict, bookToChapterDict, IDToBookDict } from "./library.js"
+import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict } from "./library.js"
 
 type WordMassResult = {
     headword: string;
@@ -122,6 +122,7 @@ function rearrangeAddressList(addressList: number[]) {
         let address = numList[i].toString().slice(1);
         rearrangedList.push(address);
     }
+    console.log(rearrangedList);
     return rearrangedList;
 }
 
@@ -139,9 +140,36 @@ function getResultObjectStrict(result: WordMassResult) {
     }
 
     let allAddresses = rearrangeAddressList(allAddressNums);
-    console.log(allAddresses[0])
-    console.log(typeof allAddresses[0])
+    //console.log(allAddresses[0]) // (e.g. '0430060275')
+    //console.log(typeof allAddresses[0]) //(string)
 
+    let allBooks: string[] = []
+    let addressBook = {};
+
+    let editionDict = {
+        '2': 'α',
+        '3': 'β',
+    }
+
+    for (let i=0; i < allAddresses.length; i++) {
+        let book = IDToBookDict[allAddresses[i].slice(0, 3) as keyof typeof IDToBookDict];
+        console.log(book)
+
+        if (!allBooks.includes(book)) {
+            allBooks.push(book);
+            addressBook[book] = {};
+        }
+        let verse = allAddresses[i].slice(3, 6) + "." + allAddresses[i].slice(6, 9);
+
+        let edition = parseInt(allAddresses[i][9]);
+
+        if (verse in addressBook[book]) {
+            addressBook[book][verse] *= edition;
+        } else {
+            addressBook[book][verse] = edition;
+        }
+       
+    }
 }
 
 function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
@@ -154,7 +182,7 @@ function displayAllResults(results: WordMassResult[], diacritics: "lax" | "stric
         results = sortByFrequency(results);
     }
 
-    console.log(results[0])
+    //console.log(results[0])
 
     results.forEach(result => {
         getResultObjectStrict(result);
