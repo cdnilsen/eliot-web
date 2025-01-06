@@ -27,9 +27,39 @@ async function sendWordSearch(searchString: string, searchType: string, diacriti
     }
 }
 
-function sortByAlphabet(results: WordMassResult[]) {
-    return results;
+function sortByAlphabet(results: WordMassResult[]): WordMassResult[] {
+    return [...results].sort((a, b) => {
+        const aWord = a.headword;
+        const bWord = b.headword;
+        let i = 0;
+        
+        while (i < aWord.length && i < bWord.length) {
+            const aChar = aWord[i];
+            const bChar = bWord[i];
+            
+            // If both characters are '8', move to next character
+            if (aChar === '8' && bChar === '8') {
+                i++;
+                continue;
+            }
+            
+            // If one is '8', it should come after everything
+            if (aChar === '8') return 1;
+            if (bChar === '8') return -1;
+            
+            // Regular character comparison
+            if (aChar !== bChar) {
+                return aChar.localeCompare(bChar);
+            }
+            
+            i++;
+        }
+        
+        // Handle different length strings
+        return aWord.length - bWord.length;
+    });
 }
+
 
 
 function sortByFrequency(results: WordMassResult[]) {
