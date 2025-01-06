@@ -107,14 +107,22 @@ function getResultObjectLax() {
 }
 
 function rearrangeAddressList(addressList: number[]) {
-    let rearrangedList = [] as number[];
+
+    let numList = [] as number[];
+    let rearrangedList = [] as string[];
 
     for (let i=0; i < addressList.length; i++) {
         let address = addressList[i].toString();
         let newAddress = "1" + address.slice(1) + address[0];
-        rearrangedList.push(parseInt(newAddress));
+        numList.push(parseInt(newAddress));
     }
-    return rearrangedList.sort((a, b) => a - b);
+    numList = numList.sort((a, b) => b - a);
+
+    for (let i=0; i < numList.length; i++) {
+        let address = numList[i].toString().slice(1);
+        rearrangedList.push(address);
+    }
+    return rearrangedList;
 }
 
 function getResultObjectStrict(result: WordMassResult) {
@@ -123,16 +131,16 @@ function getResultObjectStrict(result: WordMassResult) {
     let triangleObject = createTriangleObject();
     topDiv.appendChild(triangleObject.span);
 
-    let allAddresses = result.verses;
+    let allAddressNums = result.verses;
 
     let addressToCountDict = {} as { [key: string]: number };
-    for (let i = 0; i < allAddresses.length; i++) {
-        addressToCountDict[allAddresses[i]] = result.counts[i];
+    for (let i = 0; i < allAddressNums.length; i++) {
+        addressToCountDict[allAddressNums[i]] = result.counts[i];
     }
 
-    allAddresses = rearrangeAddressList(allAddresses);
+    let allAddresses = rearrangeAddressList(allAddressNums);
     console.log(allAddresses[0])
-    console.log(typeof allAddresses[0])
+    //console.log(typeof allAddresses[0])
 
 }
 
