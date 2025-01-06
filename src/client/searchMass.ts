@@ -67,7 +67,7 @@ function sortByFrequency(results: WordMassResult[]) {
 }
 
 
-function createTriangleObject(resultDiv: HTMLDivElement, result: WordMassResult) {
+function createTriangleObject() {
     let triangleSpan = document.createElement("span");
     triangleSpan.className = "triangle";
     triangleSpan.innerHTML = "▶";
@@ -98,10 +98,32 @@ function resultDiv(result: WordMassResult): HTMLDivElement {
     let formattedHeadword = result.headword.replaceAll("8", "ꝏ̄");
     headwordSpan.innerHTML = `<strong>${formattedHeadword} (${totalCount})</strong> `; 
     resultDiv.appendChild(headwordSpan);
-    let triangleObject = createTriangleObject(resultDiv, result);
-    resultDiv.appendChild(triangleObject.span);
-    
+
     return resultDiv;
+}
+
+function getResultObjectLax() {
+
+}
+
+function rearrangeAddressList(addressList: number[]) {
+
+}
+
+function getResultObjectStrict(result: WordMassResult) {
+    let topDiv = resultDiv(result);
+
+    let triangleObject = createTriangleObject();
+    topDiv.appendChild(triangleObject.span);
+
+    let allAddresses = result.verses;
+
+    let addressToCountDict = {} as { [key: string]: number };
+    for (let i = 0; i < allAddresses.length; i++) {
+        addressToCountDict[allAddresses[i]] = result.counts[i];
+    }
+    console.log(allAddresses[0])
+
 }
 
 function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
@@ -117,7 +139,7 @@ function displayAllResults(results: WordMassResult[], diacritics: "lax" | "stric
     console.log(results[0])
 
     results.forEach(result => {
-        resultsContainer.appendChild(resultDiv(result));
+        getResultObjectStrict(result);
     });
 
 }
