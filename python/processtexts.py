@@ -722,5 +722,5 @@ def delete_by_book(table_name: str, book_value: str) -> None:
 
 
 # Usage example:
-#delete_by_book('all_verses', 'Luke')
+#delete_by_book('all_verses', 'Acts')
 main()

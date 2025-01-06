@@ -95,12 +95,12 @@ function resultDiv(result: WordMassResult): HTMLDivElement {
     resultDiv.className = "result-item";
     let headwordSpan = document.createElement("span");
     let totalCount = result.counts.reduce((sum, val) => sum + val, 0);
-    headwordSpan.innerHTML = `<strong>${result.headword} (${totalCount})</strong> `; 
+    let formattedHeadword = result.headword.replaceAll("8", "ꝏ̄");
+    headwordSpan.innerHTML = `<strong>${formattedHeadword} (${totalCount})</strong> `; 
     resultDiv.appendChild(headwordSpan);
     let triangleObject = createTriangleObject(resultDiv, result);
     resultDiv.appendChild(triangleObject.span);
     
-
     return resultDiv;
 }
 
