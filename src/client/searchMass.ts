@@ -126,6 +126,17 @@ function rearrangeAddressList(addressList: number[]) {
     return rearrangedList;
 }
 
+
+
+
+type AddressBook = {
+    [key: string]: {
+        [key: string]: {
+            [key: string]: number;
+        }
+    }
+}  
+
 function getResultObjectStrict(result: WordMassResult) {
     let topDiv = resultDiv(result);
 
@@ -144,7 +155,7 @@ function getResultObjectStrict(result: WordMassResult) {
     //console.log(typeof allAddresses[0]) //(string)
 
     let allBooks: string[] = []
-    let addressBook = {};
+    let addressBook: AddressBook = {};
 
     let editionDict = {
         '2': 'α',
@@ -161,14 +172,15 @@ function getResultObjectStrict(result: WordMassResult) {
         }
         let verse = allAddresses[i].slice(3, 6) + "." + allAddresses[i].slice(6, 9);
 
-        let edition = parseInt(allAddresses[i][9]);
+        let edition = allAddresses[i][9];
 
         if (verse in addressBook[book]) {
-            addressBook[book][verse] *= edition;
+            addressBook[book][verse][edition] = addressToCountDict[allAddresses[i]];
         } else {
-            addressBook[book][verse] = edition;
+            addressBook[book][verse] = {
+                [edition]: addressToCountDict[allAddresses[i]]
+            }
         }
-       
     }
 }
 
