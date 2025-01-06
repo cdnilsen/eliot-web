@@ -27,9 +27,26 @@ async function sendWordSearch(searchString: string, searchType: string, diacriti
     }
 }
 
-function displayResults(results: WordMassResult[], diacritics: "lax" | "strict") {
+function sortByAlphabet(results: WordMassResult[]) {
+    return results;
+}
+
+
+function sortByFrequency(results: WordMassResult[]) {
+    return results.sort((a, b) => b.counts.reduce((sum, val) => sum + val, 0) - a.counts.reduce((sum, val) => sum + val, 0));
+}
+
+function displayResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
     let resultsContainer = document.getElementById("results-container") as HTMLDivElement;
     resultsContainer.innerHTML = ''; // Clear previous results
+
+    if (sortAlphabetically) {
+        results = sortByAlphabet(results);
+    } else {
+        results = sortByFrequency(results);
+    }
+
+    console.log(results[0])
 
     results.forEach(result => {
         let resultDiv = document.createElement("div");
@@ -41,12 +58,8 @@ function displayResults(results: WordMassResult[], diacritics: "lax" | "strict")
 }
 
 
+async function search() {
 
-
-
-let submitButton = document.getElementById("submitButton");
-
-submitButton?.addEventListener("click", async () => {
     let searchInput = document.getElementById("search_bar") as HTMLInputElement;
     let searchInputValue = searchInput.value;
     let searchDropdown = document.getElementById("searchWordDropdown") as HTMLSelectElement;
@@ -63,9 +76,17 @@ submitButton?.addEventListener("click", async () => {
     const results = await sendWordSearch(searchInputValue, searchType, diacritics);
     console.log('Search results:', results);
 
-    displayResults(results, diacritics);
+    displayResults(results, diacritics, sortAlphabetically);
+}
 
-    //let resultsContainer = document.getElementById("results-container") as HTMLDivElement;
 
-    //console.log(typeof results);
+let submitButton = document.getElementById("submitButton");
+submitButton?.addEventListener("click", async () => {
+    await search();
+});
+
+document.addEventListener("keydown", async (event) => {
+    if (event.key === "Enter") {
+        await search();
+    }
 });
