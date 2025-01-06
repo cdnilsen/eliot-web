@@ -5,6 +5,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from library import bookToIDDict, cleanDiacritics, cleanWord
 import time
 import math
+import asyncio
 
 #load_dotenv('vars.env')
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:Cb4-D5B2BEEg6*GBBB*Fga*b5FE6CbfF@monorail.proxy.rlwy.net:14224/railway')
@@ -723,4 +724,7 @@ def delete_by_book(table_name: str, book_value: str) -> None:
 
 # Usage example:
 #delete_by_book('all_verses', 'Acts')
-main()
+#main()
+
+connection = psycopg2.connect(DATABASE_URL)
+clear_tables(connection)

@@ -1,0 +1,342 @@
+import os
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from library import bookToIDDict, cleanDiacritics, cleanWord
+import time
+import math
+import asyncio
+
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:Cb4-D5B2BEEg6*GBBB*Fga*b5FE6CbfF@monorail.proxy.rlwy.net:14224/railway')
+
+def addZeros(number):
+    while (len(number) < 3):
+        number = "0" + number
+    return number
+
+def getIDTail(bookID, object):
+    chapter = addZeros(str(object["chapter"]))
+    verse = addZeros(str(object["verse"]))
+
+    return bookID + chapter + verse
+
+def getVerseObject(line, bookID, edition):
+
+    splitLine = line.split(" ")
+    address = splitLine[0].strip()
+    text = " ".join(splitLine[1:])
+
+    editionDict = {
+        "First Edition": "2",
+        "Second Edition": "3",
+        "Mayhew": "5",
+        "Zeroth": "7",
+        "KJV": "4",
+        "Grebrew": "8"
+    }
+
+    columnDict = {
+        "First Edition": "first_edition",
+        "Second Edition": "second_edition",
+        "Mayhew": "mayhew",
+        "Zeroth": "zeroth_edition",
+        "KJV": "kjv",
+        "Grebrew": "grebrew"
+    }
+
+    editionID = editionDict[edition]
+
+    object = {
+        "chapter": 999,
+        "verse": 999,
+        "genericID": "1" + bookID + "999999",
+        "specificID": editionID + bookID + "999999",
+        "text": text,
+        "words": [],
+        "counts": [],
+        "isMass": edition != "Grebrew" and edition != "KJV",
+        "column": columnDict[edition]
+    }
+
+    if "." in address:
+        splitAddress = address.split(".")
+        object["chapter"] = int(splitAddress[0])
+        object["verse"] = int(splitAddress[1])
+        idTail = getIDTail(bookID, object)
+        object["genericID"] = "1" + idTail
+        object["specificID"] = editionID + idTail
+
+    splitText = text.split(" ")
+    if edition != "Grebrew" and edition != "KJV":
+        wordToCountDict = {}
+        for word in splitText:
+            word = cleanWord(word)
+            if word in wordToCountDict:
+                wordToCountDict[word] += 1
+            else:
+                wordToCountDict[word] = 1
+                object["words"].append(word)
+
+        for word in object["words"]:
+            object["counts"].append(wordToCountDict[word])
+
+    return object
+
+def updateAddresses(newAddresses, newCounts, oldAddressList, oldCountList):
+    oldCountDictionary = {}
+    for i in range(len(oldAddressList)):
+        oldCountDictionary[oldAddressList[i]] = oldCountList[i]
+
+    newCountDictionary = {}
+    for i in range(len(newAddresses)):
+        newCountDictionary[newAddresses[i]] = newCounts[i]
+
+
+
+    object = {
+        "addresses": [],
+        "counts": [],
+        "delete": []
+    }
+    return object
+
+
+def updateMassWordObject(connection, object):
+
+
+    return object
+    
+
+def updateMassWord(connection, headwords, newHeadwordRawObject):
+    cursor = connection.cursor()
+    try:
+        cursor.execute("SELECT * FROM words_mass WHERE headword = ANY(%s)", (headwords,))
+        rows = cursor.fetchall()
+
+        existingHeadwords = {}
+        newHeadwords = []
+        for row in rows:
+            headword = row[0]
+            oldObject = {
+                "addresses": row[1],
+                "counts": row[2],
+                "lemma": row[3],
+                "noDiacritics": row[4],
+                "editionNum": row[5],
+                "totalCount": row[6]
+            }
+
+            existingHeadwords[headword] = oldObject
+
+        for newHeadword in newHeadwordRawObject:
+            if newHeadword in existingHeadwords:
+                oldObject = existingHeadwords[newHeadword]
+                newObject = updateMassWordObject(connection, oldObject)
+            else:
+                newHeadwords.append(newHeadword)
+                newObject = newHeadwordRawObject[newHeadword]
+
+            newObject = updateMassWordObject(connection, oldObject)
+            
+        for headword in headwords:
+            if headword not in existingHeadwords:
+                newHeadwords.append(headword)
+
+        print(newHeadwords)
+        return rows
+    except Exception as e:
+        connection.rollback()
+        print(f"Error updating words: {e}")
+
+
+def addRawText(connection, bookObject):
+    cursor = connection.cursor()
+
+    allEditions = [
+        "First Edition",
+        "Second Edition",
+        "Mayhew",
+        "Zeroth Edition",
+        "KJV",
+        "Grebrew"
+    ]
+
+    editionsPresent = []
+    for edition in bookObject["editions"]:
+        if edition in allEditions:
+            editionsPresent.append(edition)
+
+    genericIDList = bookObject["IDs"]
+    rawTextDict = bookObject["dict"]
+    book = bookObject["book"]
+
+
+    oldDataList = []
+    oldDataDict = {}
+
+    cursor.execute("SELECT * FROM all_verses WHERE book = %s", (book,))
+    rows = cursor.fetchall()
+    for existingTuple in rows:
+        stringID = str(existingTuple[0])
+        oldDataList.append(stringID)
+        oldDataDict[stringID] = existingTuple
+
+    newDataList = []
+    newDataDict = {}
+    lastChapter = 0
+    for genericID in genericIDList:
+        subobject = rawTextDict[genericID]
+        for edition in allEditions:
+            if edition not in subobject:
+                subobject[edition] = ""
+        
+        if len(genericID) == 10:
+            chapter = int(genericID[4:7])
+            verse = int(genericID[7:10])
+            lastChapter = chapter
+        else:
+            chapter = lastChapter
+            verse = 999
+        tuple = (
+            int(genericID),
+            book,
+            chapter,
+            verse,
+            subobject["First Edition"],
+            subobject["Second Edition"],
+            subobject["Mayhew"],
+            subobject["Zeroth Edition"],
+            subobject["KJV"],
+            subobject["Grebrew"]
+        )
+        newDataList.append(genericID)
+        newDataDict[genericID] = tuple
+    
+
+    idsToAdd = []
+    idsToChange = []
+    for id in newDataList:
+        if id in oldDataDict and id in newDataDict:
+            oldTuple = oldDataDict[id]
+            newTuple = newDataDict[id]
+            for i in range(len(newTuple)):
+                if newTuple[i] != oldTuple[i]:
+                    idsToChange.append(id)
+                    break
+        elif id in newDataDict:
+            idsToAdd.append(id)
+
+    if len(idsToAdd) > 0:
+        data = []
+        for id in idsToAdd:
+            data.append(newDataDict[id])
+        try:
+            original_start_time = time.time()
+            for i in range(0, len(data), 50):
+                batch = data[i:i+50]
+                start_time = time.time()
+                cursor.executemany("""
+                    INSERT INTO all_verses (verse_id, book, chapter, verse, first_edition, second_edition, 
+                    mayhew, zeroth_edition, kjv, grebrew) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, batch)
+                end_time = time.time()
+                print(f"Inserted rows {i}-{i+len(batch)} in {end_time - start_time:.2f} seconds")
+                connection.commit()
+            final_end_time = time.time()
+            print(f"Inserted {len(data)} rows in {final_end_time - original_start_time:.2f} seconds")
+            connection.commit()
+        except Exception as e:
+            connection.rollback()
+            print(f"Error inserting rows: {e}")
+    
+
+    # Now we need to deal with rows where the data has changed
+
+    if len(idsToChange) > 0:
+        try:
+            for i in range(0, len(idsToChange), 50):
+                batch_ids = idsToChange[i:i+50]
+                batch_data = [newDataDict[id] for id in batch_ids]
+                start_time = time.time()
+                cursor.executemany("""
+                    UPDATE all_verses 
+                    SET book = %s, chapter = %s, verse = %s, 
+                        first_edition = %s, second_edition = %s,
+                        mayhew = %s, zeroth_edition = %s, 
+                        kjv = %s, grebrew = %s
+                    WHERE verse_id = %s
+                """, [(t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], t[9], t[0]) for t in batch_data])
+                end_time = time.time()
+                print(f"Updated rows {i}-{i+len(batch_ids)} in {end_time - start_time:.2f} seconds")
+                connection.commit()
+        except Exception as e:
+            connection.rollback()
+            print(f"Error updating rows: {e}")
+    return
+
+
+def processBookToDict(bookName):
+    fileDirectory = os.listdir("../texts")
+    rightFiles = []
+    for file in fileDirectory:
+        if file.startswith(bookName):
+            rightFiles.append(file)
+
+    if(len(rightFiles) == 0):
+        print("No files found for that book")
+        return
+
+    massVerseObjects = []
+    nonMassVerseObjects = []
+
+    rawTextDict = {}
+    genericIDList = []
+    editions = []
+    for file in rightFiles:
+        bookID = bookToIDDict[file.split(".")[0]]
+        edition = file.split(".")[1]
+        editions.append(edition)
+        with open(f"../texts/{file}", "r", encoding="utf-8") as file:
+            for line in file.readlines():
+                line = line.strip()
+                if line == "":
+                    continue
+                thisVerseObject = getVerseObject(line, bookID, edition)
+                genericID = thisVerseObject["genericID"]
+                if genericID not in rawTextDict:
+                    rawTextDict[genericID] = {}
+                    genericIDList.append(genericID)
+                
+                rawTextDict[genericID][edition] = thisVerseObject["text"]
+    
+    object = {
+        "book": bookName,
+        "dict": rawTextDict,
+        "IDs": genericIDList,
+        "editions": editions
+    }
+
+    return object
+
+def main():
+    connection = psycopg2.connect(DATABASE_URL)
+    book = input("Enter book name: ")
+    #edition = input("Enter edition: ")
+
+    bookObject = processBookToDict(book)
+
+    addRawText(connection, bookObject)
+
+
+allNTBooks = ["Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"]
+
+for book in allNTBooks:
+
+    startBookTime = time.time()
+    connection = psycopg2.connect(DATABASE_URL)
+    bookObject = processBookToDict(book)
+    addRawText(connection, bookObject)
+    endBookTime = time.time()
+    print(f"Finished {book} in {endBookTime - startBookTime:.2f} seconds")
+    
+#main()

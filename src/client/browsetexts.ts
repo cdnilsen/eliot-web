@@ -502,6 +502,10 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
     // Add verse number
     let verseString = verse.chapter.toString() + ":" + verse.verse.toString();
 
+    if (verse.verse == 999) {
+        verseString = "Epilogue";
+    }
+
     const verseNumCell = document.createElement(cellType);
     verseNumCell.className = 'verse-number';
     verseNumCell.style.width = '10%';
