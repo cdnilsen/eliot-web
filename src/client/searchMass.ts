@@ -140,7 +140,7 @@ function getResultObjectStrict(result: WordMassResult) {
 
     let allAddresses = rearrangeAddressList(allAddressNums);
     console.log(allAddresses[0])
-    //console.log(typeof allAddresses[0])
+    console.log(typeof allAddresses[0])
 
 }
 
