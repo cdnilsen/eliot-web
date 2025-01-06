@@ -175,7 +175,7 @@ function getResultObjectStrict(result: WordMassResult) {
     }
 
     allAddresses.sort((a, b) => parseInt(b) - parseInt(a));
-
+    console.log(result.headword);
     console.log(allAddresses);
     //console.log(allAddresses[0]) // (e.g. '0430060275')
     //console.log(typeof allAddresses[0]) //(string)
@@ -194,8 +194,9 @@ function getResultObjectStrict(result: WordMassResult) {
         let address = allAddresses[i];
         let bookKey = address.slice(1, 4);
         let book = IDToBookDict[bookKey];
-        console.log(book)
-        console.log(addressToCountDict[allAddresses[i]])
+
+        //console.log(book)
+        //console.log(addressToCountDict[allAddresses[i]])
 
         if (!allBooks.includes(book)) {
             allBooks.push(book);
@@ -215,7 +216,7 @@ function getResultObjectStrict(result: WordMassResult) {
         }
     }
 
-    console.log(addressBook);
+    //console.log(addressBook);
 }
 
 function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
