@@ -107,10 +107,14 @@ function getResultObjectLax() {
 }
 
 function rearrangeAddressList(addressList: number[]) {
+    let rearrangedList = [] as number[];
 
-    let newAdressList = addressList.slice();
-    addressList.sort((a, b) => a - b);
-
+    for (let i=0; i < addressList.length; i++) {
+        let address = addressList[i].toString();
+        let newAddress = "1" + address.slice(1) + address[0];
+        rearrangedList.push(parseInt(newAddress));
+    }
+    return rearrangedList.sort((a, b) => a - b);
 }
 
 function getResultObjectStrict(result: WordMassResult) {
@@ -125,6 +129,8 @@ function getResultObjectStrict(result: WordMassResult) {
     for (let i = 0; i < allAddresses.length; i++) {
         addressToCountDict[allAddresses[i]] = result.counts[i];
     }
+
+    allAddresses = rearrangeAddressList(allAddresses);
     console.log(allAddresses[0])
     console.log(typeof allAddresses[0])
 
