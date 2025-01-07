@@ -262,7 +262,8 @@ type AddressBook = {
 }
 
 type WordObject = {
-    div: HTMLDivElement;
+    parentDiv: HTMLDivElement;
+    childContainer: HTMLDivElement;
     addressBook: AddressBook;
     triangle: TriangleObject;
 }
@@ -329,8 +330,15 @@ function getResultObjectStrict(result: WordMassResult) {
         }
     }
 
+    let bookDivs = getBookDivs(addressBook);
+    let childContainerDiv = document.createElement("div");
+    bookDivs.forEach(bookDiv => {   
+        childContainerDiv.appendChild(bookDiv);
+    })
+
     let object: WordObject = {
-        div: topDiv,
+        parentDiv: topDiv,
+        childContainer: childContainerDiv,
         addressBook: addressBook,
         triangle: triangleObject
     }
@@ -340,13 +348,10 @@ function getResultObjectStrict(result: WordMassResult) {
         object.triangle.span.innerHTML = object.triangle.isClicked ? "▼" : "▶";
         if (object.triangle.isClicked) {
             object.triangle.span.style.color = "blue";
-            let bookDivs = getBookDivs(object.addressBook);
-            bookDivs.forEach(bookDiv => {
-                object.div.appendChild(bookDiv);
-            })
+            object.parentDiv.appendChild(object.childContainer);
         } else {
             object.triangle.span.style.color = "";
-            object.div.innerHTML = `<strong>${result.headword}</strong> (${result.counts.reduce((sum, val) => sum + val, 0)})`; //idk lol
+            object.parentDiv.innerHTML = `<strong>${result.headword}</strong> (${result.counts.reduce((sum, val) => sum + val, 0)})`; //idk lol
         }
         
     }
