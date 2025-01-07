@@ -171,7 +171,7 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
 function getOneBookDiv(bookName: string, topDict: AddressBook) {
     let bookDiv = document.createElement("div");
     bookDiv.className = "book-div";
-    bookDiv.style.paddingBottom = "10px";
+    bookDiv.style.paddingBottom = "8px";
     let bookSpan = document.createElement("span");
 
 
