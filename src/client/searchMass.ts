@@ -84,24 +84,68 @@ function createTriangleObject(): TriangleObject {
 }
 
 
-function getAddressSpan(dict: { [key: string]: number }, address: string): HTMLSpanElement {
-    let span = document.createElement("span");
+function getAddressSpan(dict: { [key: string]: number }, address: string, bookName: string): HTMLSpanElement {
+    let topSpan = document.createElement("span");
     let keys = Object.keys(dict).sort((a, b) => parseInt(b) - parseInt(a));
+
+    let editionToPrefixDict = {
+        '2': 'α',
+        '3': 'β',
+        '5': 'M',
+        '7': 'א',
+        '10': 'αM',
+        '14': 'αא',
+        '15': 'βM',
+        '30': 'אβ'
+    }
+
+    if (bookName == "John" || bookName == "Psalms (prose)") {
+        editionToPrefixDict['6'] = 'αβ';
+    }
     
     let editionNum = 1;
+    let allCounts: number[] = [];
+    
+    let notAllCountsSame: boolean = false;
     for (let i=0; i < keys.length; i++) {
         let key = keys[i];
         let count = dict[key];
+        if (allCounts.length > 0) {
+            if (allCounts[allCounts.length - 1] != count) {
+                notAllCountsSame = true;
+            }
+        }
+        allCounts.push(count);
         console.log("The type of the key is: " + typeof key);
         console.log(key);
+        editionNum *= parseInt(key);
         //editionNum *= key;
         let addressSpan = document.createElement("span");
-        addressSpan.innerHTML = address + " (" + count + ") ";
-        span.appendChild(addressSpan);
+        let spanInnerHTML = "";
+        if (editionNum.toString() in editionToPrefixDict) {
+            spanInnerHTML += "<sup>"+ editionToPrefixDict[editionNum.toString()] + "</sup>";
+        }
+
+
+        spanInnerHTML += address + " (" + count + ")";
+
+        if (notAllCountsSame) {
+            let countString = "";
+            for (let j=0; j < allCounts.length; j++) {
+                countString += allCounts[j].toString() + "/";
+            }
+            countString = countString.slice(0, -1);
+            spanInnerHTML += "<sup>" + countString + "</sup>";
+        }
+        
+
+        if (i < keys.length - 1) {
+            spanInnerHTML += ", ";
+        }
+        addressSpan.innerHTML = spanInnerHTML;
+        topSpan.appendChild(addressSpan);
     }
-
-    return span;
-
+    return topSpan;
 }
 
 function getOneBookDiv(bookName: string, topDict: AddressBook) {
@@ -113,18 +157,25 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
     let totalCount = 0;
     let addressList = Object.keys(topDict[bookName]).sort();
 
+    let allSpans: HTMLSpanElement[] = [];
     for (let i=0; i < addressList.length; i++) {
         let address = addressList[i];
         console.log(address);
         let addressDict = topDict[bookName][address];
         console.log(addressDict);
         //totalCount += addressCount;
-        let span: HTMLSpanElement = getAddressSpan(addressDict, address);
-        bookDiv.appendChild(span);
+        let span: HTMLSpanElement = getAddressSpan(addressDict, address, bookName);
+        allSpans.push(span);
     }
     bookSpan.innerHTML = "<t><i>" + bookName + "</i> (" + totalCount + "): ";
 
     bookDiv.appendChild(bookSpan);
+    
+    for (let i=0; i < allSpans.length; i++) {
+        let span = allSpans[i];
+        bookDiv.appendChild(span);
+    }
+    
     return bookDiv;
 
 }
