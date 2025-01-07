@@ -375,7 +375,7 @@ function displayAllResults(results: WordMassResult[], diacritics: "lax" | "stric
 
     results.forEach(result => {
         let object: WordObject = getResultObjectStrict(result);
-        resultsContainer.appendChild(object.div);
+        resultsContainer.appendChild(object.parentDiv);
     });
 
 }
