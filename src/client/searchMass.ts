@@ -236,6 +236,8 @@ function getResultObjectStrict(result: WordMassResult) {
         console.log(object.addressBook);
     }
 
+    return object;
+
     //console.log(addressBook);
 }
 
@@ -252,7 +254,8 @@ function displayAllResults(results: WordMassResult[], diacritics: "lax" | "stric
     //console.log(results[0])
 
     results.forEach(result => {
-        getResultObjectStrict(result);
+        let object: WordObject = getResultObjectStrict(result);
+        resultsContainer.appendChild(object.div);
     });
 
 }
