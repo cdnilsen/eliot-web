@@ -93,6 +93,7 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
         '3': 'β',
         '5': 'M',
         '7': 'א',
+        '6': '',
         '10': 'αM',
         '14': 'αא',
         '15': 'βM',
