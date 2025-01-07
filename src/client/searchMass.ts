@@ -66,13 +66,17 @@ function sortByFrequency(results: WordMassResult[]) {
     return results.sort((a, b) => b.counts.reduce((sum, val) => sum + val, 0) - a.counts.reduce((sum, val) => sum + val, 0));
 }
 
+type TriangleObject = {
+    span: HTMLSpanElement;
+    isClicked: boolean;
+}
 
-function createTriangleObject() {
+function createTriangleObject(): TriangleObject {
     let triangleSpan = document.createElement("span");
     triangleSpan.className = "triangle";
     triangleSpan.innerHTML = "▶";
 
-    let object = {
+    let object: TriangleObject = {
         span: triangleSpan,
         isClicked: false,
     }
@@ -152,7 +156,13 @@ type AddressBook = {
             [key: string]: number;
         }
     }
-}  
+}
+
+type WordObject = {
+    div: HTMLDivElement;
+    addressBook: AddressBook;
+    triangle: TriangleObject;
+}
 
 function getResultObjectStrict(result: WordMassResult) {
     let topDiv = resultDiv(result);
@@ -214,6 +224,16 @@ function getResultObjectStrict(result: WordMassResult) {
                 [edition]: addressToCountDict[allAddresses[i]]
             }
         }
+    }
+
+    let object: WordObject = {
+        div: topDiv,
+        addressBook: addressBook,
+        triangle: triangleObject
+    }
+
+    object.triangle.span.onclick = () => {
+        console.log(object.addressBook);
     }
 
     //console.log(addressBook);

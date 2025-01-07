@@ -1,12 +1,43 @@
 import os
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from psycopg2.extras import execute_values
 from library import bookToIDDict, cleanDiacritics, cleanWord
 import time
 import math
 import asyncio
 
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:Cb4-D5B2BEEg6*GBBB*Fga*b5FE6CbfF@monorail.proxy.rlwy.net:14224/railway')
+
+def clear_tables(connection):
+    areYouSure = input("THIS WILL DELETE ALL YOUR DATA FROM ALL YOUR TABLES.\nIF YOU'RE SURE, TYPE 'YES' (ALL CAPS): ")
+    if areYouSure != "YES":
+        print("Aborting")
+        return
+    else:
+        cursor = connection.cursor()
+
+        executeStatement = ""
+        whichTable = input("Which table would you like to clear?\n(1) all_verses\n(2) verses_to_words\n(3) words_mass\n(4) all of them\n: ")
+
+        if whichTable == "1":
+            executeStatement = "DELETE FROM all_verses;"
+        elif whichTable == "2":
+            executeStatement = "DELETE FROM verses_to_words;"
+        elif whichTable == "3":
+            executeStatement = "DELETE FROM words_mass;"
+        elif whichTable == "4":
+            executeStatement = "DELETE FROM all_verses; DELETE FROM verses_to_words; DELETE FROM words_mass;"
+
+        try:
+            cursor.execute(executeStatement)
+            connection.commit()
+            print("Tables cleared successfully")
+        except Exception as e:
+            connection.rollback()
+            print(f"Error: {e}")
+        finally:
+            cursor.close()
 
 def delete_by_book(table_name: str, book_value: str) -> None:
     try:
@@ -30,6 +61,12 @@ def delete_by_book(table_name: str, book_value: str) -> None:
             cur.close()
         if conn:
             conn.close()
+
+def alphabetizeMass(words: list[str]) -> list[str]:
+    def getOrdering(word: str) -> tuple:
+        return tuple(999 if c == '8' else ord(c) for c in word)
+    
+    return sorted(words, key=getOrdering)
 
 
 def addZeros(number):
@@ -247,7 +284,7 @@ def addRawText(connection, bookObject):
             newTuple = newDataDict[id]
             for i in range(len(newTuple)):
                 if newTuple[i] != oldTuple[i]:
-                    idsToChange.append(id)
+                    idsToAdd.append(id)
                     if (i > 3 and i < 8):
                         changeMass = True
                     break
@@ -261,19 +298,21 @@ def addRawText(connection, bookObject):
             data.append(newDataDict[id])
         try:
             original_start_time = time.time()
-            for i in range(0, len(data), 50):
-                batch = data[i:i+50]
-                start_time = time.time()
-                cursor.executemany("""
-                    INSERT INTO all_verses (verse_id, book, chapter, verse, first_edition, second_edition, 
-                    mayhew, zeroth_edition, kjv, grebrew) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, batch)
-                end_time = time.time()
-                print(f"Inserted rows {i}-{i+len(batch)} in {end_time - start_time:.2f} seconds")
-                connection.commit()
+            start_time = time.time()
+            insert_query = """
+            INSERT INTO all_verses (
+                verse_id, book, chapter, verse, first_edition, 
+                second_edition, mayhew, zeroth_edition, kjv, grebrew
+            ) VALUES %s
+            """
+            execute_values(
+            cursor, 
+            insert_query, 
+            data,
+            page_size=50  # This handles batching internally in a more efficient way
+            )
             final_end_time = time.time()
-            print(f"Inserted {len(data)} rows in {final_end_time - original_start_time:.2f} seconds")
+            print(f"Inserted {len(data)} rows in {final_end_time - start_time:.2f} seconds")
             connection.commit()
         except Exception as e:
             connection.rollback()
@@ -398,25 +437,135 @@ def getWordsFromText(text):
 def getEditionTextDict(rowTuple):
     addressTail = str(rowTuple[0])[1:]
     return {
-        "addresses": ["2 " + addressTail, "3 " + addressTail, "5 " + addressTail, "7 " + addressTail],
+        "addresses": ["2" + addressTail, "3" + addressTail, "5" + addressTail, "7" + addressTail],
         "2" + addressTail: rowTuple[4],
         "3" + addressTail: rowTuple[5],
         "5" + addressTail: rowTuple[6],
         "7" + addressTail: rowTuple[7],
     }
 
-def processWordAdditions(connection, object):
-    idList = object["idsToAdd"]
+def getWordAdditions(object):
+    idList = []
     allWordList = []
-
+    wordToVerseDict = {}
+    verseToWordDict = {}
     for key in object["newDict"]:
         tuple = object["newDict"][key]
         #print(tuple)
         textDict = getEditionTextDict(tuple)
         editionAddresses = textDict["addresses"]
-        
 
-    return 
+        for address in editionAddresses:
+            text = textDict[address].strip()
+            if text.strip() == "":
+                continue
+            idList.append(address)
+            wordObject = getWordsFromText(text)
+            verseToWordDict[address] = wordObject["counts"]
+            for i in range(len(wordObject["words"])):
+                word = wordObject["words"][i]
+                if word.strip() == "":
+                    continue
+                count = wordObject["counts"][word]
+                verseToWordDict[word] = count
+
+                if word not in wordToVerseDict:
+                    wordToVerseDict[word] = {
+                        address: count
+                    }
+                    allWordList.append(word)
+                else:
+                    if address not in wordToVerseDict[word]:
+                        wordToVerseDict[word][address] = count
+                    else:
+                        wordToVerseDict[word][address] += count
+    object = {
+        "ids": idList,
+        "words": allWordList,
+        "wordToVerse": wordToVerseDict,
+        "verseToWord": verseToWordDict
+    }
+
+    return object
+
+
+def processWordAdditions(connection, object):
+    cursor = connection.cursor()
+
+    # Add to verses_to_words
+    allTuples = []
+    for id in object["ids"]:
+        thisIDDict = object["verseToWord"][id]
+        wordList = alphabetizeMass(thisIDDict.keys())
+        countList = []
+        for word in wordList:
+            countList.append(thisIDDict[word])
+        tuple = (int(id), wordList, countList)
+        allTuples.append(tuple)
+    
+    # Batch insert into verses_to_words
+    insert_query = """
+        INSERT INTO verses_to_words (verse_id, words, counts)
+        VALUES %s
+        ON CONFLICT (verse_id) 
+        DO UPDATE SET 
+            words = EXCLUDED.words,
+            counts = EXCLUDED.counts
+    """
+    
+    try:
+        execute_values(cursor, insert_query, allTuples)
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise Exception(f"Error inserting into verses_to_words: {str(e)}")
+
+    # add to words_mass
+    allWordsMassTuples = []
+    for word in object["words"]:
+        if word.strip() == "":
+            continue
+        noDiacritics = cleanDiacritics(word)
+        if word not in object["wordToVerse"]:
+            print("Problem with word: " + word + " at " + str(object["wordToVerse"][word]))
+            continue
+        verseDict = object["wordToVerse"][word]
+        addresses = []
+        counts = []
+        for address in verseDict:
+            addresses.append(int(address))
+            counts.append(verseDict[address])
+        lemma = "" # For now.
+        noDiacritics = cleanDiacritics(word)
+        editionNum = 1 # fix this later
+        totalCount = sum(counts)
+
+        tuple = (word, addresses, counts, lemma, noDiacritics, editionNum, totalCount)
+
+        allWordsMassTuples.append(tuple)
+
+    words_query = """
+        INSERT INTO words_mass (headword, verses, counts, lemma, no_diacritics, editions, total_count)
+        VALUES %s
+        ON CONFLICT (headword)
+        DO UPDATE SET 
+            verses = words_mass.verses || EXCLUDED.verses,
+            counts = words_mass.counts || EXCLUDED.counts,
+            lemma = EXCLUDED.lemma,
+            no_diacritics = EXCLUDED.no_diacritics,
+            editions = EXCLUDED.editions,
+            total_count = words_mass.total_count + EXCLUDED.total_count
+    """
+    
+    try:
+        execute_values(cursor, words_query, allWordsMassTuples)
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise Exception(f"Error inserting into words_mass: {str(e)}")
+    finally:
+        cursor.close()
+    
 
 def processWordChanges(connection, object):
 
@@ -433,7 +582,13 @@ def main(book=""):
     endAddBookTime = time.time()
     print(f"Finished {book} in {endAddBookTime - startAddBookTime:.2f} seconds")
 
-    processWordAdditions(connection, rawTextChangeObject)
+    startWordTime = time.time()
+    wordAdditionObject = getWordAdditions(rawTextChangeObject)
+    processWordAdditions(connection, wordAdditionObject)
+    endWordTime = time.time()
+    print(f"Finished {book} in {endWordTime - startWordTime:.2f} seconds")
+
+
 
     startProcessWordsTime = time.time()
     if rawTextChangeObject["changes"]:
@@ -441,18 +596,22 @@ def main(book=""):
             processWordAdditions(rawTextChangeObject)
         processWordChanges(connection, rawTextChangeObject)
     endProcessWordsTime = time.time()
-    print(f"Processed words in {endProcessWordsTime - startProcessWordsTime:.2f} seconds")
 
     if rawTextChangeObject["changes"]:
         print(f"Total time for {book}: {endProcessWordsTime - startAddBookTime:.2f} seconds")
 
 
-delete_by_book("all_verses", "2 Timothy")
 
-allNTBooks = ["2 Timothy"]
 
+allNTBooks = ["Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"]
+
+
+outerStartTime = time.time()
+connection = psycopg2.connect(DATABASE_URL)
+clear_tables(connection)
 for book in allNTBooks:
     main(book)
+print(f"Total time for all books: {time.time() - outerStartTime:.2f} seconds")
 
     
     
