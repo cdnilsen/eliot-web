@@ -1,3 +1,4 @@
+import { totalmem } from "os";
 import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, allBookList } from "./library.js"
 
 type WordMassResult = {
@@ -107,10 +108,11 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
 
     let editionNum = 1;
     let allCounts: number[] = [];
-    
+    let totalCount = 0;
     let notAllCountsSame: boolean = false;
     for (let i=0; i < keys.length; i++) {
         let key = keys[i];
+        editionNum *= parseInt(key);
         let count = dict[key];
         if (allCounts.length > 0) {
             if (allCounts[allCounts.length - 1] != count) {
@@ -118,31 +120,27 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
             }
         }
         allCounts.push(count);
-        console.log("The type of the key is: " + typeof key);
-        console.log(key);
-        editionNum *= parseInt(key);
-        //editionNum *= key;
-        let addressSpan = document.createElement("span");
-        let spanInnerHTML = "";
-        if (editionNum.toString() in editionToPrefixDict) {
-            spanInnerHTML += "<sup>"+ editionToPrefixDict[editionNum.toString()] + "</sup>";
-        }
-
-
-        spanInnerHTML += address + " (" + count + ")";
-
-        if (notAllCountsSame) {
-            let countString = "";
-            for (let j=0; j < allCounts.length; j++) {
-                countString += allCounts[j].toString() + "/";
-            }
-            countString = countString.slice(0, -1);
-            spanInnerHTML += "<sup>" + countString + "</sup>";
-        }
-        
-        addressSpan.innerHTML = spanInnerHTML;
-        topSpan.appendChild(addressSpan);
+        totalCount += count;
     }
+
+    let spanInnerHTML = "";
+    if (editionNum.toString() in editionToPrefixDict) {
+        spanInnerHTML += "<sup>"+ editionToPrefixDict[editionNum.toString()] + "</sup>";
+    }
+    spanInnerHTML += address + " (" + totalCount + ")";
+
+    if (notAllCountsSame) {
+        let countString = "";
+        for (let j=0; j < allCounts.length; j++) {
+            countString += allCounts[j].toString() + "/";
+        }
+        countString = countString.slice(0, -1);
+        spanInnerHTML += "<sup>" + countString + "</sup>";
+    }
+
+    let addressSpan = document.createElement("span");
+    addressSpan.innerHTML = spanInnerHTML;
+    topSpan.appendChild(addressSpan);
     return topSpan;
 }
 
@@ -154,11 +152,22 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
 
     let totalCount = 0;
     let addressList = Object.keys(topDict[bookName]).sort();
-    console.log("ADDRESS LIST: ")
+    console.log("Address list in " + bookName);
     console.log(addressList);
+
+
     let allSpans: HTMLSpanElement[] = [];
+
+    let addressRecord: { [key: string]: {[key: string]: number} } = {};
     for (let i=0; i < addressList.length; i++) {
         let address = addressList[i];
+        if (address in addressRecord) {
+            addressRecord[address] = topDict[bookName][address];
+        } else {
+            console.log("ARE THESE DOUBLETS?")
+            console.log(addressRecord[address]);
+            console.log(topDict[bookName][address]);
+        }
         console.log(address);
         let addressDict = topDict[bookName][address];
         console.log(addressDict);
@@ -385,7 +394,7 @@ function displayAllResults(results: WordMassResult[], diacritics: "lax" | "stric
 async function search() {
 
     let searchInput = document.getElementById("search_bar") as HTMLInputElement;
-    let searchInputValue = searchInput.value;
+    let searchInputValue = searchInput.value.trim();
     let searchDropdown = document.getElementById("searchWordDropdown") as HTMLSelectElement;
     let searchType = searchDropdown.value;
     let laxDiacritics = document.getElementById("diacriticsLax") as HTMLInputElement;
