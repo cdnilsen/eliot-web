@@ -88,7 +88,7 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
     let topSpan = document.createElement("span");
     let keys = Object.keys(dict).sort((a, b) => parseInt(b) - parseInt(a));
 
-    let editionToPrefixDict = {
+    let editionToPrefixDict: {[key: string]: string} = {
         '2': 'α',
         '3': 'β',
         '5': 'M',
@@ -104,6 +104,7 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
         editionToPrefixDict['6'] = 'αβ';
     }
     
+
     let editionNum = 1;
     let allCounts: number[] = [];
     
