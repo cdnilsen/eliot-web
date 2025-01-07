@@ -605,14 +605,26 @@ def main(book=""):
 
 allNTBooks = ["Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"]
 
-
+'''
 outerStartTime = time.time()
 connection = psycopg2.connect(DATABASE_URL)
 clear_tables(connection)
 for book in allNTBooks:
     main(book)
 print(f"Total time for all books: {time.time() - outerStartTime:.2f} seconds")
+'''
 
+connection = psycopg2.connect(DATABASE_URL)
+cursor = connection.cursor()
+try:
+    cursor.execute("SELECT COUNT(*) FROM words_mass")
+    row_count = cursor.fetchone()[0]
+    print(f"Total number of rows in words_mass: {row_count}")
+except Exception as e:
+    print(f"Error: {e}")
+finally:
+    cursor.close()
+    connection.close()
     
     
 #main()
