@@ -140,10 +140,6 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
             spanInnerHTML += "<sup>" + countString + "</sup>";
         }
         
-
-        if (i < keys.length - 1) {
-            spanInnerHTML += ", ";
-        }
         addressSpan.innerHTML = spanInnerHTML;
         topSpan.appendChild(addressSpan);
     }
@@ -175,6 +171,9 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
     
     for (let i=0; i < allSpans.length; i++) {
         let span = allSpans[i];
+        if (i < allSpans.length - 1) {
+            span.innerHTML += ", ";
+        }
         bookDiv.appendChild(span);
     }
     
