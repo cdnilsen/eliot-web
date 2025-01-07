@@ -84,6 +84,26 @@ function createTriangleObject(): TriangleObject {
 }
 
 
+function getAddressSpan(dict: { [key: string]: number }, address: string): HTMLSpanElement {
+    let span = document.createElement("span");
+    let keys = Object.keys(dict).sort((a, b) => parseInt(b) - parseInt(a));
+    
+    let editionNum = 1;
+    for (let i=0; i < keys.length; i++) {
+        let key = keys[i];
+        let count = dict[key];
+        console.log("The type of the key is: " + typeof key);
+        console.log(key);
+        //editionNum *= key;
+        let addressSpan = document.createElement("span");
+        addressSpan.innerHTML = address + " (" + count + ") ";
+        span.appendChild(addressSpan);
+    }
+
+    return span;
+
+}
+
 function getOneBookDiv(bookName: string, topDict: AddressBook) {
     let bookDiv = document.createElement("div");
     bookDiv.className = "book-div";
@@ -95,7 +115,8 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
 
     for (let i=0; i < addressList.length; i++) {
         let address = addressList[i];
-        let addressCount = topDict[bookName][address];
+        console.log(address);
+        let addressDict = topDict[bookName][address];
         console.log(addressCount);
         //totalCount += addressCount;
     }
