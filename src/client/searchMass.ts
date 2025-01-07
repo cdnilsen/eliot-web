@@ -67,6 +67,20 @@ function sortByFrequency(results: WordMassResult[]) {
     return results.sort((a, b) => b.counts.reduce((sum, val) => sum + val, 0) - a.counts.reduce((sum, val) => sum + val, 0));
 }
 
+const sortCitationOrder = (arr: string[]): string[] => {
+    return arr.sort((a, b) => {
+        const [aPre, aPost] = a.split('.');
+        const [bPre, bPost] = b.split('.');
+        
+        // First compare the numbers before the decimal
+        const preCompare = parseInt(aPre) - parseInt(bPre);
+        if (preCompare !== 0) return preCompare;
+        
+        // If those are equal, compare the numbers after the decimal
+        return parseInt(aPost) - parseInt(bPost);
+    });
+};
+
 type TriangleObject = {
     span: HTMLSpanElement;
     isClicked: boolean;
@@ -152,7 +166,7 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
 
     let totalCount = 0;
     console.log(topDict[bookName]);
-    let addressList = Object.keys(topDict[bookName]).sort();
+    let addressList = sortCitationOrder(Object.keys(topDict[bookName]));
     console.log("Address list in " + bookName);
     console.log(addressList);
 
