@@ -165,7 +165,7 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
         let span: HTMLSpanElement = getAddressSpan(addressDict, address, bookName);
         allSpans.push(span);
     }
-    bookSpan.innerHTML = "<t><i>" + bookName + "</i> (" + totalCount + "): ";
+    bookSpan.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<i>" + bookName + "</i> (" + totalCount + "): ";
 
     bookDiv.appendChild(bookSpan);
     
@@ -351,7 +351,7 @@ function getResultObjectStrict(result: WordMassResult) {
             object.parentDiv.appendChild(object.childContainer);
         } else {
             object.triangle.span.style.color = "";
-            object.parentDiv.innerHTML = `<strong>${result.headword}</strong> (${result.counts.reduce((sum, val) => sum + val, 0)})`; //idk lol
+            object.parentDiv.removeChild(object.childContainer);
         }
         
     }
