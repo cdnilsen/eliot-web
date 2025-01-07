@@ -151,6 +151,7 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
 
 
     let totalCount = 0;
+    console.log(topDict[bookName]);
     let addressList = Object.keys(topDict[bookName]).sort();
     console.log("Address list in " + bookName);
     console.log(addressList);
