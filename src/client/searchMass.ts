@@ -154,7 +154,8 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
 
     let totalCount = 0;
     let addressList = Object.keys(topDict[bookName]).sort();
-
+    console.log("ADDRESS LIST: ")
+    console.log(addressList);
     let allSpans: HTMLSpanElement[] = [];
     for (let i=0; i < addressList.length; i++) {
         let address = addressList[i];
