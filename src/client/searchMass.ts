@@ -99,7 +99,12 @@ function createTriangleObject(): TriangleObject {
 }
 
 
-function getAddressSpan(dict: { [key: string]: number }, address: string, bookName: string): HTMLSpanElement {
+type AddressSpanObject = {
+    span: HTMLSpanElement;
+    count: number;
+}
+
+function getAddressSpan(dict: { [key: string]: number }, address: string, bookName: string): AddressSpanObject {
     let topSpan = document.createElement("span");
     let keys = Object.keys(dict).sort((a, b) => parseInt(b) - parseInt(a));
 
@@ -155,7 +160,12 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
     let addressSpan = document.createElement("span");
     addressSpan.innerHTML = spanInnerHTML;
     topSpan.appendChild(addressSpan);
-    return topSpan;
+
+    let object: AddressSpanObject = {
+    span: addressSpan,
+        count: totalCount
+    }
+    return object;
 }
 
 function getOneBookDiv(bookName: string, topDict: AddressBook) {
@@ -187,9 +197,11 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
         let addressDict = topDict[bookName][address];
         console.log(addressDict);
         //totalCount += addressCount;
-        let span: HTMLSpanElement = getAddressSpan(addressDict, address, bookName);
-        allSpans.push(span);
+        let spanObject: AddressSpanObject = getAddressSpan(addressDict, address, bookName);
+        allSpans.push(spanObject.span);
+        totalCount += spanObject.count;
     }
+    
     bookSpan.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<i>" + bookName + "</i> (" + totalCount + "): ";
 
     bookDiv.appendChild(bookSpan);
