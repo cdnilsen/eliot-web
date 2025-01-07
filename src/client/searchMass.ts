@@ -80,16 +80,6 @@ function createTriangleObject(): TriangleObject {
         span: triangleSpan,
         isClicked: false,
     }
-
-    triangleSpan.onclick = () => {
-        object.isClicked = !object.isClicked;
-        triangleSpan.innerHTML = object.isClicked ? "▼" : "▶";
-        if (object.isClicked) {
-            triangleSpan.style.color = "blue";
-        } else {
-            triangleSpan.style.color = "";
-        }
-    }
     return object;
 }
 
@@ -233,7 +223,13 @@ function getResultObjectStrict(result: WordMassResult) {
     }
 
     object.triangle.span.onclick = () => {
-        console.log(object.addressBook);
+        object.triangle.isClicked = !object.triangle.isClicked;
+        object.triangle.span.innerHTML = object.triangle.isClicked ? "▼" : "▶";
+        if (object.triangle.isClicked) {
+            object.triangle.span.style.color = "blue";
+        } else {
+            object.triangle.span.style.color = "";
+        }
     }
 
     return object;
