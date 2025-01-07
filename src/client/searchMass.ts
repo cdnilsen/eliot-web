@@ -230,6 +230,7 @@ function getResultObjectStrict(result: WordMassResult) {
         } else {
             object.triangle.span.style.color = "";
         }
+        console.log(object.addressBook);
     }
 
     return object;
