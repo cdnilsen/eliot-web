@@ -117,7 +117,7 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
         let address = addressList[i];
         console.log(address);
         let addressDict = topDict[bookName][address];
-        console.log(addressCount);
+        console.log(addressDict);
         //totalCount += addressCount;
     }
     bookSpan.innerHTML = "<i>" + bookName + "</i> (" + totalCount + "): ";
