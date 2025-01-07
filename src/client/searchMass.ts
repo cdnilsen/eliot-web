@@ -117,7 +117,7 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
         '10': 'αM',
         '14': 'αא',
         '15': 'βM',
-        '30': 'אβ'
+        '35': 'אβ'
     }
 
     if (bookName == "John" || bookName == "Psalms (prose)") {
