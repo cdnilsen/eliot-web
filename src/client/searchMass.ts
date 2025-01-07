@@ -1,4 +1,4 @@
-import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict } from "./library.js"
+import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, allBookList } from "./library.js"
 
 type WordMassResult = {
     headword: string;
@@ -81,6 +81,36 @@ function createTriangleObject(): TriangleObject {
         isClicked: false,
     }
     return object;
+}
+
+
+function getOneBookDiv(bookName: string, topDict: AddressBook) {
+    let bookDiv = document.createElement("div");
+    bookDiv.className = "book-div";
+    let bookSpan = document.createElement("span");
+
+    let allAddresses = topDict[bookName];
+    console.log(allAddresses);
+    bookSpan.innerHTML = "<i>" + bookName + "</i> (";
+
+    bookDiv.appendChild(bookSpan);
+    return bookDiv;
+
+}
+
+function getBookDivs(dict: AddressBook) {
+    let divArray: HTMLDivElement[] = [];
+    let allBooks = Object.keys(dict);
+
+    allBooks.sort((a, b) => allBookList.indexOf(a) - allBookList.indexOf(b));
+
+    allBooks.forEach(book => {
+        let bookDiv =  getOneBookDiv(book, dict);
+        divArray.push(bookDiv);
+    });
+
+    return divArray;
+
 }
 
 function resultDiv(result: WordMassResult): HTMLDivElement {
@@ -227,10 +257,15 @@ function getResultObjectStrict(result: WordMassResult) {
         object.triangle.span.innerHTML = object.triangle.isClicked ? "▼" : "▶";
         if (object.triangle.isClicked) {
             object.triangle.span.style.color = "blue";
+            let bookDivs = getBookDivs(object.addressBook);
+            bookDivs.forEach(bookDiv => {
+                object.div.appendChild(bookDiv);
+            })
         } else {
             object.triangle.span.style.color = "";
+            object.div.innerHTML = `<strong>${result.headword}</strong> (${result.counts.reduce((sum, val) => sum + val, 0)})`; //idk lol
         }
-        console.log(object.addressBook);
+        
     }
 
     return object;
