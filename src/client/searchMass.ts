@@ -89,9 +89,17 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
     bookDiv.className = "book-div";
     let bookSpan = document.createElement("span");
 
-    let allAddresses = topDict[bookName];
-    console.log(allAddresses);
-    bookSpan.innerHTML = "<i>" + bookName + "</i> (";
+
+    let totalCount = 0;
+    let addressList = Object.keys(topDict[bookName]).sort();
+
+    for (let i=0; i < addressList.length; i++) {
+        let address = addressList[i];
+        let addressCount = topDict[bookName][address];
+        console.log(addressCount);
+        //totalCount += addressCount;
+    }
+    bookSpan.innerHTML = "<i>" + bookName + "</i> (" + totalCount + "): ";
 
     bookDiv.appendChild(bookSpan);
     return bookDiv;
