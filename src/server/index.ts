@@ -447,18 +447,35 @@ app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
     console.log("Parsed addresses:", addressArray);  // Add this
     console.log("SQL params:", [addressArray]);      // Add this
 
-    try  {
-        const query = await client.query(
-            `SELECT first_edition, second_edition, mayhew, zeroth_edition, kjv, grebrew
-             FROM all_verses 
-             WHERE verse_id = ANY($1)`,
-            [addressArray]
-        );
-        console.log(query.rows);
-        res.json(query.rows);
-    }
-    
-    catch (err) {
+    try {
+        // Test query 1 - single ID
+        const query1 = await client.query(`
+            SELECT first_edition, second_edition, mayhew, zeroth_edition, kjv, grebrew
+            FROM all_verses 
+            WHERE verse_id = ANY(ARRAY[10180260092]);
+        `);
+        console.log("Query 1 results:", query1.rows);
+
+        // Test query 2 - multiple IDs
+        const query2 = await client.query(`
+            SELECT first_edition, second_edition, mayhew, zeroth_edition, kjv, grebrew
+            FROM all_verses 
+            WHERE verse_id = ANY(ARRAY[10580120013, 10580120012]);
+        `);
+        console.log("Query 2 results:", query2.rows);
+
+        // Check column type
+        const typeQuery = await client.query(`
+            SELECT pg_typeof(verse_id) FROM all_verses LIMIT 1;
+        `);
+        console.log("verse_id type:", typeQuery.rows[0]);
+
+        res.json({
+            query1: query1.rows,
+            query2: query2.rows,
+            columnType: typeQuery.rows[0]
+        });
+    } catch (err) {
         console.error('Error:', err);
         res.status(500).json({ status: 'error', error: err.message });
     }
