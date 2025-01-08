@@ -434,7 +434,31 @@ app.post('/words_mass', express.json(), wrapAsync(async (req, res) => {
     
     
     }
+}));
 
+app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
+    const { addresses } = req.query;
+    
+    if (!addresses) {
+        return res.status(400).json({ status: 'error', error: 'addresses parameter is required' });
+    }
+
+    const addressArray = addresses.toString().split(',').map(Number);
+
+    try  {
+        const query = await client.query(
+            `SELECT first_edition, second_edition, mayhew, zeroth_edition, kjv, grebrew
+             FROM all_verses 
+             WHERE verse_id = ANY($1)`,
+            [addressArray]
+        );
+        res.json(query.rows);
+    }
+    
+    catch (err) {
+        console.error('Error:', err);
+        res.status(500).json({ status: 'error', error: err.message });
+    }
 }));
 
 app.get('/chapter/:bookID/:chapter', wrapAsync(async (req, res) => {

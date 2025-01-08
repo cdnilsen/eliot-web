@@ -1,5 +1,5 @@
 import { totalmem } from "os";
-import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, allBookList } from "./library.js"
+import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, StringToStringDict, allBookList } from "./library.js"
 
 type WordMassResult = {
     headword: string;
@@ -306,7 +306,94 @@ type WordObject = {
     triangle: TriangleObject;
 }
 
-function getResultObjectStrict(result: WordMassResult) {
+type VerseDisplayDict = {
+    '2': string, // First Edition
+    '3': string, // Second Edition
+    '5': string, // Mayhew
+    '7': string, // Zeroth Edition
+    '4': string, // KJV
+    '8': string // Grebrew
+}
+
+
+function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean) {
+    let dictKeys = Object.keys(rawDict).sort();
+    let newDict: StringToStringDict = {};
+    console.log("Is this in the right order?")
+    console.log(dictKeys); 
+
+    for (let i=0; i < dictKeys.length; i++) {
+        let key = dictKeys[i];
+        let value = rawDict[key];
+        if (value.strip() == "") {
+            continue;
+        } else {
+            newDict[key] = value;            
+        }
+    }
+
+    let keysWithVerses = Object.keys(newDict).sort(); // Probably superfluous...
+    let numColumns = Object.keys(newDict).length;
+
+    let table = document.createElement('table');
+    table.classList.add('show-verse');
+
+    let thead = document.createElement('thead');
+    let headerRow = document.createElement('tr');
+
+    let tbody = document.createElement('tbody');
+    let verseRow = document.createElement('tr');
+
+    let editionNumToTitleHTML: StringToStringDict = {
+        '2': '<b><u>α</b></u>',
+        '3': '<b><u>β</b></u>',
+        '5': '<b><u>M</b></u>',
+        '7': '<b><u>א</b></u>',
+        '4': '<b><u>KJV</b></u>',
+        '8': '<b><u>Heb.</u></b>'
+    }
+
+    if (!isHebrew) {
+        editionNumToTitleHTML['8'] = '<b><u>Grk.</u></b>';
+    }
+
+    let titleDict: StringToStringDict = {}
+
+    for (let i=0; i < dictKeys.length; i++) {
+        let key = dictKeys[i];
+        let title = editionNumToTitleHTML[key];
+        titleDict[key] = title;
+        let th = document.createElement('th');
+        th.innerHTML = title;
+        headerRow.appendChild(th);
+
+        let td = document.createElement('td');
+        td.innerHTML = newDict[key];
+
+    }
+}
+
+async function grabMatchingVerses(addresses: number[]) { 
+    try {
+        const queryParams = new URLSearchParams({
+            addresses: addresses.join(',')  // Numbers will auto-convert to strings here
+        });
+        
+        const response = await fetch(`/matching_verses?${queryParams}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching matching verses:', error);
+        throw error;
+    }
+}
+
+async function getResultObjectStrict(result: WordMassResult) {
     let topDiv = resultDiv(result);
 
     let triangleObject = createTriangleObject();
@@ -331,6 +418,8 @@ function getResultObjectStrict(result: WordMassResult) {
     console.log(allAddresses);
     //console.log(allAddresses[0]) // (e.g. '0430060275')
     //console.log(typeof allAddresses[0]) //(string)
+
+    let matchingVerseTexts = await grabMatchingVerses(allAddresses.map(address => parseInt(address)));
 
     let allBooks: string[] = []
     let addressBook: AddressBook = {};
@@ -387,6 +476,7 @@ function getResultObjectStrict(result: WordMassResult) {
         if (object.triangle.isClicked) {
             object.triangle.span.style.color = "blue";
             object.parentDiv.appendChild(object.childContainer);
+            console.log(matchingVerseTexts);
         } else {
             object.triangle.span.style.color = "";
             object.parentDiv.removeChild(object.childContainer);
@@ -399,7 +489,7 @@ function getResultObjectStrict(result: WordMassResult) {
     //console.log(addressBook);
 }
 
-function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
+async function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
     let resultsContainer = document.getElementById("results-container") as HTMLDivElement;
     resultsContainer.innerHTML = ''; // Clear previous results
 
@@ -411,10 +501,10 @@ function displayAllResults(results: WordMassResult[], diacritics: "lax" | "stric
 
     //console.log(results[0])
 
-    results.forEach(result => {
-        let object: WordObject = getResultObjectStrict(result);
+    await Promise.all(results.map(async result => {
+        let object: WordObject = await getResultObjectStrict(result);
         resultsContainer.appendChild(object.parentDiv);
-    });
+    }));
 
 }
 

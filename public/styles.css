@@ -241,16 +241,15 @@ button {
     float: right;
     width: 60%;
 }
-/*
+
 .hover-tooltip {
     position: relative;
     display: inline-block;
     border-bottom: 1px dotted;
     border-color: black; 
     color: blue;
-    cursor: help; /* Changes the cursor to a question mark
+    cursor: help; /* Changes the cursor to a question mark */
 }
-*/
 
 .cite-span {
     position: relative;

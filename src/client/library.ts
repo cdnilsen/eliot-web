@@ -249,3 +249,7 @@ export const allBookList = [
     "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"
 ]
 
+export type StringToStringDict = {
+    [key: string]: string
+}
+
