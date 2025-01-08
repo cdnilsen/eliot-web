@@ -435,6 +435,7 @@ app.post('/words_mass', express.json(), wrapAsync(async (req, res) => {
     
     }
 }));
+
 app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
     const { addresses } = req.query;
     
@@ -442,27 +443,18 @@ app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
         return res.status(400).json({ status: 'error', error: 'addresses parameter is required' });
     }
 
+    // Convert to BigInt instead of Number
     const addressArray = addresses.toString().split(',').map(str => BigInt(str));
     console.log("Parsed addresses:", addressArray);
 
     try {
-        // First let's check if these IDs exist at all
-        const checkQuery = await client.query(`
-            SELECT verse_id 
-            FROM all_verses 
-            WHERE verse_id = ANY($1)`,
-            [addressArray]
-        );
-        console.log("Do these IDs exist?", checkQuery.rows);
-
-        // Then try the full query
         const query = await client.query(`
             SELECT verse_id, first_edition, second_edition, mayhew, zeroth_edition, kjv, grebrew
             FROM all_verses 
-            WHERE verse_id = ANY($1)`,
-            [addressArray]
+            WHERE verse_id = ANY($1::bigint[])`,  // Note the explicit cast to bigint[]
+            [addressArray.map(String)]  // Convert BigInts back to strings for Postgres
         );
-        console.log("Full query results:", query.rows);
+        console.log("Query results:", query.rows);
 
         res.json(query.rows);
     } catch (err) {
@@ -470,6 +462,7 @@ app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
         res.status(500).json({ status: 'error', error: err.message });
     }
 }));
+
 
 app.get('/chapter/:bookID/:chapter', wrapAsync(async (req, res) => {
     const { bookID, chapter } = req.params;
