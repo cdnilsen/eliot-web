@@ -18,7 +18,7 @@ def clear_tables(connection):
         cursor = connection.cursor()
 
         executeStatement = ""
-        whichTable = input("Which table would you like to clear?\n(1) all_verses\n(2) verses_to_words\n(3) words_mass\n(4) all of them\n: ")
+        whichTable = input("Which table would you like to clear?\n(1) all_verses\n(2) verses_to_words\n(3) words_mass\n(4) words_kjv\n(5) all of them\n: ")
 
         if whichTable == "1":
             executeStatement = "DELETE FROM all_verses;"
@@ -27,6 +27,8 @@ def clear_tables(connection):
         elif whichTable == "3":
             executeStatement = "DELETE FROM words_mass;"
         elif whichTable == "4":
+            executeStatement = "DELETE FROM words_kjv;"
+        elif whichTable == "5":
             executeStatement = "DELETE FROM all_verses; DELETE FROM verses_to_words; DELETE FROM words_mass;"
 
         try:
@@ -161,12 +163,6 @@ def updateAddresses(newAddresses, newCounts, oldAddressList, oldCountList):
     return object
 
 
-def updateMassWordObject(connection, object):
-
-
-    return object
-    
-
 def updateMassWord(connection, headwords, newHeadwordRawObject):
     cursor = connection.cursor()
     try:
@@ -209,7 +205,7 @@ def updateMassWord(connection, headwords, newHeadwordRawObject):
         print(f"Error updating words: {e}")
 
 
-def addRawText(connection, bookObject):
+def addRawText(connection, bookObject, updateKJV=False):
     cursor = connection.cursor()
 
     allEditions = [
@@ -229,7 +225,6 @@ def addRawText(connection, bookObject):
     genericIDList = bookObject["IDs"]
     rawTextDict = bookObject["dict"]
     book = bookObject["book"]
-
 
     oldDataList = []
     oldDataDict = {}
@@ -317,7 +312,6 @@ def addRawText(connection, bookObject):
         except Exception as e:
             connection.rollback()
             print(f"Error inserting rows: {e}")
-    
 
     # Now we need to deal with rows where the data has changed
 
@@ -349,7 +343,8 @@ def addRawText(connection, bookObject):
             "idsToAdd": [],
             "idsToChange": [],
             "oldDict": {},
-            "newDict": {}
+            "newDict": {},
+            "updateKJVTable": updateKJV
     }
     
     changeAnything = changeAnything or changeMass
@@ -361,7 +356,8 @@ def addRawText(connection, bookObject):
             "idsToAdd": relevantIDs,
             "idsToChange": idsToChange,
             "oldDict": oldDataDict,
-            "newDict": newDataDict
+            "newDict": newDataDict,
+            "updateKJVTable": updateKJV
         }
     
     return returnObject
@@ -375,8 +371,8 @@ def processBookToDict(bookName):
             rightFiles.append(file)
 
     if(len(rightFiles) == 0):
-        print("No files found for that book")
-        return
+        print("No files found for " + bookName)
+        return None
 
     massVerseObjects = []
     nonMassVerseObjects = []
@@ -566,11 +562,6 @@ def processWordAdditions(connection, object):
     finally:
         cursor.close()
     
-
-def processWordChanges(connection, object):
-
-    return
-
 def main(book=""):
     connection = psycopg2.connect(DATABASE_URL)
     if book == "":
@@ -578,18 +569,21 @@ def main(book=""):
 
     startAddBookTime = time.time()
     bookObject = processBookToDict(book)
+    if bookObject is None:
+        return
+    
     rawTextChangeObject = addRawText(connection, bookObject)
     endAddBookTime = time.time()
-    print(f"Finished {book} in {endAddBookTime - startAddBookTime:.2f} seconds")
+    print(f"Finished processing text in {book} in {endAddBookTime - startAddBookTime:.2f} seconds")
 
     startWordTime = time.time()
     wordAdditionObject = getWordAdditions(rawTextChangeObject)
     processWordAdditions(connection, wordAdditionObject)
     endWordTime = time.time()
-    print(f"Finished {book} in {endWordTime - startWordTime:.2f} seconds")
+    print(f"Finished processing words from {book} in {endWordTime - startWordTime:.2f} seconds")
 
 
-
+    '''
     startProcessWordsTime = time.time()
     if rawTextChangeObject["changes"]:
         if rawTextChangeObject["additions"]:
@@ -599,32 +593,140 @@ def main(book=""):
 
     if rawTextChangeObject["changes"]:
         print(f"Total time for {book}: {endProcessWordsTime - startAddBookTime:.2f} seconds")
+    '''
 
 
 
+def getNumWords(connection):
+    cursor = connection.cursor()
+    cursor.execute("SELECT COUNT(*) FROM words_mass")
+    count = cursor.fetchone()[0]
+    return count
 
-allNTBooks = ["Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"]
+
+def addToKJV(connection, book):
+    currentTime = time.time()
+    file = book + ".KJV.txt"
+    cursor = connection.cursor()
+    fileLines = []
+    try:
+        fileLines = open(f"../texts/{file}", "r", encoding="utf-8").readlines()
+    except:
+        print("Error opening file for " + book)
+        return {}
+    
+    bookID = "1" + bookToIDDict[book]
+
+
+    dict = {}
+    for line in fileLines:
+        splitLine = line.split(" ")
+        address = splitLine[0].strip()
+        chapter = address.split(".")[0]
+        verse = address.split(".")[1]
+        addressID = int(bookID + addZeros(chapter) + addZeros(verse))
+        for word in splitLine[1:]:
+            word = cleanWord(word)
+            if word not in dict:
+                dict[word] = [addressID]
+            else:
+                dict[word].append(addressID)
+
+    allTuples = []
+    allWords = list(dict.keys())
+    for word in allWords:
+        tuple = (word, dict[word])
+        allTuples.append(tuple)
+    try:
+        execute_values(
+            cursor,
+            """
+            INSERT INTO words_kjv (word, verses) 
+            VALUES %s
+            ON CONFLICT (word) DO UPDATE 
+            SET verses = (
+                SELECT ARRAY(
+                    SELECT DISTINCT UNNEST(
+                        words_kjv.verses || EXCLUDED.verses
+                    )
+                    ORDER BY 1
+                )
+            )
+            """,
+            allTuples,
+            template="(%s, %s)",
+            page_size=100
+        )
+        connection.commit()
+        endTime = time.time()
+        print(f"Finished processing KJV for {book} in {endTime - currentTime:.2f} seconds")
+        return dict
+    except Exception as e:
+        connection.rollback()
+        print(f"Error inserting rows: {e}")
+        return {}
+    finally:
+        cursor.close()
+
+
 
 '''
-outerStartTime = time.time()
+allFilesInTextFolder = os.listdir("../texts")
+for file in allFilesInTextFolder:
+    fileLines = open(f"../texts/{file}", "r", encoding="utf-8").readlines()
+    if fileLines[1].startswith("α") or fileLines[1].startswith("β"):
+        print(file)
+'''
+
+
+allBookList = [
+    "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy",
+    "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel", "1 Kings", "2 Kings",
+    "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther",
+    "Job", "Psalms (prose)", "Proverbs", "Ecclesiastes", "Song of Songs",
+    "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel",
+    "Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum",
+    "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi",
+    "Matthew", "Mark", "Luke", "John", "Acts",
+    "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians",
+    "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians",
+    "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews",
+    "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"
+    ]
+
+def addAllKJV(connection):
+    totalWords = 0
+    allWordsDict = {}
+    for book in allBookList:
+        thisBookDict = addToKJV(connection, book)
+        for word in thisBookDict:
+            if word not in allWordsDict:
+                totalWords += 1
+    print(f"Total words in KJV: {totalWords}")
+
+def fullReset():
+    outerStartTime = time.time()
+    connection = psycopg2.connect(DATABASE_URL)
+    clear_tables(connection)
+    for book in allBookList:
+        main(book)
+        
+    print(f"Total time for all books: {time.time() - outerStartTime:.2f} seconds")
+    totalWords = getNumWords(connection)
+    print(f"Total Massachusett headwords in database: {totalWords}")
+    addAllKJV(connection)
+
 connection = psycopg2.connect(DATABASE_URL)
 clear_tables(connection)
-for book in allNTBooks:
-    main(book)
-print(f"Total time for all books: {time.time() - outerStartTime:.2f} seconds")
-'''
+addAllKJV(connection)
 
-connection = psycopg2.connect(DATABASE_URL)
-cursor = connection.cursor()
-try:
-    cursor.execute("SELECT COUNT(*) FROM words_mass")
-    row_count = cursor.fetchone()[0]
-    print(f"Total number of rows in words_mass: {row_count}")
-except Exception as e:
-    print(f"Error: {e}")
-finally:
-    cursor.close()
-    connection.close()
-    
-    
+
+
+#fullReset()
+
+
+
+
+
+
 #main()

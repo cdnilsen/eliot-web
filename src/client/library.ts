@@ -8,7 +8,7 @@ export type stringToIntDict = {
 
 export type BookName = "Genesis" | "Exodus" | "Leviticus" | "Numbers" | "Deuteronomy" | 
     "Joshua" | "Judges" | "Ruth" | "1 Samuel" | "2 Samuel" | "1 Kings" | "2 Kings" | 
-    "1 Chronicles" | "2 Chronicles" | "Ezra" | "Nehemiah" | "Esther" | "Job" | "Psalms" | 
+    "1 Chronicles" | "2 Chronicles" | "Ezra" | "Nehemiah" | "Esther" | "Job" | "Psalms (prose)" | 
     "Proverbs" | "Ecclesiastes" | "Song of Songs" | "Isaiah" | "Jeremiah" | "Lamentations" | 
     "Ezekiel" | "Daniel" | "Hosea" | "Joel" | "Amos" | "Obadiah" | "Jonah" | "Micah" | 
     "Nahum" | "Habakkuk" | "Zephaniah" | "Haggai" | "Zechariah" | "Malachi" | "Matthew" | 
@@ -36,7 +36,7 @@ export const bookToIDDict: Record<BookName, string> = {
     "Nehemiah": "016",
     "Esther": "017",
     "Job": "018",
-    "Psalms": "019",
+    "Psalms (prose)": "019",
     "Proverbs": "020",
     "Ecclesiastes": "021",
     "Song of Songs": "022",
@@ -105,7 +105,7 @@ export const IDToBookDict: Record<string, string> = {
     "016": "Nehemiah",
     "017": "Esther",
     "018": "Job",
-    "019": "Psalms",
+    "019": "Psalms (prose)",
     "020": "Proverbs",
     "021": "Ecclesiastes",
     "022": "Song of Songs",
@@ -158,7 +158,7 @@ export const IDToBookDict: Record<string, string> = {
 export let sectionToBookDict: stringToStringListDict = {
     "pentateuch": ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy"],
     "history": ["Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel", "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther"],
-    "wisdom": ["Job", "Psalms", "Proverbs", "Ecclesiastes", "Song of Songs"],
+    "wisdom": ["Job", "Psalms (prose)", "Proverbs", "Ecclesiastes", "Song of Songs"],
     "major_ prophets": ["Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel"],
     "minor_prophets": ["Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi"],
     "gospels_acts": ["Matthew", "Mark", "Luke", "John", "Acts"],
@@ -184,7 +184,7 @@ export let bookToChapterDict: stringToIntDict = {
     "Nehemiah": 13,
     "Esther": 10,
     "Job": 42,
-    "Psalms": 150,
+    "Psalms (prose)": 150,
     "Proverbs": 31,
     "Ecclesiastes": 12,
     "Song of Songs": 8,
@@ -238,7 +238,7 @@ export const allBookList = [
     "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy",
     "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel", "1 Kings", "2 Kings",
     "1 Chronicles", "2 Chronicles", "Ezra", "Nehemiah", "Esther",
-    "Job", "Psalms", "Proverbs", "Ecclesiastes", "Song of Songs",
+    "Job", "Psalms (prose)", "Proverbs", "Ecclesiastes", "Song of Songs",
     "Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel",
     "Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum",
     "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi",

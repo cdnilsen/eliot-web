@@ -20,7 +20,7 @@ bookToIDDict = {
     "Nehemiah": "016",
     "Esther": "017",
     "Job": "018",
-    "Psalms": "019",
+    "Psalms (prose)": "019",
     "Proverbs": "020",
     "Ecclesiastes": "021",
     "Song of Songs": "022",
@@ -193,7 +193,7 @@ def cleanWord(word):
 
     word = word.lower()
 
-    punctuation = ['.', ',', ';', ':', '!', '?', '(', ')', '[', ']', '{', '}', '"', "'", '“', '”', '‘', '’', '—', '–', '…', '•', '·', '«', '»', '„']
+    punctuation = ['.', ',', ';', ':', '!', '?', '(', ')', '[', ']', '{', '}', '"', "'", '“', '”', '‘', '’', '—', '–', '…', '•', '·', '«', '»', '„', '¶']
 
     for char in punctuation:
         word = word.replace(char, "")
