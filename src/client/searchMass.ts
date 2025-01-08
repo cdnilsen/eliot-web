@@ -369,10 +369,15 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     }
 }
 
-async function grabMatchingVerses(addresses: number[]) { 
+async function grabMatchingVerses(addresses: string[]) {
+    
+    let addressNums: number[] = [];
+    for (let i=0; i < addresses.length; i++) {
+        addressNums.push(parseInt(addresses[i]));
+    }
     try {
         const queryParams = new URLSearchParams({
-            addresses: addresses.join(',')  // Numbers will auto-convert to strings here
+            addresses: addressNums.join(',')  // Numbers will auto-convert to strings here
         });
         
         const response = await fetch(`/matching_verses?${queryParams}`);
@@ -382,6 +387,7 @@ async function grabMatchingVerses(addresses: number[]) {
         }
         
         const data = await response.json();
+        console.log("Successfully called grabMatchingVerses");
         return data;
     } catch (error) {
         console.error('Error fetching matching verses:', error);
@@ -415,7 +421,7 @@ async function getResultObjectStrict(result: WordMassResult) {
     //console.log(allAddresses[0]) // (e.g. '0430060275')
     //console.log(typeof allAddresses[0]) //(string)
 
-    let matchingVerseTexts = await grabMatchingVerses(allAddresses.map(address => parseInt(address)));
+    let matchingVerseTexts = await grabMatchingVerses(allAddresses);
 
     let allBooks: string[] = []
     let addressBook: AddressBook = {};
