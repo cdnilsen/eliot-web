@@ -388,6 +388,7 @@ async function grabMatchingVerses(addresses: string[]) {
         
         const data = await response.json();
         console.log("Successfully called grabMatchingVerses");
+        console.log(data);
         return data;
     } catch (error) {
         console.error('Error fetching matching verses:', error);
