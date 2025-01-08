@@ -444,7 +444,7 @@ app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
     }
 
     // Convert to BigInt instead of Number
-    const addressArray = addresses.toString().split(',').map(str => BigInt(str));
+    const addressArray = addresses.toString().slice(0, -1).split(',').map(str => BigInt(str));
     console.log("Parsed addresses:", addressArray);
 
     try {
