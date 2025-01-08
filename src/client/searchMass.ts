@@ -320,7 +320,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
 
     for (let i=0; i < dictKeys.length; i++) {
         let key = dictKeys[i];
-        let value = dictKeys[key];
+        let value = rawDict[key];
         if (value.strip() == "") {
             continue;
         } else {
