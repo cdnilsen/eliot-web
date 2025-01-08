@@ -313,15 +313,15 @@ type VerseDisplayDict = {
 
 
 function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean) {
-    let dictKeys = Object.keys(rawDict).sort();
+    let dictKeys = Object.keys(rawDict) as (keyof VerseDisplayDict)[];
     let newDict: StringToStringDict = {};
     console.log("Is this in the right order?")
     console.log(dictKeys); 
 
-    for (let i=0; i < dictKeys.length; i++) {
+    for (let i = 0; i < dictKeys.length; i++) {
         let key = dictKeys[i];
         let value = rawDict[key];
-        if (value.strip() == "") {
+        if (value.trim() === "") {  // Using trim() instead of strip()
             continue;
         } else {
             newDict[key] = value;            
