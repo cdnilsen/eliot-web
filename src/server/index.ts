@@ -442,7 +442,7 @@ app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
         return res.status(400).json({ status: 'error', error: 'addresses parameter is required' });
     }
 
-    const addressArray = addresses.toString().split(',').map(Number);
+    const addressArray = addresses.toString().split(',').map(str => BigInt(str));
     console.log("Parsed addresses:", addressArray);
 
     try {
