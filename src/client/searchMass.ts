@@ -370,18 +370,14 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
 }
 
 async function grabMatchingVerses(addresses: string[]) {
-    
-    let addressNums: number[] = [];
-    for (let i=0; i < addresses.length; i++) {
-        addressNums.push(parseInt(addresses[i]));
-    }
+    // Remove the number conversion - just pass the strings directly
     try {
         const queryParams = new URLSearchParams({
-            addresses: addressNums.join(',')  // Numbers will auto-convert to strings here
+            addresses: addresses.join(',')  // Keep as strings
         });
         
         console.log("Here's the URL: ")
-        console.log(`/matching_verses?${queryParams}`);  // Add this
+        console.log(`/matching_verses?${queryParams}`);
         const response = await fetch(`/matching_verses?${queryParams}`);
         
         if (!response.ok) {
