@@ -451,7 +451,7 @@ app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
             `SELECT first_edition, second_edition, mayhew, zeroth_edition, kjv, grebrew
              FROM all_verses 
              WHERE verse_id = ANY($1)`,
-            [addressArray]
+            [addresses]
         );
         res.json(query.rows);
     }
