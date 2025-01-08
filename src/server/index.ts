@@ -444,6 +444,7 @@ app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
     }
 
     const addressArray = addresses.toString().split(',').map(Number);
+    console.log(addressArray);
 
     try  {
         const query = await client.query(
