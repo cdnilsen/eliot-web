@@ -189,10 +189,6 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
         let address = addressList[i];
         if (address in addressRecord) {
             addressRecord[address] = topDict[bookName][address];
-        } else {
-            console.log("ARE THESE DOUBLETS?")
-            console.log(addressRecord[address]);
-            console.log(topDict[bookName][address]);
         }
         console.log(address);
         let addressDict = topDict[bookName][address];
@@ -476,6 +472,7 @@ async function getResultObjectStrict(result: WordMassResult) {
         if (object.triangle.isClicked) {
             object.triangle.span.style.color = "blue";
             object.parentDiv.appendChild(object.childContainer);
+            console.log("Matching verse texts for " + result.headword);
             console.log(matchingVerseTexts);
         } else {
             object.triangle.span.style.color = "";
