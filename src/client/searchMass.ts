@@ -380,6 +380,8 @@ async function grabMatchingVerses(addresses: string[]) {
             addresses: addressNums.join(',')  // Numbers will auto-convert to strings here
         });
         
+        console.log("Here's the URL: ")
+        console.log(`/matching_verses?${queryParams}`);  // Add this
         const response = await fetch(`/matching_verses?${queryParams}`);
         
         if (!response.ok) {

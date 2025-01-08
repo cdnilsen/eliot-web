@@ -444,7 +444,8 @@ app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
     }
 
     const addressArray = addresses.toString().split(',').map(Number);
-    console.log(addressArray);
+    console.log("Parsed addresses:", addressArray);  // Add this
+    console.log("SQL params:", [addressArray]);      // Add this
 
     try  {
         const query = await client.query(
@@ -453,7 +454,7 @@ app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
              WHERE verse_id = ANY($1)`,
             [addressArray]
         );
-        console.log(query.rows[0]);
+        console.log(query.rows);
         res.json(query.rows);
     }
     
