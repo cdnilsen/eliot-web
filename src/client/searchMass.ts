@@ -185,6 +185,7 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
 
     console.log(totalCount);
     bookSpan.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<i>" + bookName + "</i> (" + totalCount + "): ";
+    bookDiv.appendChild(bookSpan);
 
     let thisBookVerseDisplaySuperDict: {[key: string]: VerseDisplayDict} = {};
 
@@ -200,11 +201,8 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
         console.log(generic); // works
         let thisGenericDict = thisBookVerseDisplaySuperDict[generic];
         console.log(thisGenericDict); // works
-        let addressSpan = getAddressSpan(addressToCountDict, generic, bookName);
+        let addressSpanObject = getAddressSpan(addressToCountDict, generic, bookName);
     }
-
-    
-
     
     return bookDiv;
 
