@@ -499,6 +499,7 @@ async function getResultObjectStrict(result: WordMassResult) {
         let address = allAddresses[i];
 
         let thisAddressText = matchingVerseTexts[address];
+        console.log(address);
         console.log(thisAddressText);
         let bookKey = address.slice(1, 4);
         let book = IDToBookDict[bookKey];
