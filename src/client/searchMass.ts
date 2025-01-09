@@ -174,6 +174,8 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
     bookDiv.style.paddingBottom = "8px";
     let bookSpan = document.createElement("span");
 
+    console.log("Here's the full address to count dict as called in getOneBookDiv")
+    console.log(addressToCountDict);
     let totalCount = 0;
 
     for (let i=0; i < matchingVerseTexts.length; i++) {
