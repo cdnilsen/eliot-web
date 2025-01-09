@@ -220,10 +220,33 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     addressSpan.addEventListener("mouseover", (event) => {
         addressInnerSpan.style.fontWeight = "bold";
         addressInnerSpan.style.color = "blue";
-        addressInnerSpan.style.borderBottom= '2px dotted black';
+        addressInnerSpan.style.borderBottom = '2px dotted black';
+        
+        // Get the position relative to the viewport
+        const rect = addressInnerSpan.getBoundingClientRect();
+        
+        // Position the tooltip relative to the viewport
         displayBox.style.display = "block";
-        displayBox.style.left = `${event.pageX + 10}px`;
-        displayBox.style.top = `${event.pageY + 10}px`;
+        
+        // Calculate position to ensure tooltip stays on screen
+        const viewportWidth = window.innerWidth;
+        const tooltipWidth = displayBox.offsetWidth;
+        
+        // Start with default position to the right
+        let left = rect.right + 10;
+        
+        // If tooltip would go off right edge, position to the left instead
+        if (left + tooltipWidth > viewportWidth - 20) {
+            left = rect.left - tooltipWidth - 10;
+        }
+        
+        // If tooltip would go off left edge, position below instead
+        if (left < 20) {
+            left = Math.max(20, rect.left);
+        }
+        
+        displayBox.style.left = `${left}px`;
+        displayBox.style.top = `${rect.top}px`;
     });
 
     addressSpan.addEventListener("mouseleave", () => {
