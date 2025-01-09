@@ -416,8 +416,8 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     // Populate newDict with the verse texts
     for (let i = 0; i < dictKeys.length; i++) {
         let key = dictKeys[i];
-        // Only add if it's a verse text key ('2', '3', '4', '5', '7', '8')
-        if (['2', '3', '4', '5', '7', '8'].includes(key)) {
+        // Only add if it's a verse text key and has content
+        if (['2', '3', '4', '5', '7', '8'].includes(key) && rawDict[key]?.toString().trim()) {
             newDict[key] = rawDict[key].toString();
         }
     }
@@ -437,26 +437,29 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         '5': '<b><u>M</b></u>',
         '7': '<b><u>א</b></u>',
         '4': '<b><u>KJV</b></u>',
-        '8': '<b><u>Heb.</u></b>'
-    }
+        '8': isHebrew ? '<b><u>Heb.</u></b>' : '<b><u>Grk.</u></b>'
+    };
 
-    if (!isHebrew) {
-        editionNumToTitleHTML['8'] = '<b><u>Grk.</u></b>';
-    }
+    // Get all valid keys that have content
+    const validKeys = Object.keys(newDict).filter(key => 
+        newDict[key]?.toString().trim() !== '' && 
+        editionNumToTitleHTML[key]
+    );
 
-    // Only iterate over edition keys that have content
-    Object.keys(newDict).forEach(key => {
-        let title = editionNumToTitleHTML[key];
-        if (title && newDict[key].trim() != "") {  // Only add if we have a title for this edition
-            let th = document.createElement('th');
-            th.innerHTML = title;
-            headerRow.appendChild(th);
-            
-            let td = document.createElement('td');
-            td.innerHTML = newDict[key];
-            console.log(newDict[key]);
-            verseRow.appendChild(td);
-        }
+    // Calculate column width as a percentage
+    const colWidth = 100 / validKeys.length;
+
+    // Create columns only for editions that have content
+    validKeys.forEach(key => {
+        let th = document.createElement('th');
+        th.style.width = `${colWidth}%`;
+        th.innerHTML = editionNumToTitleHTML[key];
+        headerRow.appendChild(th);
+        
+        let td = document.createElement('td');
+        td.style.width = `${colWidth}%`;
+        td.innerHTML = newDict[key];
+        verseRow.appendChild(td);
     });
 
     thead.appendChild(headerRow);

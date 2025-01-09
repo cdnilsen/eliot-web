@@ -257,24 +257,46 @@ button {
     cursor: pointer;
     text-decoration-style: dotted;
 }
-
 .display-box {
     position: fixed;
-    opacity: 1;
-    left: 0;
-    top: 100%;
-    /* top: -80px;  Place it below the triggering span with 10px offset */
-    /* left: 60px; Set at least 50 pixels away from the left edge */
-    padding: 10px;
-    /*width: 600px;*/
     background-color: #fff;
     border: 1px solid #bbb;
-    font-size: 12px;
-    text-align: center;
-    padding: 5px 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 5px;
     z-index: 9999;
-    /*transform: translateX(-50%);*/
-    /*transition: opacity 0.3s ease-in-out;*/
+    min-width: 200px;  /* Reduced from default table width */
+    max-width: 800px;
+    display: none;
+    table-layout: fixed;  /* This ensures columns have equal width */
+}
+
+/* Style for the table cells */
+.display-box td, .display-box th {
+    padding: 8px;
+    text-align: center;
+    vertical-align: top;
+    border-bottom: 1px solid #ddd;
+    word-wrap: break-word;  /* Allows text to wrap within cells */
+    width: 1%;  /* Make all columns equal width */
+    white-space: normal;  /* Allows text to wrap */
+}
+
+/* Style for the header cells */
+.display-box th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+    border-bottom: 2px solid #ddd;
+}
+
+/* Make sure the table takes up the full width of its container */
+.display-box table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* Add some spacing between rows */
+.display-box tr:not(:last-child) {
+    border-bottom: 1px solid #eee;
 }
 
 .show-verse.active {
