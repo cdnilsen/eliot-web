@@ -275,7 +275,7 @@ button {
     vertical-align: top;
     border-bottom: 1px solid #ddd;
     position: relative;
-    min-width: 150px;
+    min-width: 90px;
     line-height: 1.4;
 }
 
@@ -305,6 +305,7 @@ button {
     margin: 0;
     table-layout: fixed;
 }
+
 .show-verse.active {
     visibility: visible;
     opacity: 1;
