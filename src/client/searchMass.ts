@@ -404,8 +404,8 @@ async function grabMatchingVerses(addresses: string[]) {
         try {
             console.log("Data dump:")
             console.log(data);
-            let dict = data[0];
-
+            return data;
+            /*
             let outputObject: VerseDisplaySuperdict = {};
             for (let i=0; i < data.length; i++) {
                 let subdict: VerseDisplayDict = {
@@ -426,6 +426,7 @@ async function grabMatchingVerses(addresses: string[]) {
             // Comes in rows. data[n] has the matching verses for addresses[n] at here, and data[n]['verse_id'] is the verse ID
             
             return outputObject;
+            */
         } catch (error) {
             console.error('Error parsing matching verses:', error);
             throw error;
@@ -462,7 +463,27 @@ async function getResultObjectStrict(result: WordMassResult) {
     //console.log(allAddresses[0]) // (e.g. '0430060275')
     //console.log(typeof allAddresses[0]) //(string)
 
-    let matchingVerseTexts = await grabMatchingVerses(allAddresses);
+    let matchingVerseTextsRaw = await grabMatchingVerses(allAddresses);
+
+    let matchingVerseTexts: VerseDisplaySuperdict = {};
+    for (let i=0; i < matchingVerseTextsRaw.length; i++) {
+        let thisMatchingVerse = matchingVerseTextsRaw[i];
+        let subdict: VerseDisplayDict = {
+            '2': thisMatchingVerse['first_edition'],
+            '3': thisMatchingVerse['second_edition'],
+            '5': thisMatchingVerse['mayhew'],
+            '7': thisMatchingVerse['zeroth_edition'],
+            '4': thisMatchingVerse['kjv'],
+            '8': thisMatchingVerse['grebrew'],
+            'book': thisMatchingVerse['book'],
+            'chapter': thisMatchingVerse['chapter'].toString(),
+            'verse': thisMatchingVerse['verse'].toString()
+        };
+        let verse_id = thisMatchingVerse['verse_id'].toString();
+        matchingVerseTexts[verse_id] = subdict;
+    }
+
+
 
     let allBooks: string[] = []
     let addressBook: AddressBook = {};
