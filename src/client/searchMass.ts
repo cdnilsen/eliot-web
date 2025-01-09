@@ -205,7 +205,14 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
         displayBox.style.display = "block";
     });
 
+    addressSpan.addEventListener("mouseleave", () => {
+        addressSpan.style.fontWeight = "normal";
+        addressSpan.style.color = "";
+        displayBox.style.display = "none";
+    });
+
     addressSpan.innerHTML = spanInnerHTML;
+    addressSpan.appendChild(displayBox);
 
 
     let object: AddressSpanObject = {
@@ -410,8 +417,6 @@ type WordObject = {
 function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean): HTMLTableElement {
     let dictKeys = Object.keys(rawDict) as (keyof VerseDisplayDict)[];
     let newDict: StringToStringDict = {};
-    console.log("Is this in the right order?")
-    console.log(dictKeys); 
 
     for (let i = 0; i < dictKeys.length; i++) {
         let key = dictKeys[i];

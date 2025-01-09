@@ -259,16 +259,20 @@ button {
 }
 
 .show-verse {
+    position: absolute;
     visibility: hidden;
     opacity: 0;
+    left: 0;
+    top: 100%;
+    display: none;
     /* top: -80px;  Place it below the triggering span with 10px offset */
     /* left: 60px; Set at least 50 pixels away from the left edge */
     padding: 10px;
     /*width: 600px;*/
     background-color: #fff;
+    border: 1px solid #bbb;
     text-align: center;
     padding: 5px 10px;
-    position: absolute;
     z-index: 9999;
     /*transform: translateX(-50%);*/
     /*transition: opacity 0.3s ease-in-out;*/
