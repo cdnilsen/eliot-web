@@ -395,7 +395,9 @@ async function grabMatchingVerses(addresses: string[]) {
         console.log("Successfully called grabMatchingVerses");
 
         try {
+            console.log("Data dump:")
             console.log(data);
+            let dict = data[0];
 
             let outputObject: VerseDisplaySuperdict = {};
             for (let i=0; i < data.length; i++) {
