@@ -105,6 +105,7 @@ function createTriangleObject(): TriangleObject {
     let triangleSpan = document.createElement("span");
     triangleSpan.className = "triangle";
     triangleSpan.innerHTML = "▶";
+    triangleSpan.style.cursor = 'pointer';
 
     let object: TriangleObject = {
         span: triangleSpan,
