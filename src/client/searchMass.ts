@@ -178,7 +178,7 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
     console.log("Here's the full address to count dict as called in getOneBookDiv")
     console.log(addressToCountDict);
 
-    let allGenerics = Object.keys(matchingVerseTexts);
+    let allGenerics = Object.keys(addressToCountDict);
     console.log(allGenerics);
     let totalCount = 0;
 
