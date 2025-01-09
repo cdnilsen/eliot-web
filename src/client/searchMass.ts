@@ -145,6 +145,7 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
     let allCounts: number[] = [];
     let totalCount = 0;
     let notAllCountsSame: boolean = false;
+    console.log("For loop in getAddressSpan")
     for (let i=0; i < keys.length; i++) {
         let key = keys[i];
         console.log(key);
@@ -264,8 +265,6 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
 
 
     allBooks.forEach(book => {
-        console.log("here's the book")
-        console.log(book)
         let allTexts = matchingVerseTexts[book];
         allTexts = allTexts.sort((a, b) => {
             // First compare chapters
@@ -439,8 +438,6 @@ async function grabMatchingVerses(addresses: string[]) {
             addresses: addresses.join(',')  // Keep as strings
         });
         
-        console.log("Here's the URL: ")
-        console.log(`/matching_verses?${queryParams}`);
         const response = await fetch(`/matching_verses?${queryParams}`);
         
         if (!response.ok) {
@@ -448,33 +445,9 @@ async function grabMatchingVerses(addresses: string[]) {
         }
         
         const data = await response.json();
-        console.log("Successfully called grabMatchingVerses");
 
         try {
-            console.log(data);
             return data;
-            /*
-            let outputObject: VerseDisplaySuperdict = {};
-            for (let i=0; i < data.length; i++) {
-                let subdict: VerseDisplayDict = {
-                    '2': data[i]['first_edition'],
-                    '3': data[i]['second_edition'],
-                    '5': data[i]['mayhew'],
-                    '7': data[i]['zeroth_edition'],
-                    '4': data[i]['kjv'],
-                    '8': data[i]['grebrew'],
-                    'book': data[i]['book'],
-                    'chapter': data[i]['chapter'].toString(),
-                    'verse': data[i]['verse'].toString()
-                };
-                let verse_id = data[i]['verse_id'].toString();
-                outputObject[verse_id] = subdict;
-            }
-            console.log(outputObject);
-            // Comes in rows. data[n] has the matching verses for addresses[n] at here, and data[n]['verse_id'] is the verse ID
-            
-            return outputObject;
-            */
         } catch (error) {
             console.error('Error parsing matching verses:', error);
             throw error;
@@ -509,8 +482,6 @@ async function getResultObjectStrict(result: WordMassResult) {
     allAddresses.sort((a, b) => parseInt(b) - parseInt(a));
     console.log(result.headword);
     console.log(allAddresses);
-    //console.log(allAddresses[0]) // (e.g. '0430060275')
-    //console.log(typeof allAddresses[0]) //(string)
 
     let matchingVerseTextsRaw = await grabMatchingVerses(allAddresses);
 
