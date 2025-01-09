@@ -169,7 +169,7 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
     return object;
 }
 
-function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[], addressToCountDict: { [key: string]: number }) {
+function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[], genericIDs: string[], addressToCountDict: { [key: string]: number }) {
     let bookDiv = document.createElement("div");
     bookDiv.className = "book-div";
     bookDiv.style.paddingBottom = "8px";
@@ -177,10 +177,10 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
 
     console.log("Here's the full address to count dict as called in getOneBookDiv")
     console.log(addressToCountDict);
-
-    let allGenerics = Object.keys(addressToCountDict);
-    console.log(allGenerics);
+    console.log("Here's the generic IDs as called in getOneBookDiv")
+    console.log(genericIDs);
     let totalCount = 0;
+
 
     for (let i=0; i < matchingVerseTexts.length; i++) {
         let dict = matchingVerseTexts[i];
@@ -213,6 +213,20 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
 
     allBooks.sort((a, b) => allBookList.indexOf(a) - allBookList.indexOf(b));
 
+    let allGenerics = Object.keys(addressToCountDict);
+    let bookToGenericListDict: {[key: string]: string[]} = {}
+    for (let i=0; i < allGenerics.length; i++) {
+        let generic = allGenerics[i];
+        let book = generic.slice(0, 3);
+        if (book in bookToGenericListDict) {
+            bookToGenericListDict[book].push(generic);
+        } else {
+            bookToGenericListDict[book] = [generic];
+        }
+    }
+
+
+
     allBooks.forEach(book => {
         console.log("here's the book")
         console.log(book)
@@ -226,7 +240,9 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
             // If chapters are equal, compare verses
             return a["verse"] - b["verse"];
           });
-          getOneBookDiv(book, allTexts, addressToCountDict);
+
+          let thisBookGenerics = bookToGenericListDict[book];
+          getOneBookDiv(book, allTexts, thisBookGenerics, addressToCountDict);
     });
 
     return divArray;
