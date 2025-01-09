@@ -149,6 +149,7 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
         let key = keys[i];
         console.log(key);
         editionNum *= parseInt(key[-1]);
+        console.log(dict);
         let count = dict[key];
         if (allCounts.length > 0) {
             if (allCounts[allCounts.length - 1] != count) {
@@ -220,7 +221,6 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
         let addressSpanObject = getAddressSpan(addressToCountDict, generic, bookName);
 
         let span = addressSpanObject.span;
-        
 
         if (i < genericIDs.length - 1) {
             span.innerHTML += ", ";
