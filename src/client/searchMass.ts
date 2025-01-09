@@ -168,53 +168,23 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
     return object;
 }
 
-function getOneBookDiv(bookName: string, topDict: AddressBook, matchingVerseTexts: VerseDisplaySuperdict) {
+function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[]) {
     let bookDiv = document.createElement("div");
     bookDiv.className = "book-div";
     bookDiv.style.paddingBottom = "8px";
     let bookSpan = document.createElement("span");
 
-    console.log(topDict);
     let totalCount = 0;
-    console.log(topDict[bookName]);
-    console.log("this is the source of address-list")
-    let what_is_this = Object.keys(topDict[bookName]);
-    let addressList = sortCitationOrder(Object.keys(topDict[bookName]));
-    console.log("Address list in " + bookName);
-    console.log(addressList);
 
-    console.log("START HERE IN THE MORNING—you may need to fix addresses a bit")
-
-
-    let allSpans: HTMLSpanElement[] = [];
-
-    let addressRecord: { [key: string]: {[key: string]: number} } = {};
-    for (let i=0; i < addressList.length; i++) {
-        let address = addressList[i];
-        if (address in addressRecord) {
-            addressRecord[address] = topDict[bookName][address];
-        }
-        console.log(address);
-        let addressDict = topDict[bookName][address];
-        console.log(addressDict);
-        //totalCount += addressCount;
-        let spanObject: AddressSpanObject = getAddressSpan(addressDict, address, bookName);
-        allSpans.push(spanObject.span);
-        totalCount += spanObject.count;
+    for (let i=0; i < matchingVerseTexts.length; i++) {
+        let dict = matchingVerseTexts[i];
+        
+        let address = dict['chapter'].toString() + "." + dict['verse'].toString();
     }
+
+    
 
     bookSpan.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<i>" + bookName + "</i> (" + totalCount + "): ";
-
-    bookDiv.appendChild(bookSpan);
-    
-    for (let i=0; i < allSpans.length; i++) {
-        let span = allSpans[i];
-        if (i < allSpans.length - 1) {
-            span.innerHTML += ", ";
-        }
-        bookDiv.appendChild(span);
-    }
-    
     return bookDiv;
 
 }
@@ -238,6 +208,7 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict) {
             // If chapters are equal, compare verses
             return a["verse"] - b["verse"];
           });
+          getOneBookDiv(book, allTexts);
     });
 
     return divArray;
@@ -464,6 +435,8 @@ async function getResultObjectStrict(result: WordMassResult) {
         allAddresses.push(newAddressString.slice(0, -1));
     }
 
+    console.log("Here's address to count dict: ")
+    console.log(addressToCountDict);
     allAddresses.sort((a, b) => parseInt(b) - parseInt(a));
     console.log(result.headword);
     console.log(allAddresses);
