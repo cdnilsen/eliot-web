@@ -223,9 +223,13 @@ function getBookDivs(addressDict: AddressBook, matchingVerseTexts: VerseDisplayS
     let divArray: HTMLDivElement[] = [];
     let allBooks = Object.keys(addressDict);
 
+
+    let allVerses = Object.keys(matchingVerseTexts);
     allBooks.sort((a, b) => allBookList.indexOf(a) - allBookList.indexOf(b));
 
     allBooks.forEach(book => {
+        console.log("here's the book")
+        console.log(book)
         let bookDiv =  getOneBookDiv(book, addressDict, matchingVerseTexts);
         divArray.push(bookDiv);
     });
@@ -472,7 +476,7 @@ async function getResultObjectStrict(result: WordMassResult) {
             '5': thisMatchingVerse['mayhew'],
             '7': thisMatchingVerse['zeroth_edition'],
             '4': thisMatchingVerse['kjv'],
-            '8': thisMatchingVerse['grebrew'].replaceAll("<span style='color:blue'>", "").replaceAll("</span>", ""),
+            '8': thisMatchingVerse['grebrew'].replaceAll('<span style="color:blue">', "").replaceAll("</span>", ""),
             'book': thisMatchingVerse['book'],
             'chapter': thisMatchingVerse['chapter'].toString(),
             'verse': thisMatchingVerse['verse'].toString()
@@ -504,9 +508,6 @@ async function getResultObjectStrict(result: WordMassResult) {
         let bookKey = address.slice(1, 4);
         let book = IDToBookDict[bookKey];
 
-        //console.log(book)
-        //console.log(addressToCountDict[allAddresses[i]])
-
         if (!allBooks.includes(book)) {
             allBooks.push(book);
             addressBook[book] = {};
@@ -515,8 +516,6 @@ async function getResultObjectStrict(result: WordMassResult) {
         console.log(verse)
 
         let edition = allAddresses[i][10];
-
-        
 
         if (verse in addressBook[book]) {
             addressBook[book][verse][edition] = addressToCountDict[allAddresses[i]];
