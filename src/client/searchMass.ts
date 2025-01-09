@@ -21,6 +21,7 @@ async function sendWordSearch(searchString: string, searchType: string, diacriti
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log("Here's the data from sendWordSearch on line 23-24")
         return data;
     } catch (error) {
         console.error('Error searching words:', error);
