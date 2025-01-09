@@ -177,8 +177,6 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
 
     console.log("Here's the full address to count dict as called in getOneBookDiv")
     console.log(addressToCountDict);
-    console.log("Here's the generic IDs as called in getOneBookDiv")
-    console.log(genericIDs);
     let totalCount = 0;
 
 
@@ -215,8 +213,11 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
 
     let allGenerics = Object.keys(addressToCountDict);
     let bookToGenericListDict: {[key: string]: string[]} = {}
+
+    console.log("List of all generics *in this book*...")
     for (let i=0; i < allGenerics.length; i++) {
         let generic = allGenerics[i];
+        console.log(generic);
         let bookNum = generic.slice(1, 4);
         let book = IDToBookDict[bookNum];
         if (bookNum in bookToGenericListDict) {
@@ -243,9 +244,10 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
             // If chapters are equal, compare verses
             return a["verse"] - b["verse"];
           });
-
-          let thisBookGenerics = bookToGenericListDict[book];
-          getOneBookDiv(book, allTexts, thisBookGenerics, addressToCountDict);
+        let thisBookGenerics = bookToGenericListDict[book];
+        console.log(thisBookGenerics);
+        console.log("Here's the generic IDs as called at 252")
+        getOneBookDiv(book, allTexts, thisBookGenerics, addressToCountDict);
     });
 
     return divArray;
