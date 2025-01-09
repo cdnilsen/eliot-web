@@ -105,9 +105,11 @@ type AddressSpanObject = {
     count: number;
 }
 
-function getAddressSpan(dict: { [key: string]: number }, address: string, bookName: string): AddressSpanObject {
+function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, bookName: string): AddressSpanObject {
     let topSpan = document.createElement("span");
     let keys = Object.keys(dict).sort((a, b) => parseInt(b) - parseInt(a));
+
+    let address = getVerseAddress(rawAddress);
 
     let editionToPrefixDict: {[key: string]: string} = {
         '2': 'α',
