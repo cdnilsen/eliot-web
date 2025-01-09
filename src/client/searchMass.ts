@@ -464,6 +464,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
             
             let td = document.createElement('td');
             td.innerHTML = newDict[key];
+            console.log(newDict[key]);
             verseRow.appendChild(td);
         }
     });
