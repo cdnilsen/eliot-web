@@ -232,7 +232,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
         addressInnerSpan.style.borderBottom= '1px dotted black';
         displayBox.style.display = "none";
     });
-    
+
     addressInnerSpan.appendChild(displayBox);
     addressSpan.appendChild(addressInnerSpan);
     
@@ -399,9 +399,16 @@ function processTextInBox(text: string, headword: string, isMass: boolean) {
         let finalString = "";
         for (let i=0; i < splitText.length; i++) {
             let word = splitText[i];
+            let punctuation = [".", ",", ";", ":", "!", "?", "(", ")", "[", "]", "{", "}", "<", ">", "\"", "'", "“", "”", "‘", "’", "—", "–", "…", "·"];
+            let thisWordPunctuation = ""
+            if (punctuation.includes(word.slice(-1))) {
+                thisWordPunctuation = word.slice(-1);
+                word = word.slice(0, -1);
+            }
             if (cleanWord(word) == cleanWord(headword)) {
                 word = "<span style='color:blue'>" + word + "</span>";
             }
+            word += thisWordPunctuation;
             word = word.replace("8", "ꝏ̄");
             word = word.replace("$", " ");
             finalString += word;
