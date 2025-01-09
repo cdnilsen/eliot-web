@@ -200,7 +200,8 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     let displayBox = getDisplayBox(textDict, headword, isHebrew);
 
     addressSpan.innerHTML = spanInnerHTML;
-    /*
+
+ 
     addressSpan.addEventListener("mouseover", (event) => {
         addressSpan.style.fontWeight = "bold";
         addressSpan.style.color = "blue";
@@ -214,10 +215,8 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
         addressSpan.style.color = "";
         displayBox.style.display = "none";
     });
-    */
 
-    
-
+    addressSpan.appendChild(displayBox);
 
     let object: AddressSpanObject = {
         span: addressSpan,
@@ -232,16 +231,12 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
     bookDiv.className = "book-div";
     bookDiv.style.paddingBottom = "8px";
     let bookSpan = document.createElement("span");
-
-    console.log("Here's the full address to count dict as called in getOneBookDiv")
-    console.log(addressToCountDict);
     let totalCount = 0;
 
     for (let i=0; i < Object.keys(addressToCountDict).length; i++) {
         totalCount += addressToCountDict[Object.keys(addressToCountDict)[i]];
     }
 
-    console.log(totalCount);
     bookSpan.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<i>" + bookName + "</i> (" + totalCount + "): ";
     bookDiv.appendChild(bookSpan);
 
@@ -249,16 +244,13 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
 
     for (let i=0; i < matchingVerseTexts.length; i++) {
         let dict = matchingVerseTexts[i];
-        console.log(dict);
         let generic = dict['genericID'];
         thisBookVerseDisplaySuperDict[generic] = dict;
     }
 
     for (let i=0; i < genericIDs.length; i++) {
         let generic = genericIDs[i];
-        console.log(generic); // works
         let thisGenericDict = thisBookVerseDisplaySuperDict[generic];
-        console.log(thisGenericDict); // works
         let addressSpanObject = getAddressSpan(addressToCountDict, generic, bookName, thisGenericDict, headword);
 
         let span = addressSpanObject.span;
@@ -267,8 +259,6 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
             span.innerHTML += ", ";
         }
         bookDiv.appendChild(span);
-        bookDiv.appendChild(addressSpanObject.table);
-        console.log(addressSpanObject);
     }
     
     return bookDiv;
