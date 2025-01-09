@@ -204,7 +204,14 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
         let thisGenericDict = thisBookVerseDisplaySuperDict[generic];
         console.log(thisGenericDict); // works
         let addressSpanObject = getAddressSpan(addressToCountDict, generic, bookName);
-        bookDiv.appendChild(addressSpanObject.span);
+
+        let span = addressSpanObject.span;
+        
+
+        if (i < genericIDs.length - 1) {
+            span.innerHTML += ", ";
+        }
+        bookDiv.appendChild(span);
         console.log(addressSpanObject);
     }
     
