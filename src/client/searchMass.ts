@@ -403,7 +403,9 @@ function processTextInBox(text: string, headword: string, isMass: boolean) {
             let thisWordPunctuation = ""
             if (punctuation.includes(word.slice(-1))) {
                 thisWordPunctuation = word.slice(-1);
+                console.log(word);
                 word = word.slice(0, -1);
+                console.log(word);
             }
             if (cleanWord(word) == cleanWord(headword)) {
                 word = "<span style='color:blue'>" + word + "</span>";
