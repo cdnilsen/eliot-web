@@ -275,16 +275,21 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
         let thisGenericDict = thisBookVerseDisplaySuperDict[generic];
         let addressSpanObject = getAddressSpan(addressToCountDict, generic, bookName, thisGenericDict, headword);
 
-        let span = addressSpanObject.span;
-
+        // Create a container for the address span and comma
+        let container = document.createElement('span');
+        container.appendChild(addressSpanObject.span);
+        
+        // Add comma after the span (not inside it) if not the last item
         if (i < genericIDs.length - 1) {
-            span.innerHTML += ", ";
+            let commaSpan = document.createElement('span');
+            commaSpan.textContent = ', ';
+            container.appendChild(commaSpan);
         }
-        bookDiv.appendChild(span);
+        
+        bookDiv.appendChild(container);
     }
     
     return bookDiv;
-
 }
 
 function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDict: { [key: string]: number }, headword: string) {
