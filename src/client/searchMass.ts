@@ -156,6 +156,7 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
     for (let i=0; i < keys.length; i++) {
         let key = keys[i];
         console.log(key);
+        console.log(typeof key);
         editionNum *= parseInt(key[-1]);
         console.log(dict);
         let count = dict[key];
