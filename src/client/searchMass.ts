@@ -479,9 +479,9 @@ async function getResultObjectStrict(result: WordMassResult) {
             'verse': thisMatchingVerse['verse'].toString()
         };
         if (thisMatchingVerse['book'] in matchingVerseTexts) {
-            matchingVerseTexts[thisMatchingVerse['book']] = [subdict];
-        } else {
             matchingVerseTexts[thisMatchingVerse['book']].push(subdict);
+        } else {
+            matchingVerseTexts[thisMatchingVerse['book']] = [subdict];
         }
     }
     console.log("Here's matchingVerseTexts:")
