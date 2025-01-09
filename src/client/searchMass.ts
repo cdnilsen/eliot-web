@@ -179,6 +179,13 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
     console.log(addressToCountDict);
     let totalCount = 0;
 
+    for (let i=0; i < Object.keys(addressToCountDict).length; i++) {
+        totalCount += addressToCountDict[Object.keys(addressToCountDict)[i]];
+    }
+
+    console.log(totalCount);
+    bookSpan.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<i>" + bookName + "</i> (" + totalCount + "): ";
+
     let thisBookVerseDisplaySuperDict: {[key: string]: VerseDisplayDict} = {};
 
     for (let i=0; i < matchingVerseTexts.length; i++) {
@@ -193,11 +200,12 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
         console.log(generic); // works
         let thisGenericDict = thisBookVerseDisplaySuperDict[generic];
         console.log(thisGenericDict); // works
+        let addressSpan = getAddressSpan(addressToCountDict, generic, bookName);
     }
 
     
 
-    bookSpan.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<i>" + bookName + "</i> (" + totalCount + "): ";
+    
     return bookDiv;
 
 }
