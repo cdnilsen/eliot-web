@@ -229,6 +229,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     addressSpan.addEventListener("mouseleave", () => {
         addressInnerSpan.style.fontWeight = "normal";
         addressInnerSpan.style.color = "";
+        addressInnerSpan.style.borderBottom= '1px dotted black';
         displayBox.style.display = "none";
     });
 
@@ -399,6 +400,7 @@ function processTextInBox(text: string, headword: string, isMass: boolean) {
                 word = "<span style='color:blue'>" + word + "</span>";
             }
             word = word.replace("8", "ꝏ̄");
+            word = word.replace("$", " ");
             finalString += word;
             if (i < splitText.length - 1) {
                 finalString += " ";
