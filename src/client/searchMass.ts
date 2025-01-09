@@ -1,6 +1,20 @@
 import { totalmem } from "os";
 import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, StringToStringDict, allBookList, stringToIntDict, bookToIDDict, BookName } from "./library.js"
 
+function cleanWord(word: string) {
+    if (word.startsWith("OO")) {
+        word = "8" + word.slice(2);
+    }
+    word = word.toLowerCase();
+    word = word.replace("ᴏᴅ", "od");
+    let punctuation = [".", ",", ";", ":", "!", "?", "(", ")", "[", "]", "{", "}", "<", ">", "\"", "'", "“", "”", "‘", "’", "—", "–", "…", "·"];
+    for (let i=0; i < punctuation.length; i++) {
+        word = word.replace(punctuation[i], "");
+    }
+    return word;
+}
+
+
 type WordMassResult = {
     headword: string;
     verses: number[];
@@ -375,12 +389,24 @@ function getVerseAddress(address: string): string {
     return killLeadingZeros(rawChapter) + "." + killLeadingZeros(rawVerse)
 }
 
-
-type AddressBook = {
-    [key: string]: {
-        [key: string]: {
-            [key: string]: number;
+function processTextInBox(text: string, headword: string, isMass: boolean) {
+    if (isMass) {
+        let splitText = text.split(" ");
+        let finalString = "";
+        for (let i=0; i < splitText.length; i++) {
+            let word = splitText[i];
+            if (cleanWord(word) == cleanWord(headword)) {
+                word = "<span style='color:blue'>" + word + "</span>";
+            }
+            word = word.replace("8", "ꝏ̄");
+            finalString += word;
+            if (i < splitText.length - 1) {
+                finalString += " ";
+            }
         }
+        return finalString;
+    } else {
+        return text;
     }
 }
 
@@ -454,6 +480,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
 
     // Create columns only for editions that have content
     validKeys.forEach(key => {
+        console.log("Here's the key: ")
         console.log(key);
         let th = document.createElement('th');
         th.style.width = `${colWidth}%`;
@@ -462,6 +489,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         
         let td = document.createElement('td');
         td.style.width = `${colWidth}%`;
+        td.style.textAlign = 'left';
         td.innerHTML = newDict[key];
         verseRow.appendChild(td);
     });

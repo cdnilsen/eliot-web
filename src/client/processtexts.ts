@@ -212,7 +212,6 @@ function isValidEdition(edition: string): edition is EditionName {
 
 
 function cleanWord(word: string) {
-
     if (word.startsWith("OO")) {
         word = "8" + word.slice(2);
     }
