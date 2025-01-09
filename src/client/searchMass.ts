@@ -228,8 +228,16 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict) {
     allBooks.forEach(book => {
         console.log("here's the book")
         console.log(book)
-        console.log(matchingVerseTexts[book]);
-        //let bookDiv =  getOneBookDiv(book, addressDict, matchingVerseTexts);
+        let allTexts = matchingVerseTexts[book];
+        allTexts = allTexts.sort((a, b) => {
+            // First compare chapters
+            if (a["chapter"] !== b["chapter"]) {
+              return a["chapter"] - b["chapter"];
+            }
+            
+            // If chapters are equal, compare verses
+            return a["verse"] - b["verse"];
+          });
     });
 
     return divArray;
@@ -309,8 +317,8 @@ type VerseDisplayDict = {
     '4': string, // KJV
     '8': string, // Grebrew
     'book': string,
-    'chapter': string,
-    'verse': string
+    'chapter': number,
+    'verse': number
 }
 
 type VerseDisplaySuperdict = {
