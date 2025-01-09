@@ -199,10 +199,12 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     
     let displayBox = getDisplayBox(textDict, headword, isHebrew);
 
-    addressSpan.addEventListener("mouseover", () => {
+    addressSpan.addEventListener("mouseover", (event) => {
         addressSpan.style.fontWeight = "bold";
         addressSpan.style.color = "blue";
         displayBox.style.display = "block";
+        displayBox.style.left = `${event.pageX + 10}px`;
+        displayBox.style.top = `${event.pageY + 10}px`;
     });
 
     addressSpan.addEventListener("mouseleave", () => {
@@ -427,7 +429,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     let numColumns = Object.keys(newDict).length;
 
     let table = document.createElement('table');
-    table.classList.add('show-verse');
+    table.classList.add('display-box');
 
     let thead = document.createElement('thead');
     let headerRow = document.createElement('tr');
