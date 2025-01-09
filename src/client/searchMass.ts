@@ -228,7 +228,7 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict) {
     allBooks.forEach(book => {
         console.log("here's the book")
         console.log(book)
-        console.log(allBooks[book]);
+        console.log(matchingVerseTexts[book]);
         //let bookDiv =  getOneBookDiv(book, addressDict, matchingVerseTexts);
     });
 
