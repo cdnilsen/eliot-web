@@ -174,7 +174,7 @@ function getOneBookDiv(bookName: string, topDict: AddressBook, matchingVerseText
     bookDiv.style.paddingBottom = "8px";
     let bookSpan = document.createElement("span");
 
-
+    console.log(topDict);
     let totalCount = 0;
     console.log(topDict[bookName]);
     console.log("this is the source of address-list")
