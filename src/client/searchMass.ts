@@ -454,6 +454,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
 
     // Create columns only for editions that have content
     validKeys.forEach(key => {
+        console.log(key);
         let th = document.createElement('th');
         th.style.width = `${colWidth}%`;
         th.innerHTML = editionNumToTitleHTML[key];
