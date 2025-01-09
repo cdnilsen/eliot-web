@@ -258,6 +258,7 @@ button {
     text-decoration-style: dotted;
 }
 
+/* Style for the table cells */
 .display-box {
     position: fixed;
     background-color: #fff;
@@ -265,41 +266,37 @@ button {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     padding: 5px;
     z-index: 9999;
-    min-width: 200px;  /* Reduced from default table width */
-    max-width: 800px;
+    min-width: fit-content;  /* Allow box to size to content */
+    max-width: 1200px;      /* Increased max-width */
     display: none;
-    table-layout: fixed;  /* This ensures columns have equal width */
+    table-layout: auto;     /* Allow columns to size to content */
 }
 
-/* Style for the table cells */
 .display-box td, .display-box th {
     padding: 8px 12px;
     vertical-align: top;
     border-bottom: 1px solid #ddd;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: none;  /* Explicitly disable hyphenation */
-    width: 1%;
-    white-space: normal;
+    white-space: nowrap;    /* Prevent text wrapping */
     line-height: 1.4;
+}
 
+.display-box td {
+    text-align: left;
+    min-width: 150px;       /* Minimum column width */
+}
 
-/* Style for the header cells */
 .display-box th {
+    text-align: center;
     background-color: #f8f8f8;
     font-weight: bold;
     border-bottom: 2px solid #ddd;
+    padding: 6px 12px;
 }
 
-/* Make sure the table takes up the full width of its container */
 .display-box table {
-    width: 100%;
+    width: auto;            /* Let table width be determined by content */
     border-collapse: collapse;
-}
-
-/* Add some spacing between rows */
-.display-box tr:not(:last-child) {
-    border-bottom: 1px solid #eee;
+    margin: 0;
 }
 
 .show-verse.active {
