@@ -219,19 +219,17 @@ function getOneBookDiv(bookName: string, topDict: AddressBook, matchingVerseText
 
 }
 
-function getBookDivs(addressDict: AddressBook, matchingVerseTexts: VerseDisplaySuperdict) {
+function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict) {
     let divArray: HTMLDivElement[] = [];
-    let allBooks = Object.keys(addressDict);
+    let allBooks = Object.keys(matchingVerseTexts);
 
-
-    let allVerses = Object.keys(matchingVerseTexts);
     allBooks.sort((a, b) => allBookList.indexOf(a) - allBookList.indexOf(b));
 
     allBooks.forEach(book => {
         console.log("here's the book")
         console.log(book)
-        let bookDiv =  getOneBookDiv(book, addressDict, matchingVerseTexts);
-        divArray.push(bookDiv);
+        console.log(allBooks[book]);
+        //let bookDiv =  getOneBookDiv(book, addressDict, matchingVerseTexts);
     });
 
     return divArray;
@@ -316,13 +314,12 @@ type VerseDisplayDict = {
 }
 
 type VerseDisplaySuperdict = {
-    [key: string]: VerseDisplayDict
+    [key: string]: VerseDisplayDict[]
 }
 
 type WordObject = {
     parentDiv: HTMLDivElement;
     childContainer: HTMLDivElement;
-    addressBook: AddressBook;
     triangle: TriangleObject;
     verseBoxDict: VerseDisplaySuperdict;
 }
@@ -481,16 +478,16 @@ async function getResultObjectStrict(result: WordMassResult) {
             'chapter': thisMatchingVerse['chapter'].toString(),
             'verse': thisMatchingVerse['verse'].toString()
         };
-        let verse_id = thisMatchingVerse['verse_id'].toString();
-        matchingVerseTexts[verse_id] = subdict;
+        if (thisMatchingVerse['book'] in matchingVerseTexts) {
+            matchingVerseTexts[thisMatchingVerse['book']] = [subdict];
+        } else {
+            matchingVerseTexts[thisMatchingVerse['book']].push(subdict);
+        }
     }
     console.log("Here's matchingVerseTexts:")
     console.log(matchingVerseTexts);
 
 
-
-    let allBooks: string[] = []
-    let addressBook: AddressBook = {};
 
     let editionDict = {
         '2': 'α',
@@ -499,35 +496,8 @@ async function getResultObjectStrict(result: WordMassResult) {
         '7': 'א'
     }
     console.log(addressToCountDict)
-    for (let i=0; i < allAddresses.length; i++) {
-        let address = allAddresses[i];
 
-        let thisAddressText = matchingVerseTexts[address];
-        console.log(address);
-        console.log(thisAddressText);
-        let bookKey = address.slice(1, 4);
-        let book = IDToBookDict[bookKey];
-
-        if (!allBooks.includes(book)) {
-            allBooks.push(book);
-            addressBook[book] = {};
-        }
-        let verse = getVerseAddress(allAddresses[i]);
-        console.log(verse)
-
-        let edition = allAddresses[i][10];
-
-        if (verse in addressBook[book]) {
-            addressBook[book][verse][edition] = addressToCountDict[allAddresses[i]];
-        } else {
-            addressBook[book][verse] = {
-                [edition]: addressToCountDict[allAddresses[i]]
-            }
-        }
-        console.log(addressToCountDict[allAddresses[i]]); //what is this exactly
-    }
-
-    let bookDivs = getBookDivs(addressBook, matchingVerseTexts);
+    let bookDivs = getBookDivs(matchingVerseTexts);
     let childContainerDiv = document.createElement("div");
     bookDivs.forEach(bookDiv => {   
         childContainerDiv.appendChild(bookDiv);
@@ -536,7 +506,6 @@ async function getResultObjectStrict(result: WordMassResult) {
     let object: WordObject = {
         parentDiv: topDiv,
         childContainer: childContainerDiv,
-        addressBook: addressBook,
         triangle: triangleObject,
         verseBoxDict: matchingVerseTexts
     }
@@ -548,7 +517,6 @@ async function getResultObjectStrict(result: WordMassResult) {
             object.triangle.span.style.color = "blue";
             object.parentDiv.appendChild(object.childContainer);
             console.log("Matching verse texts for " + result.headword);
-            console.log(object.addressBook);
             console.log(matchingVerseTexts);
         } else {
             object.triangle.span.style.color = "";
