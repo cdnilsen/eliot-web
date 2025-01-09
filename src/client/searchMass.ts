@@ -305,7 +305,10 @@ type VerseDisplayDict = {
     '5': string, // Mayhew
     '7': string, // Zeroth Edition
     '4': string, // KJV
-    '8': string // Grebrew
+    '8': string, // Grebrew
+    'book': string,
+    'chapter': string,
+    'verse': string
 }
 
 type VerseDisplaySuperdict = {
@@ -412,6 +415,9 @@ async function grabMatchingVerses(addresses: string[]) {
                     '7': data[i]['zeroth_edition'],
                     '4': data[i]['kjv'],
                     '8': data[i]['grebrew'],
+                    'book': data[i]['book'],
+                    'chapter': data[i]['chapter'].toString(),
+                    'verse': data[i]['verse'].toString()
                 };
                 let verse_id = data[i]['verse_id'];
                 outputObject[verse_id] = subdict;

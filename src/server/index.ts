@@ -457,7 +457,7 @@ app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
 
         // Then run the full query
         const queryText = `
-            SELECT verse_id, first_edition, second_edition, mayhew, zeroth_edition, kjv, grebrew
+            SELECT verse_id, first_edition, second_edition, mayhew, zeroth_edition, kjv, grebrew, book, chapter, verse
             FROM all_verses 
             WHERE verse_id = ANY($1::bigint[])
             ORDER BY verse_id`;
