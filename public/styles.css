@@ -257,6 +257,7 @@ button {
     cursor: pointer;
     text-decoration-style: dotted;
 }
+
 .display-box {
     position: fixed;
     background-color: #fff;
@@ -272,14 +273,16 @@ button {
 
 /* Style for the table cells */
 .display-box td, .display-box th {
-    padding: 8px;
-    text-align: center;
+    padding: 8px 12px;
     vertical-align: top;
     border-bottom: 1px solid #ddd;
-    word-wrap: break-word;  /* Allows text to wrap within cells */
-    width: 1%;  /* Make all columns equal width */
-    white-space: normal;  /* Allows text to wrap */
-}
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: none;  /* Explicitly disable hyphenation */
+    width: 1%;
+    white-space: normal;
+    line-height: 1.4;
+
 
 /* Style for the header cells */
 .display-box th {
