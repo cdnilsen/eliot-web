@@ -384,6 +384,7 @@ async function grabMatchingVerses(addresses: string[]) {
         console.log("Successfully called grabMatchingVerses");
 
         try {
+            console.log(data);
             return data;
             /*
             let outputObject: VerseDisplaySuperdict = {};
@@ -430,7 +431,6 @@ async function getResultObjectStrict(result: WordMassResult) {
     for (let i = 0; i < allAddressNums.length; i++) {
         let addressNum = allAddressNums[i];
         let count = result.counts[i];
-
         let rawAddressString = addressNum.toString();
         let newAddressString = "1" + rawAddressString.slice(1) + rawAddressString[0];
         addressToCountDict[newAddressString] = count;
