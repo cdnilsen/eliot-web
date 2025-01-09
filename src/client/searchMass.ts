@@ -1,5 +1,5 @@
 import { totalmem } from "os";
-import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, StringToStringDict, allBookList } from "./library.js"
+import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, StringToStringDict, allBookList, stringToIntDict } from "./library.js"
 
 type WordMassResult = {
     headword: string;
@@ -184,7 +184,6 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
     for (let i=0; i < matchingVerseTexts.length; i++) {
         let dict = matchingVerseTexts[i];
         console.log(dict);
-        let addressString = dict['chapter'].toString() + "." + dict['verse'].toString();
         let generic = dict['genericID'];
         thisBookVerseDisplaySuperDict[generic] = dict;
     }
@@ -209,11 +208,14 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
 
     allBooks.sort((a, b) => allBookList.indexOf(a) - allBookList.indexOf(b));
 
-    let allGenerics = Object.keys(addressToCountDict);
+    let allEditionIDs = Object.keys(addressToCountDict);
     let bookToGenericListDict: {[key: string]: string[]} = {}
 
-    for (let i=0; i < allGenerics.length; i++) {
-        let generic = allGenerics[i].slice(0, -1);
+
+
+    let bookToCountDict: {[key: string]: stringToIntDict} = {};
+    for (let i=0; i < allEditionIDs.length; i++) {
+        let generic = allEditionIDs[i].slice(0, -1);
         console.log(generic);
         let bookNum = generic.slice(1, 4);
         let book = IDToBookDict[bookNum];
@@ -221,7 +223,9 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
             if (!bookToGenericListDict[book].includes(generic)) {
                 bookToGenericListDict[book].push(generic);
             }
+            bookToCountDict[book][allEditionIDs[i]] = addressToCountDict[allEditionIDs[i]];
         } else {
+            bookToCountDict[book] = {};
             bookToGenericListDict[book] = [generic];
         }
     }
@@ -243,8 +247,8 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
           });
         let thisBookGenerics = bookToGenericListDict[book];
         console.log(thisBookGenerics);
-        console.log("Here's the generic IDs as called at 252")
-        getOneBookDiv(book, allTexts, thisBookGenerics, addressToCountDict);
+        let thisBookCountDictionary: stringToIntDict = {};
+        getOneBookDiv(book, allTexts, thisBookGenerics, bookToCountDict[book]);
     });
 
     return divArray;
