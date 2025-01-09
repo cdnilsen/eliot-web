@@ -111,6 +111,7 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
     let rawKeys = Object.keys(dict);
     console.log("Here's the raw key list in getAddressSpan")
     console.log(rawKeys);
+    console.log(rawAddress);
     let keys: string[] = [];
 
     for (let i=0; i < rawKeys.length; i++) {
