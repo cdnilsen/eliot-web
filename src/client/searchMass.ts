@@ -475,8 +475,8 @@ async function getResultObjectStrict(result: WordMassResult) {
             '4': thisMatchingVerse['kjv'],
             '8': thisMatchingVerse['grebrew'].replaceAll('<span style="color:blue">', "").replaceAll("</span>", ""),
             'book': thisMatchingVerse['book'],
-            'chapter': thisMatchingVerse['chapter'].toString(),
-            'verse': thisMatchingVerse['verse'].toString()
+            'chapter': thisMatchingVerse['chapter'],
+            'verse': thisMatchingVerse['verse']
         };
         if (thisMatchingVerse['book'] in matchingVerseTexts) {
             matchingVerseTexts[thisMatchingVerse['book']].push(subdict);
