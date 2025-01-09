@@ -108,6 +108,7 @@ type AddressSpanObject = {
 function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, bookName: string): AddressSpanObject {
     let topSpan = document.createElement("span");
 
+    console.log(dict);
     let rawKeys = Object.keys(dict);
     console.log("Here's the raw key list in getAddressSpan")
     console.log(rawKeys);
