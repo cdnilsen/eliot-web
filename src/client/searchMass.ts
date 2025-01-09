@@ -391,6 +391,7 @@ async function grabMatchingVerses(addresses: string[]) {
         console.log("Successfully called grabMatchingVerses");
 
         try {
+            console.log(data);
             let outputObject: VerseDisplayDict = {
                 '2': data[0]['first_edition'],
                 '3': data[0]['second_edition'],
