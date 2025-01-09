@@ -1,5 +1,5 @@
 import { totalmem } from "os";
-import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, StringToStringDict, allBookList, stringToIntDict } from "./library.js"
+import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, StringToStringDict, allBookList, stringToIntDict, bookToIDDict } from "./library.js"
 
 type WordMassResult = {
     headword: string;
@@ -102,15 +102,14 @@ function createTriangleObject(): TriangleObject {
 
 type AddressSpanObject = {
     span: HTMLSpanElement;
+    table: HTMLTableElement;
     count: number;
 }
 
-function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, bookName: string): AddressSpanObject {
-    let topSpan = document.createElement("span");
+function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string, bookName: string, textDict: VerseDisplayDict, headword: string): AddressSpanObject {
 
-
-    console.log(dict);
-    let rawKeys = Object.keys(dict);
+    console.log(countDict);
+    let rawKeys = Object.keys(countDict);
     console.log("Here's the raw key list in getAddressSpan")
     console.log(rawKeys);
     console.log(rawAddress);
@@ -129,7 +128,7 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
     let address = getVerseAddress(rawAddress);
 
     console.log("here's address to count dict in getAddressSpan")
-    console.log(dict);
+    console.log(countDict);
 
     let editionToPrefixDict: {[key: string]: string} = {
         '2': 'α',
@@ -146,6 +145,8 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
     if (bookName == "John" || bookName == "Psalms (prose)") {
         editionToPrefixDict['6'] = 'αβ';
     }
+
+    let isHebrew = (parseInt(bookToIDDict[bookName]) < 40);
     
 
     let editionNum = 1;
@@ -158,8 +159,8 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
         console.log(key);
         console.log(typeof key);
         editionNum *= parseInt(key.at(-1) ?? '0');
-        console.log(dict);
-        let count = dict[key];
+        console.log(countDict);
+        let count = countDict[key];
         if (allCounts.length > 0) {
             if (allCounts[allCounts.length - 1] != count) {
                 notAllCountsSame = true;
@@ -190,17 +191,29 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
     }
 
     let addressSpan = document.createElement("span");
+    addressSpan.style.borderBottom= '1px dotted black';
+
+    
+    let displayBox = getDisplayBox(textDict, headword, isHebrew);
+
+    addressSpan.addEventListener("mouseover", () => {
+        addressSpan.style.fontWeight = "bold";
+        addressSpan.style.color = "blue";
+        displayBox.style.display = "block";
+    });
+
     addressSpan.innerHTML = spanInnerHTML;
-    topSpan.appendChild(addressSpan);
+
 
     let object: AddressSpanObject = {
         span: addressSpan,
+        table: displayBox,
         count: totalCount
     }
     return object;
 }
 
-function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[], genericIDs: string[], addressToCountDict: { [key: string]: number }) {
+function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[], genericIDs: string[], addressToCountDict: { [key: string]: number }, headword: string) {
     let bookDiv = document.createElement("div");
     bookDiv.className = "book-div";
     bookDiv.style.paddingBottom = "8px";
@@ -232,7 +245,7 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
         console.log(generic); // works
         let thisGenericDict = thisBookVerseDisplaySuperDict[generic];
         console.log(thisGenericDict); // works
-        let addressSpanObject = getAddressSpan(addressToCountDict, generic, bookName);
+        let addressSpanObject = getAddressSpan(addressToCountDict, generic, bookName, thisGenericDict, headword);
 
         let span = addressSpanObject.span;
 
@@ -247,7 +260,7 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
 
 }
 
-function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDict: { [key: string]: number }) {
+function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDict: { [key: string]: number }, headword: string) {
     let divArray: HTMLDivElement[] = [];
     let allBooks = Object.keys(matchingVerseTexts);
 
@@ -290,7 +303,7 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
         let thisBookGenerics = bookToGenericListDict[book];
         console.log(thisBookGenerics);
         let thisBookCountDictionary: stringToIntDict = {};
-        let thisBookDiv = getOneBookDiv(book, allTexts, thisBookGenerics, bookToCountDict[book]);
+        let thisBookDiv = getOneBookDiv(book, allTexts, thisBookGenerics, bookToCountDict[book], headword);
         divArray.push(thisBookDiv);
     });
 
@@ -391,7 +404,7 @@ type WordObject = {
 
 
 
-function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean) {
+function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean): HTMLTableElement {
     let dictKeys = Object.keys(rawDict) as (keyof VerseDisplayDict)[];
     let newDict: StringToStringDict = {};
     console.log("Is this in the right order?")
@@ -436,11 +449,17 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         let th = document.createElement('th');
         th.innerHTML = title;
         headerRow.appendChild(th);
-
         let td = document.createElement('td');
         td.innerHTML = newDict[key];
 
+        verseRow.appendChild(td);
     }
+
+    thead.appendChild(headerRow);
+    tbody.appendChild(verseRow);
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    return table;
 }
 
 async function grabMatchingVerses(addresses: string[]) {
@@ -532,7 +551,7 @@ async function getResultObjectStrict(result: WordMassResult) {
     }
     console.log(addressToCountDict)
 
-    let bookDivs = getBookDivs(matchingVerseTexts, addressToCountDict);
+    let bookDivs = getBookDivs(matchingVerseTexts, addressToCountDict, result.headword);
     let childContainerDiv = document.createElement("div");
 
     bookDivs.forEach(bookDiv => {   
