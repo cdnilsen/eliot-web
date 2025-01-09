@@ -178,7 +178,6 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[])
 
     for (let i=0; i < matchingVerseTexts.length; i++) {
         let dict = matchingVerseTexts[i];
-        
         let address = dict['chapter'].toString() + "." + dict['verse'].toString();
     }
 
@@ -289,7 +288,8 @@ type VerseDisplayDict = {
     '8': string, // Grebrew
     'book': string,
     'chapter': number,
-    'verse': number
+    'verse': number,
+    'count': number
 }
 
 type VerseDisplaySuperdict = {
@@ -315,11 +315,6 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     for (let i = 0; i < dictKeys.length; i++) {
         let key = dictKeys[i];
         let value = rawDict[key];
-        if (value.trim() === "") {  // Using trim() instead of strip()
-            continue;
-        } else {
-            newDict[key] = value;            
-        }
     }
 
     let keysWithVerses = Object.keys(newDict).sort(); // Probably superfluous...
@@ -457,7 +452,8 @@ async function getResultObjectStrict(result: WordMassResult) {
             '8': thisMatchingVerse['grebrew'].replaceAll('<span style="color:blue">', "").replaceAll("</span>", ""),
             'book': thisMatchingVerse['book'],
             'chapter': thisMatchingVerse['chapter'],
-            'verse': thisMatchingVerse['verse']
+            'verse': thisMatchingVerse['verse'],
+            'count': addressToCountDict[thisMatchingVerse['verse_id']]
         };
         if (thisMatchingVerse['book'] in matchingVerseTexts) {
             matchingVerseTexts[thisMatchingVerse['book']].push(subdict);
