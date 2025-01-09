@@ -109,6 +109,8 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
     let topSpan = document.createElement("span");
 
     let rawKeys = Object.keys(dict);
+    console.log("Here's the raw key list in getAddressSpan")
+    console.log(rawKeys);
     let keys: string[] = [];
 
     for (let i=0; i < rawKeys.length; i++) {
