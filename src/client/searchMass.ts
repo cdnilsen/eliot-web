@@ -119,6 +119,8 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
     }
 
     keys = keys.sort((a, b) => parseInt(b) - parseInt(a));
+    console.log("here's the key list in getAddressSpan")
+    console.log(keys);
     let address = getVerseAddress(rawAddress);
 
     console.log("here's address to count dict in getAddressSpan")
