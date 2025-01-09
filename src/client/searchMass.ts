@@ -422,14 +422,15 @@ type WordObject = {
 function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean): HTMLTableElement {
     let dictKeys = Object.keys(rawDict) as (keyof VerseDisplayDict)[];
     let newDict: StringToStringDict = {};
-
+    
+    // Populate newDict with the verse texts
     for (let i = 0; i < dictKeys.length; i++) {
         let key = dictKeys[i];
-        let value = rawDict[key];
+        // Only add if it's a verse text key ('2', '3', '4', '5', '7', '8')
+        if (['2', '3', '4', '5', '7', '8'].includes(key)) {
+            newDict[key] = rawDict[key].toString();
+        }
     }
-
-    let keysWithVerses = Object.keys(newDict).sort(); // Probably superfluous...
-    let numColumns = Object.keys(newDict).length;
 
     let table = document.createElement('table');
     table.classList.add('display-box');
@@ -453,25 +454,25 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         editionNumToTitleHTML['8'] = '<b><u>Grk.</u></b>';
     }
 
-    let titleDict: StringToStringDict = {}
-
-    for (let i=0; i < dictKeys.length; i++) {
-        let key = dictKeys[i];
+    // Only iterate over edition keys that have content
+    Object.keys(newDict).forEach(key => {
         let title = editionNumToTitleHTML[key];
-        titleDict[key] = title;
-        let th = document.createElement('th');
-        th.innerHTML = title;
-        headerRow.appendChild(th);
-        let td = document.createElement('td');
-        td.innerHTML = newDict[key];
-
-        verseRow.appendChild(td);
-    }
+        if (title) {  // Only add if we have a title for this edition
+            let th = document.createElement('th');
+            th.innerHTML = title;
+            headerRow.appendChild(th);
+            
+            let td = document.createElement('td');
+            td.innerHTML = newDict[key];
+            verseRow.appendChild(td);
+        }
+    });
 
     thead.appendChild(headerRow);
     tbody.appendChild(verseRow);
     table.appendChild(thead);
     table.appendChild(tbody);
+    
     return table;
 }
 
