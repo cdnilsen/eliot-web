@@ -400,19 +400,19 @@ function processTextInBox(text: string, headword: string, isMass: boolean) {
         for (let i=0; i < splitText.length; i++) {
             let word = splitText[i];
             let punctuation = [".", ",", ";", ":", "!", "?", "(", ")", "[", "]", "{", "}", "<", ">", "\"", "'", "“", "”", "‘", "’", "—", "–", "…", "·"];
-            let thisWordPunctuation = ""
-            if (punctuation.includes(word.slice(-1))) {
-                thisWordPunctuation = word.slice(-1);
-                console.log(word);
-                word = word.slice(0, -1);
-                console.log(word);
-            }
             if (cleanWord(word) == cleanWord(headword)) {
-                word = "<span style='color:blue'>" + word + "</span>";
+                let thisWordPunctuation = ""
+                if (punctuation.includes(word.slice(-1))) {
+                    thisWordPunctuation = word.slice(-1);
+                    console.log(word);
+                    word = word.slice(0, -1);
+                    console.log(word);
+                }
+                word = '<span style="color:blue">' + word + '</span>';
+                word += thisWordPunctuation;
             }
-            word += thisWordPunctuation;
-            word = word.replace("8", "ꝏ̄");
-            word = word.replace("$", " ");
+            word = word.replaceAll("8", "ꝏ̄");
+            word = word.replaceAll("$", " ");
             finalString += word;
             if (i < splitText.length - 1) {
                 finalString += " ";
