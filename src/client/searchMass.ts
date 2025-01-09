@@ -407,8 +407,10 @@ async function grabMatchingVerses(addresses: string[]) {
                     '4': data[i]['kjv'],
                     '8': data[i]['grebrew'],
                 };
-                outputObject[data[i]['verse_id']] = subdict;
+                let verse_id = data[i]['verse_id'];
+                outputObject[verse_id] = subdict;
             }
+            console.log(outputObject);
             // Comes in rows. data[n] has the matching verses for addresses[n] at here, and data[n]['verse_id'] is the verse ID
             
             return outputObject;
