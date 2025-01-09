@@ -177,6 +177,8 @@ function getOneBookDiv(bookName: string, topDict: AddressBook, matchingVerseText
 
     let totalCount = 0;
     console.log(topDict[bookName]);
+    console.log("this is the source of address-list")
+    let what_is_this = Object.keys(topDict[bookName]);
     let addressList = sortCitationOrder(Object.keys(topDict[bookName]));
     console.log("Address list in " + bookName);
     console.log(addressList);
