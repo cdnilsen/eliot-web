@@ -443,7 +443,7 @@ async function getResultObjectStrict(result: WordMassResult) {
         let rawAddressString = addressNum.toString();
         let newAddressString = "1" + rawAddressString.slice(1) + rawAddressString[0];
         addressToCountDict[newAddressString] = count;
-        allAddresses.push(newAddressString);
+        allAddresses.push(newAddressString.slice(0, -1));
     }
 
     allAddresses.sort((a, b) => parseInt(b) - parseInt(a));
