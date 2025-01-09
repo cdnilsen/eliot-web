@@ -419,7 +419,7 @@ async function grabMatchingVerses(addresses: string[]) {
                     'chapter': data[i]['chapter'].toString(),
                     'verse': data[i]['verse'].toString()
                 };
-                let verse_id = data[i]['verse_id'];
+                let verse_id = data[i]['verse_id'].toString();
                 outputObject[verse_id] = subdict;
             }
             console.log(outputObject);
