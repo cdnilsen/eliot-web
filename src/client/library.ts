@@ -253,3 +253,16 @@ export type StringToStringDict = {
     [key: string]: string
 }
 
+export function reverseDictionary(dict: StringToStringDict): StringToStringDict {
+    let reversedDict: StringToStringDict = {};
+    for (let key in dict) {
+        if (dict[key] in reversedDict) {
+            console.error('Duplicate key in reverse dictionary:', dict[key]);
+            return {};
+        } else {
+            reversedDict[dict[key]] = key;
+        }
+    }
+    return reversedDict;
+}
+

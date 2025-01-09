@@ -217,7 +217,7 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
     let bookToGenericListDict: {[key: string]: string[]} = {}
     for (let i=0; i < allGenerics.length; i++) {
         let generic = allGenerics[i];
-        let bookNum = generic.slice(0, 3);
+        let bookNum = generic.slice(1, 4);
         let book = IDToBookDict[bookNum];
         if (bookNum in bookToGenericListDict) {
             bookToGenericListDict[book].push(generic);
