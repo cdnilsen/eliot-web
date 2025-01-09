@@ -168,7 +168,7 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
     return object;
 }
 
-function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[]) {
+function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[], addressToCountDict: { [key: string]: number }) {
     let bookDiv = document.createElement("div");
     bookDiv.className = "book-div";
     bookDiv.style.paddingBottom = "8px";
@@ -178,7 +178,11 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[])
 
     for (let i=0; i < matchingVerseTexts.length; i++) {
         let dict = matchingVerseTexts[i];
-        let address = dict['chapter'].toString() + "." + dict['verse'].toString();
+        let addressString = dict['chapter'].toString() + "." + dict['verse'].toString();
+        let genericID = dict['genericID'];
+        if (genericID in addressToCountDict) {
+            console.log(addressToCountDict[genericID]);
+        }
     }
 
     
@@ -188,7 +192,7 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[])
 
 }
 
-function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict) {
+function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDict: { [key: string]: number }) {
     let divArray: HTMLDivElement[] = [];
     let allBooks = Object.keys(matchingVerseTexts);
 
@@ -207,7 +211,7 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict) {
             // If chapters are equal, compare verses
             return a["verse"] - b["verse"];
           });
-          getOneBookDiv(book, allTexts);
+          getOneBookDiv(book, allTexts, addressToCountDict);
     });
 
     return divArray;
@@ -289,6 +293,7 @@ type VerseDisplayDict = {
     'book': string,
     'chapter': number,
     'verse': number,
+    'genericID': string,
     'count': number
 }
 
@@ -453,6 +458,7 @@ async function getResultObjectStrict(result: WordMassResult) {
             'book': thisMatchingVerse['book'],
             'chapter': thisMatchingVerse['chapter'],
             'verse': thisMatchingVerse['verse'],
+            'genericID': thisMatchingVerse['verse_id'],
             'count': addressToCountDict[thisMatchingVerse['verse_id']]
         };
         if (thisMatchingVerse['book'] in matchingVerseTexts) {
@@ -474,7 +480,7 @@ async function getResultObjectStrict(result: WordMassResult) {
     }
     console.log(addressToCountDict)
 
-    let bookDivs = getBookDivs(matchingVerseTexts);
+    let bookDivs = getBookDivs(matchingVerseTexts, addressToCountDict);
     let childContainerDiv = document.createElement("div");
     bookDivs.forEach(bookDiv => {   
         childContainerDiv.appendChild(bookDiv);
