@@ -200,7 +200,6 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     let displayBox = getDisplayBox(textDict, headword, isHebrew);
 
     addressSpan.innerHTML = spanInnerHTML;
-    addressSpan.appendChild(displayBox);
     /*
     addressSpan.addEventListener("mouseover", (event) => {
         addressSpan.style.fontWeight = "bold";
@@ -268,6 +267,7 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
             span.innerHTML += ", ";
         }
         bookDiv.appendChild(span);
+        bookDiv.appendChild(addressSpanObject.table);
         console.log(addressSpanObject);
     }
     
