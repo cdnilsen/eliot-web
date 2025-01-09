@@ -224,6 +224,8 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
             bookToGenericListDict[book] = [generic];
         }
     }
+    console.log("Here's the book to generic list dict")
+    console.log(bookToGenericListDict);
 
 
 
