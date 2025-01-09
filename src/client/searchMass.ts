@@ -145,6 +145,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     if (bookName == "John" || bookName == "Psalms (prose)") {
         editionToPrefixDict['6'] = 'αβ';
     }
+    
     let isHebrew = false;
     if (bookName in bookToIDDict) {
         isHebrew = (parseInt(bookToIDDict[bookName]) < 40);
