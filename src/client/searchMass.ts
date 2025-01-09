@@ -447,7 +447,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     // Only iterate over edition keys that have content
     Object.keys(newDict).forEach(key => {
         let title = editionNumToTitleHTML[key];
-        if (title) {  // Only add if we have a title for this edition
+        if (title && newDict[key].trim() != "") {  // Only add if we have a title for this edition
             let th = document.createElement('th');
             th.innerHTML = title;
             headerRow.appendChild(th);
