@@ -107,8 +107,18 @@ type AddressSpanObject = {
 
 function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, bookName: string): AddressSpanObject {
     let topSpan = document.createElement("span");
-    let keys = Object.keys(dict).sort((a, b) => parseInt(b) - parseInt(a));
 
+    let rawKeys = Object.keys(dict);
+    let keys: string[] = [];
+
+    for (let i=0; i < rawKeys.length; i++) {
+        let key = rawKeys[i];
+        if (key.slice(0, -1) == rawAddress) {
+            keys.push(key);
+        }
+    }
+
+    keys = keys.sort((a, b) => parseInt(b) - parseInt(a));
     let address = getVerseAddress(rawAddress);
 
     console.log("here's address to count dict in getAddressSpan")
