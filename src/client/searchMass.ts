@@ -217,7 +217,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
 
     let displayBox = getDisplayBox(textDict, headword, isHebrew);
  
-    addressInnerSpan.addEventListener("mouseover", (event) => {
+    addressSpan.addEventListener("mouseover", (event) => {
         addressInnerSpan.style.fontWeight = "bold";
         addressInnerSpan.style.color = "blue";
         addressInnerSpan.style.borderBottom= '2px dotted black';
@@ -226,7 +226,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
         displayBox.style.top = `${event.pageY + 10}px`;
     });
 
-    addressInnerSpan.addEventListener("mouseleave", () => {
+    addressSpan.addEventListener("mouseleave", () => {
         addressInnerSpan.style.fontWeight = "normal";
         addressInnerSpan.style.color = "";
         addressInnerSpan.style.borderBottom= '1px dotted black';
