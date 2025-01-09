@@ -169,10 +169,15 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
     }
 
     let spanInnerHTML = "";
+    console.log("here's the editionNum")
+    console.log(editionNum);
     if (editionNum.toString() in editionToPrefixDict) {
         spanInnerHTML += "<sup>"+ editionToPrefixDict[editionNum.toString()] + "</sup>";
     }
-    spanInnerHTML += address + " (" + totalCount + ")";
+    spanInnerHTML += address;
+    if (totalCount > 1) {
+        spanInnerHTML += " (" + totalCount + ")";
+    }
 
     if (notAllCountsSame) {
         let countString = "";
