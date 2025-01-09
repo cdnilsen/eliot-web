@@ -256,7 +256,8 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
         let thisBookGenerics = bookToGenericListDict[book];
         console.log(thisBookGenerics);
         let thisBookCountDictionary: stringToIntDict = {};
-        getOneBookDiv(book, allTexts, thisBookGenerics, bookToCountDict[book]);
+        let thisBookDiv = getOneBookDiv(book, allTexts, thisBookGenerics, bookToCountDict[book]);
+        divArray.push(thisBookDiv);
     });
 
     return divArray;
