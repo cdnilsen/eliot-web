@@ -215,14 +215,14 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
 
 }
 
-function getBookDivs(dict: AddressBook) {
+function getBookDivs(addressDict: AddressBook, matchingVerseTexts: VerseDisplaySuperdict) {
     let divArray: HTMLDivElement[] = [];
-    let allBooks = Object.keys(dict);
+    let allBooks = Object.keys(addressDict);
 
     allBooks.sort((a, b) => allBookList.indexOf(a) - allBookList.indexOf(b));
 
     allBooks.forEach(book => {
-        let bookDiv =  getOneBookDiv(book, dict);
+        let bookDiv =  getOneBookDiv(book, addressDict);
         divArray.push(bookDiv);
     });
 
@@ -304,12 +304,16 @@ type VerseDisplayDict = {
     '8': string // Grebrew
 }
 
+type VerseDisplaySuperdict = {
+    [key: string]: VerseDisplayDict
+}
+
 type WordObject = {
     parentDiv: HTMLDivElement;
     childContainer: HTMLDivElement;
     addressBook: AddressBook;
     triangle: TriangleObject;
-    verseBoxDict: VerseDisplayDict;
+    verseBoxDict: VerseDisplaySuperdict;
 }
 
 
@@ -392,15 +396,21 @@ async function grabMatchingVerses(addresses: string[]) {
 
         try {
             console.log(data);
+
+            let outputObject: VerseDisplaySuperdict = {};
+            for (let i=0; i < data.length; i++) {
+                let subdict: VerseDisplayDict = {
+                    '2': data[i]['first_edition'],
+                    '3': data[i]['second_edition'],
+                    '5': data[i]['mayhew'],
+                    '7': data[i]['zeroth_edition'],
+                    '4': data[i]['kjv'],
+                    '8': data[i]['grebrew'],
+                };
+                outputObject[data[i]['verse_id']] = subdict;
+            }
             // Comes in rows. data[n] has the matching verses for addresses[n] at here, and data[n]['verse_id'] is the verse ID
-            let outputObject: VerseDisplayDict = {
-                '2': data[0]['first_edition'],
-                '3': data[0]['second_edition'],
-                '5': data[0]['mayhew'],
-                '7': data[0]['zeroth_edition'],
-                '4': data[0]['kjv'],
-                '8': data[0]['grebrew'],
-            };
+            
             return outputObject;
         } catch (error) {
             console.error('Error parsing matching verses:', error);
@@ -476,7 +486,7 @@ async function getResultObjectStrict(result: WordMassResult) {
         }
     }
 
-    let bookDivs = getBookDivs(addressBook);
+    let bookDivs = getBookDivs(addressBook, matchingVerseTexts);
     let childContainerDiv = document.createElement("div");
     bookDivs.forEach(bookDiv => {   
         childContainerDiv.appendChild(bookDiv);
