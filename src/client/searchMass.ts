@@ -481,7 +481,7 @@ async function getResultObjectStrict(result: WordMassResult) {
         matchingVerseTexts[verse_id] = subdict;
     }
     console.log("Here's matchingVerseTexts:")
-    //console.log(matchingVerseTexts);
+    console.log(matchingVerseTexts);
 
 
 
