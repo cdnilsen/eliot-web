@@ -233,8 +233,9 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
         displayBox.style.display = "none";
     });
 
-    addressInnerSpan.appendChild(displayBox);
+    
     addressSpan.appendChild(addressInnerSpan);
+    addressSpan.appendChild(displayBox);
     
 
 
