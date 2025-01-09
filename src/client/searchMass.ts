@@ -181,6 +181,7 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
 
     for (let i=0; i < matchingVerseTexts.length; i++) {
         let dict = matchingVerseTexts[i];
+        console.log(dict);
         let addressString = dict['chapter'].toString() + "." + dict['verse'].toString();
         let genericID = dict['genericID'];
         if (genericID in addressToCountDict) {
@@ -485,6 +486,7 @@ async function getResultObjectStrict(result: WordMassResult) {
 
     let bookDivs = getBookDivs(matchingVerseTexts, addressToCountDict);
     let childContainerDiv = document.createElement("div");
+
     bookDivs.forEach(bookDiv => {   
         childContainerDiv.appendChild(bookDiv);
     })
