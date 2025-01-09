@@ -295,13 +295,6 @@ type AddressBook = {
     }
 }
 
-type WordObject = {
-    parentDiv: HTMLDivElement;
-    childContainer: HTMLDivElement;
-    addressBook: AddressBook;
-    triangle: TriangleObject;
-}
-
 type VerseDisplayDict = {
     '2': string, // First Edition
     '3': string, // Second Edition
@@ -310,6 +303,16 @@ type VerseDisplayDict = {
     '4': string, // KJV
     '8': string // Grebrew
 }
+
+type WordObject = {
+    parentDiv: HTMLDivElement;
+    childContainer: HTMLDivElement;
+    addressBook: AddressBook;
+    triangle: TriangleObject;
+    verseBoxDict: VerseDisplayDict;
+}
+
+
 
 
 function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean) {
@@ -386,8 +389,21 @@ async function grabMatchingVerses(addresses: string[]) {
         
         const data = await response.json();
         console.log("Successfully called grabMatchingVerses");
-        console.log(data);
-        return data;
+
+        try {
+            let outputObject: VerseDisplayDict = {
+                '2': data[0]['first_edition'],
+                '3': data[0]['second_edition'],
+                '5': data[0]['mayhew'],
+                '7': data[0]['zeroth_edition'],
+                '4': data[0]['kjv'],
+                '8': data[0]['grebrew'],
+            };
+            return outputObject;
+        } catch (error) {
+            console.error('Error parsing matching verses:', error);
+            throw error;
+        }
     } catch (error) {
         console.error('Error fetching matching verses:', error);
         throw error;
@@ -468,7 +484,8 @@ async function getResultObjectStrict(result: WordMassResult) {
         parentDiv: topDiv,
         childContainer: childContainerDiv,
         addressBook: addressBook,
-        triangle: triangleObject
+        triangle: triangleObject,
+        verseBoxDict: matchingVerseTexts
     }
 
     object.triangle.span.onclick = () => {
