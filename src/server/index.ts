@@ -443,24 +443,31 @@ app.get('/matching_verses', express.json(), wrapAsync(async (req, res) => {
         return res.status(400).json({ status: 'error', error: 'addresses parameter is required' });
     }
 
-    // Clean and convert the addresses string
     const cleanAddresses = addresses.toString().trim().split(',').map(str => str.trim());
     const addressArray = cleanAddresses.map(str => BigInt(str));
-    console.log("Clean addresses:", cleanAddresses);
-    console.log("Parsed addresses:", addressArray);
 
     try {
+        // First, let's check if these IDs exist
+        const checkQuery = await client.query(`
+            SELECT verse_id 
+            FROM all_verses 
+            WHERE verse_id IN (${addressArray.map(String).join(',')})
+        `);
+        console.log("Existing verse IDs:", checkQuery.rows);
+
+        // Then run the full query
         const queryText = `
             SELECT verse_id, first_edition, second_edition, mayhew, zeroth_edition, kjv, grebrew
             FROM all_verses 
             WHERE verse_id = ANY($1::bigint[])
-            ORDER BY verse_id`;  // Added ORDER BY for consistent results
+            ORDER BY verse_id`;
             
         const queryParams = [addressArray.map(String)];
-        console.log("Query params:", queryParams);
+        console.log("Final query params:", queryParams);
 
         const query = await client.query(queryText, queryParams);
-        console.log("Query results:", query.rows);
+        console.log("Final results length:", query.rows.length);
+        console.log("Final results:", query.rows);
 
         res.json(query.rows);
     } catch (err) {
