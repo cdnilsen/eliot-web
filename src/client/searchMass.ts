@@ -496,6 +496,7 @@ async function getResultObjectStrict(result: WordMassResult) {
             object.triangle.span.style.color = "blue";
             object.parentDiv.appendChild(object.childContainer);
             console.log("Matching verse texts for " + result.headword);
+            console.log(object.addressBook);
             console.log(matchingVerseTexts);
         } else {
             object.triangle.span.style.color = "";
