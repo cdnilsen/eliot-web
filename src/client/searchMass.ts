@@ -168,7 +168,7 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
     return object;
 }
 
-function getOneBookDiv(bookName: string, topDict: AddressBook) {
+function getOneBookDiv(bookName: string, topDict: AddressBook, matchingVerseTexts: VerseDisplaySuperdict) {
     let bookDiv = document.createElement("div");
     bookDiv.className = "book-div";
     bookDiv.style.paddingBottom = "8px";
@@ -180,6 +180,8 @@ function getOneBookDiv(bookName: string, topDict: AddressBook) {
     let addressList = sortCitationOrder(Object.keys(topDict[bookName]));
     console.log("Address list in " + bookName);
     console.log(addressList);
+
+    console.log("START HERE IN THE MORNING—you may need to fix addresses a bit")
 
 
     let allSpans: HTMLSpanElement[] = [];
@@ -222,7 +224,7 @@ function getBookDivs(addressDict: AddressBook, matchingVerseTexts: VerseDisplayS
     allBooks.sort((a, b) => allBookList.indexOf(a) - allBookList.indexOf(b));
 
     allBooks.forEach(book => {
-        let bookDiv =  getOneBookDiv(book, addressDict);
+        let bookDiv =  getOneBookDiv(book, addressDict, matchingVerseTexts);
         divArray.push(bookDiv);
     });
 
