@@ -263,7 +263,6 @@ button {
     opacity: 0;
     left: 0;
     top: 100%;
-    display: none;
     /* top: -80px;  Place it below the triggering span with 10px offset */
     /* left: 60px; Set at least 50 pixels away from the left edge */
     padding: 10px;

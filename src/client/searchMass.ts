@@ -201,7 +201,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
 
     addressSpan.innerHTML = spanInnerHTML;
     addressSpan.appendChild(displayBox);
-
+    /*
     addressSpan.addEventListener("mouseover", (event) => {
         addressSpan.style.fontWeight = "bold";
         addressSpan.style.color = "blue";
@@ -215,6 +215,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
         addressSpan.style.color = "";
         displayBox.style.display = "none";
     });
+    */
 
     
 
