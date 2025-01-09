@@ -194,28 +194,31 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     }
 
     let addressSpan = document.createElement("span");
-    addressSpan.style.borderBottom= '1px dotted black';
-
     
+
+    let addressInnerSpan = document.createElement("span");
+    addressInnerSpan.style.borderBottom= '1px dotted black';
+    addressInnerSpan.style.cursor = 'pointer';
+    addressInnerSpan.innerHTML = spanInnerHTML;
+
     let displayBox = getDisplayBox(textDict, headword, isHebrew);
-
-    addressSpan.innerHTML = spanInnerHTML;
-
  
     addressSpan.addEventListener("mouseover", (event) => {
-        addressSpan.style.fontWeight = "bold";
-        addressSpan.style.color = "blue";
+        addressInnerSpan.style.fontWeight = "bold";
+        addressInnerSpan.style.color = "blue";
+        addressInnerSpan.style.borderBottom= '2px dotted black';
         displayBox.style.display = "block";
         displayBox.style.left = `${event.pageX + 10}px`;
         displayBox.style.top = `${event.pageY + 10}px`;
     });
 
     addressSpan.addEventListener("mouseleave", () => {
-        addressSpan.style.fontWeight = "normal";
-        addressSpan.style.color = "";
+        addressInnerSpan.style.fontWeight = "normal";
+        addressInnerSpan.style.color = "";
         displayBox.style.display = "none";
     });
 
+    addressSpan.appendChild(addressInnerSpan);
     addressSpan.appendChild(displayBox);
 
     let object: AddressSpanObject = {
