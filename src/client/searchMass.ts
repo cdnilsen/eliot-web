@@ -392,6 +392,7 @@ async function grabMatchingVerses(addresses: string[]) {
 
         try {
             console.log(data);
+            // Comes in rows. data[n] has the matching verses for addresses[n] at here, and data[n]['verse_id'] is the verse ID
             let outputObject: VerseDisplayDict = {
                 '2': data[0]['first_edition'],
                 '3': data[0]['second_edition'],
