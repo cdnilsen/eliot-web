@@ -137,7 +137,7 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
     let notAllCountsSame: boolean = false;
     for (let i=0; i < keys.length; i++) {
         let key = keys[i];
-        editionNum *= parseInt(key);
+        editionNum *= parseInt(key[-1]);
         let count = dict[key];
         if (allCounts.length > 0) {
             if (allCounts[allCounts.length - 1] != count) {
