@@ -481,7 +481,7 @@ async function getResultObjectStrict(result: WordMassResult) {
         matchingVerseTexts[verse_id] = subdict;
     }
     console.log("Here's matchingVerseTexts:")
-    console.log(matchingVerseTexts);
+    //console.log(matchingVerseTexts);
 
 
 
@@ -497,6 +497,9 @@ async function getResultObjectStrict(result: WordMassResult) {
 
     for (let i=0; i < allAddresses.length; i++) {
         let address = allAddresses[i];
+
+        let thisAddressText = matchingVerseTexts[address];
+        console.log(thisAddressText);
         let bookKey = address.slice(1, 4);
         let book = IDToBookDict[bookKey];
 
