@@ -163,7 +163,7 @@ function getAddressSpan(dict: { [key: string]: number }, address: string, bookNa
     topSpan.appendChild(addressSpan);
 
     let object: AddressSpanObject = {
-    span: addressSpan,
+        span: addressSpan,
         count: totalCount
     }
     return object;
@@ -202,6 +202,8 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
         let thisGenericDict = thisBookVerseDisplaySuperDict[generic];
         console.log(thisGenericDict); // works
         let addressSpanObject = getAddressSpan(addressToCountDict, generic, bookName);
+        bookDiv.appendChild(addressSpanObject.span);
+        console.log(addressSpanObject);
     }
     
     return bookDiv;
