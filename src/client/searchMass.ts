@@ -180,6 +180,12 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
     let totalCount = 0;
 
 
+    for (let i=0; i < genericIDs.length; i++) {
+        let generic = genericIDs[i];
+        console.log(generic);
+    }
+
+
     for (let i=0; i < matchingVerseTexts.length; i++) {
         let dict = matchingVerseTexts[i];
         console.log(dict);
@@ -214,23 +220,17 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
     let allGenerics = Object.keys(addressToCountDict);
     let bookToGenericListDict: {[key: string]: string[]} = {}
 
-    console.log("List of all generics *in this book*...")
     for (let i=0; i < allGenerics.length; i++) {
-        let generic = allGenerics[i];
+        let generic = allGenerics[i].slice(0, -1);
         console.log(generic);
         let bookNum = generic.slice(1, 4);
         let book = IDToBookDict[bookNum];
         if (book in bookToGenericListDict) {
-            //console.log("Here's the book to generic list dict at 221")
-            //console.log(bookToGenericListDict[book]);
             bookToGenericListDict[book].push(generic);
-            //console.log("Book list dict afterwards")
         } else {
             bookToGenericListDict[book] = [generic];
         }
     }
-    console.log("Here's the book to generic list dict")
-    console.log(bookToGenericListDict);
 
 
 
