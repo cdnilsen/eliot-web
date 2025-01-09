@@ -494,7 +494,7 @@ async function getResultObjectStrict(result: WordMassResult) {
         '5': 'M',
         '7': 'א'
     }
-
+    console.log(addressToCountDict)
     for (let i=0; i < allAddresses.length; i++) {
         let address = allAddresses[i];
 
@@ -515,6 +515,8 @@ async function getResultObjectStrict(result: WordMassResult) {
         console.log(verse)
 
         let edition = allAddresses[i][10];
+
+        
 
         if (verse in addressBook[book]) {
             addressBook[book][verse][edition] = addressToCountDict[allAddresses[i]];
