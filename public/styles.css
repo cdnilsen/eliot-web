@@ -266,23 +266,17 @@ button {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     padding: 5px;
     z-index: 9999;
-    min-width: fit-content;  /* Allow box to size to content */
-    max-width: 1200px;      /* Increased max-width */
+    width: fit-content;
     display: none;
-    table-layout: auto;     /* Allow columns to size to content */
 }
 
 .display-box td, .display-box th {
     padding: 8px 12px;
     vertical-align: top;
     border-bottom: 1px solid #ddd;
-    white-space: nowrap;    /* Prevent text wrapping */
+    position: relative;
+    min-width: 150px;
     line-height: 1.4;
-}
-
-.display-box td {
-    text-align: left;
-    min-width: 150px;       /* Minimum column width */
 }
 
 .display-box th {
@@ -290,15 +284,27 @@ button {
     background-color: #f8f8f8;
     font-weight: bold;
     border-bottom: 2px solid #ddd;
-    padding: 6px 12px;
+}
+
+.column-resizer {
+    position: absolute;
+    right: -3px;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    z-index: 10000;
+}
+
+.column-resizer:hover {
+    background-color: #0066ff33;
 }
 
 .display-box table {
-    width: auto;            /* Let table width be determined by content */
     border-collapse: collapse;
     margin: 0;
+    table-layout: fixed;
 }
-
 .show-verse.active {
     visibility: visible;
     opacity: 1;
