@@ -17,7 +17,7 @@ export type BookName = "Genesis" | "Exodus" | "Leviticus" | "Numbers" | "Deutero
     "2 Thessalonians" | "1 Timothy" | "2 Timothy" | "Titus" | "Philemon" | "Hebrews" | 
     "James" | "1 Peter" | "2 Peter" | "1 John" | "2 John" | "3 John" | "Jude" | "Revelation";
 
-export const bookToIDDict = {
+export const bookToIDDict: Record<BookName, string> = {
     "Genesis": "001",
     "Exodus": "002",
     "Leviticus": "003",

@@ -1,5 +1,5 @@
 import { totalmem } from "os";
-import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, StringToStringDict, allBookList, stringToIntDict, bookToIDDict } from "./library.js"
+import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, StringToStringDict, allBookList, stringToIntDict, bookToIDDict, BookName } from "./library.js"
 
 type WordMassResult = {
     headword: string;
@@ -145,10 +145,11 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     if (bookName == "John" || bookName == "Psalms (prose)") {
         editionToPrefixDict['6'] = 'αβ';
     }
-    
+
     let isHebrew = false;
-    if (bookName in bookToIDDict) {
-        isHebrew = (parseInt(bookToIDDict[bookName]) < 40);
+    const bookID = bookToIDDict[bookName as BookName];
+    if (bookID) {
+        isHebrew = (parseInt(bookID) < 40);
     }
 
     let editionNum = 1;
