@@ -179,29 +179,21 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
     console.log(addressToCountDict);
     let totalCount = 0;
 
-
-    for (let i=0; i < genericIDs.length; i++) {
-        let generic = genericIDs[i];
-        console.log(generic);
-    }
-
+    let thisBookVerseDisplaySuperDict: {[key: string]: VerseDisplayDict} = {};
 
     for (let i=0; i < matchingVerseTexts.length; i++) {
         let dict = matchingVerseTexts[i];
         console.log(dict);
         let addressString = dict['chapter'].toString() + "." + dict['verse'].toString();
-        /*
-        for (let j=0; j < Object.keys(dict).length; j++) {
-            let key = Object.keys(dict)[j];
-            console.log("Count at line 189-191:")
-            console.log(key);
-            console.log(dict[key]);
-        }
-        */
-        let genericID = dict['genericID'];
-        if (genericID in addressToCountDict) {
-            console.log(addressToCountDict[genericID]);
-        }
+        let generic = dict['genericID'];
+        thisBookVerseDisplaySuperDict[generic] = dict;
+    }
+
+    for (let i=0; i < genericIDs.length; i++) {
+        let generic = genericIDs[i];
+        console.log(generic); // works
+        let thisGenericDict = thisBookVerseDisplaySuperDict[generic];
+        console.log(thisGenericDict); // works
     }
 
     
