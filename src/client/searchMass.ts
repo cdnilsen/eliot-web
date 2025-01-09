@@ -108,6 +108,7 @@ type AddressSpanObject = {
 function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, bookName: string): AddressSpanObject {
     let topSpan = document.createElement("span");
 
+
     console.log(dict);
     let rawKeys = Object.keys(dict);
     console.log("Here's the raw key list in getAddressSpan")
@@ -257,15 +258,14 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
         console.log(generic);
         let bookNum = generic.slice(1, 4);
         let book = IDToBookDict[bookNum];
-        if (book in bookToGenericListDict) {
-            if (!bookToGenericListDict[book].includes(generic)) {
-                bookToGenericListDict[book].push(generic);
-            }
-            bookToCountDict[book][allEditionIDs[i]] = addressToCountDict[allEditionIDs[i]];
-        } else {
+        if (!(book in bookToGenericListDict)) {
             bookToCountDict[book] = {};
-            bookToGenericListDict[book] = [generic];
+            bookToGenericListDict[book] = [];
         }
+        if (!bookToGenericListDict[book].includes(generic)) {
+            bookToGenericListDict[book].push(generic);
+        }
+        bookToCountDict[book][allEditionIDs[i]] = addressToCountDict[allEditionIDs[i]];
     }
 
 
