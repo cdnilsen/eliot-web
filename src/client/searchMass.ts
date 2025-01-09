@@ -111,6 +111,9 @@ function getAddressSpan(dict: { [key: string]: number }, rawAddress: string, boo
 
     let address = getVerseAddress(rawAddress);
 
+    console.log("here's address to count dict in getAddressSpan")
+    console.log(dict);
+
     let editionToPrefixDict: {[key: string]: string} = {
         '2': 'α',
         '3': 'β',
