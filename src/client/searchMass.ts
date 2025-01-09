@@ -402,8 +402,6 @@ async function grabMatchingVerses(addresses: string[]) {
         console.log("Successfully called grabMatchingVerses");
 
         try {
-            console.log("Data dump:")
-            console.log(data);
             return data;
             /*
             let outputObject: VerseDisplaySuperdict = {};
@@ -482,6 +480,8 @@ async function getResultObjectStrict(result: WordMassResult) {
         let verse_id = thisMatchingVerse['verse_id'].toString();
         matchingVerseTexts[verse_id] = subdict;
     }
+    console.log("Here's matchingVerseTexts:")
+    console.log(matchingVerseTexts);
 
 
 
