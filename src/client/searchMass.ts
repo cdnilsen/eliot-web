@@ -183,6 +183,13 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
         let dict = matchingVerseTexts[i];
         console.log(dict);
         let addressString = dict['chapter'].toString() + "." + dict['verse'].toString();
+
+        for (let j=0; j < Object.keys(dict).length; j++) {
+            let key = Object.keys(dict)[j];
+            console.log("Count at line 189-191:")
+            console.log(key);
+            console.log(dict[key]);
+        }
         let genericID = dict['genericID'];
         if (genericID in addressToCountDict) {
             console.log(addressToCountDict[genericID]);
