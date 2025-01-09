@@ -472,7 +472,7 @@ async function getResultObjectStrict(result: WordMassResult) {
             '5': thisMatchingVerse['mayhew'],
             '7': thisMatchingVerse['zeroth_edition'],
             '4': thisMatchingVerse['kjv'],
-            '8': thisMatchingVerse['grebrew'],
+            '8': thisMatchingVerse['grebrew'].replaceAll("<span style='color:blue'>", "").replaceAll("</span>", ""),
             'book': thisMatchingVerse['book'],
             'chapter': thisMatchingVerse['chapter'].toString(),
             'verse': thisMatchingVerse['verse'].toString()
@@ -523,6 +523,7 @@ async function getResultObjectStrict(result: WordMassResult) {
                 [edition]: addressToCountDict[allAddresses[i]]
             }
         }
+        console.log(addressToCountDict[allAddresses[i]]); //what is this exactly
     }
 
     let bookDivs = getBookDivs(addressBook, matchingVerseTexts);
