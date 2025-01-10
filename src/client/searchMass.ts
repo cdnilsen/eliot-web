@@ -486,12 +486,16 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     let dictKeys = Object.keys(rawDict) as (keyof VerseDisplayDict)[];
     let newDict: StringToStringDict = {};
     
-    // Populate newDict with the verse texts
+    // Populate newDict with verse texts and calculate content lengths
+    let maxLengths: { [key: string]: number } = {};
     for (let i = 0; i < dictKeys.length; i++) {
         let key = dictKeys[i];
-        // Only add if it's a verse text key and has content
         if (['2', '3', '4', '5', '7', '8'].includes(key) && rawDict[key]?.toString().trim()) {
             newDict[key] = rawDict[key].toString();
+            // Calculate max word length in this text
+            const words = newDict[key].split(/\s+/);
+            const maxWordLength = Math.max(...words.map(w => w.length));
+            maxLengths[key] = maxWordLength;
         }
     }
 
@@ -513,29 +517,29 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         '8': isHebrew ? '<b><u>Heb.</u></b>' : '<b><u>Grk.</u></b>'
     };
 
-    // Get all valid keys that have content
     const validKeys = Object.keys(newDict).filter(key => 
         newDict[key]?.toString().trim() !== '' && 
         editionNumToTitleHTML[key]
     );
 
-    // Calculate column width as a percentage
-    const colWidth = 100 / validKeys.length;
-
-    // Create columns only for editions that have content
+    // Calculate appropriate column widths
     validKeys.forEach(key => {
-        console.log("Here's the key: ")
-        console.log(key);
+        const baseWidth = 8; // pixels per character
+        const padding = 24;  // extra padding
+        let width = Math.max(
+            150, // minimum width
+            maxLengths[key] * baseWidth + padding
+        );
+        
         let th = document.createElement('th');
-        th.style.width = `${colWidth}%`;
+        th.style.width = `${width}px`;
         th.innerHTML = editionNumToTitleHTML[key];
         headerRow.appendChild(th);
         
         let td = document.createElement('td');
-        td.style.width = `${colWidth}%`;
-        td.style.textAlign = 'left';
+        td.style.width = `${width}px`;
+        td.style.maxWidth = `${width}px`;
         td.innerHTML = processTextInBox(newDict[key], headword, (parseInt(key) % 4 != 0));
-        console.log(newDict[key]);
         verseRow.appendChild(td);
     });
 
@@ -546,7 +550,6 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     
     return table;
 }
-
 async function grabMatchingVerses(addresses: string[]) {
     // Remove the number conversion - just pass the strings directly
     try {
