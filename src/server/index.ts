@@ -553,7 +553,7 @@ app.get('/words_mass/:word', wrapAsync(async (req, res) => {
 
 app.get('/search_mass', wrapAsync(async (req, res) => {
     const { pattern, searchType, diacritics } = req.query;
-    
+    console.log(diacritics);
     if (!pattern || typeof pattern !== 'string') {
         res.status(400).json({ error: 'Search pattern is required' });
         return;
