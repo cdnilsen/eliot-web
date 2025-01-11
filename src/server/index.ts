@@ -551,7 +551,6 @@ app.get('/words_mass/:word', wrapAsync(async (req, res) => {
     }
 }));
 
-// Search words with pattern matching
 app.get('/search_mass', wrapAsync(async (req, res) => {
     const { pattern, searchType, diacritics } = req.query;
     
@@ -570,27 +569,27 @@ app.get('/search_mass', wrapAsync(async (req, res) => {
     switch (searchType) {
         case 'exact':
             queryString += diacritics === 'lax' 
-                ? `LOWER(headword) = LOWER($1)` 
+                ? `no_diacritics = LOWER($1)` 
                 : `headword = $1`;
             break;
         case 'contains':
             queryString += diacritics === 'lax' 
-                ? `LOWER(headword) LIKE LOWER('%' || $1 || '%')` 
+                ? `no_diacritics LIKE LOWER('%' || $1 || '%')` 
                 : `headword LIKE '%' || $1 || '%'`;
             break;
         case 'starts':
             queryString += diacritics === 'lax' 
-                ? `LOWER(headword) LIKE LOWER($1 || '%')` 
+                ? `no_diacritics LIKE LOWER($1 || '%')` 
                 : `headword LIKE $1 || '%'`;
             break;
         case 'ends':
             queryString += diacritics === 'lax' 
-                ? `LOWER(headword) LIKE LOWER('%' || $1)` 
+                ? `no_diacritics LIKE LOWER('%' || $1)` 
                 : `headword LIKE '%' || $1`;
             break;
         default:
             queryString += diacritics === 'lax' 
-                ? `LOWER(headword) LIKE LOWER('%' || $1 || '%')` 
+                ? `no_diacritics LIKE LOWER('%' || $1 || '%')` 
                 : `headword LIKE '%' || $1 || '%'`;
     }
     
@@ -601,7 +600,7 @@ app.get('/search_mass', wrapAsync(async (req, res) => {
         console.error('Error searching words:', err);
         res.status(500).json({ 
             error: 'Error searching words', 
-            details: err.message 
+            details: err instanceof Error ? err.message : 'Unknown error' 
         });
     }
 }));

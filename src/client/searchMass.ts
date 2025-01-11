@@ -27,15 +27,16 @@ async function sendWordSearch(searchString: string, searchType: string, diacriti
     searchString = searchString.split('(').join('');
     searchString = searchString.split(')').join('?');
     
-    console.log('URL:', `/search_mass?pattern=${encodeURIComponent(searchString)}&searchType=${searchType}`);
+    const url = `/search_mass?pattern=${encodeURIComponent(searchString)}&searchType=${searchType}&diacritics=${diacritics}`;
+    console.log('URL:', url);
 
     try {
-        const response = await fetch(`/search_mass?pattern=${encodeURIComponent(searchString)}&searchType=${searchType}`);
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log("Here's the data from sendWordSearch on line 23-24")
+        console.log("Here's the data from sendWordSearch on line 23-24");
         return data;
     } catch (error) {
         console.error('Error searching words:', error);
@@ -478,8 +479,6 @@ type WordObject = {
     triangle: TriangleObject;
     verseBoxDict: VerseDisplaySuperdict;
 }
-
-
 
 
 function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean): HTMLTableElement {
