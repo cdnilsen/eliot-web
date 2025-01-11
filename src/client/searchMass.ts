@@ -44,10 +44,16 @@ async function sendWordSearch(searchString: string, searchType: string, diacriti
     }
 }
 
-function sortByAlphabet(results: WordMassResult[]): WordMassResult[] {
+function sortByAlphabet(results: WordMassResult[], diacritics: "lax" | "strict"): WordMassResult[] {
+
+    
     return [...results].sort((a, b) => {
-        const aWord = a.headword;
-        const bWord = b.headword;
+        let aWord = a.headword;
+        let bWord = b.headword;
+        if (diacritics = "lax") {
+            
+
+        }
         let i = 0;
         
         while (i < aWord.length && i < bWord.length) {
@@ -79,7 +85,7 @@ function sortByAlphabet(results: WordMassResult[]): WordMassResult[] {
 
 
 
-function sortByFrequency(results: WordMassResult[]) {
+function sortByFrequency(results: WordMassResult[], diacritics: "lax" | "strict") {
     return results.sort((a, b) => b.counts.reduce((sum, val) => sum + val, 0) - a.counts.reduce((sum, val) => sum + val, 0));
 }
 
@@ -677,9 +683,9 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
     resultsContainer.innerHTML = ''; // Clear previous results
 
     if (sortAlphabetically) {
-        results = sortByAlphabet(results);
+        results = sortByAlphabet(results, diacritics);
     } else {
-        results = sortByFrequency(results);
+        results = sortByFrequency(results, diacritics);
     }
 
     //console.log(results[0])

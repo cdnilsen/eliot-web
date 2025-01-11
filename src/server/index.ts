@@ -554,6 +554,7 @@ app.get('/words_mass/:word', wrapAsync(async (req, res) => {
 app.get('/search_mass', wrapAsync(async (req, res) => {
     const { pattern, searchType, diacritics } = req.query;
     console.log(diacritics);
+    
     if (!pattern || typeof pattern !== 'string') {
         res.status(400).json({ error: 'Search pattern is required' });
         return;
@@ -563,35 +564,25 @@ app.get('/search_mass', wrapAsync(async (req, res) => {
     searchPattern = searchPattern.split('(').join('');
     searchPattern = searchPattern.split(')').join('?');
     
-    let queryString = `SELECT headword, verses, counts, editions FROM words_mass WHERE `;
+    const column = diacritics === 'lax' ? 'no_diacritics' : 'headword';
+    const searchValue = diacritics === 'lax' ? 'LOWER($1)' : '$1';
     
-    // Handle the search type
-    switch (searchType) {
-        case 'exact':
-            queryString += diacritics === 'lax' 
-                ? `no_diacritics = LOWER($1)` 
-                : `headword = $1`;
-            break;
-        case 'contains':
-            queryString += diacritics === 'lax' 
-                ? `no_diacritics LIKE LOWER('%' || $1 || '%')` 
-                : `headword LIKE '%' || $1 || '%'`;
-            break;
-        case 'starts':
-            queryString += diacritics === 'lax' 
-                ? `no_diacritics LIKE LOWER($1 || '%')` 
-                : `headword LIKE $1 || '%'`;
-            break;
-        case 'ends':
-            queryString += diacritics === 'lax' 
-                ? `no_diacritics LIKE LOWER('%' || $1)` 
-                : `headword LIKE '%' || $1`;
-            break;
-        default:
-            queryString += diacritics === 'lax' 
-                ? `no_diacritics LIKE LOWER('%' || $1 || '%')` 
-                : `headword LIKE '%' || $1 || '%'`;
+    let queryString = `SELECT headword, verses, counts, editions`;
+    if (diacritics === 'lax') {
+        queryString += `, no_diacritics`;
     }
+    queryString += ` FROM words_mass WHERE ${column}`;
+    
+    // Map search types to their SQL patterns
+    const patterns = {
+        'exact': ` = ${searchValue}`,
+        'contains': ` LIKE '%' || ${searchValue} || '%'`,
+        'starts': ` LIKE ${searchValue} || '%'`,
+        'ends': ` LIKE '%' || ${searchValue}`
+    } as const;
+    
+    const sqlPattern = patterns[searchType as keyof typeof patterns] ?? patterns.contains;
+    queryString += sqlPattern;
     
     try {
         const query = await client.query(queryString, [searchPattern]);
