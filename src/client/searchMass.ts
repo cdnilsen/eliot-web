@@ -17,6 +17,7 @@ function cleanWord(word: string) {
 
 type WordMassResult = {
     headword: string;
+    no_diacritics: string;
     verses: number[];
     counts: number[];
     editions: number;
@@ -37,6 +38,7 @@ async function sendWordSearch(searchString: string, searchType: string, diacriti
         }
         const data = await response.json();
         console.log("Here's the data from sendWordSearch on line 23-24");
+        console.log(data);
         return data;
     } catch (error) {
         console.error('Error searching words:', error);
@@ -51,6 +53,7 @@ function sortByAlphabet(results: WordMassResult[], diacritics: "lax" | "strict")
         let aWord = a.headword;
         let bWord = b.headword;
         if (diacritics = "lax") {
+            
             
 
         }
