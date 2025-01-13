@@ -191,6 +191,14 @@ type stringToStringDict = {
     [key: string]: string;
 }
 
+// Add this type definition at the top with your other types
+type WordKJVResult = {
+    headword: string;
+    verses: number[];
+    counts: number[];
+}
+
+
 function zipMassWordsLists(object: MassWordsTableResult): MassWordsCountObject {
     let result: MassWordsCountObject = {
         counts: {
@@ -589,6 +597,58 @@ app.get('/search_mass', wrapAsync(async (req, res) => {
         res.json(query.rows);
     } catch (err) {
         console.error('Error searching words:', err);
+        res.status(500).json({ 
+            error: 'Error searching words', 
+            details: err instanceof Error ? err.message : 'Unknown error' 
+        });
+    }
+}));
+
+// Add this endpoint after your existing endpoints
+app.get('/search_kjv', wrapAsync(async (req, res) => {
+    const { pattern, searchType } = req.query;
+    
+    if (!pattern || typeof pattern !== 'string') {
+        res.status(400).json({ error: 'Search pattern is required' });
+        return;
+    }
+    
+    // Process the search pattern similar to Mass search
+    let searchPattern = pattern.split('*').join('%');
+    searchPattern = searchPattern.split('(').join('');
+    searchPattern = searchPattern.split(')').join('?');
+    
+    let queryString = `
+        SELECT 
+            word as headword, 
+            verses,
+            array_fill(1, ARRAY[array_length(verses, 1)]) as counts  -- Create an array of 1s same length as verses
+        FROM kjv_word_verses 
+        WHERE LOWER(word)`;
+    
+    // Map search types to their SQL patterns
+    const patterns = {
+        'exact': ` = LOWER($1)`,
+        'contains': ` LIKE '%' || LOWER($1) || '%'`,
+        'starts': ` LIKE LOWER($1) || '%'`,
+        'ends': ` LIKE '%' || LOWER($1)`
+    } as const;
+    
+    const sqlPattern = patterns[searchType as keyof typeof patterns] ?? patterns.contains;
+    queryString += sqlPattern;
+    
+    try {
+        const query = await client.query(queryString, [searchPattern]);
+        
+        // Add debugging logs
+        console.log('Search pattern:', searchPattern);
+        console.log('Search type:', searchType);
+        console.log('Query:', queryString);
+        console.log('Results count:', query.rows.length);
+        
+        res.json(query.rows);
+    } catch (err) {
+        console.error('Error searching KJV words:', err);
         res.status(500).json({ 
             error: 'Error searching words', 
             details: err instanceof Error ? err.message : 'Unknown error' 
