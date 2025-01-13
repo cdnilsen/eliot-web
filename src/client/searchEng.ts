@@ -99,27 +99,45 @@ async function grabMatchingVerses(addresses: string[]) {
     }
 }
 
-function processVerses() {
-
+function cleanWord(word: string) {
+    word = word.toLowerCase();
+    word = word.replace("ᴏᴅ", "od");
+    let punctuation = [".", ",", ";", ":", "!", "?", "(", ")", "[", "]", "{", "}", "<", ">", "\"", "'", "“", "”", "‘", "’", "—", "–", "…", "·"];
+    for (let i=0; i < punctuation.length; i++) {
+        word = word.replace(punctuation[i], "");
+    }
+    return word;
 }
 
 function processTextInBox(text: string, headword: string, isKJV: boolean): string {
-    if (!text) return '';
+    //if (!text) return '';
     if (!isKJV) {
         return text;
     } else {
-        const words = text.split(' ');
-        const finalWords = words.map(word => {
-            // Remove punctuation for comparison but keep it for display
-            const punctuation = word.match(/[.,;:!?()[\]{}<>"'""''—–…·]*$/)?.[0] || '';
-            const cleanWord = word.slice(0, word.length - punctuation.length).toLowerCase();
-            
-            if (cleanWord === headword.toLowerCase()) {
-                return `<span style="color:blue">${word.slice(0, -punctuation.length)}</span>${punctuation}`;
+        const splitText = text.split(' ');
+        let finalString = "";
+        for (let i=0; i < splitText.length; i++) {
+            let word = splitText[i];
+            let punctuation = [".", ",", ";", ":", "!", "?", "(", ")", "[", "]", "{", "}", "<", ">", "\"", "'", "“", "”", "‘", "’", "—", "–", "…", "·"];
+            if (cleanWord(word) == cleanWord(headword)) {
+                let thisWordPunctuation = ""
+                if (punctuation.includes(word.slice(-1))) {
+                    thisWordPunctuation = word.slice(-1);
+                    console.log(word);
+                    word = word.slice(0, -1);
+                    console.log(word);
+                }
+                word = '<span style="color:blue">' + word + '</span>';
+                word += thisWordPunctuation;
             }
-            return word;
-        });
-        return finalWords.join(' ');
+            word = word.replaceAll("8", "ꝏ̄");
+            word = word.replaceAll("$", " ");
+            finalString += word;
+            if (i < splitText.length - 1) {
+                finalString += " ";
+            }
+        }
+        return finalString;
     }
 }
 
