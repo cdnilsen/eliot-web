@@ -73,12 +73,20 @@ function sortByAlphabet(results: WordKJVResult[]): WordKJVResult[] {
 }
 
 function sortByFrequency(results: WordKJVResult[]) {
-    return results.sort((a, b) => 
-        b.counts.reduce((sum, val) => sum + val, 0) - 
-        a.counts.reduce((sum, val) => sum + val, 0)
-    );
+    return results.sort((a, b) => {
+        // First compare by total frequency
+        const freqA = a.counts.reduce((sum, val) => sum + val, 0);
+        const freqB = b.counts.reduce((sum, val) => sum + val, 0);
+        
+        // If frequencies are different, sort by that
+        if (freqB !== freqA) {
+            return freqB - freqA;
+        }
+        
+        // If frequencies are equal, sort alphabetically
+        return a.headword.localeCompare(b.headword);
+    });
 }
-
 async function grabMatchingVerses(addresses: string[]) {
     try {
         const queryParams = new URLSearchParams({

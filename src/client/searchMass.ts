@@ -48,7 +48,6 @@ async function sendWordSearch(searchString: string, searchType: string, diacriti
 
 function sortByAlphabet(results: WordMassResult[], diacritics: "lax" | "strict"): WordMassResult[] {
 
-    
     return [...results].sort((a, b) => {
         let aWord = a.headword;
         let bWord = b.headword;
@@ -86,10 +85,22 @@ function sortByAlphabet(results: WordMassResult[], diacritics: "lax" | "strict")
     });
 }
 
-
-
 function sortByFrequency(results: WordMassResult[], diacritics: "lax" | "strict") {
-    return results.sort((a, b) => b.counts.reduce((sum, val) => sum + val, 0) - a.counts.reduce((sum, val) => sum + val, 0));
+    return results.sort((a, b) => {
+        // First compare by total frequency
+        const freqA = a.counts.reduce((sum, val) => sum + val, 0);
+        const freqB = b.counts.reduce((sum, val) => sum + val, 0);
+        
+        // If frequencies are different, sort by that
+        if (freqB !== freqA) {
+            return freqB - freqA;
+        }
+        
+        // If frequencies are equal, use alphabetical sorting
+        return sortByAlphabet([a], diacritics)[0].headword.localeCompare(
+            sortByAlphabet([b], diacritics)[0].headword
+        );
+    });
 }
 
 const sortCitationOrder = (arr: string[]): string[] => {
