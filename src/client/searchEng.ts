@@ -137,6 +137,9 @@ function getResultDiv(result: WordKJVResult): HTMLDivElement {
 }
 
 async function displayAllResults(results: WordKJVResult[], sortAlphabetically: boolean) {
+    console.log("Here are the results on line 140...")
+    console.log(results);
+
     let resultsContainer = document.getElementById("results-container") as HTMLDivElement;
     let headlineContainer = document.getElementById("headline-container") as HTMLDivElement;
     headlineContainer.style.textAlign = 'center';
