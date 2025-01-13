@@ -164,8 +164,9 @@ async function displayAllResults(results: WordKJVResult[], sortAlphabetically: b
 
     // Process each result
     for (const result of results) {
-        const resultDiv = getResultDiv(result);
-        resultsContainer.appendChild(resultDiv);
+        const resultObject = await getResultObjectStrict(result);
+        resultsContainer.appendChild(resultObject.parentDiv);
+
     }
 }
 
