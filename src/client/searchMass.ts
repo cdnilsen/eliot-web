@@ -383,7 +383,7 @@ function resultDiv(result: WordMassResult): HTMLDivElement {
     resultDiv.className = "result-item";
     let headwordSpan = document.createElement("span");
     let totalCount = result.counts.reduce((sum, val) => sum + val, 0);
-    let formattedHeadword = result.headword.replaceAll("8", "ꝏ̄");
+    let formattedHeadword = result.headword.replaceAll("8", "ꝏ̄").replaceAll("$", " ");
     headwordSpan.innerHTML = `<strong>${formattedHeadword} (${totalCount})</strong> `; 
     resultDiv.appendChild(headwordSpan);
 
@@ -596,8 +596,6 @@ async function getResultObjectStrict(result: WordMassResult) {
     let allAddressNums = result.verses;
     let allAddresses: string[] = [];
 
-
-
     let totalTokens: number = 0;
     let addressToCountDict = {} as { [key: string]: number };
     for (let i = 0; i < allAddressNums.length; i++) {
@@ -616,7 +614,6 @@ async function getResultObjectStrict(result: WordMassResult) {
 
     let matchingVerseTexts: VerseDisplaySuperdict = {};
 
-    
     for (let i=0; i < matchingVerseTextsRaw.length; i++) {
         let thisMatchingVerse = matchingVerseTextsRaw[i];
         let subdict: VerseDisplayDict = {
