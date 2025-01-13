@@ -178,7 +178,7 @@ async function displayAllResults(results: WordKJVResult[], sortAlphabetically: b
     );
 
     // Create headline
-    let headlineString = `<i>Found <b>${allWordTokens}</b> tokens, representing <b>${totalWords}</b> separate headwords, across <b>${totalVerses}</b> verses.</i><br><br>`;
+    let headlineString = `<i>Found in <b>${totalVerses}</b> verses, representing <b>${totalWords}</b> separate tokens`;
     let headlineSpan = document.createElement('span');
     headlineSpan.innerHTML = headlineString;
     headlineSpan.style.textAlign = 'center';
