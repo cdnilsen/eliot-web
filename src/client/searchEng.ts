@@ -109,11 +109,11 @@ function cleanWord(word: string) {
     return word;
 }
 
-function processTextInBox(text: string, headword: string, isKJV: boolean): string {
+function processTextInBox(text: string, headword: string, keyNum: number): string {
     //if (!text) return '';
-    if (!isKJV) {
-        return text;
-    } else {
+    if (keyNum % 4 != 0) {
+        return text.replaceAll("8", "ꝏ̄").replaceAll("$", " ");
+    } else if (keyNum == 4) {
         const splitText = text.split(' ');
         let finalString = "";
         for (let i=0; i < splitText.length; i++) {
@@ -138,6 +138,8 @@ function processTextInBox(text: string, headword: string, isKJV: boolean): strin
             }
         }
         return finalString;
+    } else {
+        return text;
     }
 }
 
@@ -285,7 +287,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         let td = document.createElement('td');
         td.style.width = `${width}px`;
         td.style.maxWidth = `${width}px`;
-        td.innerHTML = processTextInBox(newDict[key], headword, (parseInt(key) == 4));
+        td.innerHTML = processTextInBox(newDict[key], headword, (parseInt(key)));
         verseRow.appendChild(td);
     });
 
