@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Massachusett Word Search</title>
+    <link rel="stylesheet" type="text/css" href="./styles.css">
+</head>
+<body>
+    <a href="index.html">Back to index</a>
+
+    <br>
+    <div style="display: flex; flex-direction: row; justify-content: center; align-items: center">
+        <span style="padding-right:5px; width: 170px">Search for words that</span>
+        <select id="searchWordDropdown" name="searchWordDropdown" style="padding-right:5px; padding-left:5px">
+            <option id="contains" value="contains">contain: </option>
+            <option id="isExactly" value="exact">are exactly: </option> 
+            <option id="beginsWith" value="starts">begin with: </option>
+            <option id="endsWith" value="ends">end with: </option>
+        </select>
+        <input style="padding-left:5px" type="text" id="search_bar" name="search_query" placeholder="Search...">
+    </div>
+
+    <div style="width:100%; text-align: center; padding-left: 100px; padding-right: 100px;">
+        <i>Use <span style="color: red"><b>*</b></span> for wildcard sequences and <span style="color: red"><b>(</b></span>parentheses<span style="color: red"><b>)</b></span> for optional characters.</i>
+    </div>
+    <br>
+    <div id="sortWordsSelection">
+        <input type="radio" name="sortWords" id="sortAlph" value="sortAlph" checked>
+            <label for="sortAlph">Sort words alphabetically</label>
+        <input type="radio" name="sortWords" id="sortFrequency" value="sortFrequency">
+            <label for="sortFrequency">Sort words by frequency</label>
+    </div>
+    <div id="sortCitesSelection" hidden>
+        <input type="radio" name="sortCites" id="sortBookFirst" value="sortBookFirst" checked>
+            <label for="sortBookFirst">Sort citations by book, then edition</label>
+        <input type="radio" name="sortCites" id="sortEditionFirst" value="sortEditionFirst">
+            <label for="sortEditionFirst">Sort citations by edition, then book (<span style="color:red">not yet implemented</span>)</label>
+    </div>
+
+    <button type="submit" id="submitButton">Search</button>
+    <br>
+    <div id="headline-container">
+
+    </div>
+
+    <div id="results-container" style="padding-right: 100px">
+    </div>
+
+    <br>
+    <p><span style="color: red"><b>This site is a work in progress.</b></span> Do not cite anything without checking against an original copy!</p>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <script type="text/javascript">
+        /*
+        document.getElementById("submit").addEventListener("click", function () {
+            var searchType = document.getElementById("searchWordDropdown").value;
+            var query = document.getElementById("search_bar").value;
+
+            seeAllWords(document.getElementById("results-container"), query, searchType);
+        })
+        */
+    </script>
+</body>
+<script src="searchEng.js" type="module"></script>
+</html>
