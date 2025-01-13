@@ -623,7 +623,7 @@ app.get('/search_kjv', wrapAsync(async (req, res) => {
             word as headword, 
             verses,
             array_fill(1, ARRAY[array_length(verses, 1)]) as counts  -- Create an array of 1s same length as verses
-        FROM kjv_word_verses 
+        FROM words_kjv 
         WHERE LOWER(word)`;
     
     // Map search types to their SQL patterns
