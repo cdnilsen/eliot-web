@@ -630,6 +630,8 @@ async function getResultObjectStrict(result: WordMassResult) {
         };
 
         totalTokens += subdict["count"];
+        console.log("Here's subdict['count']...")
+        console.log(subdict["count"])
         if (thisMatchingVerse['book'] in matchingVerseTexts) {
             matchingVerseTexts[thisMatchingVerse['book']].push(subdict);
         } else {
@@ -687,6 +689,7 @@ async function getResultObjectStrict(result: WordMassResult) {
 async function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
     let resultsContainer = document.getElementById("results-container") as HTMLDivElement;
     let headlineContainer = document.getElementById("headline-container") as HTMLDivElement;
+    headlineContainer.style.textAlign = 'center';
 
     // Clear previous results
     resultsContainer.innerHTML = ''; 
