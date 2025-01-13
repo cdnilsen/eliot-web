@@ -709,7 +709,7 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
         allObjects.push(object);
     }));
 
-    let headlineString: string = `Found <b>{allWordTokens}</b> tokens, representing <b>{totalWords}</b> separate headwords, across <b>{totalVerses}</b> verses`
+    let headlineString: string = `Found <b>${allWordTokens}</b> tokens, representing <b>${totalWords}</b> separate headwords, across <b>${totalVerses}</b> verses.`
     let headlineSpan = document.createElement('span');
     headlineSpan.innerHTML = headlineString;
     headlineContainer.appendChild(headlineSpan);
