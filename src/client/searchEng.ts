@@ -161,8 +161,7 @@ async function createResultDiv(result: WordKJVResult): Promise<HTMLDivElement> {
         // Only load verse content if expanding and container is empty
         if (!isExpanded && !verseContainer.hasChildNodes()) {
             const verses = await grabMatchingVerses(result.verses.map(String));
-            // Process and display verses here...
-            // This would be similar to the Mass implementation
+            console.log(verses)
         }
     };
 
