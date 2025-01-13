@@ -596,12 +596,16 @@ async function getResultObjectStrict(result: WordMassResult) {
     let allAddressNums = result.verses;
     let allAddresses: string[] = [];
 
+
+
+    let totalTokens: number = 0;
     let addressToCountDict = {} as { [key: string]: number };
     for (let i = 0; i < allAddressNums.length; i++) {
         let addressNum = allAddressNums[i];
         let count = result.counts[i];
         let rawAddressString = addressNum.toString();
         let newAddressString = "1" + rawAddressString.slice(1) + rawAddressString[0];
+        totalTokens += count;
         addressToCountDict[newAddressString] = count;
         allAddresses.push(newAddressString.slice(0, -1));
     }
@@ -612,7 +616,7 @@ async function getResultObjectStrict(result: WordMassResult) {
 
     let matchingVerseTexts: VerseDisplaySuperdict = {};
 
-    let totalTokens: number = 0;
+    
     for (let i=0; i < matchingVerseTextsRaw.length; i++) {
         let thisMatchingVerse = matchingVerseTextsRaw[i];
         let subdict: VerseDisplayDict = {
@@ -629,9 +633,6 @@ async function getResultObjectStrict(result: WordMassResult) {
             'count': addressToCountDict[thisMatchingVerse['verse_id']]
         };
 
-        totalTokens += subdict["count"];
-        console.log("Here's subdict['count']...")
-        console.log(subdict["count"])
         if (thisMatchingVerse['book'] in matchingVerseTexts) {
             matchingVerseTexts[thisMatchingVerse['book']].push(subdict);
         } else {
