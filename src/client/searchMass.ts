@@ -487,6 +487,8 @@ type WordObject = {
     childContainer: HTMLDivElement;
     triangle: TriangleObject;
     verseBoxDict: VerseDisplaySuperdict;
+    numVerses: number;
+    numTokens: number; 
 }
 
 
@@ -604,15 +606,13 @@ async function getResultObjectStrict(result: WordMassResult) {
         allAddresses.push(newAddressString.slice(0, -1));
     }
 
-    console.log("Here's address to count dict: ")
-    console.log(addressToCountDict);
     allAddresses.sort((a, b) => parseInt(b) - parseInt(a));
-    console.log(result.headword);
-    console.log(allAddresses);
 
     let matchingVerseTextsRaw = await grabMatchingVerses(allAddresses);
 
     let matchingVerseTexts: VerseDisplaySuperdict = {};
+
+    let totalTokens: number = 0;
     for (let i=0; i < matchingVerseTextsRaw.length; i++) {
         let thisMatchingVerse = matchingVerseTextsRaw[i];
         let subdict: VerseDisplayDict = {
@@ -628,16 +628,14 @@ async function getResultObjectStrict(result: WordMassResult) {
             'genericID': thisMatchingVerse['verse_id'],
             'count': addressToCountDict[thisMatchingVerse['verse_id']]
         };
+
+        totalTokens += subdict["count"];
         if (thisMatchingVerse['book'] in matchingVerseTexts) {
             matchingVerseTexts[thisMatchingVerse['book']].push(subdict);
         } else {
             matchingVerseTexts[thisMatchingVerse['book']] = [subdict];
         }
     }
-    console.log("Here's matchingVerseTexts:")
-    console.log(matchingVerseTexts);
-
-
 
     let editionDict = {
         '2': 'α',
@@ -645,7 +643,6 @@ async function getResultObjectStrict(result: WordMassResult) {
         '5': 'M',
         '7': 'א'
     }
-    console.log(addressToCountDict)
 
     let bookDivs = getBookDivs(matchingVerseTexts, addressToCountDict, result.headword);
     let childContainerDiv = document.createElement("div");
@@ -658,7 +655,9 @@ async function getResultObjectStrict(result: WordMassResult) {
         parentDiv: topDiv,
         childContainer: childContainerDiv,
         triangle: triangleObject,
-        verseBoxDict: matchingVerseTexts
+        verseBoxDict: matchingVerseTexts,
+        numVerses: matchingVerseTextsRaw.length,
+        numTokens: totalTokens
     }
 
     object.triangle.span.onclick = () => {
@@ -683,7 +682,11 @@ async function getResultObjectStrict(result: WordMassResult) {
 
 async function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
     let resultsContainer = document.getElementById("results-container") as HTMLDivElement;
-    resultsContainer.innerHTML = ''; // Clear previous results
+    let headlineContainer = document.getElementById("headline-container") as HTMLDivElement;
+
+    // Clear previous results
+    resultsContainer.innerHTML = ''; 
+    headlineContainer.innerHTML = '';
 
     if (sortAlphabetically) {
         results = sortByAlphabet(results, diacritics);
@@ -693,10 +696,28 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
 
     //console.log(results[0])
 
+    let totalWords: number = 0
+    let totalVerses: number = 0
+    let allWordTokens: number = 0
+
+    let allObjects: WordObject[] = [];
     await Promise.all(results.map(async result => {
         let object: WordObject = await getResultObjectStrict(result);
-        resultsContainer.appendChild(object.parentDiv);
+        totalWords += 1
+        totalVerses += object.numVerses;
+        allWordTokens += object.numTokens
+        allObjects.push(object);
     }));
+
+    let headlineString: string = `Found <b>{allWordTokens}</b> tokens, representing <b>{totalWords}</b> separate headwords, across <b>{totalVerses}</b> verses`
+    let headlineSpan = document.createElement('span');
+    headlineSpan.innerHTML = headlineString;
+    headlineContainer.appendChild(headlineSpan);
+
+    for (let i=0; i < allObjects.length; i++) {
+        let object = allObjects[i];
+        resultsContainer.appendChild(object.parentDiv);
+    }
 
 }
 
