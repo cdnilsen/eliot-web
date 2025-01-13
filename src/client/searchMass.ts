@@ -663,10 +663,6 @@ async function getResultObjectStrict(result: WordMassResult) {
         numTokens: totalTokens
     }
 
-    console.log("Here's totalTokens")
-    console.log(typeof totalTokens)
-    console.log(totalTokens)
-
     object.triangle.span.onclick = () => {
         object.triangle.isClicked = !object.triangle.isClicked;
         object.triangle.span.innerHTML = object.triangle.isClicked ? "▼" : "▶";
@@ -717,7 +713,7 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
         allObjects.push(object);
     }));
 
-    let headlineString: string = `Found <b>${allWordTokens}</b> tokens, representing <b>${totalWords}</b> separate headwords, across <b>${totalVerses}</b> verses.<br>`
+    let headlineString: string = `<i>Found <b>${allWordTokens}</b> tokens, representing <b>${totalWords}</b> separate headwords, across <b>${totalVerses}</b> verses.</i><br><br>`
     let headlineSpan = document.createElement('span');
     headlineSpan.innerHTML = headlineString;
     headlineSpan.style.textAlign = 'center';
