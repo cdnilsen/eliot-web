@@ -540,10 +540,10 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         '8': isHebrew ? '<b><u>Heb.</u></b>' : '<b><u>Grk.</u></b>'
     };
 
-    const validKeys = Object.keys(newDict).filter(key => 
-        newDict[key]?.toString().trim() !== '' && 
-        editionNumToTitleHTML[key]
-    );
+    const desiredOrder = ['7', '2', '3', '5', '4', '8'];
+    const validKeys = Object.keys(newDict)
+        .filter(key => newDict[key]?.toString().trim() !== '' && editionNumToTitleHTML[key])
+        .sort((a, b) => desiredOrder.indexOf(a) - desiredOrder.indexOf(b));
 
     // Calculate appropriate column widths
     validKeys.forEach(key => {
