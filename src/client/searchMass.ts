@@ -142,8 +142,39 @@ type AddressSpanObject = {
     count: number;
 }
 
-function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string, bookName: string, textDict: VerseDisplayDict, headword: string): AddressSpanObject {
+function mouseoverAddressSpan(innerSpan: HTMLSpanElement, displayBox: HTMLTableElement, window: Window) {
+    innerSpan.style.fontWeight = "bold";
+    innerSpan.style.color = "blue";
+    innerSpan.style.borderBottom = '2px dotted black';
 
+    // Get the position relative to the viewport
+    const rect = innerSpan.getBoundingClientRect();
+        
+    // Position the tooltip relative to the viewport
+    displayBox.style.display = "block";
+
+    // Calculate position to ensure tooltip stays on screen
+    const viewportWidth = window.innerWidth;
+    const tooltipWidth = displayBox.offsetWidth;
+
+    // Start with default position to the right
+    let left = rect.right + 10;
+        
+    // If tooltip would go off right edge, position to the left instead
+    if (left + tooltipWidth > viewportWidth - 20) {
+        left = rect.left - tooltipWidth - 10;
+    }
+    
+    // If tooltip would go off left edge, position below instead
+    if (left < 20) {
+        left = Math.max(20, rect.left);
+    }
+
+    displayBox.style.left = `${left}px`;
+    displayBox.style.top = `${rect.top}px`;
+}
+
+function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string, bookName: string, textDict: VerseDisplayDict, headword: string): AddressSpanObject {
     console.log(countDict);
     let rawKeys = Object.keys(countDict);
     console.log("Here's the raw key list in getAddressSpan")
@@ -230,8 +261,6 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     }
 
     let addressSpan = document.createElement("span");
-    
-
     let addressInnerSpan = document.createElement("span");
     addressInnerSpan.style.borderBottom= '1px dotted black';
     addressInnerSpan.style.cursor = 'pointer';
@@ -240,35 +269,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     let displayBox = getDisplayBox(textDict, headword, isHebrew);
  
     addressSpan.addEventListener("mouseover", (event) => {
-        addressInnerSpan.style.fontWeight = "bold";
-        addressInnerSpan.style.color = "blue";
-        addressInnerSpan.style.borderBottom = '2px dotted black';
-        
-        // Get the position relative to the viewport
-        const rect = addressInnerSpan.getBoundingClientRect();
-        
-        // Position the tooltip relative to the viewport
-        displayBox.style.display = "block";
-        
-        // Calculate position to ensure tooltip stays on screen
-        const viewportWidth = window.innerWidth;
-        const tooltipWidth = displayBox.offsetWidth;
-        
-        // Start with default position to the right
-        let left = rect.right + 10;
-        
-        // If tooltip would go off right edge, position to the left instead
-        if (left + tooltipWidth > viewportWidth - 20) {
-            left = rect.left - tooltipWidth - 10;
-        }
-        
-        // If tooltip would go off left edge, position below instead
-        if (left < 20) {
-            left = Math.max(20, rect.left);
-        }
-        
-        displayBox.style.left = `${left}px`;
-        displayBox.style.top = `${rect.top}px`;
+        mouseoverAddressSpan(addressInnerSpan, displayBox, window);
     });
 
     addressSpan.addEventListener("mouseleave", () => {
@@ -281,8 +282,6 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     
     addressSpan.appendChild(addressInnerSpan);
     addressSpan.appendChild(displayBox);
-    
-
 
     let object: AddressSpanObject = {
         span: addressSpan,
@@ -505,6 +504,9 @@ type WordObject = {
 
 function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean): HTMLTableElement {
     let dictKeys = Object.keys(rawDict) as (keyof VerseDisplayDict)[];
+
+    console.log("HERE ARE DICTKEYS")
+    console.log(dictKeys);
     let newDict: StringToStringDict = {};
     
     // Populate newDict with verse texts and calculate content lengths
