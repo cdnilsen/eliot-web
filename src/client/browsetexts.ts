@@ -212,7 +212,7 @@ type EditionState = {
     highlighting: Highlighting,
     hapaxes: Hapax,
     book: string,
-    chapter: number
+    chapter: number,
 }
 
 type Verse = {
@@ -736,6 +736,9 @@ async function fetchChapter(state: EditionState) {
 
 function submitButtonListener(state: EditionState) {
     let submitButton = <HTMLButtonElement>document.getElementById("submitBookQuery");
+
+    let zerothContainer = document.getElementById("zerothContainer");
+    zerothContainer!.hidden = (state.book != "Genesis");
     submitButton.addEventListener("click", function() {
         fetchChapter(state);
     });
