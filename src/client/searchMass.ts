@@ -751,7 +751,31 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
                 return freqB - freqA;
             }
             
-            return a.result.headword.localeCompare(b.result.headword);
+            // If frequencies are equal, use diacritics-aware alphabetical sorting
+            let aWord = diacritics === "lax" ? a.result.no_diacritics : a.result.headword;
+            let bWord = diacritics === "lax" ? b.result.no_diacritics : b.result.headword;
+            
+            let i = 0;
+            while (i < aWord.length && i < bWord.length) {
+                const aChar = aWord[i];
+                const bChar = bWord[i];
+                
+                if (aChar === '8' && bChar === '8') {
+                    i++;
+                    continue;
+                }
+                
+                if (aChar === '8') return 1;
+                if (bChar === '8') return -1;
+                
+                if (aChar !== bChar) {
+                    return aChar.localeCompare(bChar);
+                }
+                
+                i++;
+            }
+            
+            return aWord.length - bWord.length;
         });
     }
 
