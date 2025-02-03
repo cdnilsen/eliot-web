@@ -253,6 +253,7 @@ function sectionListener(state: EditionState) {
     let sectionDropdown = <HTMLSelectElement>document.getElementById("sectionDropdown");
     let bookDropdown = <HTMLSelectElement>document.getElementById("bookDropdown");
     let chapterDropdown = <HTMLSelectElement>document.getElementById("chapterSelectionDropdown");
+    let zerothContainer = document.getElementById("zerothContainer");
     
     sectionDropdown.addEventListener("change", function() {
         bookDropdown.innerHTML = "";
@@ -272,6 +273,7 @@ function sectionListener(state: EditionState) {
             option.innerHTML = allBooks[i];
             bookDropdown.appendChild(option);
         }
+        zerothContainer!.hidden = (state.book != "Genesis");
 
         let numChapters = bookToChapterDict[state.book];
         chapterDropdown.innerHTML = "";
@@ -297,6 +299,7 @@ function sectionListener(state: EditionState) {
             option.innerHTML = i.toString();
             chapterDropdown.appendChild(option);
         }
+        zerothContainer!.hidden = (state.book != "Genesis");
 
         let mayhewContainer = document.getElementById("mayhewContainer")!;
         let mayhewCheckbox = <HTMLInputElement>document.getElementById("useMayhew");
@@ -736,9 +739,6 @@ async function fetchChapter(state: EditionState) {
 
 function submitButtonListener(state: EditionState) {
     let submitButton = <HTMLButtonElement>document.getElementById("submitBookQuery");
-
-    let zerothContainer = document.getElementById("zerothContainer");
-    zerothContainer!.hidden = (state.book != "Genesis");
     submitButton.addEventListener("click", function() {
         fetchChapter(state);
     });
