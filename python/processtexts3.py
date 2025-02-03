@@ -1,3 +1,6 @@
+# Run with:
+# py -3.12 -m processtexts3.py
+
 import os
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -92,7 +95,7 @@ def getVerseObject(line, bookID, edition):
         "First Edition": "2",
         "Second Edition": "3",
         "Mayhew": "5",
-        "Zeroth": "7",
+        "Zeroth Edition": "7",
         "KJV": "4",
         "Grebrew": "8"
     }
@@ -101,7 +104,7 @@ def getVerseObject(line, bookID, edition):
         "First Edition": "first_edition",
         "Second Edition": "second_edition",
         "Mayhew": "mayhew",
-        "Zeroth": "zeroth_edition",
+        "Zeroth Edition": "zeroth_edition",
         "KJV": "kjv",
         "Grebrew": "grebrew"
     }
@@ -716,17 +719,10 @@ def fullReset():
     print(f"Total Massachusett headwords in database: {totalWords}")
     addAllKJV(connection)
 
-connection = psycopg2.connect(DATABASE_URL)
-clear_tables(connection)
-addAllKJV(connection)
+#connection = psycopg2.connect(DATABASE_URL)
+#clear_tables(connection)
+#addAllKJV(connection)
 
 
 
-#fullReset()
-
-
-
-
-
-
-#main()
+fullReset()

@@ -700,40 +700,76 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
     resultsContainer.innerHTML = ''; 
     headlineContainer.innerHTML = '';
 
-    if (sortAlphabetically) {
-        results = sortByAlphabet(results, diacritics);
-    } else {
-        results = sortByFrequency(results, diacritics);
-    }
-
-    //console.log(results[0])
-
-    let totalWords: number = 0
-    let totalVerses: number = 0
-    let allWordTokens: number = 0
-
-    let allObjects: WordObject[] = [];
+    // Create all WordObjects first
+    let allObjects: {result: WordMassResult, wordObj: WordObject}[] = [];
     await Promise.all(results.map(async result => {
-        let object: WordObject = await getResultObjectStrict(result);
-        totalWords += 1
-        totalVerses += object.numVerses;
-        allWordTokens += object.numTokens;
-        allObjects.push(object);
+        let wordObj = await getResultObjectStrict(result);
+        allObjects.push({result, wordObj});
     }));
 
-    let headlineString: string = `<i>Found <b>${allWordTokens}</b> tokens, representing <b>${totalWords}</b> separate headwords, across <b>${totalVerses}</b> verses.</i><br><br>`
+    // Sort based on user preference
+    if (sortAlphabetically) {
+        allObjects.sort((a, b) => {
+            let aWord = a.result.headword;
+            let bWord = b.result.headword;
+            
+            if (diacritics === "lax") {
+                aWord = a.result.no_diacritics;
+                bWord = b.result.no_diacritics;
+            }
+            
+            let i = 0;
+            while (i < aWord.length && i < bWord.length) {
+                const aChar = aWord[i];
+                const bChar = bWord[i];
+                
+                if (aChar === '8' && bChar === '8') {
+                    i++;
+                    continue;
+                }
+                
+                if (aChar === '8') return 1;
+                if (bChar === '8') return -1;
+                
+                if (aChar !== bChar) {
+                    return aChar.localeCompare(bChar);
+                }
+                
+                i++;
+            }
+            
+            return aWord.length - bWord.length;
+        });
+    } else {
+        allObjects.sort((a, b) => {
+            const freqA = a.result.counts.reduce((sum, val) => sum + val, 0);
+            const freqB = b.result.counts.reduce((sum, val) => sum + val, 0);
+            
+            if (freqB !== freqA) {
+                return freqB - freqA;
+            }
+            
+            return a.result.headword.localeCompare(b.result.headword);
+        });
+    }
+
+    // Calculate totals
+    let totalWords = allObjects.length;
+    let totalVerses = allObjects.reduce((sum, obj) => sum + obj.wordObj.numVerses, 0);
+    let allWordTokens = allObjects.reduce((sum, obj) => sum + obj.wordObj.numTokens, 0);
+
+    // Display headline
+    let headlineString = `<i>Found <b>${allWordTokens}</b> tokens, representing <b>${totalWords}</b> separate headwords, across <b>${totalVerses}</b> verses.</i><br><br>`;
     let headlineSpan = document.createElement('span');
     headlineSpan.innerHTML = headlineString;
     headlineSpan.style.textAlign = 'center';
     headlineSpan.style.fontSize = '1.2em';
-
     headlineContainer.appendChild(headlineSpan);
 
-    for (let i=0; i < allObjects.length; i++) {
-        let object = allObjects[i];
-        resultsContainer.appendChild(object.parentDiv);
-    }
-
+    // Display results in sorted order
+    allObjects.forEach(obj => {
+        resultsContainer.appendChild(obj.wordObj.parentDiv);
+    });
 }
 
 
