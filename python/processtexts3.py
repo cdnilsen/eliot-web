@@ -725,4 +725,4 @@ def fullReset():
 
 
 
-fullReset()
+main()

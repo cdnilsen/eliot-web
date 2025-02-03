@@ -228,7 +228,7 @@ type Verse = {
 }
 
 function refreshSectionDropdown() {
-    let valuesList = ["pentateuch", "history", "wisdom", "major_prophets", "minor-prophets", "gospels_acts", "other_nt", "mishnaic"]
+    let valuesList = ["pentateuch", "history", "wisdom", "major_prophets", "minor_prophets", "gospels_acts", "other_nt", "mishnaic"]
     let labelsList = ["Pentateuch", "Historical Books", "Wisdom/Poetry Books", "Major Prophets", "Minor Prophets", "Gospels/Acts", "Rest of New Testament", '"Mishnaic" publications']
 
     let sectionDropdown = <HTMLSelectElement>document.getElementById("sectionDropdown");
