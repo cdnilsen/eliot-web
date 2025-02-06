@@ -1,1070 +1,3210 @@
-1.1 
-1.2 
-1.3 
-1.4 
-1.5 
-1.6 
-1.7 
-1.8 
-1.9 
-1.10 
-1.11 
-1.12 
-1.13 
-1.14 
-1.15 
-1.16 
-1.17 
-1.18 
-1.19 
-1.20 
-1.21 
-1.22 
-2.1 
-2.2 
-2.3 
-2.4 
-2.5 
-2.6 
-2.7 
-2.8 
-2.9 
-2.10 
-2.11 
-2.12 
-2.13 
-3.1 
-3.2 
-3.3 
-3.4 
-3.5 
-3.6 
-3.7 
-3.8 
-3.9 
-3.10 
-3.11 
-3.12 
-3.13 
-3.14 
-3.15 
-3.16 
-3.17 
-3.18 
-3.19 
-3.20 
-3.21 
-3.22 
-3.23 
-3.24 
-3.25 
-3.26 
-4.1 
-4.2 
-4.3 
-4.4 
-4.5 
-4.6 
-4.7 
-4.8 
-4.9 
-4.10 
-4.11 
-4.12 
-4.13 
-4.14 
-4.15 
-4.16 
-4.17 
-4.18 
-4.19 
-4.20 
-4.21 
-5.1 
-5.2 
-5.3 
-5.4 
-5.5 
-5.6 
-5.7 
-5.8 
-5.9 
-5.10 
-5.11 
-5.12 
-5.13 
-5.14 
-5.15 
-5.16 
-5.17 
-5.18 
-5.19 
-5.20 
-5.21 
-5.22 
-5.23 
-5.24 
-5.25 
-5.26 
-5.27 
-6.1 
-6.2 
-6.3 
-6.4 
-6.5 
-6.6 
-6.7 
-6.8 
-6.9 
-6.10 
-6.11 
-6.12 
-6.13 
-6.14 
-6.15 
-6.16 
-6.17 
-6.18 
-6.19 
-6.20 
-6.21 
-6.22 
-6.23 
-6.24 
-6.25 
-6.26 
-6.27 
-6.28 
-6.29 
-6.30 
-7.1 
-7.2 
-7.3 
-7.4 
-7.5 
-7.6 
-7.7 
-7.8 
-7.9 
-7.10 
-7.11 
-7.12 
-7.13 
-7.14 
-7.15 
-7.16 
-7.17 
-7.18 
-7.19 
-7.20 
-7.21 
-8.1 
-8.2 
-8.3 
-8.4 
-8.5 
-8.6 
-8.7 
-8.8 
-8.9 
-8.10 
-8.11 
-8.12 
-8.13 
-8.14 
-8.15 
-8.16 
-8.17 
-8.18 
-8.19 
-8.20 
-8.21 
-8.22 
-9.1 
-9.2 
-9.3 
-9.4 
-9.5 
-9.6 
-9.7 
-9.8 
-9.9 
-9.10 
-9.11 
-9.12 
-9.13 
-9.14 
-9.15 
-9.16 
-9.17 
-9.18 
-9.19 
-9.20 
-9.21 
-9.22 
-9.23 
-9.24 
-9.25 
-9.26 
-9.27 
-9.28 
-9.29 
-9.30 
-9.31 
-9.32 
-9.33 
-9.34 
-9.35 
-10.1 
-10.2 
-10.3 
-10.4 
-10.5 
-10.6 
-10.7 
-10.8 
-10.9 
-10.10 
-10.11 
-10.12 
-10.13 
-10.14 
-10.15 
-10.16 
-10.17 
-10.18 
-10.19 
-10.20 
-10.21 
-10.22 
-11.1 
-11.2 
-11.3 
-11.4 
-11.5 
-11.6 
-11.7 
-11.8 
-11.9 
-11.10 
-11.11 
-11.12 
-11.13 
-11.14 
-11.15 
-11.16 
-11.17 
-11.18 
-11.19 
-11.20 
-12.1 
-12.2 
-12.3 
-12.4 
-12.5 
-12.6 
-12.7 
-12.8 
-12.9 
-12.10 
-12.11 
-12.12 
-12.13 
-12.14 
-12.15 
-12.16 
-12.17 
-12.18 
-12.19 
-12.20 
-12.21 
-12.22 
-12.23 
-12.24 
-12.25 
-13.1 
-13.2 
-13.3 
-13.4 
-13.5 
-13.6 
-13.7 
-13.8 
-13.9 
-13.10 
-13.11 
-13.12 
-13.13 
-13.14 
-13.15 
-13.16 
-13.17 
-13.18 
-13.19 
-13.20 
-13.21 
-13.22 
-13.23 
-13.24 
-13.25 
-13.26 
-13.27 
-13.28 
-14.1 
-14.2 
-14.3 
-14.4 
-14.5 
-14.6 
-14.7 
-14.8 
-14.9 
-14.10 
-14.11 
-14.12 
-14.13 
-14.14 
-14.15 
-14.16 
-14.17 
-14.18 
-14.19 
-14.20 
-14.21 
-14.22 
-15.1 
-15.2 
-15.3 
-15.4 
-15.5 
-15.6 
-15.7 
-15.8 
-15.9 
-15.10 
-15.11 
-15.12 
-15.13 
-15.14 
-15.15 
-15.16 
-15.17 
-15.18 
-15.19 
-15.20 
-15.21 
-15.22 
-15.23 
-15.24 
-15.25 
-15.26 
-15.27 
-15.28 
-15.29 
-15.30 
-15.31 
-15.32 
-15.33 
-15.34 
-15.35 
-16.1 
-16.2 
-16.3 
-16.4 
-16.5 
-16.6 
-16.7 
-16.8 
-16.9 
-16.10 
-16.11 
-16.12 
-16.13 
-16.14 
-16.15 
-16.16 
-16.17 
-16.18 
-16.19 
-16.20 
-16.21 
-16.22 
-17.1 
-17.2 
-17.3 
-17.4 
-17.5 
-17.6 
-17.7 
-17.8 
-17.9 
-17.10 
-17.11 
-17.12 
-17.13 
-17.14 
-17.15 
-17.16 
-18.1 
-18.2 
-18.3 
-18.4 
-18.5 
-18.6 
-18.7 
-18.8 
-18.9 
-18.10 
-18.11 
-18.12 
-18.13 
-18.14 
-18.15 
-18.16 
-18.17 
-18.18 
-18.19 
-18.20 
-18.21 
-19.1 
-19.2 
-19.3 
-19.4 
-19.5 
-19.6 
-19.7 
-19.8 
-19.9 
-19.10 
-19.11 
-19.12 
-19.13 
-19.14 
-19.15 
-19.16 
-19.17 
-19.18 
-19.19 
-19.20 
-19.21 
-19.22 
-19.23 
-19.24 
-19.25 
-19.26 
-19.27 
-19.28 
-19.29 
-20.1 
-20.2 
-20.3 
-20.4 
-20.5 
-20.6 
-20.7 
-20.8 
-20.9 
-20.10 
-20.11 
-20.12 
-20.13 
-20.14 
-20.15 
-20.16 
-20.17 
-20.18 
-20.19 
-20.20 
-20.21 
-20.22 
-20.23 
-20.24 
-20.25 
-20.26 
-20.27 
-20.28 
-20.29 
-21.1 
-21.2 
-21.3 
-21.4 
-21.5 
-21.6 
-21.7 
-21.8 
-21.9 
-21.10 
-21.11 
-21.12 
-21.13 
-21.14 
-21.15 
-21.16 
-21.17 
-21.18 
-21.19 
-21.20 
-21.21 
-21.22 
-21.23 
-21.24 
-21.25 
-21.26 
-21.27 
-21.28 
-21.29 
-21.30 
-21.31 
-21.32 
-21.33 
-21.34 
-22.1 
-22.2 
-22.3 
-22.4 
-22.5 
-22.6 
-22.7 
-22.8 
-22.9 
-22.10 
-22.11 
-22.12 
-22.13 
-22.14 
-22.15 
-22.16 
-22.17 
-22.18 
-22.19 
-22.20 
-22.21 
-22.22 
-22.23 
-22.24 
-22.25 
-22.26 
-22.27 
-22.28 
-22.29 
-22.30 
-23.1 
-23.2 
-23.3 
-23.4 
-23.5 
-23.6 
-23.7 
-23.8 
-23.9 
-23.10 
-23.11 
-23.12 
-23.13 
-23.14 
-23.15 
-23.16 
-23.17 
-24.1 
-24.2 
-24.3 
-24.4 
-24.5 
-24.6 
-24.7 
-24.8 
-24.9 
-24.10 
-24.11 
-24.12 
-24.13 
-24.14 
-24.15 
-24.16 
-24.17 
-24.18 
-24.19 
-24.20 
-24.21 
-24.22 
-24.23 
-24.24 
-24.25 
-25.1 
-25.2 
-25.3 
-25.4 
-25.5 
-25.6 
-26.1 
-26.2 
-26.3 
-26.4 
-26.5 
-26.6 
-26.7 
-26.8 
-26.9 
-26.10 
-26.11 
-26.12 
-26.13 
-26.14 
-27.1 
-27.2 
-27.3 
-27.4 
-27.5 
-27.6 
-27.7 
-27.8 
-27.9 
-27.10 
-27.11 
-27.12 
-27.13 
-27.14 
-27.15 
-27.16 
-27.17 
-27.18 
-27.19 
-27.20 
-27.21 
-27.22 
-27.23 
-28.1 
-28.2 
-28.3 
-28.4 
-28.5 
-28.6 
-28.7 
-28.8 
-28.9 
-28.10 
-28.11 
-28.12 
-28.13 
-28.14 
-28.15 
-28.16 
-28.17 
-28.18 
-28.19 
-28.20 
-28.21 
-28.22 
-28.23 
-28.24 
-28.25 
-28.26 
-28.27 
-28.28 
-29.1 
-29.2 
-29.3 
-29.4 
-29.5 
-29.6 
-29.7 
-29.8 
-29.9 
-29.10 
-29.11 
-29.12 
-29.13 
-29.14 
-29.15 
-29.16 
-29.17 
-29.18 
-29.19 
-29.20 
-29.21 
-29.22 
-29.23 
-29.24 
-29.25 
-30.1 
-30.2 
-30.3 
-30.4 
-30.5 
-30.6 
-30.7 
-30.8 
-30.9 
-30.10 
-30.11 
-30.12 
-30.13 
-30.14 
-30.15 
-30.16 
-30.17 
-30.18 
-30.19 
-30.20 
-30.21 
-30.22 
-30.23 
-30.24 
-30.25 
-30.26 
-30.27 
-30.28 
-30.29 
-30.30 
-30.31 
-31.1 
-31.2 
-31.3 
-31.4 
-31.5 
-31.6 
-31.7 
-31.8 
-31.9 
-31.10 
-31.11 
-31.12 
-31.13 
-31.14 
-31.15 
-31.16 
-31.17 
-31.18 
-31.19 
-31.20 
-31.21 
-31.22 
-31.23 
-31.24 
-31.25 
-31.26 
-31.27 
-31.28 
-31.29 
-31.30 
-31.31 
-31.32 
-31.33 
-31.34 
-31.35 
-31.36 
-31.37 
-31.38 
-31.39 
-31.40 
-32.1 
-32.2 
-32.3 
-32.4 
-32.5 
-32.6 
-32.7 
-32.8 
-32.9 
-32.10 
-32.11 
-32.12 
-32.13 
-32.14 
-32.15 
-32.16 
-32.17 
-32.18 
-32.19 
-32.20 
-32.21 
-32.22 
-33.1 
-33.2 
-33.3 
-33.4 
-33.5 
-33.6 
-33.7 
-33.8 
-33.9 
-33.10 
-33.11 
-33.12 
-33.13 
-33.14 
-33.15 
-33.16 
-33.17 
-33.18 
-33.19 
-33.20 
-33.21 
-33.22 
-33.23 
-33.24 
-33.25 
-33.26 
-33.27 
-33.28 
-33.29 
-33.30 
-33.31 
-33.32 
-33.33 
-34.1 
-34.2 
-34.3 
-34.4 
-34.5 
-34.6 
-34.7 
-34.8 
-34.9 
-34.10 
-34.11 
-34.12 
-34.13 
-34.14 
-34.15 
-34.16 
-34.17 
-34.18 
-34.19 
-34.20 
-34.21 
-34.22 
-34.23 
-34.24 
-34.25 
-34.26 
-34.27 
-34.28 
-34.29 
-34.30 
-34.31 
-34.32 
-34.33 
-34.34 
-34.35 
-34.36 
-34.37 
-35.1 
-35.2 
-35.3 
-35.4 
-35.5 
-35.6 
-35.7 
-35.8 
-35.9 
-35.10 
-35.11 
-35.12 
-35.13 
-35.14 
-35.15 
-35.16 
-36.1 
-36.2 
-36.3 
-36.4 
-36.5 
-36.6 
-36.7 
-36.8 
-36.9 
-36.10 
-36.11 
-36.12 
-36.13 
-36.14 
-36.15 
-36.16 
-36.17 
-36.18 
-36.19 
-36.20 
-36.21 
-36.22 
-36.23 
-36.24 
-36.25 
-36.26 
-36.27 
-36.28 
-36.29 
-36.30 
-36.31 
-36.32 
-36.33 
-37.1 
-37.2 
-37.3 
-37.4 
-37.5 
-37.6 
-37.7 
-37.8 
-37.9 
-37.10 
-37.11 
-37.12 
-37.13 
-37.14 
-37.15 
-37.16 
-37.17 
-37.18 
-37.19 
-37.20 
-37.21 
-37.22 
-37.23 
-37.24 
-38.1 
-38.2 
-38.3 
-38.4 
-38.5 
-38.6 
-38.7 
-38.8 
-38.9 
-38.10 
-38.11 
-38.12 
-38.13 
-38.14 
-38.15 
-38.16 
-38.17 
-38.18 
-38.19 
-38.20 
-38.21 
-38.22 
-38.23 
-38.24 
-38.25 
-38.26 
-38.27 
-38.28 
-38.29 
-38.30 
-38.31 
-38.32 
-38.33 
-38.34 
-38.35 
-38.36 
-38.37 
-38.38 
-38.39 
-38.40 
-38.41 
-39.1 
-39.2 
-39.3 
-39.4 
-39.5 
-39.6 
-39.7 
-39.8 
-39.9 
-39.10 
-39.11 
-39.12 
-39.13 
-39.14 
-39.15 
-39.16 
-39.17 
-39.18 
-39.19 
-39.20 
-39.21 
-39.22 
-39.23 
-39.24 
-39.25 
-39.26 
-39.27 
-39.28 
-39.29 
-39.30 
-40.1 
-40.2 
-40.3 
-40.4 
-40.5 
-40.6 
-40.7 
-40.8 
-40.9 
-40.10 
-40.11 
-40.12 
-40.13 
-40.14 
-40.15 
-40.16 
-40.17 
-40.18 
-40.19 
-40.20 
-40.21 
-40.22 
-40.23 
-40.24 
-41.1 
-41.2 
-41.3 
-41.4 
-41.5 
-41.6 
-41.7 
-41.8 
-41.9 
-41.10 
-41.11 
-41.12 
-41.13 
-41.14 
-41.15 
-41.16 
-41.17 
-41.18 
-41.19 
-41.20 
-41.21 
-41.22 
-41.23 
-41.24 
-41.25 
-41.26 
-41.27 
-41.28 
-41.29 
-41.30 
-41.31 
-41.32 
-41.33 
-41.34 
-42.1 
-42.2 
-42.3 
-42.4 
-42.5 
-42.6 
-42.7 
-42.8 
-42.9 
-42.10 
-42.11 
-42.12 
-42.13 
-42.14 
-42.15 
-42.16 
-42.17 
+
+α.1.1 
+E.1.1 There was a man in the land of Uz, whose name was Job; and that man was perfect and upright, and one that feared God, and eschewed evil.
+
+α.1.2 
+E.1.2 And there were born unto him seven sons and three daughters.
+
+α.1.3 
+E.1.3 His substance also was seven thousand sheep, and three thousand camels, and five hundred yoke of oxen, and five hundred she asses, and a very great household; so that this man was the greatest of all the men of the east.
+
+α.1.4 
+E.1.4 And his sons went and feasted in their houses, every one his day; and sent and called for their three sisters to eat and to drink with them.
+
+α.1.5 
+E.1.5 And it was so, when the days of their feasting were gone about, that Job sent and sanctified them, and rose up early in the morning, and offered burnt offerings according to the number of them all: for Job said, It may be that my sons have sinned, and cursed God in their hearts. Thus did Job continually.
+
+α.1.6 
+E.1.6 Now there was a day when the sons of God came to present themselves before the LORD, and Satan came also among them.
+
+α.1.7 
+E.1.7 And the LORD said unto Satan, Whence comest thou? Then Satan answered the LORD, and said, From going to and fro in the earth, and from walking up and down in it.
+
+α.1.8 
+E.1.8 And the LORD said unto Satan, Hast thou considered my servant Job, that there is none like him in the earth, a perfect and an upright man, one that feareth God, and escheweth evil?
+
+α.1.9 
+E.1.9 Then Satan answered the LORD, and said, Doth Job fear God for nought?
+
+α.1.10 
+E.1.10 Hast not thou made an hedge about him, and about his house, and about all that he hath on every side? thou hast blessed the work of his hands, and his substance is increased in the land.
+
+α.1.11 
+E.1.11 But put forth thine hand now, and touch all that he hath, and he will curse thee to thy face.
+
+α.1.12 
+E.1.12 And the LORD said unto Satan, Behold, all that he hath is in thy power; only upon himself put not forth thine hand. So Satan went forth from the presence of the LORD.
+
+α.1.13 
+E.1.13 And there was a day when his sons and his daughters were eating and drinking wine in their eldest brother's house:
+
+α.1.14 
+E.1.14 And there came a messenger unto Job, and said, The oxen were plowing, and the asses feeding beside them:
+
+α.1.15 
+E.1.15 And the Sabeans fell upon them, and took them away; yea, they have slain the servants with the edge of the sword; and I only am escaped alone to tell thee.
+
+α.1.16 
+E.1.16 While he was yet speaking, there came also another, and said, The fire of God is fallen from heaven, and hath burned up the sheep, and the servants, and consumed them; and I only am escaped alone to tell thee.
+
+α.1.17 
+E.1.17 While he was yet speaking, there came also another, and said, The Chaldeans made out three bands, and fell upon the camels, and have carried them away, yea, and slain the servants with the edge of the sword; and I only am escaped alone to tell thee.
+
+α.1.18 
+E.1.18 While he was yet speaking, there came also another, and said, Thy sons and thy daughters were eating and drinking wine in their eldest brother's house:
+
+α.1.19 
+E.1.19 And, behold, there came a great wind from the wilderness, and smote the four corners of the house, and it fell upon the young men, and they are dead; and I only am escaped alone to tell thee.
+
+α.1.20 
+E.1.20 Then Job arose, and rent his mantle, and shaved his head, and fell down upon the ground, and worshipped,
+
+α.1.21 
+E.1.21 And said, Naked came I out of my mother's womb, and naked shall I return thither: the LORD gave, and the LORD hath taken away; blessed be the name of the LORD.
+
+α.1.22 
+E.1.22 In all this Job sinned not, nor charged God foolishly.
+
+α.2.1 
+E.2.1 Again there was a day when the sons of God came to present themselves before the LORD, and Satan came also among them to present himself before the LORD.
+
+α.2.2 
+E.2.2 And the LORD said unto Satan, From whence comest thou? And Satan answered the LORD, and said, From going to and fro in the earth, and from walking up and down in it.
+
+α.2.3 
+E.2.3 And the LORD said unto Satan, Hast thou considered my servant Job, that there is none like him in the earth, a perfect and an upright man, one that feareth God, and escheweth evil? and still he holdeth fast his integrity, although thou movedst me against him, to destroy him without cause.
+
+α.2.4 
+E.2.4 And Satan answered the LORD, and said, Skin for skin, yea, all that a man hath will he give for his life.
+
+α.2.5 
+E.2.5 But put forth thine hand now, and touch his bone and his flesh, and he will curse thee to thy face.
+
+α.2.6 
+E.2.6 And the LORD said unto Satan, Behold, he is in thine hand; but save his life.
+
+α.2.7 
+E.2.7 So went Satan forth from the presence of the LORD, and smote Job with sore boils from the sole of his foot unto his crown.
+
+α.2.8 
+E.2.8 And he took him a potsherd to scrape himself withal; and he sat down among the ashes.
+
+α.2.9 
+E.2.9 Then said his wife unto him, Dost thou still retain thine integrity?  curse God, and die.
+
+α.2.10 
+E.2.10 But he said unto her, Thou speakest as one of the foolish women speaketh. What? shall we receive good at the hand of God, and shall we not receive evil? In all this did not Job sin with his lips.
+
+α.2.11 
+E.2.11 Now when Job's three friends heard of all this evil that was come upon him, they came every one from his own place; Eliphaz the Temanite, and Bildad the Shuhite, and Zophar the Naamathite: for they had made an appointment together to come to mourn with him and to comfort him.
+
+α.2.12 
+E.2.12 And when they lifted up their eyes afar off, and knew him not, they lifted up their voice, and wept; and they rent every one his mantle, and sprinkled dust upon their heads toward heaven.
+
+α.2.13 
+E.2.13 So they sat down with him upon the ground seven days and seven nights, and none spake a word unto him: for they saw that his grief was very great.
+
+α.3.1 
+E.3.1 After this opened Job his mouth, and cursed his day.
+
+α.3.2 
+E.3.2 And Job spake, and said,
+
+α.3.3 
+E.3.3 Let the day perish wherein I was born, and the night in which it was said, There is a man child conceived.
+
+α.3.4 
+E.3.4 Let that day be darkness; let not God regard it from above, neither let the light shine upon it.
+
+α.3.5 
+E.3.5 Let darkness and the shadow of death stain it; let a cloud dwell upon it; let the blackness of the day terrify it.
+
+α.3.6 
+E.3.6 As for that night, let darkness seize upon it; let it not be joined unto the days of the year, let it not come into the number of the months.
+
+α.3.7 
+E.3.7 Lo, let that night be solitary, let no joyful voice come therein.
+
+α.3.8 
+E.3.8 Let them curse it that curse the day, who are ready to raise up their mourning.
+
+α.3.9 
+E.3.9 Let the stars of the twilight thereof be dark; let it look for light, but have none; neither let it see the dawning of the day:
+
+α.3.10 
+E.3.10 Because it shut not up the doors of my mother's womb, nor hid sorrow from mine eyes.
+
+α.3.11 
+E.3.11 Why died I not from the womb? why did I not give up the ghost when I came out of the belly?
+
+α.3.12 
+E.3.12 Why did the knees prevent me? or why the breasts that I should suck?
+
+α.3.13 
+E.3.13 For now should I have lain still and been quiet, I should have slept: then had I been at rest,
+
+α.3.14 
+E.3.14 With kings and counsellors of the earth, which build desolate places for themselves;
+
+α.3.15 
+E.3.15 Or with princes that had gold, who filled their houses with silver:
+
+α.3.16 
+E.3.16 Or as an hidden untimely birth I had not been; as infants which never saw light.
+
+α.3.17 
+E.3.17 There the wicked cease from troubling; and there the weary be at rest.
+
+α.3.18 
+E.3.18 There the prisoners rest together; they hear not the voice of the oppressor.
+
+α.3.19 
+E.3.19 The small and great are there; and the servant is free from his master.
+
+α.3.20 
+E.3.20 Wherefore is light given to him that is in misery, and life unto the bitter in soul;
+
+α.3.21 
+E.3.21 Which long for death, but it cometh not; and dig for it more than for hid treasures;
+
+α.3.22 
+E.3.22 Which rejoice exceedingly, and are glad, when they can find the grave?
+
+α.3.23 
+E.3.23 Why is light given to a man whose way is hid, and whom God hath hedged in?
+
+α.3.24 
+E.3.24 For my sighing cometh before I eat, and my roarings are poured out like the waters.
+
+α.3.25 
+E.3.25 For the thing which I greatly feared is come upon me, and that which I was afraid of is come unto me.
+
+α.3.26 
+E.3.26 I was not in safety, neither had I rest, neither was I quiet; yet trouble came.
+
+α.4.1 
+E.4.1 Then Eliphaz the Temanite answered and said,
+
+α.4.2 
+E.4.2 If we assay to commune with thee, wilt thou be grieved? but who can withhold himself from speaking?
+
+α.4.3 
+E.4.3 Behold, thou hast instructed many, and thou hast strengthened the weak hands.
+
+α.4.4 
+E.4.4 Thy words have upholden him that was falling, and thou hast strengthened the feeble knees.
+
+α.4.5 
+E.4.5 But now it is come upon thee, and thou faintest; it toucheth thee, and thou art troubled.
+
+α.4.6 
+E.4.6 Is not this thy fear, thy confidence, thy hope, and the uprightness of thy ways?
+
+α.4.7 
+E.4.7 Remember, I pray thee, who ever perished, being innocent? or where were the righteous cut off?
+
+α.4.8 
+E.4.8 Even as I have seen, they that plow iniquity, and sow wickedness, reap the same.
+
+α.4.9 
+E.4.9 By the blast of God they perish, and by the breath of his nostrils are they consumed.
+
+α.4.10 
+E.4.10 The roaring of the lion, and the voice of the fierce lion, and the teeth of the young lions, are broken.
+
+α.4.11 
+E.4.11 The old lion perisheth for lack of prey, and the stout lion's whelps are scattered abroad.
+
+α.4.12 
+E.4.12 Now a thing was secretly brought to me, and mine ear received a little thereof.
+
+α.4.13 
+E.4.13 In thoughts from the visions of the night, when deep sleep falleth on men,
+
+α.4.14 
+E.4.14 Fear came upon me, and trembling, which made all my bones to shake.
+
+α.4.15 
+E.4.15 Then a spirit passed before my face; the hair of my flesh stood up:
+
+α.4.16 
+E.4.16 It stood still, but I could not discern the form thereof: an image was before mine eyes, there was silence, and I heard a voice, saying,
+
+α.4.17 
+E.4.17 Shall mortal man be more just than God? shall a man be more pure than his maker?
+
+α.4.18 
+E.4.18 Behold, he put no trust in his servants; and his angels he charged with folly:
+
+α.4.19 
+E.4.19 How much less in them that dwell in houses of clay, whose foundation is in the dust, which are crushed before the moth?
+
+α.4.20 
+E.4.20 They are destroyed from morning to evening: they perish for ever without any regarding it.
+
+α.4.21 
+E.4.21 Doth not their excellency which is in them go away? they die, even without wisdom.
+
+α.5.1 
+E.5.1 Call now, if there be any that will answer thee; and to which of the saints wilt thou turn?
+
+α.5.2 
+E.5.2 For wrath killeth the foolish man, and envy slayeth the silly one.
+
+α.5.3 
+E.5.3 I have seen the foolish taking root: but suddenly I cursed his habitation.
+
+α.5.4 
+E.5.4 His children are far from safety, and they are crushed in the gate, neither is there any to deliver them.
+
+α.5.5 
+E.5.5 Whose harvest the hungry eateth up, and taketh it even out of the thorns, and the robber swalloweth up their substance.
+
+α.5.6 
+E.5.6 Although affliction cometh not forth of the dust, neither doth trouble spring out of the ground;
+
+α.5.7 
+E.5.7 Yet man is born unto trouble, as the sparks fly upward.
+
+α.5.8 
+E.5.8 I would seek unto God, and unto God would I commit my cause:
+
+α.5.9 
+E.5.9 Which doeth great things and unsearchable; marvellous things without number:
+
+α.5.10 
+E.5.10 Who giveth rain upon the earth, and sendeth waters upon the fields:
+
+α.5.11 
+E.5.11 To set up on high those that be low; that those which mourn may be exalted to safety.
+
+α.5.12 
+E.5.12 He disappointeth the devices of the crafty, so that their hands cannot perform their enterprise.
+
+α.5.13 
+E.5.13 He taketh the wise in their own craftiness: and the counsel of the froward is carried headlong.
+
+α.5.14 
+E.5.14 They meet with darkness in the day time, and grope in the noonday as in the night.
+
+α.5.15 
+E.5.15 But he saveth the poor from the sword, from their mouth, and from the hand of the mighty.
+
+α.5.16 
+E.5.16 So the poor hath hope, and iniquity stoppeth her mouth.
+
+α.5.17 
+E.5.17 Behold, happy is the man whom God correcteth: therefore despise not thou the chastening of the Almighty:
+
+α.5.18 
+E.5.18 For he maketh sore, and bindeth up: he woundeth, and his hands make whole.
+
+α.5.19 
+E.5.19 He shall deliver thee in six troubles: yea, in seven there shall no evil touch thee.
+
+α.5.20 
+E.5.20 In famine he shall redeem thee from death: and in war from the power of the sword.
+
+α.5.21 
+E.5.21 Thou shalt be hid from the scourge of the tongue: neither shalt thou be afraid of destruction when it cometh.
+
+α.5.22 
+E.5.22 At destruction and famine thou shalt laugh: neither shalt thou be afraid of the beasts of the earth.
+
+α.5.23 
+E.5.23 For thou shalt be in league with the stones of the field: and the beasts of the field shall be at peace with thee.
+
+α.5.24 
+E.5.24 And thou shalt know that thy tabernacle shall be in peace; and thou shalt visit thy habitation, and shalt not sin.
+
+α.5.25 
+E.5.25 Thou shalt know also that thy seed shall be great, and thine offspring as the grass of the earth.
+
+α.5.26 
+E.5.26 Thou shalt come to thy grave in a full age, like as a shock of corn cometh in in his season.
+
+α.5.27 
+E.5.27 Lo this, we have searched it, so it is; hear it, and know thou it for thy good.
+
+α.6.1 
+E.6.1 But Job answered and said,
+
+α.6.2 
+E.6.2 Oh that my grief were throughly weighed, and my calamity laid in the balances together!
+
+α.6.3 
+E.6.3 For now it would be heavier than the sand of the sea: therefore my words are swallowed up.
+
+α.6.4 
+E.6.4 For the arrows of the Almighty are within me, the poison whereof drinketh up my spirit: the terrors of God do set themselves in array against me.
+
+α.6.5 
+E.6.5 Doth the wild ass bray when he hath grass? or loweth the ox over his fodder?
+
+α.6.6 
+E.6.6 Can that which is unsavoury be eaten without salt? or is there any taste in the white of an egg?
+
+α.6.7 
+E.6.7 The things that my soul refused to touch are as my sorrowful meat.
+
+α.6.8 
+E.6.8 Oh that I might have my request; and that God would grant me the thing that I long for!
+
+α.6.9 
+E.6.9 Even that it would please God to destroy me; that he would let loose his hand, and cut me off!
+
+α.6.10 
+E.6.10 Then should I yet have comfort; yea, I would harden myself in sorrow: let him not spare; for I have not concealed the words of the Holy One.
+
+α.6.11 
+E.6.11 What is my strength, that I should hope? and what is mine end, that I should prolong my life?
+
+α.6.12 
+E.6.12 Is my strength the strength of stones? or is my flesh of brass?
+
+α.6.13 
+E.6.13 Is not my help in me? and is wisdom driven quite from me?
+
+α.6.14 
+E.6.14 To him that is afflicted pity should be shewed from his friend; but he forsaketh the fear of the Almighty.
+
+α.6.15 
+E.6.15 My brethren have dealt deceitfully as a brook, and as the stream of brooks they pass away;
+
+α.6.16 
+E.6.16 Which are blackish by reason of the ice, and wherein the snow is hid:
+
+α.6.17 
+E.6.17 What time they wax warm, they vanish: when it is hot, they are consumed out of their place.
+
+α.6.18 
+E.6.18 The paths of their way are turned aside; they go to nothing, and perish.
+
+α.6.19 
+E.6.19 The troops of Tema looked, the companies of Sheba waited for them.
+
+α.6.20 
+E.6.20 They were confounded because they had hoped; they came thither, and were ashamed.
+
+α.6.21 
+E.6.21 For now ye are nothing; ye see my casting down, and are afraid.
+
+α.6.22 
+E.6.22 Did I say, Bring unto me? or, Give a reward for me of your substance?
+
+α.6.23 
+E.6.23 Or, Deliver me from the enemy's hand? or, Redeem me from the hand of the mighty?
+
+α.6.24 
+E.6.24 Teach me, and I will hold my tongue: and cause me to understand wherein I have erred.
+
+α.6.25 
+E.6.25 How forcible are right words! but what doth your arguing reprove?
+
+α.6.26 
+E.6.26 Do ye imagine to reprove words, and the speeches of one that is desperate, which are as wind?
+
+α.6.27 
+E.6.27 Yea, ye overwhelm the fatherless, and ye dig a pit for your friend.
+
+α.6.28 
+E.6.28 Now therefore be content, look upon me; for it is evident unto you if I lie.
+
+α.6.29 
+E.6.29 Return, I pray you, let it not be iniquity; yea, return again, my righteousness is in it.
+
+α.6.30 
+E.6.30 Is there iniquity in my tongue? cannot my taste discern perverse things?
+
+α.7.1 
+E.7.1 Is there not an appointed time to man upon earth? are not his days also like the days of an hireling?
+
+α.7.2 
+E.7.2 As a servant earnestly desireth the shadow, and as an hireling looketh for the reward of his work:
+
+α.7.3 
+E.7.3 So am I made to possess months of vanity, and wearisome nights are appointed to me.
+
+α.7.4 
+E.7.4 When I lie down, I say, When shall I arise, and the night be gone? and I am full of tossings to and fro unto the dawning of the day.
+
+α.7.5 
+E.7.5 My flesh is clothed with worms and clods of dust; my skin is broken, and become loathsome.
+
+α.7.6 
+E.7.6 My days are swifter than a weaver's shuttle, and are spent without hope.
+
+α.7.7 
+E.7.7 O remember that my life is wind: mine eye shall no more see good.
+
+α.7.8 
+E.7.8 The eye of him that hath seen me shall see me no more: thine eyes are upon me, and I am not.
+
+α.7.9 
+E.7.9 As the cloud is consumed and vanisheth away: so he that goeth down to the grave shall come up no more.
+
+α.7.10 
+E.7.10 He shall return no more to his house, neither shall his place know him any more.
+
+α.7.11 
+E.7.11 Therefore I will not refrain my mouth; I will speak in the anguish of my spirit; I will complain in the bitterness of my soul.
+
+α.7.12 
+E.7.12 Am I a sea, or a whale, that thou settest a watch over me?
+
+α.7.13 
+E.7.13 When I say, My bed shall comfort me, my couch shall ease my complaints;
+
+α.7.14 
+E.7.14 Then thou scarest me with dreams, and terrifiest me through visions:
+
+α.7.15 
+E.7.15 So that my soul chooseth strangling, and death rather than my life.
+
+α.7.16 
+E.7.16 I loathe it; I would not live alway: let me alone; for my days are vanity.
+
+α.7.17 
+E.7.17 What is man, that thou shouldest magnify him? and that thou shouldest set thine heart upon him?
+
+α.7.18 
+E.7.18 And that thou shouldest visit him every morning, and try him every moment?
+
+α.7.19 
+E.7.19 How long wilt thou not depart from me, nor let me alone till I swallow down my spittle?
+
+α.7.20 
+E.7.20 I have sinned; what shall I do unto thee, O thou preserver of men?  why hast thou set me as a mark against thee, so that I am a burden to myself?
+
+α.7.21 
+E.7.21 And why dost thou not pardon my transgression, and take away my iniquity? for now shall I sleep in the dust; and thou shalt seek me in the morning, but I shall not be.
+
+α.8.1 
+E.8.1 Then answered Bildad the Shuhite, and said,
+
+α.8.2 
+E.8.2 How long wilt thou speak these things? and how long shall the words of thy mouth be like a strong wind?
+
+α.8.3 
+E.8.3 Doth God pervert judgment? or doth the Almighty pervert justice?
+
+α.8.4 
+E.8.4 If thy children have sinned against him, and he have cast them away for their transgression;
+
+α.8.5 
+E.8.5 If thou wouldest seek unto God betimes, and make thy supplication to the Almighty;
+
+α.8.6 
+E.8.6 If thou wert pure and upright; surely now he would awake for thee, and make the habitation of thy righteousness prosperous.
+
+α.8.7 
+E.8.7 Though thy beginning was small, yet thy latter end should greatly increase.
+
+α.8.8 
+E.8.8 For enquire, I pray thee, of the former age, and prepare thyself to the search of their fathers:
+
+α.8.9 
+E.8.9 (For we are but of yesterday, and know nothing, because our days upon earth are a shadow:)
+
+α.8.10 
+E.8.10 Shall not they teach thee, and tell thee, and utter words out of their heart?
+
+α.8.11 
+E.8.11 Can the rush grow up without mire? can the flag grow without water?
+
+α.8.12 
+E.8.12 Whilst it is yet in his greenness, and not cut down, it withereth before any other herb.
+
+α.8.13 
+E.8.13 So are the paths of all that forget God; and the hypocrite's hope shall perish:
+
+α.8.14 
+E.8.14 Whose hope shall be cut off, and whose trust shall be a spider's web.
+
+α.8.15 
+E.8.15 He shall lean upon his house, but it shall not stand: he shall hold it fast, but it shall not endure.
+
+α.8.16 
+E.8.16 He is green before the sun, and his branch shooteth forth in his garden.
+
+α.8.17 
+E.8.17 His roots are wrapped about the heap, and seeth the place of stones.
+
+α.8.18 
+E.8.18 If he destroy him from his place, then it shall deny him, saying, I have not seen thee.
+
+α.8.19 
+E.8.19 Behold, this is the joy of his way, and out of the earth shall others grow.
+
+α.8.20 
+E.8.20 Behold, God will not cast away a perfect man, neither will he help the evil doers:
+
+α.8.21 
+E.8.21 Till he fill thy mouth with laughing, and thy lips with rejoicing.
+
+α.8.22 
+E.8.22 They that hate thee shall be clothed with shame; and the dwelling place of the wicked shall come to nought.
+
+α.9.1 NEit Job namp8ham kah n8wau
+E.9.1 Then Job answered and said,
+
+α.9.2 N8wahteoun ne wunnamuhkut nnih, qut uttoh woh wuttin wosketomp sampweusseaenuin ut Godut?
+E.9.2 I know it is so of a truth: but how should man be just with God?
+
+α.9.3 Penuanumont, matta woh wunnamp8hamauoh pasuk, ut nequt muttannonganog kodtut,
+E.9.3 If he will contend with him, he cannot answer him one of a thousand.
+
+α.9.4 Noh waantamwutteahau, missugken ut menehk[e]suonganit: howan noh ayeuuhkonittue manuhkeheont wuhhogkuh, kah waniit,
+E.9.4 He is wise in heart, and mighty in strength: who hath hardened himself against him, and hath prospered?
+
+α.9.5 Noh ontahtunk wadchuash, kah matta 8wahteauunash, nish k8skonukish ut ummusquanittam8onganit.
+E.9.5 Which removeth the mountains, and they know not: which overturneth them in his anger.
+
+α.9.6 Noh tadtauuhteadt ohke wutch wutayeuonganit, kah nish neepàttunkquongash nunnukshaash.
+E.9.6 Which shaketh the earth out of her place, and the pillars thereof tremble.
+
+α.9.7 Noh ann8nont nepauzsoh, kah páhpishpo[u], kah sealteau anogqsoh[.]
+E.9.7 Which commandeth the sun, and it riseth not; and sealeth up the stars.
+
+α.9.8 Noh nase sepagkenuk kesukquash, kah ohpa[n]tu kehtahhano[n]tugquoh.
+E.9.8 Which alone spreadeth out the heavens, and treadeth upon the waves of the sea.
+
+α.9.9 Noh ayim Arcturus, Orion, kah Pleiades, kah sow[á]niyeu chambersash.
+E.9.9 Which maketh Arcturus, Orion, and Pleiades, and the chambers of the south.
+
+α.9.10 Noh asit mog[a]gish matta woh namehteouunash, nux kah monchanatam8ongash matta woh ogketam8unash.
+E.9.10 Which doeth great things past finding out; yea, and wonders without number.
+
+α.9.11 Kusseh, nukkishkuhkonk, kah matta nunnau, wonk kutchittoushau, qut matta n8waheuh,
+E.9.11 Lo, he goeth by me, and I see him not: he passeth on also, but I perceive him not.
+
+α.9.12 Kusseh wutamaunumun, kah howan woh 8tameheuh? howan woh wuttinuh toh kutussen?
+E.9.12 Behold, he taketh away, who can hinder him? who will say unto him, What doest thou?
+
+α.9.13 G<OD> matta wutont[n]um8k ummusquantam8onk, pittuanumwe aninnohsuenuog wunnau wogkompauwehtauo[u]k.
+E.9.13 If God will not withdraw his anger, the proud helpers do stoop under him.
+
+α.9.14 
+E.9.14 How much less shall I answer him, and choose out my words to reason with him?
+
+α.9.15 
+E.9.15 Whom, though I were righteous, yet would I not answer, but I would make supplication to my judge.
+
+α.9.16 
+E.9.16 If I had called, and he had answered me; yet would I not believe that he had hearkened unto my voice.
+
+α.9.17 
+E.9.17 For he breaketh me with a tempest, and multiplieth my wounds without cause.
+
+α.9.18 
+E.9.18 He will not suffer me to take my breath, but filleth me with bitterness.
+
+α.9.19 
+E.9.19 If I speak of strength, lo, he is strong: and if of judgment, who shall set me a time to plead?
+
+α.9.20 
+E.9.20 If I justify myself, mine own mouth shall condemn me: if I say, I am perfect, it shall also prove me perverse.
+
+α.9.21 
+E.9.21 Though I were perfect, yet would I not know my soul: I would despise my life.
+
+α.9.22 
+E.9.22 This is one thing, therefore I said it, He destroyeth the perfect and the wicked.
+
+α.9.23 
+E.9.23 If the scourge slay suddenly, he will laugh at the trial of the innocent.
+
+α.9.24 
+E.9.24 The earth is given into the hand of the wicked: he covereth the faces of the judges thereof; if not, where, and who is he?
+
+α.9.25 
+E.9.25 Now my days are swifter than a post: they flee away, they see no good.
+
+α.9.26 
+E.9.26 They are passed away as the swift ships: as the eagle that hasteth to the prey.
+
+α.9.27 
+E.9.27 If I say, I will forget my complaint, I will leave off my heaviness, and comfort myself:
+
+α.9.28 
+E.9.28 I am afraid of all my sorrows, I know that thou wilt not hold me innocent.
+
+α.9.29 
+E.9.29 If I be wicked, why then labour I in vain?
+
+α.9.30 
+E.9.30 If I wash myself with snow water, and make my hands never so clean;
+
+α.9.31 
+E.9.31 Yet shalt thou plunge me in the ditch, and mine own clothes shall abhor me.
+
+α.9.32 
+E.9.32 For he is not a man, as I am, that I should answer him, and we should come together in judgment.
+
+α.9.33 
+E.9.33 Neither is there any daysman betwixt us, that might lay his hand upon us both.
+
+α.9.34 
+E.9.34 Let him take his rod away from me, and let not his fear terrify me:
+
+α.9.35 
+E.9.35 Then would I speak, and not fear him; but it is not so with me.
+
+α.10.1 
+E.10.1 My soul is weary of my life; I will leave my complaint upon myself; I will speak in the bitterness of my soul.
+
+α.10.2 
+E.10.2 I will say unto God, Do not condemn me; shew me wherefore thou contendest with me.
+
+α.10.3 
+E.10.3 Is it good unto thee that thou shouldest oppress, that thou shouldest despise the work of thine hands, and shine upon the counsel of the wicked?
+
+α.10.4 
+E.10.4 Hast thou eyes of flesh? or seest thou as man seeth?
+
+α.10.5 
+E.10.5 Are thy days as the days of man? are thy years as man's days,
+
+α.10.6 
+E.10.6 That thou enquirest after mine iniquity, and searchest after my sin?
+
+α.10.7 
+E.10.7 Thou knowest that I am not wicked; and there is none that can deliver out of thine hand.
+
+α.10.8 
+E.10.8 Thine hands have made me and fashioned me together round about; yet thou dost destroy me.
+
+α.10.9 
+E.10.9 Remember, I beseech thee, that thou hast made me as the clay; and wilt thou bring me into dust again?
+
+α.10.10 
+E.10.10 Hast thou not poured me out as milk, and curdled me like cheese?
+
+α.10.11 
+E.10.11 Thou hast clothed me with skin and flesh, and hast fenced me with bones and sinews.
+
+α.10.12 
+E.10.12 Thou hast granted me life and favour, and thy visitation hath preserved my spirit.
+
+α.10.13 
+E.10.13 And these things hast thou hid in thine heart: I know that this is with thee.
+
+α.10.14 
+E.10.14 If I sin, then thou markest me, and thou wilt not acquit me from mine iniquity.
+
+α.10.15 
+E.10.15 If I be wicked, woe unto me; and if I be righteous, yet will I not lift up my head. I am full of confusion; therefore see thou mine affliction;
+
+α.10.16 
+E.10.16 For it increaseth. Thou huntest me as a fierce lion: and again thou shewest thyself marvellous upon me.
+
+α.10.17 
+E.10.17 Thou renewest thy witnesses against me, and increasest thine indignation upon me; changes and war are against me.
+
+α.10.18 
+E.10.18 Wherefore then hast thou brought me forth out of the womb? Oh that I had given up the ghost, and no eye had seen me!
+
+α.10.19 
+E.10.19 I should have been as though I had not been; I should have been carried from the womb to the grave.
+
+α.10.20 
+E.10.20 Are not my days few? cease then, and let me alone, that I may take comfort a little,
+
+α.10.21 
+E.10.21 Before I go whence I shall not return, even to the land of darkness and the shadow of death;
+
+α.10.22 
+E.10.22 A land of darkness, as darkness itself; and of the shadow of death, without any order, and where the light is as darkness.
+
+α.11.1 
+E.11.1 Then answered Zophar the Naamathite, and said,
+
+α.11.2 
+E.11.2 Should not the multitude of words be answered? and should a man full of talk be justified?
+
+α.11.3 
+E.11.3 Should thy lies make men hold their peace? and when thou mockest, shall no man make thee ashamed?
+
+α.11.4 
+E.11.4 For thou hast said, My doctrine is pure, and I am clean in thine eyes.
+
+α.11.5 
+E.11.5 But oh that God would speak, and open his lips against thee;
+
+α.11.6 
+E.11.6 And that he would shew thee the secrets of wisdom, that they are double to that which is! Know therefore that God exacteth of thee less than thine iniquity deserveth.
+
+α.11.7 
+E.11.7 Canst thou by searching find out God? canst thou find out the Almighty unto perfection?
+
+α.11.8 
+E.11.8 It is as high as heaven; what canst thou do? deeper than hell; what canst thou know?
+
+α.11.9 
+E.11.9 The measure thereof is longer than the earth, and broader than the sea.
+
+α.11.10 
+E.11.10 If he cut off, and shut up, or gather together, then who can hinder him?
+
+α.11.11 
+E.11.11 For he knoweth vain men: he seeth wickedness also; will he not then consider it?
+
+α.11.12 
+E.11.12 For vain men would be wise, though man be born like a wild ass's colt.
+
+α.11.13 
+E.11.13 If thou prepare thine heart, and stretch out thine hands toward him;
+
+α.11.14 
+E.11.14 If iniquity be in thine hand, put it far away, and let not wickedness dwell in thy tabernacles.
+
+α.11.15 
+E.11.15 For then shalt thou lift up thy face without spot; yea, thou shalt be stedfast, and shalt not fear:
+
+α.11.16 
+E.11.16 Because thou shalt forget thy misery, and remember it as waters that pass away:
+
+α.11.17 
+E.11.17 And thine age shall be clearer than the noonday: thou shalt shine forth, thou shalt be as the morning.
+
+α.11.18 
+E.11.18 And thou shalt be secure, because there is hope; yea, thou shalt dig about thee, and thou shalt take thy rest in safety.
+
+α.11.19 
+E.11.19 Also thou shalt lie down, and none shall make thee afraid; yea, many shall make suit unto thee.
+
+α.11.20 
+E.11.20 But the eyes of the wicked shall fail, and they shall not escape, and their hope shall be as the giving up of the ghost.
+
+α.12.1 
+E.12.1 And Job answered and said,
+
+α.12.2 
+E.12.2 No doubt but ye are the people, and wisdom shall die with you.
+
+α.12.3 
+E.12.3 But I have understanding as well as you; I am not inferior to you: yea, who knoweth not such things as these?
+
+α.12.4 
+E.12.4 I am as one mocked of his neighbour, who calleth upon God, and he answereth him: the just upright man is laughed to scorn.
+
+α.12.5 
+E.12.5 He that is ready to slip with his feet is as a lamp despised in the thought of him that is at ease.
+
+α.12.6 
+E.12.6 The tabernacles of robbers prosper, and they that provoke God are secure; into whose hand God bringeth abundantly.
+
+α.12.7 
+E.12.7 But ask now the beasts, and they shall teach thee; and the fowls of the air, and they shall tell thee:
+
+α.12.8 
+E.12.8 Or speak to the earth, and it shall teach thee: and the fishes of the sea shall declare unto thee.
+
+α.12.9 
+E.12.9 Who knoweth not in all these that the hand of the LORD hath wrought this?
+
+α.12.10 
+E.12.10 In whose hand is the soul of every living thing, and the breath of all mankind.
+
+α.12.11 
+E.12.11 Doth not the ear try words? and the mouth taste his meat?
+
+α.12.12 
+E.12.12 With the ancient is wisdom; and in length of days understanding.
+
+α.12.13 
+E.12.13 With him is wisdom and strength, he hath counsel and understanding.
+
+α.12.14 
+E.12.14 Behold, he breaketh down, and it cannot be built again: he shutteth up a man, and there can be no opening.
+
+α.12.15 
+E.12.15 Behold, he withholdeth the waters, and they dry up: also he sendeth them out, and they overturn the earth.
+
+α.12.16 
+E.12.16 With him is strength and wisdom: the deceived and the deceiver are his.
+
+α.12.17 
+E.12.17 He leadeth counsellors away spoiled, and maketh the judges fools.
+
+α.12.18 
+E.12.18 He looseth the bond of kings, and girdeth their loins with a girdle.
+
+α.12.19 
+E.12.19 He leadeth princes away spoiled, and overthroweth the mighty.
+
+α.12.20 
+E.12.20 He removeth away the speech of the trusty, and taketh away the understanding of the aged.
+
+α.12.21 
+E.12.21 He poureth contempt upon princes, and weakeneth the strength of the mighty.
+
+α.12.22 
+E.12.22 He discovereth deep things out of darkness, and bringeth out to light the shadow of death.
+
+α.12.23 
+E.12.23 He increaseth the nations, and destroyeth them: he enlargeth the nations, and straiteneth them again.
+
+α.12.24 
+E.12.24 He taketh away the heart of the chief of the people of the earth, and causeth them to wander in a wilderness where there is no way.
+
+α.12.25 
+E.12.25 They grope in the dark without light, and he maketh them to stagger like a drunken man.
+
+α.13.1 
+E.13.1 Lo, mine eye hath seen all this, mine ear hath heard and understood it.
+
+α.13.2 
+E.13.2 What ye know, the same do I know also: I am not inferior unto you.
+
+α.13.3 
+E.13.3 Surely I would speak to the Almighty, and I desire to reason with God.
+
+α.13.4 
+E.13.4 But ye are forgers of lies, ye are all physicians of no value.
+
+α.13.5 
+E.13.5 O that ye would altogether hold your peace! and it should be your wisdom.
+
+α.13.6 
+E.13.6 Hear now my reasoning, and hearken to the pleadings of my lips.
+
+α.13.7 
+E.13.7 Will ye speak wickedly for God? and talk deceitfully for him?
+
+α.13.8 
+E.13.8 Will ye accept his person? will ye contend for God?
+
+α.13.9 
+E.13.9 Is it good that he should search you out? or as one man mocketh another, do ye so mock him?
+
+α.13.10 
+E.13.10 He will surely reprove you, if ye do secretly accept persons.
+
+α.13.11 
+E.13.11 Shall not his excellency make you afraid? and his dread fall upon you?
+
+α.13.12 
+E.13.12 Your remembrances are like unto ashes, your bodies to bodies of clay.
+
+α.13.13 
+E.13.13 Hold your peace, let me alone, that I may speak, and let come on me what will.
+
+α.13.14 
+E.13.14 Wherefore do I take my flesh in my teeth, and put my life in mine hand?
+
+α.13.15 
+E.13.15 Though he slay me, yet will I trust in him: but I will maintain mine own ways before him.
+
+α.13.16 
+E.13.16 He also shall be my salvation: for an hypocrite shall not come before him.
+
+α.13.17 
+E.13.17 Hear diligently my speech, and my declaration with your ears.
+
+α.13.18 
+E.13.18 Behold now, I have ordered my cause; I know that I shall be justified.
+
+α.13.19 
+E.13.19 Who is he that will plead with me? for now, if I hold my tongue, I shall give up the ghost.
+
+α.13.20 
+E.13.20 Only do not two things unto me: then will I not hide myself from thee.
+
+α.13.21 
+E.13.21 Withdraw thine hand far from me: and let not thy dread make me afraid.
+
+α.13.22 
+E.13.22 Then call thou, and I will answer: or let me speak, and answer thou me.
+
+α.13.23 
+E.13.23 How many are mine iniquities and sins? make me to know my transgression and my sin.
+
+α.13.24 
+E.13.24 Wherefore hidest thou thy face, and holdest me for thine enemy?
+
+α.13.25 
+E.13.25 Wilt thou break a leaf driven to and fro? and wilt thou pursue the dry stubble?
+
+α.13.26 
+E.13.26 For thou writest bitter things against me, and makest me to possess the iniquities of my youth.
+
+α.13.27 
+E.13.27 Thou puttest my feet also in the stocks, and lookest narrowly unto all my paths; thou settest a print upon the heels of my feet.
+
+α.13.28 
+E.13.28 And he, as a rotten thing, consumeth, as a garment that is moth eaten.
+
+α.14.1 
+E.14.1 Man that is born of a woman is of few days and full of trouble.
+
+α.14.2 
+E.14.2 He cometh forth like a flower, and is cut down: he fleeth also as a shadow, and continueth not.
+
+α.14.3 
+E.14.3 And doth thou open thine eyes upon such an one, and bringest me into judgment with thee?
+
+α.14.4 
+E.14.4 Who can bring a clean thing out of an unclean? not one.
+
+α.14.5 
+E.14.5 Seeing his days are determined, the number of his months are with thee, thou hast appointed his bounds that he cannot pass;
+
+α.14.6 
+E.14.6 Turn from him, that he may rest, till he shall accomplish, as an hireling, his day.
+
+α.14.7 
+E.14.7 For there is hope of a tree, if it be cut down, that it will sprout again, and that the tender branch thereof will not cease.
+
+α.14.8 
+E.14.8 Though the root thereof wax old in the earth, and the stock thereof die in the ground;
+
+α.14.9 
+E.14.9 Yet through the scent of water it will bud, and bring forth boughs like a plant.
+
+α.14.10 
+E.14.10 But man dieth, and wasteth away: yea, man giveth up the ghost, and where is he?
+
+α.14.11 
+E.14.11 As the waters fail from the sea, and the flood decayeth and drieth up:
+
+α.14.12 
+E.14.12 So man lieth down, and riseth not: till the heavens be no more, they shall not awake, nor be raised out of their sleep.
+
+α.14.13 
+E.14.13 O that thou wouldest hide me in the grave, that thou wouldest keep me secret, until thy wrath be past, that thou wouldest appoint me a set time, and remember me!
+
+α.14.14 
+E.14.14 If a man die, shall he live again? all the days of my appointed time will I wait, till my change come.
+
+α.14.15 
+E.14.15 Thou shalt call, and I will answer thee: thou wilt have a desire to the work of thine hands.
+
+α.14.16 
+E.14.16 For now thou numberest my steps: dost thou not watch over my sin?
+
+α.14.17 
+E.14.17 My transgression is sealed up in a bag, and thou sewest up mine iniquity.
+
+α.14.18 
+E.14.18 And surely the mountains falling cometh to nought, and the rock is removed out of his place.
+
+α.14.19 
+E.14.19 The waters wear the stones: thou washest away the things which grow out of the dust of the earth; and thou destroyest the hope of man.
+
+α.14.20 
+E.14.20 Thou prevailest for ever against him, and he passeth: thou changest his countenance, and sendest him away.
+
+α.14.21 
+E.14.21 His sons come to honour, and he knoweth it not; and they are brought low, but he perceiveth it not of them.
+
+α.14.22 
+E.14.22 But his flesh upon him shall have pain, and his soul within him shall mourn.
+
+α.15.1 
+E.15.1 Then answered Eliphaz the Temanite, and said,
+
+α.15.2 
+E.15.2 Should a wise man utter vain knowledge, and fill his belly with the east wind?
+
+α.15.3 
+E.15.3 Should he reason with unprofitable talk? or with speeches wherewith he can do no good?
+
+α.15.4 
+E.15.4 Yea, thou castest off fear, and restrainest prayer before God.
+
+α.15.5 
+E.15.5 For thy mouth uttereth thine iniquity, and thou choosest the tongue of the crafty.
+
+α.15.6 
+E.15.6 Thine own mouth condemneth thee, and not I: yea, thine own lips testify against thee.
+
+α.15.7 
+E.15.7 Art thou the first man that was born? or wast thou made before the hills?
+
+α.15.8 
+E.15.8 Hast thou heard the secret of God? and dost thou restrain wisdom to thyself?
+
+α.15.9 
+E.15.9 What knowest thou, that we know not? what understandest thou, which is not in us?
+
+α.15.10 
+E.15.10 With us are both the grayheaded and very aged men, much elder than thy father.
+
+α.15.11 
+E.15.11 Are the consolations of God small with thee? is there any secret thing with thee?
+
+α.15.12 
+E.15.12 Why doth thine heart carry thee away? and what do thy eyes wink at,
+
+α.15.13 
+E.15.13 That thou turnest thy spirit against God, and lettest such words go out of thy mouth?
+
+α.15.14 
+E.15.14 What is man, that he should be clean? and he which is born of a woman, that he should be righteous?
+
+α.15.15 
+E.15.15 Behold, he putteth no trust in his saints; yea, the heavens are not clean in his sight.
+
+α.15.16 
+E.15.16 How much more abominable and filthy is man, which drinketh iniquity like water?
+
+α.15.17 
+E.15.17 I will shew thee, hear me; and that which I have seen I will declare;
+
+α.15.18 
+E.15.18 Which wise men have told from their fathers, and have not hid it:
+
+α.15.19 
+E.15.19 Unto whom alone the earth was given, and no stranger passed among them.
+
+α.15.20 
+E.15.20 The wicked man travaileth with pain all his days, and the number of years is hidden to the oppressor.
+
+α.15.21 
+E.15.21 A dreadful sound is in his ears: in prosperity the destroyer shall come upon him.
+
+α.15.22 
+E.15.22 He believeth not that he shall return out of darkness, and he is waited for of the sword.
+
+α.15.23 
+E.15.23 He wandereth abroad for bread, saying, Where is it? he knoweth that the day of darkness is ready at his hand.
+
+α.15.24 
+E.15.24 Trouble and anguish shall make him afraid; they shall prevail against him, as a king ready to the battle.
+
+α.15.25 
+E.15.25 For he stretcheth out his hand against God, and strengtheneth himself against the Almighty.
+
+α.15.26 
+E.15.26 He runneth upon him, even on his neck, upon the thick bosses of his bucklers:
+
+α.15.27 
+E.15.27 Because he covereth his face with his fatness, and maketh collops of fat on his flanks.
+
+α.15.28 
+E.15.28 And he dwelleth in desolate cities, and in houses which no man inhabiteth, which are ready to become heaps.
+
+α.15.29 
+E.15.29 He shall not be rich, neither shall his substance continue, neither shall he prolong the perfection thereof upon the earth.
+
+α.15.30 
+E.15.30 He shall not depart out of darkness; the flame shall dry up his branches, and by the breath of his mouth shall he go away.
+
+α.15.31 
+E.15.31 Let not him that is deceived trust in vanity: for vanity shall be his recompence.
+
+α.15.32 
+E.15.32 It shall be accomplished before his time, and his branch shall not be green.
+
+α.15.33 
+E.15.33 He shall shake off his unripe grape as the vine, and shall cast off his flower as the olive.
+
+α.15.34 
+E.15.34 For the congregation of hypocrites shall be desolate, and fire shall consume the tabernacles of bribery.
+
+α.15.35 
+E.15.35 They conceive mischief, and bring forth vanity, and their belly prepareth deceit.
+
+α.16.1 
+E.16.1 Then Job answered and said,
+
+α.16.2 
+E.16.2 I have heard many such things: miserable comforters are ye all.
+
+α.16.3 
+E.16.3 Shall vain words have an end? or what emboldeneth thee that thou answerest?
+
+α.16.4 
+E.16.4 I also could speak as ye do: if your soul were in my soul's stead, I could heap up words against you, and shake mine head at you.
+
+α.16.5 
+E.16.5 But I would strengthen you with my mouth, and the moving of my lips should asswage your grief.
+
+α.16.6 
+E.16.6 Though I speak, my grief is not asswaged: and though I forbear, what am I eased?
+
+α.16.7 
+E.16.7 But now he hath made me weary: thou hast made desolate all my company.
+
+α.16.8 
+E.16.8 And thou hast filled me with wrinkles, which is a witness against me: and my leanness rising up in me beareth witness to my face.
+
+α.16.9 
+E.16.9 He teareth me in his wrath, who hateth me: he gnasheth upon me with his teeth; mine enemy sharpeneth his eyes upon me.
+
+α.16.10 
+E.16.10 They have gaped upon me with their mouth; they have smitten me upon the cheek reproachfully; they have gathered themselves together against me.
+
+α.16.11 
+E.16.11 God hath delivered me to the ungodly, and turned me over into the hands of the wicked.
+
+α.16.12 
+E.16.12 I was at ease, but he hath broken me asunder: he hath also taken me by my neck, and shaken me to pieces, and set me up for his mark.
+
+α.16.13 
+E.16.13 His archers compass me round about, he cleaveth my reins asunder, and doth not spare; he poureth out my gall upon the ground.
+
+α.16.14 
+E.16.14 He breaketh me with breach upon breach, he runneth upon me like a giant.
+
+α.16.15 
+E.16.15 I have sewed sackcloth upon my skin, and defiled my horn in the dust.
+
+α.16.16 
+E.16.16 My face is foul with weeping, and on my eyelids is the shadow of death;
+
+α.16.17 
+E.16.17 Not for any injustice in mine hands: also my prayer is pure.
+
+α.16.18 
+E.16.18 O earth, cover not thou my blood, and let my cry have no place.
+
+α.16.19 
+E.16.19 Also now, behold, my witness is in heaven, and my record is on high.
+
+α.16.20 
+E.16.20 My friends scorn me: but mine eye poureth out tears unto God.
+
+α.16.21 
+E.16.21 O that one might plead for a man with God, as a man pleadeth for his neighbour!
+
+α.16.22 
+E.16.22 When a few years are come, then I shall go the way whence I shall not return.
+
+α.17.1 
+E.17.1 My breath is corrupt, my days are extinct, the graves are ready for me.
+
+α.17.2 
+E.17.2 Are there not mockers with me? and doth not mine eye continue in their provocation?
+
+α.17.3 
+E.17.3 Lay down now, put me in a surety with thee; who is he that will strike hands with me?
+
+α.17.4 
+E.17.4 For thou hast hid their heart from understanding: therefore shalt thou not exalt them.
+
+α.17.5 
+E.17.5 He that speaketh flattery to his friends, even the eyes of his children shall fail.
+
+α.17.6 
+E.17.6 He hath made me also a byword of the people; and aforetime I was as a tabret.
+
+α.17.7 
+E.17.7 Mine eye also is dim by reason of sorrow, and all my members are as a shadow.
+
+α.17.8 
+E.17.8 Upright men shall be astonied at this, and the innocent shall stir up himself against the hypocrite.
+
+α.17.9 
+E.17.9 The righteous also shall hold on his way, and he that hath clean hands shall be stronger and stronger.
+
+α.17.10 
+E.17.10 But as for you all, do ye return, and come now: for I cannot find one wise man among you.
+
+α.17.11 
+E.17.11 My days are past, my purposes are broken off, even the thoughts of my heart.
+
+α.17.12 
+E.17.12 They change the night into day: the light is short because of darkness.
+
+α.17.13 
+E.17.13 If I wait, the grave is mine house: I have made my bed in the darkness.
+
+α.17.14 
+E.17.14 I have said to corruption, Thou art my father: to the worm, Thou art my mother, and my sister.
+
+α.17.15 
+E.17.15 And where is now my hope? as for my hope, who shall see it?
+
+α.17.16 
+E.17.16 They shall go down to the bars of the pit, when our rest together is in the dust.
+
+α.18.1 
+E.18.1 Then answered Bildad the Shuhite, and said,
+
+α.18.2 
+E.18.2 How long will it be ere ye make an end of words? mark, and afterwards we will speak.
+
+α.18.3 
+E.18.3 Wherefore are we counted as beasts, and reputed vile in your sight?
+
+α.18.4 
+E.18.4 He teareth himself in his anger: shall the earth be forsaken for thee? and shall the rock be removed out of his place?
+
+α.18.5 
+E.18.5 Yea, the light of the wicked shall be put out, and the spark of his fire shall not shine.
+
+α.18.6 
+E.18.6 The light shall be dark in his tabernacle, and his candle shall be put out with him.
+
+α.18.7 
+E.18.7 The steps of his strength shall be straitened, and his own counsel shall cast him down.
+
+α.18.8 
+E.18.8 For he is cast into a net by his own feet, and he walketh upon a snare.
+
+α.18.9 
+E.18.9 The gin shall take him by the heel, and the robber shall prevail against him.
+
+α.18.10 
+E.18.10 The snare is laid for him in the ground, and a trap for him in the way.
+
+α.18.11 
+E.18.11 Terrors shall make him afraid on every side, and shall drive him to his feet.
+
+α.18.12 
+E.18.12 His strength shall be hungerbitten, and destruction shall be ready at his side.
+
+α.18.13 
+E.18.13 It shall devour the strength of his skin: even the firstborn of death shall devour his strength.
+
+α.18.14 
+E.18.14 His confidence shall be rooted out of his tabernacle, and it shall bring him to the king of terrors.
+
+α.18.15 
+E.18.15 It shall dwell in his tabernacle, because it is none of his: brimstone shall be scattered upon his habitation.
+
+α.18.16 
+E.18.16 His roots shall be dried up beneath, and above shall his branch be cut off.
+
+α.18.17 
+E.18.17 His remembrance shall perish from the earth, and he shall have no name in the street.
+
+α.18.18 
+E.18.18 He shall be driven from light into darkness, and chased out of the world.
+
+α.18.19 
+E.18.19 He shall neither have son nor nephew among his people, nor any remaining in his dwellings.
+
+α.18.20 
+E.18.20 They that come after him shall be astonied at his day, as they that went before were affrighted.
+
+α.18.21 
+E.18.21 Surely such are the dwellings of the wicked, and this is the place of him that knoweth not God.
+
+α.19.1 
+E.19.1 Then Job answered and said,
+
+α.19.2 
+E.19.2 How long will ye vex my soul, and break me in pieces with words?
+
+α.19.3 
+E.19.3 These ten times have ye reproached me: ye are not ashamed that ye make yourselves strange to me.
+
+α.19.4 
+E.19.4 And be it indeed that I have erred, mine error remaineth with myself.
+
+α.19.5 
+E.19.5 If indeed ye will magnify yourselves against me, and plead against me my reproach:
+
+α.19.6 
+E.19.6 Know now that God hath overthrown me, and hath compassed me with his net.
+
+α.19.7 
+E.19.7 Behold, I cry out of wrong, but I am not heard: I cry aloud, but there is no judgment.
+
+α.19.8 
+E.19.8 He hath fenced up my way that I cannot pass, and he hath set darkness in my paths.
+
+α.19.9 
+E.19.9 He hath stripped me of my glory, and taken the crown from my head.
+
+α.19.10 
+E.19.10 He hath destroyed me on every side, and I am gone: and mine hope hath he removed like a tree.
+
+α.19.11 
+E.19.11 He hath also kindled his wrath against me, and he counteth me unto him as one of his enemies.
+
+α.19.12 
+E.19.12 His troops come together, and raise up their way against me, and encamp round about my tabernacle.
+
+α.19.13 
+E.19.13 He hath put my brethren far from me, and mine acquaintance are verily estranged from me.
+
+α.19.14 
+E.19.14 My kinsfolk have failed, and my familiar friends have forgotten me.
+
+α.19.15 
+E.19.15 They that dwell in mine house, and my maids, count me for a stranger: I am an alien in their sight.
+
+α.19.16 
+E.19.16 I called my servant, and he gave me no answer; I intreated him with my mouth.
+
+α.19.17 
+E.19.17 My breath is strange to my wife, though I intreated for the children's sake of mine own body.
+
+α.19.18 
+E.19.18 Yea, young children despised me; I arose, and they spake against me.
+
+α.19.19 
+E.19.19 All my inward friends abhorred me: and they whom I loved are turned against me.
+
+α.19.20 
+E.19.20 My bone cleaveth to my skin and to my flesh, and I am escaped with the skin of my teeth.
+
+α.19.21 
+E.19.21 Have pity upon me, have pity upon me, O ye my friends; for the hand of God hath touched me.
+
+α.19.22 
+E.19.22 Why do ye persecute me as God, and are not satisfied with my flesh?
+
+α.19.23 
+E.19.23 Oh that my words were now written! oh that they were printed in a book!
+
+α.19.24 
+E.19.24 That they were graven with an iron pen and lead in the rock for ever!
+
+α.19.25 
+E.19.25 For I know that my redeemer liveth, and that he shall stand at the latter day upon the earth:
+
+α.19.26 
+E.19.26 And though after my skin worms destroy this body, yet in my flesh shall I see God:
+
+α.19.27 
+E.19.27 Whom I shall see for myself, and mine eyes shall behold, and not another; though my reins be consumed within me.
+
+α.19.28 
+E.19.28 But ye should say, Why persecute we him, seeing the root of the matter is found in me?
+
+α.19.29 
+E.19.29 Be ye afraid of the sword: for wrath bringeth the punishments of the sword, that ye may know there is a judgment.
+
+α.20.1 
+E.20.1 Then answered Zophar the Naamathite, and said,
+
+α.20.2 
+E.20.2 Therefore do my thoughts cause me to answer, and for this I make haste.
+
+α.20.3 
+E.20.3 I have heard the check of my reproach, and the spirit of my understanding causeth me to answer.
+
+α.20.4 
+E.20.4 Knowest thou not this of old, since man was placed upon earth,
+
+α.20.5 
+E.20.5 That the triumphing of the wicked is short, and the joy of the hypocrite but for a moment?
+
+α.20.6 
+E.20.6 Though his excellency mount up to the heavens, and his head reach unto the clouds;
+
+α.20.7 
+E.20.7 Yet he shall perish for ever like his own dung: they which have seen him shall say, Where is he?
+
+α.20.8 
+E.20.8 He shall fly away as a dream, and shall not be found: yea, he shall be chased away as a vision of the night.
+
+α.20.9 
+E.20.9 The eye also which saw him shall see him no more; neither shall his place any more behold him.
+
+α.20.10 
+E.20.10 His children shall seek to please the poor, and his hands shall restore their goods.
+
+α.20.11 
+E.20.11 His bones are full of the sin of his youth, which shall lie down with him in the dust.
+
+α.20.12 
+E.20.12 Though wickedness be sweet in his mouth, though he hide it under his tongue;
+
+α.20.13 
+E.20.13 Though he spare it, and forsake it not; but keep it still within his mouth:
+
+α.20.14 
+E.20.14 Yet his meat in his bowels is turned, it is the gall of asps within him.
+
+α.20.15 
+E.20.15 He hath swallowed down riches, and he shall vomit them up again: God shall cast them out of his belly.
+
+α.20.16 
+E.20.16 He shall suck the poison of asps: the viper's tongue shall slay him.
+
+α.20.17 
+E.20.17 He shall not see the rivers, the floods, the brooks of honey and butter.
+
+α.20.18 
+E.20.18 That which he laboured for shall he restore, and shall not swallow it down: according to his substance shall the restitution be, and he shall not rejoice therein.
+
+α.20.19 
+E.20.19 Because he hath oppressed and hath forsaken the poor; because he hath violently taken away an house which he builded not;
+
+α.20.20 
+E.20.20 Surely he shall not feel quietness in his belly, he shall not save of that which he desired.
+
+α.20.21 
+E.20.21 There shall none of his meat be left; therefore shall no man look for his goods.
+
+α.20.22 
+E.20.22 In the fulness of his sufficiency he shall be in straits: every hand of the wicked shall come upon him.
+
+α.20.23 
+E.20.23 When he is about to fill his belly, God shall cast the fury of his wrath upon him, and shall rain it upon him while he is eating.
+
+α.20.24 
+E.20.24 He shall flee from the iron weapon, and the bow of steel shall strike him through.
+
+α.20.25 
+E.20.25 It is drawn, and cometh out of the body; yea, the glittering sword cometh out of his gall: terrors are upon him.
+
+α.20.26 
+E.20.26 All darkness shall be hid in his secret places: a fire not blown shall consume him; it shall go ill with him that is left in his tabernacle.
+
+α.20.27 
+E.20.27 The heaven shall reveal his iniquity; and the earth shall rise up against him.
+
+α.20.28 
+E.20.28 The increase of his house shall depart, and his goods shall flow away in the day of his wrath.
+
+α.20.29 
+E.20.29 This is the portion of a wicked man from God, and the heritage appointed unto him by God.
+
+α.21.1 
+E.21.1 But Job answered and said,
+
+α.21.2 
+E.21.2 Hear diligently my speech, and let this be your consolations.
+
+α.21.3 
+E.21.3 Suffer me that I may speak; and after that I have spoken, mock on.
+
+α.21.4 
+E.21.4 As for me, is my complaint to man? and if it were so, why should not my spirit be troubled?
+
+α.21.5 
+E.21.5 Mark me, and be astonished, and lay your hand upon your mouth.
+
+α.21.6 
+E.21.6 Even when I remember I am afraid, and trembling taketh hold on my flesh.
+
+α.21.7 
+E.21.7 Wherefore do the wicked live, become old, yea, are mighty in power?
+
+α.21.8 
+E.21.8 Their seed is established in their sight with them, and their offspring before their eyes.
+
+α.21.9 
+E.21.9 Their houses are safe from fear, neither is the rod of God upon them.
+
+α.21.10 
+E.21.10 Their bull gendereth, and faileth not; their cow calveth, and casteth not her calf.
+
+α.21.11 
+E.21.11 They send forth their little ones like a flock, and their children dance.
+
+α.21.12 
+E.21.12 They take the timbrel and harp, and rejoice at the sound of the organ.
+
+α.21.13 
+E.21.13 They spend their days in wealth, and in a moment go down to the grave.
+
+α.21.14 
+E.21.14 Therefore they say unto God, Depart from us; for we desire not the knowledge of thy ways.
+
+α.21.15 
+E.21.15 What is the Almighty, that we should serve him? and what profit should we have, if we pray unto him?
+
+α.21.16 
+E.21.16 Lo, their good is not in their hand: the counsel of the wicked is far from me.
+
+α.21.17 
+E.21.17 How oft is the candle of the wicked put out! and how oft cometh their destruction upon them! God distributeth sorrows in his anger.
+
+α.21.18 
+E.21.18 They are as stubble before the wind, and as chaff that the storm carrieth away.
+
+α.21.19 
+E.21.19 God layeth up his iniquity for his children: he rewardeth him, and he shall know it.
+
+α.21.20 
+E.21.20 His eyes shall see his destruction, and he shall drink of the wrath of the Almighty.
+
+α.21.21 
+E.21.21 For what pleasure hath he in his house after him, when the number of his months is cut off in the midst?
+
+α.21.22 
+E.21.22 Shall any teach God knowledge? seeing he judgeth those that are high.
+
+α.21.23 
+E.21.23 One dieth in his full strength, being wholly at ease and quiet.
+
+α.21.24 
+E.21.24 His breasts are full of milk, and his bones are moistened with marrow.
+
+α.21.25 
+E.21.25 And another dieth in the bitterness of his soul, and never eateth with pleasure.
+
+α.21.26 
+E.21.26 They shall lie down alike in the dust, and the worms shall cover them.
+
+α.21.27 
+E.21.27 Behold, I know your thoughts, and the devices which ye wrongfully imagine against me.
+
+α.21.28 
+E.21.28 For ye say, Where is the house of the prince? and where are the dwelling places of the wicked?
+
+α.21.29 
+E.21.29 Have ye not asked them that go by the way? and do ye not know their tokens,
+
+α.21.30 
+E.21.30 That the wicked is reserved to the day of destruction? they shall be brought forth to the day of wrath.
+
+α.21.31 
+E.21.31 Who shall declare his way to his face? and who shall repay him what he hath done?
+
+α.21.32 
+E.21.32 Yet shall he be brought to the grave, and shall remain in the tomb.
+
+α.21.33 
+E.21.33 The clods of the valley shall be sweet unto him, and every man shall draw after him, as there are innumerable before him.
+
+α.21.34 
+E.21.34 How then comfort ye me in vain, seeing in your answers there remaineth falsehood?
+
+α.22.1 
+E.22.1 Then Eliphaz the Temanite answered and said,
+
+α.22.2 
+E.22.2 Can a man be profitable unto God, as he that is wise may be profitable unto himself?
+
+α.22.3 
+E.22.3 Is it any pleasure to the Almighty, that thou art righteous? or is it gain to him, that thou makest thy ways perfect?
+
+α.22.4 
+E.22.4 Will he reprove thee for fear of thee? will he enter with thee into judgment?
+
+α.22.5 
+E.22.5 Is not thy wickedness great? and thine iniquities infinite?
+
+α.22.6 
+E.22.6 For thou hast taken a pledge from thy brother for nought, and stripped the naked of their clothing.
+
+α.22.7 
+E.22.7 Thou hast not given water to the weary to drink, and thou hast withholden bread from the hungry.
+
+α.22.8 
+E.22.8 But as for the mighty man, he had the earth; and the honourable man dwelt in it.
+
+α.22.9 
+E.22.9 Thou hast sent widows away empty, and the arms of the fatherless have been broken.
+
+α.22.10 
+E.22.10 Therefore snares are round about thee, and sudden fear troubleth thee;
+
+α.22.11 
+E.22.11 Or darkness, that thou canst not see; and abundance of waters cover thee.
+
+α.22.12 
+E.22.12 Is not God in the height of heaven? and behold the height of the stars, how high they are!
+
+α.22.13 
+E.22.13 And thou sayest, How doth God know? can he judge through the dark cloud?
+
+α.22.14 
+E.22.14 Thick clouds are a covering to him, that he seeth not; and he walketh in the circuit of heaven.
+
+α.22.15 
+E.22.15 Hast thou marked the old way which wicked men have trodden?
+
+α.22.16 
+E.22.16 Which were cut down out of time, whose foundation was overflown with a flood:
+
+α.22.17 
+E.22.17 Which said unto God, Depart from us: and what can the Almighty do for them?
+
+α.22.18 
+E.22.18 Yet he filled their houses with good things: but the counsel of the wicked is far from me.
+
+α.22.19 
+E.22.19 The righteous see it, and are glad: and the innocent laugh them to scorn.
+
+α.22.20 
+E.22.20 Whereas our substance is not cut down, but the remnant of them the fire consumeth.
+
+α.22.21 
+E.22.21 Acquaint now thyself with him, and be at peace: thereby good shall come unto thee.
+
+α.22.22 
+E.22.22 Receive, I pray thee, the law from his mouth, and lay up his words in thine heart.
+
+α.22.23 
+E.22.23 If thou return to the Almighty, thou shalt be built up, thou shalt put away iniquity far from thy tabernacles.
+
+α.22.24 
+E.22.24 Then shalt thou lay up gold as dust, and the gold of Ophir as the stones of the brooks.
+
+α.22.25 
+E.22.25 Yea, the Almighty shall be thy defence, and thou shalt have plenty of silver.
+
+α.22.26 
+E.22.26 For then shalt thou have thy delight in the Almighty, and shalt lift up thy face unto God.
+
+α.22.27 
+E.22.27 Thou shalt make thy prayer unto him, and he shall hear thee, and thou shalt pay thy vows.
+
+α.22.28 
+E.22.28 Thou shalt also decree a thing, and it shall be established unto thee: and the light shall shine upon thy ways.
+
+α.22.29 
+E.22.29 When men are cast down, then thou shalt say, There is lifting up; and he shall save the humble person.
+
+α.22.30 
+E.22.30 He shall deliver the island of the innocent: and it is delivered by the pureness of thine hands.
+
+α.23.1 
+E.23.1 Then Job answered and said,
+
+α.23.2 
+E.23.2 Even to day is my complaint bitter: my stroke is heavier than my groaning.
+
+α.23.3 
+E.23.3 Oh that I knew where I might find him! that I might come even to his seat!
+
+α.23.4 
+E.23.4 I would order my cause before him, and fill my mouth with arguments.
+
+α.23.5 
+E.23.5 I would know the words which he would answer me, and understand what he would say unto me.
+
+α.23.6 
+E.23.6 Will he plead against me with his great power? No; but he would put strength in me.
+
+α.23.7 
+E.23.7 There the righteous might dispute with him; so should I be delivered for ever from my judge.
+
+α.23.8 
+E.23.8 Behold, I go forward, but he is not there; and backward, but I cannot perceive him:
+
+α.23.9 
+E.23.9 On the left hand, where he doth work, but I cannot behold him: he hideth himself on the right hand, that I cannot see him:
+
+α.23.10 
+E.23.10 But he knoweth the way that I take: when he hath tried me, I shall come forth as gold.
+
+α.23.11 
+E.23.11 My foot hath held his steps, his way have I kept, and not declined.
+
+α.23.12 
+E.23.12 Neither have I gone back from the commandment of his lips; I have esteemed the words of his mouth more than my necessary food.
+
+α.23.13 
+E.23.13 But he is in one mind, and who can turn him? and what his soul desireth, even that he doeth.
+
+α.23.14 
+E.23.14 For he performeth the thing that is appointed for me: and many such things are with him.
+
+α.23.15 
+E.23.15 Therefore am I troubled at his presence: when I consider, I am afraid of him.
+
+α.23.16 
+E.23.16 For God maketh my heart soft, and the Almighty troubleth me:
+
+α.23.17 
+E.23.17 Because I was not cut off before the darkness, neither hath he covered the darkness from my face.
+
+α.24.1 
+E.24.1 Why, seeing times are not hidden from the Almighty, do they that know him not see his days?
+
+α.24.2 
+E.24.2 Some remove the landmarks; they violently take away flocks, and feed thereof.
+
+α.24.3 
+E.24.3 They drive away the ass of the fatherless, they take the widow's ox for a pledge.
+
+α.24.4 
+E.24.4 They turn the needy out of the way: the poor of the earth hide themselves together.
+
+α.24.5 
+E.24.5 Behold, as wild asses in the desert, go they forth to their work; rising betimes for a prey: the wilderness yieldeth food for them and for their children.
+
+α.24.6 
+E.24.6 They reap every one his corn in the field: and they gather the vintage of the wicked.
+
+α.24.7 
+E.24.7 They cause the naked to lodge without clothing, that they have no covering in the cold.
+
+α.24.8 
+E.24.8 They are wet with the showers of the mountains, and embrace the rock for want of a shelter.
+
+α.24.9 
+E.24.9 They pluck the fatherless from the breast, and take a pledge of the poor.
+
+α.24.10 
+E.24.10 They cause him to go naked without clothing, and they take away the sheaf from the hungry;
+
+α.24.11 
+E.24.11 Which make oil within their walls, and tread their winepresses, and suffer thirst.
+
+α.24.12 
+E.24.12 Men groan from out of the city, and the soul of the wounded crieth out: yet God layeth not folly to them.
+
+α.24.13 
+E.24.13 They are of those that rebel against the light; they know not the ways thereof, nor abide in the paths thereof.
+
+α.24.14 
+E.24.14 The murderer rising with the light killeth the poor and needy, and in the night is as a thief.
+
+α.24.15 
+E.24.15 The eye also of the adulterer waiteth for the twilight, saying, No eye shall see me: and disguiseth his face.
+
+α.24.16 
+E.24.16 In the dark they dig through houses, which they had marked for themselves in the daytime: they know not the light.
+
+α.24.17 
+E.24.17 For the morning is to them even as the shadow of death: if one know them, they are in the terrors of the shadow of death.
+
+α.24.18 
+E.24.18 He is swift as the waters; their portion is cursed in the earth: he beholdeth not the way of the vineyards.
+
+α.24.19 
+E.24.19 Drought and heat consume the snow waters: so doth the grave those which have sinned.
+
+α.24.20 
+E.24.20 The womb shall forget him; the worm shall feed sweetly on him; he shall be no more remembered; and wickedness shall be broken as a tree.
+
+α.24.21 
+E.24.21 He evil entreateth the barren that beareth not: and doeth not good to the widow.
+
+α.24.22 
+E.24.22 He draweth also the mighty with his power: he riseth up, and no man is sure of life.
+
+α.24.23 
+E.24.23 Though it be given him to be in safety, whereon he resteth; yet his eyes are upon their ways.
+
+α.24.24 
+E.24.24 They are exalted for a little while, but are gone and brought low; they are taken out of the way as all other, and cut off as the tops of the ears of corn.
+
+α.24.25 
+E.24.25 And if it be not so now, who will make me a liar, and make my speech nothing worth?
+
+α.25.1 
+E.25.1 Then answered Bildad the Shuhite, and said,
+
+α.25.2 
+E.25.2 Dominion and fear are with him, he maketh peace in his high places.
+
+α.25.3 
+E.25.3 Is there any number of his armies? and upon whom doth not his light arise?
+
+α.25.4 
+E.25.4 How then can man be justified with God? or how can he be clean that is born of a woman?
+
+α.25.5 
+E.25.5 Behold even to the moon, and it shineth not; yea, the stars are not pure in his sight.
+
+α.25.6 
+E.25.6 How much less man, that is a worm? and the son of man, which is a worm?
+
+α.26.1 
+E.26.1 But Job answered and said,
+
+α.26.2 
+E.26.2 How hast thou helped him that is without power? how savest thou the arm that hath no strength?
+
+α.26.3 
+E.26.3 How hast thou counselled him that hath no wisdom? and how hast thou plentifully declared the thing as it is?
+
+α.26.4 
+E.26.4 To whom hast thou uttered words? and whose spirit came from thee?
+
+α.26.5 
+E.26.5 Dead things are formed from under the waters, and the inhabitants thereof.
+
+α.26.6 
+E.26.6 Hell is naked before him, and destruction hath no covering.
+
+α.26.7 
+E.26.7 He stretcheth out the north over the empty place, and hangeth the earth upon nothing.
+
+α.26.8 
+E.26.8 He bindeth up the waters in his thick clouds; and the cloud is not rent under them.
+
+α.26.9 
+E.26.9 He holdeth back the face of his throne, and spreadeth his cloud upon it.
+
+α.26.10 
+E.26.10 He hath compassed the waters with bounds, until the day and night come to an end.
+
+α.26.11 
+E.26.11 The pillars of heaven tremble and are astonished at his reproof.
+
+α.26.12 
+E.26.12 He divideth the sea with his power, and by his understanding he smiteth through the proud.
+
+α.26.13 
+E.26.13 By his spirit he hath garnished the heavens; his hand hath formed the crooked serpent.
+
+α.26.14 
+E.26.14 Lo, these are parts of his ways: but how little a portion is heard of him? but the thunder of his power who can understand?
+
+α.27.1 
+E.27.1 Moreover Job continued his parable, and said,
+
+α.27.2 
+E.27.2 As God liveth, who hath taken away my judgment; and the Almighty, who hath vexed my soul;
+
+α.27.3 
+E.27.3 All the while my breath is in me, and the spirit of God is in my nostrils;
+
+α.27.4 
+E.27.4 My lips shall not speak wickedness, nor my tongue utter deceit.
+
+α.27.5 
+E.27.5 God forbid that I should justify you: till I die I will not remove mine integrity from me.
+
+α.27.6 
+E.27.6 My righteousness I hold fast, and will not let it go: my heart shall not reproach me so long as I live.
+
+α.27.7 
+E.27.7 Let mine enemy be as the wicked, and he that riseth up against me as the unrighteous.
+
+α.27.8 
+E.27.8 For what is the hope of the hypocrite, though he hath gained, when God taketh away his soul?
+
+α.27.9 
+E.27.9 Will God hear his cry when trouble cometh upon him?
+
+α.27.10 
+E.27.10 Will he delight himself in the Almighty? will he always call upon God?
+
+α.27.11 
+E.27.11 I will teach you by the hand of God: that which is with the Almighty will I not conceal.
+
+α.27.12 
+E.27.12 Behold, all ye yourselves have seen it; why then are ye thus altogether vain?
+
+α.27.13 
+E.27.13 This is the portion of a wicked man with God, and the heritage of oppressors, which they shall receive of the Almighty.
+
+α.27.14 
+E.27.14 If his children be multiplied, it is for the sword: and his offspring shall not be satisfied with bread.
+
+α.27.15 
+E.27.15 Those that remain of him shall be buried in death: and his widows shall not weep.
+
+α.27.16 
+E.27.16 Though he heap up silver as the dust, and prepare raiment as the clay;
+
+α.27.17 
+E.27.17 He may prepare it, but the just shall put it on, and the innocent shall divide the silver.
+
+α.27.18 
+E.27.18 He buildeth his house as a moth, and as a booth that the keeper maketh.
+
+α.27.19 
+E.27.19 The rich man shall lie down, but he shall not be gathered: he openeth his eyes, and he is not.
+
+α.27.20 
+E.27.20 Terrors take hold on him as waters, a tempest stealeth him away in the night.
+
+α.27.21 
+E.27.21 The east wind carrieth him away, and he departeth: and as a storm hurleth him out of his place.
+
+α.27.22 
+E.27.22 For God shall cast upon him, and not spare: he would fain flee out of his hand.
+
+α.27.23 
+E.27.23 Men shall clap their hands at him, and shall hiss him out of his place.
+
+α.28.1 
+E.28.1 Surely there is a vein for the silver, and a place for gold where they fine it.
+
+α.28.2 
+E.28.2 Iron is taken out of the earth, and brass is molten out of the stone.
+
+α.28.3 
+E.28.3 He setteth an end to darkness, and searcheth out all perfection: the stones of darkness, and the shadow of death.
+
+α.28.4 
+E.28.4 The flood breaketh out from the inhabitant; even the waters forgotten of the foot: they are dried up, they are gone away from men.
+
+α.28.5 
+E.28.5 As for the earth, out of it cometh bread: and under it is turned up as it were fire.
+
+α.28.6 
+E.28.6 The stones of it are the place of sapphires: and it hath dust of gold.
+
+α.28.7 
+E.28.7 There is a path which no fowl knoweth, and which the vulture's eye hath not seen:
+
+α.28.8 
+E.28.8 The lion's whelps have not trodden it, nor the fierce lion passed by it.
+
+α.28.9 
+E.28.9 He putteth forth his hand upon the rock; he overturneth the mountains by the roots.
+
+α.28.10 
+E.28.10 He cutteth out rivers among the rocks; and his eye seeth every precious thing.
+
+α.28.11 
+E.28.11 He bindeth the floods from overflowing; and the thing that is hid bringeth he forth to light.
+
+α.28.12 
+E.28.12 But where shall wisdom be found? and where is the place of understanding?
+
+α.28.13 
+E.28.13 Man knoweth not the price thereof; neither is it found in the land of the living.
+
+α.28.14 
+E.28.14 The depth saith, It is not in me: and the sea saith, It is not with me.
+
+α.28.15 
+E.28.15 It cannot be gotten for gold, neither shall silver be weighed for the price thereof.
+
+α.28.16 
+E.28.16 It cannot be valued with the gold of Ophir, with the precious onyx, or the sapphire.
+
+α.28.17 
+E.28.17 The gold and the crystal cannot equal it: and the exchange of it shall not be for jewels of fine gold.
+
+α.28.18 
+E.28.18 No mention shall be made of coral, or of pearls: for the price of wisdom is above rubies.
+
+α.28.19 
+E.28.19 The topaz of Ethiopia shall not equal it, neither shall it be valued with pure gold.
+
+α.28.20 
+E.28.20 Whence then cometh wisdom? and where is the place of understanding?
+
+α.28.21 
+E.28.21 Seeing it is hid from the eyes of all living, and kept close from the fowls of the air.
+
+α.28.22 
+E.28.22 Destruction and death say, We have heard the fame thereof with our ears.
+
+α.28.23 
+E.28.23 God understandeth the way thereof, and he knoweth the place thereof.
+
+α.28.24 
+E.28.24 For he looketh to the ends of the earth, and seeth under the whole heaven;
+
+α.28.25 
+E.28.25 To make the weight for the winds; and he weigheth the waters by measure.
+
+α.28.26 
+E.28.26 When he made a decree for the rain, and a way for the lightning of the thunder:
+
+α.28.27 
+E.28.27 Then did he see it, and declare it; he prepared it, yea, and searched it out.
+
+α.28.28 
+E.28.28 And unto man he said, Behold, the fear of the LORD, that is wisdom; and to depart from evil is understanding.
+
+α.29.1 
+E.29.1 Moreover Job continued his parable, and said,
+
+α.29.2 
+E.29.2 Oh that I were as in months past, as in the days when God preserved me;
+
+α.29.3 
+E.29.3 When his candle shined upon my head, and when by his light I walked through darkness;
+
+α.29.4 
+E.29.4 As I was in the days of my youth, when the secret of God was upon my tabernacle;
+
+α.29.5 
+E.29.5 When the Almighty was yet with me, when my children were about me;
+
+α.29.6 
+E.29.6 When I washed my steps with butter, and the rock poured me out rivers of oil;
+
+α.29.7 
+E.29.7 When I went out to the gate through the city, when I prepared my seat in the street!
+
+α.29.8 
+E.29.8 The young men saw me, and hid themselves: and the aged arose, and stood up.
+
+α.29.9 
+E.29.9 The princes refrained talking, and laid their hand on their mouth.
+
+α.29.10 
+E.29.10 The nobles held their peace, and their tongue cleaved to the roof of their mouth.
+
+α.29.11 
+E.29.11 When the ear heard me, then it blessed me; and when the eye saw me, it gave witness to me:
+
+α.29.12 
+E.29.12 Because I delivered the poor that cried, and the fatherless, and him that had none to help him.
+
+α.29.13 
+E.29.13 The blessing of him that was ready to perish came upon me: and I caused the widow's heart to sing for joy.
+
+α.29.14 
+E.29.14 I put on righteousness, and it clothed me: my judgment was as a robe and a diadem.
+
+α.29.15 
+E.29.15 I was eyes to the blind, and feet was I to the lame.
+
+α.29.16 
+E.29.16 I was a father to the poor: and the cause which I knew not I searched out.
+
+α.29.17 
+E.29.17 And I brake the jaws of the wicked, and plucked the spoil out of his teeth.
+
+α.29.18 
+E.29.18 Then I said, I shall die in my nest, and I shall multiply my days as the sand.
+
+α.29.19 
+E.29.19 My root was spread out by the waters, and the dew lay all night upon my branch.
+
+α.29.20 
+E.29.20 My glory was fresh in me, and my bow was renewed in my hand.
+
+α.29.21 
+E.29.21 Unto me men gave ear, and waited, and kept silence at my counsel.
+
+α.29.22 
+E.29.22 After my words they spake not again; and my speech dropped upon them.
+
+α.29.23 
+E.29.23 And they waited for me as for the rain; and they opened their mouth wide as for the latter rain.
+
+α.29.24 
+E.29.24 If I laughed on them, they believed it not; and the light of my countenance they cast not down.
+
+α.29.25 
+E.29.25 I chose out their way, and sat chief, and dwelt as a king in the army, as one that comforteth the mourners.
+
+α.30.1 
+E.30.1 But now they that are younger than I have me in derision, whose fathers I would have disdained to have set with the dogs of my flock.
+
+α.30.2 
+E.30.2 Yea, whereto might the strength of their hands profit me, in whom old age was perished?
+
+α.30.3 
+E.30.3 For want and famine they were solitary; fleeing into the wilderness in former time desolate and waste.
+
+α.30.4 
+E.30.4 Who cut up mallows by the bushes, and juniper roots for their meat.
+
+α.30.5 
+E.30.5 They were driven forth from among men, (they cried after them as after a thief;)
+
+α.30.6 
+E.30.6 To dwell in the cliffs of the valleys, in caves of the earth, and in the rocks.
+
+α.30.7 
+E.30.7 Among the bushes they brayed; under the nettles they were gathered together.
+
+α.30.8 
+E.30.8 They were children of fools, yea, children of base men: they were viler than the earth.
+
+α.30.9 
+E.30.9 And now am I their song, yea, I am their byword.
+
+α.30.10 
+E.30.10 They abhor me, they flee far from me, and spare not to spit in my face.
+
+α.30.11 
+E.30.11 Because he hath loosed my cord, and afflicted me, they have also let loose the bridle before me.
+
+α.30.12 
+E.30.12 Upon my right hand rise the youth; they push away my feet, and they raise up against me the ways of their destruction.
+
+α.30.13 
+E.30.13 They mar my path, they set forward my calamity, they have no helper.
+
+α.30.14 
+E.30.14 They came upon me as a wide breaking in of waters: in the desolation they rolled themselves upon me.
+
+α.30.15 
+E.30.15 Terrors are turned upon me: they pursue my soul as the wind: and my welfare passeth away as a cloud.
+
+α.30.16 
+E.30.16 And now my soul is poured out upon me; the days of affliction have taken hold upon me.
+
+α.30.17 
+E.30.17 My bones are pierced in me in the night season: and my sinews take no rest.
+
+α.30.18 
+E.30.18 By the great force of my disease is my garment changed: it bindeth me about as the collar of my coat.
+
+α.30.19 
+E.30.19 He hath cast me into the mire, and I am become like dust and ashes.
+
+α.30.20 
+E.30.20 I cry unto thee, and thou dost not hear me: I stand up, and thou regardest me not.
+
+α.30.21 
+E.30.21 Thou art become cruel to me: with thy strong hand thou opposest thyself against me.
+
+α.30.22 
+E.30.22 Thou liftest me up to the wind; thou causest me to ride upon it, and dissolvest my substance.
+
+α.30.23 
+E.30.23 For I know that thou wilt bring me to death, and to the house appointed for all living.
+
+α.30.24 
+E.30.24 Howbeit he will not stretch out his hand to the grave, though they cry in his destruction.
+
+α.30.25 
+E.30.25 Did not I weep for him that was in trouble? was not my soul grieved for the poor?
+
+α.30.26 
+E.30.26 When I looked for good, then evil came unto me: and when I waited for light, there came darkness.
+
+α.30.27 
+E.30.27 My bowels boiled, and rested not: the days of affliction prevented me.
+
+α.30.28 
+E.30.28 I went mourning without the sun: I stood up, and I cried in the congregation.
+
+α.30.29 
+E.30.29 I am a brother to dragons, and a companion to owls.
+
+α.30.30 
+E.30.30 My skin is black upon me, and my bones are burned with heat.
+
+α.30.31 
+E.30.31 My harp also is turned to mourning, and my organ into the voice of them that weep.
+
+α.31.1 
+E.31.1 I made a covenant with mine eyes; why then should I think upon a maid?
+
+α.31.2 
+E.31.2 For what portion of God is there from above? and what inheritance of the Almighty from on high?
+
+α.31.3 
+E.31.3 Is not destruction to the wicked? and a strange punishment to the workers of iniquity?
+
+α.31.4 
+E.31.4 Doth not he see my ways, and count all my steps?
+
+α.31.5 
+E.31.5 If I have walked with vanity, or if my foot hath hasted to deceit;
+
+α.31.6 
+E.31.6 Let me be weighed in an even balance that God may know mine integrity.
+
+α.31.7 
+E.31.7 If my step hath turned out of the way, and mine heart walked after mine eyes, and if any blot hath cleaved to mine hands;
+
+α.31.8 
+E.31.8 Then let me sow, and let another eat; yea, let my offspring be rooted out.
+
+α.31.9 
+E.31.9 If mine heart have been deceived by a woman, or if I have laid wait at my neighbour's door;
+
+α.31.10 
+E.31.10 Then let my wife grind unto another, and let others bow down upon her.
+
+α.31.11 
+E.31.11 For this is an heinous crime; yea, it is an iniquity to be punished by the judges.
+
+α.31.12 
+E.31.12 For it is a fire that consumeth to destruction, and would root out all mine increase.
+
+α.31.13 
+E.31.13 If I did despise the cause of my manservant or of my maidservant, when they contended with me;
+
+α.31.14 
+E.31.14 What then shall I do when God riseth up? and when he visiteth, what shall I answer him?
+
+α.31.15 
+E.31.15 Did not he that made me in the womb make him? and did not one fashion us in the womb?
+
+α.31.16 
+E.31.16 If I have withheld the poor from their desire, or have caused the eyes of the widow to fail;
+
+α.31.17 
+E.31.17 Or have eaten my morsel myself alone, and the fatherless hath not eaten thereof;
+
+α.31.18 
+E.31.18 (For from my youth he was brought up with me, as with a father, and I have guided her from my mother's womb;)
+
+α.31.19 
+E.31.19 If I have seen any perish for want of clothing, or any poor without covering;
+
+α.31.20 
+E.31.20 If his loins have not blessed me, and if he were not warmed with the fleece of my sheep;
+
+α.31.21 
+E.31.21 If I have lifted up my hand against the fatherless, when I saw my help in the gate:
+
+α.31.22 
+E.31.22 Then let mine arm fall from my shoulder blade, and mine arm be broken from the bone.
+
+α.31.23 
+E.31.23 For destruction from God was a terror to me, and by reason of his highness I could not endure.
+
+α.31.24 
+E.31.24 If I have made gold my hope, or have said to the fine gold, Thou art my confidence;
+
+α.31.25 
+E.31.25 If I rejoice because my wealth was great, and because mine hand had gotten much;
+
+α.31.26 
+E.31.26 If I beheld the sun when it shined, or the moon walking in brightness;
+
+α.31.27 
+E.31.27 And my heart hath been secretly enticed, or my mouth hath kissed my hand:
+
+α.31.28 
+E.31.28 This also were an iniquity to be punished by the judge: for I should have denied the God that is above.
+
+α.31.29 
+E.31.29 If I rejoice at the destruction of him that hated me, or lifted up myself when evil found him:
+
+α.31.30 
+E.31.30 Neither have I suffered my mouth to sin by wishing a curse to his soul.
+
+α.31.31 
+E.31.31 If the men of my tabernacle said not, Oh that we had of his flesh!  we cannot be satisfied.
+
+α.31.32 
+E.31.32 The stranger did not lodge in the street: but I opened my doors to the traveller.
+
+α.31.33 
+E.31.33 If I covered my transgressions as Adam, by hiding mine iniquity in my bosom:
+
+α.31.34 
+E.31.34 Did I fear a great multitude, or did the contempt of families terrify me, that I kept silence, and went not out of the door?
+
+α.31.35 
+E.31.35 Oh that one would hear me! behold, my desire is, that the Almighty would answer me, and that mine adversary had written a book.
+
+α.31.36 
+E.31.36 Surely I would take it upon my shoulder, and bind it as a crown to me.
+
+α.31.37 
+E.31.37 I would declare unto him the number of my steps; as a prince would I go near unto him.
+
+α.31.38 
+E.31.38 If my land cry against me, or that the furrows likewise thereof complain;
+
+α.31.39 
+E.31.39 If I have eaten the fruits thereof without money, or have caused the owners thereof to lose their life:
+
+α.31.40 
+E.31.40 Let thistles grow instead of wheat, and cockle instead of barley. The words of Job are ended.
+
+α.32.1 
+E.32.1 So these three men ceased to answer Job, because he was righteous in his own eyes.
+
+α.32.2 
+E.32.2 Then was kindled the wrath of Elihu the son of Barachel the Buzite, of the kindred of Ram: against Job was his wrath kindled, because he justified himself rather than God.
+
+α.32.3 
+E.32.3 Also against his three friends was his wrath kindled, because they had found no answer, and yet had condemned Job.
+
+α.32.4 
+E.32.4 Now Elihu had waited till Job had spoken, because they were elder than he.
+
+α.32.5 
+E.32.5 When Elihu saw that there was no answer in the mouth of these three men, then his wrath was kindled.
+
+α.32.6 
+E.32.6 And Elihu the son of Barachel the Buzite answered and said, I am young, and ye are very old; wherefore I was afraid, and durst not shew you mine opinion.
+
+α.32.7 
+E.32.7 I said, Days should speak, and multitude of years should teach wisdom.
+
+α.32.8 
+E.32.8 But there is a spirit in man: and the inspiration of the Almighty giveth them understanding.
+
+α.32.9 
+E.32.9 Great men are not always wise: neither do the aged understand judgment.
+
+α.32.10 
+E.32.10 Therefore I said, Hearken to me; I also will shew mine opinion.
+
+α.32.11 
+E.32.11 Behold, I waited for your words; I gave ear to your reasons, whilst ye searched out what to say.
+
+α.32.12 
+E.32.12 Yea, I attended unto you, and, behold, there was none of you that convinced Job, or that answered his words:
+
+α.32.13 
+E.32.13 Lest ye should say, We have found out wisdom: God thrusteth him down, not man.
+
+α.32.14 
+E.32.14 Now he hath not directed his words against me: neither will I answer him with your speeches.
+
+α.32.15 
+E.32.15 They were amazed, they answered no more: they left off speaking.
+
+α.32.16 
+E.32.16 When I had waited, (for they spake not, but stood still, and answered no more;)
+
+α.32.17 
+E.32.17 I said, I will answer also my part, I also will shew mine opinion.
+
+α.32.18 
+E.32.18 For I am full of matter, the spirit within me constraineth me.
+
+α.32.19 
+E.32.19 Behold, my belly is as wine which hath no vent; it is ready to burst like new bottles.
+
+α.32.20 
+E.32.20 I will speak, that I may be refreshed: I will open my lips and answer.
+
+α.32.21 
+E.32.21 Let me not, I pray you, accept any man's person, neither let me give flattering titles unto man.
+
+α.32.22 
+E.32.22 For I know not to give flattering titles; in so doing my maker would soon take me away.
+
+α.33.1 
+E.33.1 Wherefore, Job, I pray thee, hear my speeches, and hearken to all my words.
+
+α.33.2 
+E.33.2 Behold, now I have opened my mouth, my tongue hath spoken in my mouth.
+
+α.33.3 
+E.33.3 My words shall be of the uprightness of my heart: and my lips shall utter knowledge clearly.
+
+α.33.4 
+E.33.4 The spirit of God hath made me, and the breath of the Almighty hath given me life.
+
+α.33.5 
+E.33.5 If thou canst answer me, set thy words in order before me, stand up.
+
+α.33.6 
+E.33.6 Behold, I am according to thy wish in God's stead: I also am formed out of the clay.
+
+α.33.7 
+E.33.7 Behold, my terror shall not make thee afraid, neither shall my hand be heavy upon thee.
+
+α.33.8 
+E.33.8 Surely thou hast spoken in mine hearing, and I have heard the voice of thy words, saying,
+
+α.33.9 
+E.33.9 I am clean without transgression, I am innocent; neither is there iniquity in me.
+
+α.33.10 
+E.33.10 Behold, he findeth occasions against me, he counteth me for his enemy,
+
+α.33.11 
+E.33.11 He putteth my feet in the stocks, he marketh all my paths.
+
+α.33.12 
+E.33.12 Behold, in this thou art not just: I will answer thee, that God is greater than man.
+
+α.33.13 
+E.33.13 Why dost thou strive against him? for he giveth not account of any of his matters.
+
+α.33.14 
+E.33.14 For God speaketh once, yea twice, yet man perceiveth it not.
+
+α.33.15 
+E.33.15 In a dream, in a vision of the night, when deep sleep falleth upon men, in slumberings upon the bed;
+
+α.33.16 
+E.33.16 Then he openeth the ears of men, and sealeth their instruction,
+
+α.33.17 
+E.33.17 That he may withdraw man from his purpose, and hide pride from man.
+
+α.33.18 
+E.33.18 He keepeth back his soul from the pit, and his life from perishing by the sword.
+
+α.33.19 
+E.33.19 He is chastened also with pain upon his bed, and the multitude of his bones with strong pain:
+
+α.33.20 
+E.33.20 So that his life abhorreth bread, and his soul dainty meat.
+
+α.33.21 
+E.33.21 His flesh is consumed away, that it cannot be seen; and his bones that were not seen stick out.
+
+α.33.22 
+E.33.22 Yea, his soul draweth near unto the grave, and his life to the destroyers.
+
+α.33.23 
+E.33.23 If there be a messenger with him, an interpreter, one among a thousand, to shew unto man his uprightness:
+
+α.33.24 
+E.33.24 Then he is gracious unto him, and saith, Deliver him from going down to the pit: I have found a ransom.
+
+α.33.25 
+E.33.25 His flesh shall be fresher than a child's: he shall return to the days of his youth:
+
+α.33.26 
+E.33.26 He shall pray unto God, and he will be favourable unto him: and he shall see his face with joy: for he will render unto man his righteousness.
+
+α.33.27 
+E.33.27 He looketh upon men, and if any say, I have sinned, and perverted that which was right, and it profited me not;
+
+α.33.28 
+E.33.28 He will deliver his soul from going into the pit, and his life shall see the light.
+
+α.33.29 
+E.33.29 Lo, all these things worketh God oftentimes with man,
+
+α.33.30 
+E.33.30 To bring back his soul from the pit, to be enlightened with the light of the living.
+
+α.33.31 
+E.33.31 Mark well, O Job, hearken unto me: hold thy peace, and I will speak.
+
+α.33.32 
+E.33.32 If thou hast anything to say, answer me: speak, for I desire to justify thee.
+
+α.33.33 
+E.33.33 If not, hearken unto me: hold thy peace, and I shall teach thee wisdom.
+
+α.34.1 
+E.34.1 Furthermore Elihu answered and said,
+
+α.34.2 
+E.34.2 Hear my words, O ye wise men; and give ear unto me, ye that have knowledge.
+
+α.34.3 
+E.34.3 For the ear trieth words, as the mouth tasteth meat.
+
+α.34.4 
+E.34.4 Let us choose to us judgment: let us know among ourselves what is good.
+
+α.34.5 
+E.34.5 For Job hath said, I am righteous: and God hath taken away my judgment.
+
+α.34.6 
+E.34.6 Should I lie against my right? my wound is incurable without transgression.
+
+α.34.7 
+E.34.7 What man is like Job, who drinketh up scorning like water?
+
+α.34.8 
+E.34.8 Which goeth in company with the workers of iniquity, and walketh with wicked men.
+
+α.34.9 
+E.34.9 For he hath said, It profiteth a man nothing that he should delight himself with God.
+
+α.34.10 
+E.34.10 Therefore hearken unto me ye men of understanding: far be it from God, that he should do wickedness; and from the Almighty, that he should commit iniquity.
+
+α.34.11 
+E.34.11 For the work of a man shall he render unto him, and cause every man to find according to his ways.
+
+α.34.12 
+E.34.12 Yea, surely God will not do wickedly, neither will the Almighty pervert judgment.
+
+α.34.13 
+E.34.13 Who hath given him a charge over the earth? or who hath disposed the whole world?
+
+α.34.14 
+E.34.14 If he set his heart upon man, if he gather unto himself his spirit and his breath;
+
+α.34.15 
+E.34.15 All flesh shall perish together, and man shall turn again unto dust.
+
+α.34.16 
+E.34.16 If now thou hast understanding, hear this: hearken to the voice of my words.
+
+α.34.17 
+E.34.17 Shall even he that hateth right govern? and wilt thou condemn him that is most just?
+
+α.34.18 
+E.34.18 Is it fit to say to a king, Thou art wicked? and to princes, Ye are ungodly?
+
+α.34.19 
+E.34.19 How much less to him that accepteth not the persons of princes, nor regardeth the rich more than the poor? for they all are the work of his hands.
+
+α.34.20 
+E.34.20 In a moment shall they die, and the people shall be troubled at midnight, and pass away: and the mighty shall be taken away without hand.
+
+α.34.21 
+E.34.21 For his eyes are upon the ways of man, and he seeth all his goings.
+
+α.34.22 
+E.34.22 There is no darkness, nor shadow of death, where the workers of iniquity may hide themselves.
+
+α.34.23 
+E.34.23 For he will not lay upon man more than right; that he should enter into judgment with God.
+
+α.34.24 
+E.34.24 He shall break in pieces mighty men without number, and set others in their stead.
+
+α.34.25 
+E.34.25 Therefore he knoweth their works, and he overturneth them in the night, so that they are destroyed.
+
+α.34.26 
+E.34.26 He striketh them as wicked men in the open sight of others;
+
+α.34.27 
+E.34.27 Because they turned back from him, and would not consider any of his ways:
+
+α.34.28 
+E.34.28 So that they cause the cry of the poor to come unto him, and he heareth the cry of the afflicted.
+
+α.34.29 
+E.34.29 When he giveth quietness, who then can make trouble? and when he hideth his face, who then can behold him? whether it be done against a nation, or against a man only:
+
+α.34.30 
+E.34.30 That the hypocrite reign not, lest the people be ensnared.
+
+α.34.31 
+E.34.31 Surely it is meet to be said unto God, I have borne chastisement, I will not offend any more:
+
+α.34.32 
+E.34.32 That which I see not teach thou me: if I have done iniquity, I will do no more.
+
+α.34.33 
+E.34.33 Should it be according to thy mind? he will recompense it, whether thou refuse, or whether thou choose; and not I: therefore speak what thou knowest.
+
+α.34.34 
+E.34.34 Let men of understanding tell me, and let a wise man hearken unto me.
+
+α.34.35 
+E.34.35 Job hath spoken without knowledge, and his words were without wisdom.
+
+α.34.36 
+E.34.36 My desire is that Job may be tried unto the end because of his answers for wicked men.
+
+α.34.37 
+E.34.37 For he addeth rebellion unto his sin, he clappeth his hands among us, and multiplieth his words against God.
+
+α.35.1 
+E.35.1 Elihu spake moreover, and said,
+
+α.35.2 
+E.35.2 Thinkest thou this to be right, that thou saidst, My righteousness is more than God's?
+
+α.35.3 
+E.35.3 For thou saidst, What advantage will it be unto thee? and, What profit shall I have, if I be cleansed from my sin?
+
+α.35.4 
+E.35.4 I will answer thee, and thy companions with thee.
+
+α.35.5 
+E.35.5 Look unto the heavens, and see; and behold the clouds which are higher than thou.
+
+α.35.6 
+E.35.6 If thou sinnest, what doest thou against him? or if thy transgressions be multiplied, what doest thou unto him?
+
+α.35.7 
+E.35.7 If thou be righteous, what givest thou him? or what receiveth he of thine hand?
+
+α.35.8 
+E.35.8 Thy wickedness may hurt a man as thou art; and thy righteousness may profit the son of man.
+
+α.35.9 
+E.35.9 By reason of the multitude of oppressions they make the oppressed to cry: they cry out by reason of the arm of the mighty.
+
+α.35.10 
+E.35.10 But none saith, Where is God my maker, who giveth songs in the night;
+
+α.35.11 
+E.35.11 Who teacheth us more than the beasts of the earth, and maketh us wiser than the fowls of heaven?
+
+α.35.12 
+E.35.12 There they cry, but none giveth answer, because of the pride of evil men.
+
+α.35.13 
+E.35.13 Surely God will not hear vanity, neither will the Almighty regard it.
+
+α.35.14 
+E.35.14 Although thou sayest thou shalt not see him, yet judgment is before him; therefore trust thou in him.
+
+α.35.15 
+E.35.15 But now, because it is not so, he hath visited in his anger; yet he knoweth it not in great extremity:
+
+α.35.16 
+E.35.16 Therefore doth Job open his mouth in vain; he multiplieth words without knowledge.
+
+α.36.1 
+E.36.1 Elihu also proceeded, and said,
+
+α.36.2 
+E.36.2 Suffer me a little, and I will shew thee that I have yet to speak on God's behalf.
+
+α.36.3 
+E.36.3 I will fetch my knowledge from afar, and will ascribe righteousness to my Maker.
+
+α.36.4 
+E.36.4 For truly my words shall not be false: he that is perfect in knowledge is with thee.
+
+α.36.5 
+E.36.5 Behold, God is mighty, and despiseth not any: he is mighty in strength and wisdom.
+
+α.36.6 
+E.36.6 He preserveth not the life of the wicked: but giveth right to the poor.
+
+α.36.7 
+E.36.7 He withdraweth not his eyes from the righteous: but with kings are they on the throne; yea, he doth establish them for ever, and they are exalted.
+
+α.36.8 
+E.36.8 And if they be bound in fetters, and be holden in cords of affliction;
+
+α.36.9 
+E.36.9 Then he sheweth them their work, and their transgressions that they have exceeded.
+
+α.36.10 
+E.36.10 He openeth also their ear to discipline, and commandeth that they return from iniquity.
+
+α.36.11 
+E.36.11 If they obey and serve him, they shall spend their days in prosperity, and their years in pleasures.
+
+α.36.12 
+E.36.12 But if they obey not, they shall perish by the sword, and they shall die without knowledge.
+
+α.36.13 
+E.36.13 But the hypocrites in heart heap up wrath: they cry not when he bindeth them.
+
+α.36.14 
+E.36.14 They die in youth, and their life is among the unclean.
+
+α.36.15 
+E.36.15 He delivereth the poor in his affliction, and openeth their ears in oppression.
+
+α.36.16 
+E.36.16 Even so would he have removed thee out of the strait into a broad place, where there is no straitness; and that which should be set on thy table should be full of fatness.
+
+α.36.17 
+E.36.17 But thou hast fulfilled the judgment of the wicked: judgment and justice take hold on thee.
+
+α.36.18 
+E.36.18 Because there is wrath, beware lest he take thee away with his stroke: then a great ransom cannot deliver thee.
+
+α.36.19 
+E.36.19 Will he esteem thy riches? no, not gold, nor all the forces of strength.
+
+α.36.20 
+E.36.20 Desire not the night, when people are cut off in their place.
+
+α.36.21 
+E.36.21 Take heed, regard not iniquity: for this hast thou chosen rather than affliction.
+
+α.36.22 
+E.36.22 Behold, God exalteth by his power: who teacheth like him?
+
+α.36.23 
+E.36.23 Who hath enjoined him his way? or who can say, Thou hast wrought iniquity?
+
+α.36.24 
+E.36.24 Remember that thou magnify his work, which men behold.
+
+α.36.25 
+E.36.25 Every man may see it; man may behold it afar off.
+
+α.36.26 
+E.36.26 Behold, God is great, and we know him not, neither can the number of his years be searched out.
+
+α.36.27 
+E.36.27 For he maketh small the drops of water: they pour down rain according to the vapour thereof:
+
+α.36.28 
+E.36.28 Which the clouds do drop and distil upon man abundantly.
+
+α.36.29 
+E.36.29 Also can any understand the spreadings of the clouds, or the noise of his tabernacle?
+
+α.36.30 
+E.36.30 Behold, he spreadeth his light upon it, and covereth the bottom of the sea.
+
+α.36.31 
+E.36.31 For by them judgeth he the people; he giveth meat in abundance.
+
+α.36.32 
+E.36.32 With clouds he covereth the light; and commandeth it not to shine by the cloud that cometh betwixt.
+
+α.36.33 
+E.36.33 The noise thereof sheweth concerning it, the cattle also concerning the vapour.
+
+α.37.1 
+E.37.1 At this also my heart trembleth, and is moved out of his place.
+
+α.37.2 
+E.37.2 Hear attentively the noise of his voice, and the sound that goeth out of his mouth.
+
+α.37.3 
+E.37.3 He directeth it under the whole heaven, and his lightning unto the ends of the earth.
+
+α.37.4 
+E.37.4 After it a voice roareth: he thundereth with the voice of his excellency; and he will not stay them when his voice is heard.
+
+α.37.5 
+E.37.5 God thundereth marvellously with his voice; great things doeth he, which we cannot comprehend.
+
+α.37.6 
+E.37.6 For he saith to the snow, Be thou on the earth; likewise to the small rain, and to the great rain of his strength.
+
+α.37.7 
+E.37.7 He sealeth up the hand of every man; that all men may know his work.
+
+α.37.8 
+E.37.8 Then the beasts go into dens, and remain in their places.
+
+α.37.9 
+E.37.9 Out of the south cometh the whirlwind: and cold out of the north.
+
+α.37.10 
+E.37.10 By the breath of God frost is given: and the breadth of the waters is straitened.
+
+α.37.11 
+E.37.11 Also by watering he wearieth the thick cloud: he scattereth his bright cloud:
+
+α.37.12 
+E.37.12 And it is turned round about by his counsels: that they may do whatsoever he commandeth them upon the face of the world in the earth.
+
+α.37.13 
+E.37.13 He causeth it to come, whether for correction, or for his land, or for mercy.
+
+α.37.14 
+E.37.14 Hearken unto this, O Job: stand still, and consider the wondrous works of God.
+
+α.37.15 
+E.37.15 Dost thou know when God disposed them, and caused the light of his cloud to shine?
+
+α.37.16 
+E.37.16 Dost thou know the balancings of the clouds, the wondrous works of him which is perfect in knowledge?
+
+α.37.17 
+E.37.17 How thy garments are warm, when he quieteth the earth by the south wind?
+
+α.37.18 
+E.37.18 Hast thou with him spread out the sky, which is strong, and as a molten looking glass?
+
+α.37.19 
+E.37.19 Teach us what we shall say unto him; for we cannot order our speech by reason of darkness.
+
+α.37.20 
+E.37.20 Shall it be told him that I speak? if a man speak, surely he shall be swallowed up.
+
+α.37.21 
+E.37.21 And now men see not the bright light which is in the clouds: but the wind passeth, and cleanseth them.
+
+α.37.22 
+E.37.22 Fair weather cometh out of the north: with God is terrible majesty.
+
+α.37.23 
+E.37.23 Touching the Almighty, we cannot find him out: he is excellent in power, and in judgment, and in plenty of justice: he will not afflict.
+
+α.37.24 
+E.37.24 Men do therefore fear him: he respecteth not any that are wise of heart.
+
+α.38.1 
+E.38.1 Then the LORD answered Job out of the whirlwind, and said,
+
+α.38.2 
+E.38.2 Who is this that darkeneth counsel by words without knowledge?
+
+α.38.3 
+E.38.3 Gird up now thy loins like a man; for I will demand of thee, and answer thou me.
+
+α.38.4 
+E.38.4 Where wast thou when I laid the foundations of the earth? declare, if thou hast understanding.
+
+α.38.5 
+E.38.5 Who hath laid the measures thereof, if thou knowest? or who hath stretched the line upon it?
+
+α.38.6 
+E.38.6 Whereupon are the foundations thereof fastened? or who laid the corner stone thereof;
+
+α.38.7 
+E.38.7 When the morning stars sang together, and all the sons of God shouted for joy?
+
+α.38.8 
+E.38.8 Or who shut up the sea with doors, when it brake forth, as if it had issued out of the womb?
+
+α.38.9 
+E.38.9 When I made the cloud the garment thereof, and thick darkness a swaddlingband for it,
+
+α.38.10 
+E.38.10 And brake up for it my decreed place, and set bars and doors,
+
+α.38.11 
+E.38.11 And said, Hitherto shalt thou come, but no further: and here shall thy proud waves be stayed?
+
+α.38.12 
+E.38.12 Hast thou commanded the morning since thy days; and caused the dayspring to know his place;
+
+α.38.13 
+E.38.13 That it might take hold of the ends of the earth, that the wicked might be shaken out of it?
+
+α.38.14 
+E.38.14 It is turned as clay to the seal; and they stand as a garment.
+
+α.38.15 
+E.38.15 And from the wicked their light is withholden, and the high arm shall be broken.
+
+α.38.16 
+E.38.16 Hast thou entered into the springs of the sea? or hast thou walked in the search of the depth?
+
+α.38.17 
+E.38.17 Have the gates of death been opened unto thee? or hast thou seen the doors of the shadow of death?
+
+α.38.18 
+E.38.18 Hast thou perceived the breadth of the earth? declare if thou knowest it all.
+
+α.38.19 
+E.38.19 Where is the way where light dwelleth? and as for darkness, where is the place thereof,
+
+α.38.20 
+E.38.20 That thou shouldest take it to the bound thereof, and that thou shouldest know the paths to the house thereof?
+
+α.38.21 
+E.38.21 Knowest thou it, because thou wast then born? or because the number of thy days is great?
+
+α.38.22 
+E.38.22 Hast thou entered into the treasures of the snow? or hast thou seen the treasures of the hail,
+
+α.38.23 
+E.38.23 Which I have reserved against the time of trouble, against the day of battle and war?
+
+α.38.24 
+E.38.24 By what way is the light parted, which scattereth the east wind upon the earth?
+
+α.38.25 
+E.38.25 Who hath divided a watercourse for the overflowing of waters, or a way for the lightning of thunder;
+
+α.38.26 
+E.38.26 To cause it to rain on the earth, where no man is; on the wilderness, wherein there is no man;
+
+α.38.27 
+E.38.27 To satisfy the desolate and waste ground; and to cause the bud of the tender herb to spring forth?
+
+α.38.28 
+E.38.28 Hath the rain a father? or who hath begotten the drops of dew?
+
+α.38.29 
+E.38.29 Out of whose womb came the ice? and the hoary frost of heaven, who hath gendered it?
+
+α.38.30 
+E.38.30 The waters are hid as with a stone, and the face of the deep is frozen.
+
+α.38.31 Sun woh kukkushpinoh weekone ukkussinasuongan8 ass[is]hquttauaog? àsuh sun woh kutompinum ukkishpissuongash Orion.
+E.38.31 Canst thou bind the sweet influences of Pleiades, or loose the bands of Orion?
+
+α.38.32 Sun woh kussohh8wun Mazzaroth, ut wutahquompiyeumut? asuh sun woh k8nash Arcturus weeche wunnaumonuh?
+E.38.32 Canst thou bring forth Mazzaroth in his season? or canst thou guide Arcturus with his sons?
+
+α.38.33 Sun k8wahteouh kesukque kuhk8waongash? sun woh k8nohtoh wunnanawunnumoonk ut ohkeit?
+E.38.33 Knowest thou the ordinances of heaven? canst thou set the dominion thereof in the earth?
+
+α.38.34 
+E.38.34 Canst thou lift up thy voice to the clouds, that abundance of waters may cover thee?
+
+α.38.35 
+E.38.35 Canst thou send lightnings, that they may go and say unto thee, Here we are?
+
+α.38.36 
+E.38.36 Who hath put wisdom in the inward parts? or who hath given understanding to the heart?
+
+α.38.37 
+E.38.37 Who can number the clouds in wisdom? or who can stay the bottles of heaven,
+
+α.38.38 
+E.38.38 When the dust groweth into hardness, and the clods cleave fast together?
+
+α.38.39 
+E.38.39 Wilt thou hunt the prey for the lion? or fill the appetite of the young lions,
+
+α.38.40 
+E.38.40 When they couch in their dens, and abide in the covert to lie in wait?
+
+α.38.41 
+E.38.41 Who provideth for the raven his food? when his young ones cry unto God, they wander for lack of meat.
+
+α.39.1 
+E.39.1 Knowest thou the time when the wild goats of the rock bring forth? or canst thou mark when the hinds do calve?
+
+α.39.2 
+E.39.2 Canst thou number the months that they fulfil? or knowest thou the time when they bring forth?
+
+α.39.3 
+E.39.3 They bow themselves, they bring forth their young ones, they cast out their sorrows.
+
+α.39.4 
+E.39.4 Their young ones are in good liking, they grow up with corn; they go forth, and return not unto them.
+
+α.39.5 
+E.39.5 Who hath sent out the wild ass free? or who hath loosed the bands of the wild ass?
+
+α.39.6 
+E.39.6 Whose house I have made the wilderness, and the barren land his dwellings.
+
+α.39.7 
+E.39.7 He scorneth the multitude of the city, neither regardeth he the crying of the driver.
+
+α.39.8 
+E.39.8 The range of the mountains is his pasture, and he searcheth after every green thing.
+
+α.39.9 
+E.39.9 Will the unicorn be willing to serve thee, or abide by thy crib?
+
+α.39.10 
+E.39.10 Canst thou bind the unicorn with his band in the furrow? or will he harrow the valleys after thee?
+
+α.39.11 
+E.39.11 Wilt thou trust him, because his strength is great? or wilt thou leave thy labour to him?
+
+α.39.12 
+E.39.12 Wilt thou believe him, that he will bring home thy seed, and gather it into thy barn?
+
+α.39.13 
+E.39.13 Gavest thou the goodly wings unto the peacocks? or wings and feathers unto the ostrich?
+
+α.39.14 
+E.39.14 Which leaveth her eggs in the earth, and warmeth them in dust,
+
+α.39.15 
+E.39.15 And forgetteth that the foot may crush them, or that the wild beast may break them.
+
+α.39.16 
+E.39.16 She is hardened against her young ones, as though they were not her's: her labour is in vain without fear;
+
+α.39.17 
+E.39.17 Because God hath deprived her of wisdom, neither hath he imparted to her understanding.
+
+α.39.18 
+E.39.18 What time she lifteth up herself on high, she scorneth the horse and his rider.
+
+α.39.19 
+E.39.19 Hast thou given the horse strength? hast thou clothed his neck with thunder?
+
+α.39.20 
+E.39.20 Canst thou make him afraid as a grasshopper? the glory of his nostrils is terrible.
+
+α.39.21 
+E.39.21 He paweth in the valley, and rejoiceth in his strength: he goeth on to meet the armed men.
+
+α.39.22 
+E.39.22 He mocketh at fear, and is not affrighted; neither turneth he back from the sword.
+
+α.39.23 
+E.39.23 The quiver rattleth against him, the glittering spear and the shield.
+
+α.39.24 
+E.39.24 He swalloweth the ground with fierceness and rage: neither believeth he that it is the sound of the trumpet.
+
+α.39.25 
+E.39.25 He saith among the trumpets, Ha, ha; and he smelleth the battle afar off, the thunder of the captains, and the shouting.
+
+α.39.26 
+E.39.26 Doth the hawk fly by thy wisdom, and stretch her wings toward the south?
+
+α.39.27 
+E.39.27 Doth the eagle mount up at thy command, and make her nest on high?
+
+α.39.28 
+E.39.28 She dwelleth and abideth on the rock, upon the crag of the rock, and the strong place.
+
+α.39.29 
+E.39.29 From thence she seeketh the prey, and her eyes behold afar off.
+
+α.39.30 
+E.39.30 Her young ones also suck up blood: and where the slain are, there is she.
+
+α.40.1 
+E.40.1 Moreover the LORD answered Job, and said,
+
+α.40.2 
+E.40.2 Shall he that contendeth with the Almighty instruct him? he that reproveth God, let him answer it.
+
+α.40.3 
+E.40.3 Then Job answered the LORD, and said,
+
+α.40.4 
+E.40.4 Behold, I am vile; what shall I answer thee? I will lay mine hand upon my mouth.
+
+α.40.5 
+E.40.5 Once have I spoken; but I will not answer: yea, twice; but I will proceed no further.
+
+α.40.6 
+E.40.6 Then answered the LORD unto Job out of the whirlwind, and said,
+
+α.40.7 
+E.40.7 Gird up thy loins now like a man: I will demand of thee, and declare thou unto me.
+
+α.40.8 
+E.40.8 Wilt thou also disannul my judgment? wilt thou condemn me, that thou mayest be righteous?
+
+α.40.9 
+E.40.9 Hast thou an arm like God? or canst thou thunder with a voice like him?
+
+α.40.10 
+E.40.10 Deck thyself now with majesty and excellency; and array thyself with glory and beauty.
+
+α.40.11 
+E.40.11 Cast abroad the rage of thy wrath: and behold every one that is proud, and abase him.
+
+α.40.12 
+E.40.12 Look on every one that is proud, and bring him low; and tread down the wicked in their place.
+
+α.40.13 
+E.40.13 Hide them in the dust together; and bind their faces in secret.
+
+α.40.14 
+E.40.14 Then will I also confess unto thee that thine own right hand can save thee.
+
+α.40.15 
+E.40.15 Behold now behemoth, which I made with thee; he eateth grass as an ox.
+
+α.40.16 
+E.40.16 Lo now, his strength is in his loins, and his force is in the navel of his belly.
+
+α.40.17 
+E.40.17 He moveth his tail like a cedar: the sinews of his stones are wrapped together.
+
+α.40.18 
+E.40.18 His bones are as strong pieces of brass; his bones are like bars of iron.
+
+α.40.19 
+E.40.19 He is the chief of the ways of God: he that made him can make his sword to approach unto him.
+
+α.40.20 
+E.40.20 Surely the mountains bring him forth food, where all the beasts of the field play.
+
+α.40.21 
+E.40.21 He lieth under the shady trees, in the covert of the reed, and fens.
+
+α.40.22 
+E.40.22 The shady trees cover him with their shadow; the willows of the brook compass him about.
+
+α.40.23 
+E.40.23 Behold, he drinketh up a river, and hasteth not: he trusteth that he can draw up Jordan into his mouth.
+
+α.40.24 
+E.40.24 He taketh it with his eyes: his nose pierceth through snares.
+
+α.41.1 
+E.41.1 Canst thou draw out leviathan with an hook? or his tongue with a cord which thou lettest down?
+
+α.41.2 
+E.41.2 Canst thou put an hook into his nose? or bore his jaw through with a thorn?
+
+α.41.3 
+E.41.3 Will he make many supplications unto thee? will he speak soft words unto thee?
+
+α.41.4 
+E.41.4 Will he make a covenant with thee? wilt thou take him for a servant for ever?
+
+α.41.5 
+E.41.5 Wilt thou play with him as with a bird? or wilt thou bind him for thy maidens?
+
+α.41.6 
+E.41.6 Shall the companions make a banquet of him? shall they part him among the merchants?
+
+α.41.7 
+E.41.7 Canst thou fill his skin with barbed irons? or his head with fish spears?
+
+α.41.8 
+E.41.8 Lay thine hand upon him, remember the battle, do no more.
+
+α.41.9 
+E.41.9 Behold, the hope of him is in vain: shall not one be cast down even at the sight of him?
+
+α.41.10 
+E.41.10 None is so fierce that dare stir him up: who then is able to stand before me?
+
+α.41.11 
+E.41.11 Who hath prevented me, that I should repay him? whatsoever is under the whole heaven is mine.
+
+α.41.12 
+E.41.12 I will not conceal his parts, nor his power, nor his comely proportion.
+
+α.41.13 
+E.41.13 Who can discover the face of his garment? or who can come to him with his double bridle?
+
+α.41.14 
+E.41.14 Who can open the doors of his face? his teeth are terrible round about.
+
+α.41.15 
+E.41.15 His scales are his pride, shut up together as with a close seal.
+
+α.41.16 
+E.41.16 One is so near to another, that no air can come between them.
+
+α.41.17 
+E.41.17 They are joined one to another, they stick together, that they cannot be sundered.
+
+α.41.18 
+E.41.18 By his neesings a light doth shine, and his eyes are like the eyelids of the morning.
+
+α.41.19 
+E.41.19 Out of his mouth go burning lamps, and sparks of fire leap out.
+
+α.41.20 
+E.41.20 Out of his nostrils goeth smoke, as out of a seething pot or caldron.
+
+α.41.21 
+E.41.21 His breath kindleth coals, and a flame goeth out of his mouth.
+
+α.41.22 
+E.41.22 In his neck remaineth strength, and sorrow is turned into joy before him.
+
+α.41.23 
+E.41.23 The flakes of his flesh are joined together: they are firm in themselves; they cannot be moved.
+
+α.41.24 
+E.41.24 His heart is as firm as a stone; yea, as hard as a piece of the nether millstone.
+
+α.41.25 
+E.41.25 When he raiseth up himself, the mighty are afraid: by reason of breakings they purify themselves.
+
+α.41.26 
+E.41.26 The sword of him that layeth at him cannot hold: the spear, the dart, nor the habergeon.
+
+α.41.27 
+E.41.27 He esteemeth iron as straw, and brass as rotten wood.
+
+α.41.28 
+E.41.28 The arrow cannot make him flee: slingstones are turned with him into stubble.
+
+α.41.29 
+E.41.29 Darts are counted as stubble: he laugheth at the shaking of a spear.
+
+α.41.30 
+E.41.30 Sharp stones are under him: he spreadeth sharp pointed things upon the mire.
+
+α.41.31 
+E.41.31 He maketh the deep to boil like a pot: he maketh the sea like a pot of ointment.
+
+α.41.32 
+E.41.32 He maketh a path to shine after him; one would think the deep to be hoary.
+
+α.41.33 
+E.41.33 Upon earth there is not his like, who is made without fear.
+
+α.41.34 
+E.41.34 He beholdeth all high things: he is a king over all the children of pride.
+
+α.42.1 
+E.42.1 Then Job answered the LORD, and said,
+
+α.42.2 
+E.42.2 I know that thou canst do every thing, and that no thought can be withholden from thee.
+
+α.42.3 
+E.42.3 Who is he that hideth counsel without knowledge? therefore have I uttered that I understood not; things too wonderful for me, which I knew not.
+
+α.42.4 
+E.42.4 Hear, I beseech thee, and I will speak: I will demand of thee, and declare thou unto me.
+
+α.42.5 
+E.42.5 I have heard of thee by the hearing of the ear: but now mine eye seeth thee.
+
+α.42.6 
+E.42.6 Wherefore I abhor myself, and repent in dust and ashes.
+
+α.42.7 
+E.42.7 And it was so, that after the LORD had spoken these words unto Job, the LORD said to Eliphaz the Temanite, My wrath is kindled against thee, and against thy two friends: for ye have not spoken of me the thing that is right, as my servant Job hath.
+
+α.42.8 
+E.42.8 Therefore take unto you now seven bullocks and seven rams, and go to my servant Job, and offer up for yourselves a burnt offering; and my servant Job shall pray for you: for him will I accept: lest I deal with you after your folly, in that ye have not spoken of me the thing which is right, like my servant Job.
+
+α.42.9 
+E.42.9 So Eliphaz the Temanite and Bildad the Shuhite and Zophar the Naamathite went, and did according as the LORD commanded them: the LORD also accepted Job.
+
+α.42.10 
+E.42.10 And the LORD turned the captivity of Job, when he prayed for his friends: also the LORD gave Job twice as much as he had before.
+
+α.42.11 
+E.42.11 Then came there unto him all his brethren, and all his sisters, and all they that had been of his acquaintance before, and did eat bread with him in his house: and they bemoaned him, and comforted him over all the evil that the LORD had brought upon him: every man also gave him a piece of money, and every one an earring of gold.
+
+α.42.12 
+E.42.12 So the LORD blessed the latter end of Job more than his beginning: for he had fourteen thousand sheep, and six thousand camels, and a thousand yoke of oxen, and a thousand she asses.
+
+α.42.13 
+E.42.13 He had also seven sons and three daughters.
+
+α.42.14 
+E.42.14 And he called the name of the first, Jemima; and the name of the second, Kezia; and the name of the third, Kerenhappuch.
+
+α.42.15 
+E.42.15 And in all the land were no women found so fair as the daughters of Job: and their father gave them inheritance among their brethren.
+
+α.42.16 
+E.42.16 After this lived Job an hundred and forty years, and saw his sons, and his sons' sons, even four generations.
+
+α.42.17 
+E.42.17 So Job died, being old and full of days.
