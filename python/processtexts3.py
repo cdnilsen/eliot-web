@@ -194,7 +194,7 @@ def updateMassWord(connection, headwords, newHeadwordRawObject):
             else:
                 newHeadwords.append(newHeadword)
                 newObject = newHeadwordRawObject[newHeadword]
-
+            # whoopsies!
             newObject = updateMassWordObject(connection, oldObject)
             
         for headword in headwords:
@@ -207,7 +207,6 @@ def updateMassWord(connection, headwords, newHeadwordRawObject):
         connection.rollback()
         print(f"Error updating words: {e}")
 
-7866588508
 def addRawText(connection, bookObject, updateKJV=False):
     cursor = connection.cursor()
 

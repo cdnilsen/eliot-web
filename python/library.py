@@ -199,3 +199,74 @@ def cleanWord(word):
         word = word.replace(char, "")
 
     return word
+
+cantillationMarksCodePoints = [
+    "u0591",
+    "u0592",
+    "u0593",
+    "u0594",
+    "u0595",
+    "u0596",
+    "u0597",
+    "u0598",
+    "u0599",
+    "u059a",
+    "u059b",
+    "u059c",
+    "u059d",
+    "u059e",
+    "u059f",
+    "u05a0",
+    "u05a1",
+    "u05a2",
+    "u05a3",
+    "u05a4",
+    "u05a5",
+    "u05a6",
+    "u05a7",
+    "u05a8",
+    "u05a9",
+    "u05aa",
+    "u05ab",
+    "u05ac",
+    "u05ad",
+    "u05ae",
+    "u05af"
+]
+
+leftoverHapaxes = {
+    "Genesis": {
+        "וְקֹר": "קֹר",
+        "בְּשָׁוֵה": "שָׁוֵה",
+        "וְלוּז": "לוּז",
+        "בְּכַר": "כַר",
+        "חֹרִי": "חֹרִי"
+    },
+    "Exodus": {
+    },
+    "Leviticus": {
+        "דְּוֺתָהּ": "דְּוֺת",
+        "קֽ͏ַעֲקַע": "קֽ͏ַעֲקַע"
+    },
+    "Numbers": {
+
+    },
+    "Deuteronomy": {
+
+    },
+    "Joshua": {
+
+    },
+    "Judges": {
+
+    },
+    "Ruth": {
+        "מֹֽדַעְתָּנוּ": "מֹֽדַעְתָּנוּ", 
+        "בטרום": "טרום"
+    }
+}
+
+
+reversificationDictionary = {
+    
+}

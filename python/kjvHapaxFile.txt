@@ -1,0 +1,372 @@
+==PROBABLE hapaxes (3032)==
+activity: Genesis 47.6
+	The land of Egypt is before thee; in the best of the land make thy father and brethren to dwell; in the land of Goshen let them dwell: and if thou knowest any men of activity among them, then make them rulers over my cattle.
+
+badness: Genesis 41.19
+	And, behold, seven other kine came up after them, poor and very ill favoured and leanfleshed, such as I never saw in all the land of Egypt for badness:
+
+bakemeats: Genesis 40.17
+	And in the uppermost basket there was of all manner of bakemeats for Pharaoh; and the birds did eat them out of the basket upon my head.
+
+butlership: Genesis 40.21
+	And he restored the chief butler unto his butlership again; and he gave the cup into Pharaoh's hand:
+
+coffin: Genesis 50.26
+	So Joseph died, being an hundred and ten years old: and they embalmed him, and he was put in a coffin in Egypt.
+
+current: Genesis 23.16
+	And Abraham hearkened unto Ephron; and Abraham weighed to Ephron the silver, which he had named in the audience of the sons of Heth, four hundred shekels of silver, current money with the merchant.
+
+erected: Genesis 33.20
+	And he erected there an altar, and called it EleloheIsrael.
+
+guiltiness: Genesis 26.10
+	And Abimelech said, What is this thou hast done unto us? one of the people might lightly have lien with thy wife, and thou shouldest have brought guiltiness upon us.
+
+hazel: Genesis 30.37
+	And Jacob took him rods of green poplar, and of the hazel and chesnut tree; and pilled white strakes in them, and made the white appear which was in the rods.
+
+ladder: Genesis 28.12
+	And he dreamed, and behold a ladder set up on the earth, and the top of it reached to heaven: and behold the angels of God ascending and descending on it.
+
+millions: Genesis 24.60
+	And they blessed Rebekah, and said unto her, Thou art our sister, be thou the mother of thousands of millions, and let thy seed possess the gate of those which hate them.
+
+overdrive: Genesis 33.13
+	And he said unto him, My lord knoweth that the children are tender, and the flocks and herds with young are with me: and if men should overdrive them one day, all the flock will die.
+
+overspread: Genesis 9.19
+	These are the three sons of Noah: and of them was the whole earth overspread.
+
+progenitors: Genesis 49.26
+	The blessings of thy father have prevailed above the blessings of my progenitors unto the utmost bound of the everlasting hills: they shall be on the head of Joseph, and on the crown of the head of him that was separate from his brethren.
+
+purposing: Genesis 27.42
+	And these words of Esau her elder son were told to Rebekah: and she sent and called Jacob her younger son, and said unto him, Behold, thy brother Esau, as touching thee, doth comfort himself, purposing to kill thee.
+
+resen: Genesis 10.12
+	And Resen between Nineveh and Calah: the same is a great city.
+
+reumah: Genesis 22.24
+	And his concubine, whose name was Reumah, she bare also Tebah, and Gaham, and Thahash, and Maachah.
+
+rosh: Genesis 46.21
+	And the sons of Benjamin were Belah, and Becher, and Ashbel, Gera, and Naaman, Ehi, and Rosh, Muppim, and Huppim, and Ard.
+
+rouse: Genesis 49.9
+	Judah is a lion's whelp: from the prey, my son, thou art gone up: he stooped down, he couched as a lion, and as an old lion; who shall rouse him up?
+
+sabtah: Genesis 10.7
+	And the sons of Cush; Seba, and Havilah, and Sabtah, and Raamah, and Sabtechah: and the sons of Raamah; Sheba, and Dedan.
+
+sabtechah: Genesis 10.7
+	And the sons of Cush; Seba, and Havilah, and Sabtah, and Raamah, and Sabtechah: and the sons of Raamah; Sheba, and Dedan.
+
+seedtime: Genesis 8.22
+	While the earth remaineth, seedtime and harvest, and cold and heat, and summer and winter, and day and night shall not cease.
+
+selfwill: Genesis 49.6
+	O my soul, come not thou into their secret; unto their assembly, mine honour, be not thou united: for in their anger they slew a man, and in their selfwill they digged down a wall.
+
+sephar: Genesis 10.30
+	And their dwelling was from Mesha, as thou goest unto Sephar a mount of the east.
+
+shalem: Genesis 33.18
+	And Jacob came to Shalem, a city of Shechem, which is in the land of Canaan, when he came from Padanaram; and pitched his tent before the city.
+
+shebah: Genesis 26.33
+	And he called it Shebah: therefore the name of the city is Beersheba unto this day.
+
+shemeber: Genesis 14.2
+	That these made war with Bera king of Sodom, and with Birsha king of Gomorrah, Shinab king of Admah, and Shemeber king of Zeboiim, and the king of Bela, which is Zoar.
+
+shepho: Genesis 36.23
+	And the children of Shobal were these; Alvan, and Manahath, and Ebal, Shepho, and Onam.
+
+shinab: Genesis 14.2
+	That these made war with Bera king of Sodom, and with Birsha king of Gomorrah, Shinab king of Admah, and Shemeber king of Zeboiim, and the king of Bela, which is Zoar.
+
+shoelatchet: Genesis 14.23
+	That I will not take from a thread even to a shoelatchet, and that I will not take any thing that is thine, lest thou shouldest say, I have made Abram rich:
+
+shrubs: Genesis 21.15
+	And the water was spent in the bottle, and she cast the child under one of the shrubs.
+
+sichem: Genesis 12.6
+	And Abram passed through the land unto the place of Sichem, unto the plain of Moreh. And the Canaanite was then in the land.
+
+sitnah: Genesis 26.21
+	And they digged another well, and strove for that also: and he called the name of it Sitnah.
+
+slimepits: Genesis 14.10
+	And the vale of Siddim was full of slimepits; and the kings of Sodom and Gomorrah fled, and fell there; and they that remained fled to the mountain.
+
+spicery: Genesis 37.25
+	And they sat down to eat bread: and they lifted up their eyes and looked, and, behold, a company of Ishmeelites came from Gilead with their camels bearing spicery and balm and myrrh, going to carry it down to Egypt.
+
+stript: Genesis 37.23
+	And it came to pass, when Joseph was come unto his brethren, that they stript Joseph out of his coat, his coat of many colours that was on him;
+
+struggled: Genesis 25.22
+	And the children struggled together within her; and she said, If it be so, why am I thus? And she went to enquire of the LORD.
+
+tebah: Genesis 22.24
+	And his concubine, whose name was Reumah, she bare also Tebah, and Gaham, and Thahash, and Maachah.
+
+temani: Genesis 36.34
+	And Jobab died, and Husham of the land of Temani reigned in his stead.
+
+thahash: Genesis 22.24
+	And his concubine, whose name was Reumah, she bare also Tebah, and Gaham, and Thahash, and Maachah.
+
+trough: Genesis 24.20
+	And she hasted, and emptied her pitcher into the trough, and ran again unto the well to draw water, and drew for all his camels.
+
+ungirded: Genesis 24.32
+	And the man came into the house: and he ungirded his camels, and gave straw and provender for the camels, and water to wash his feet, and the men's feet that were with him.
+
+vowedst: Genesis 31.13
+	I am the God of Bethel, where thou anointedst the pillar, and where thou vowedst a vow unto me: now arise, get thee out from this land, and return unto the land of thy kindred.
+
+wittingly: Genesis 48.14
+	And Israel stretched out his right hand, and laid it upon Ephraim's head, who was the younger, and his left hand upon Manasseh's head, guiding his hands wittingly; for Manasseh was the firstborn.
+
+wotteth: Genesis 39.8
+	But he refused, and said unto his master's wife, Behold, my master wotteth not what is with me in the house, and he hath committed all that he hath to my hand;
+
+wrestlings: Genesis 30.8
+	And Rachel said, With great wrestlings have I wrestled with my sister, and I have prevailed: and she called his name Naphtali.
+
+yearn: Genesis 43.30
+	And Joseph made haste; for his bowels did yearn upon his brother: and he sought where to weep; and he entered into his chamber, and wept there.
+
+zaavan: Genesis 36.27
+	The children of Ezer are these; Bilhan, and Zaavan, and Akan.
+
+zaphnathpaaneah: Genesis 41.45
+	And Pharaoh called Joseph's name Zaphnathpaaneah; and he gave him to wife Asenath the daughter of Potipherah priest of On. And Joseph went out over all the land of Egypt.
+
+ziphion: Genesis 46.16
+	And the sons of Gad; Ziphion, and Haggi, Shuni, and Ezbon, Eri, and Arodi, and Areli.
+
+zuzims: Genesis 14.5
+	And in the fourteenth year came Chedorlaomer, and the kings that were with him, and smote the Rephaims in Ashteroth Karnaim, and the Zuzims in Ham, and the Emins in Shaveh Kiriathaim,
+
+
+==POSSIBLE hapaxes (1071)==
+badest: Genesis 27.19
+	And Jacob said unto his father, I am Esau thy first born; I have done according as thou badest me: arise, I pray thee, sit and eat of my venison, that thy soul may bless me.
+
+	bad (18): 
+		1 (1), 2 (3), Ezra (1), Genesis (3), Jeremiah (1), Leviticus (4), Matthew (2), Numbers (2), 
+
+	bade (18): 
+		1 (1), 2 (3), Acts (3), Esther (1), Exodus (1), Genesis (1), Joshua (1), Luke (4), Matthew (1), Numbers (1), Ruth (1), 
+
+bed's: Genesis 47.31
+	And he said, Swear unto me. And he sware unto him. And Israel bowed himself upon the bed's head.
+
+	bed (90): 
+		1 (8), 2 (14), Acts (2), Amos (1), Daniel (6), Esther (1), Exodus (2), Ezekiel (3), Genesis (3), Hebrews (1), Isaiah (3), Job (4), John (5), Leviticus (6), Luke (4), Mark (6), Matthew (2), Proverbs (4), Psalms (7), Revelation (1), Song (4), 
+
+butlers: Genesis 40.2
+	And Pharaoh was wroth against two of his officers, against the chief of the butlers, and against the chief of the bakers.
+
+	butler (8): 
+		Genesis 40.1, Genesis 40.5, Genesis 40.9, Genesis 40.13, Genesis 40.20, Genesis 40.21, Genesis 40.23, Genesis 41.9
+
+childrens: Genesis 31.16
+	For all the riches which God hath taken from our father, that is ours, and our children's: now then, whatsoever God hath said unto thee, do.
+
+	children (1802): 
+		1 (132), 2 (108), 3 (1), Acts (12), Amos (6), Colossians (3), Daniel (13), Deuteronomy (62), Ecclesiastes (1), Ephesians (9), Esther (2), Exodus (130), Ezekiel (27), Ezra (68), Galatians (8), Genesis (52), Hebrews (4), Hosea (16), Isaiah (35), Jeremiah (40), Job (12), Joel (7), John (6), Joshua (135), Judges (109), Lamentations (9), Leviticus (57), Luke (21), Malachi (1), Mark (10), Matthew (30), Micah (3), Nahum (1), Nehemiah (68), Numbers (235), Obadiah (2), Proverbs (10), Psalms (50), Revelation (4), Romans (8), Song (1), Titus (2), Zechariah (2), Zephaniah (3), 
+
+decreased: Genesis 8.5
+	And the waters decreased continually until the tenth month: in the tenth month, on the first day of the month, were the tops of the mountains seen.
+
+	decrease (2): 
+		John 3.30, Psalms (prose) 107.38
+
+	decrease (2): 
+		John 3.30, Psalms (prose) 107.38
+
+dinah's: Genesis 34.25
+	And it came to pass on the third day, when they were sore, that two of the sons of Jacob, Simeon and Levi, Dinah's brethren, took each man his sword, and came upon the city boldly, and slew all the males.
+
+	dinah (7): 
+		Genesis 30.21, Genesis 34.1, Genesis 34.3, Genesis 34.5, Genesis 34.13, Genesis 34.26, Genesis 46.15
+
+divineth: Genesis 44.5
+	Is not this it in which my lord drinketh, and whereby indeed he divineth? ye have done evil in so doing.
+
+	divine (11): 
+		1 (1), 2 (2), Ezekiel (3), Genesis (1), Hebrews (1), Micah (2), Proverbs (1), 
+
+droves: Genesis 32.19
+	And so commanded he the second, and the third, and all that followed the droves, saying, On this manner shall ye speak unto Esau, when ye find him.
+
+	drove (12): 
+		1 (1), Exodus (1), Genesis (4), Habakkuk (1), John (1), Joshua (1), Numbers (1), 
+
+	drove (12): 
+		1 (1), Exodus (1), Genesis (4), Habakkuk (1), John (1), Joshua (1), Numbers (1), 
+
+foals: Genesis 32.15
+	Thirty milch camels with their colts, forty kine, and ten bulls, twenty she asses, and ten foals.
+
+	foal (3): 
+		Genesis 49.11, Matthew 21.5, Zechariah 9.9
+
+forty's: Genesis 18.29
+	And he spake unto him yet again, and said, Peradventure there shall be forty found there. And he said, I will not do it for forty's sake.
+
+	forty (157): 
+		1 (15), 2 (14), Acts (10), Amos (2), Deuteronomy (10), Exodus (7), Ezekiel (6), Ezra (8), Genesis (12), Hebrews (2), Jeremiah (1), Job (1), John (1), Jonah (1), Joshua (5), Judges (7), Leviticus (1), Luke (1), Mark (1), Matthew (1), Nehemiah (14), Numbers (18), Psalms (1), Revelation (6), 
+
+guard's: Genesis 41.10
+	Pharaoh was wroth with his servants, and put me in ward in the captain of the guard's house, both me and the chief baker:
+
+	guard (50): 
+		1 (3), 2 (16), Acts (1), Daniel (1), Ezekiel (1), Genesis (5), Jeremiah (17), Nehemiah (2), 
+
+hamor's: Genesis 34.18
+	And their words pleased Hamor, and Shechem Hamor's son.
+
+	hamor (12): 
+		Genesis (10), Joshua (1), Judges (1), 
+
+hotly: Genesis 31.36
+	And Jacob was wroth, and chode with Laban: and Jacob answered and said to Laban, What is my trespass? what is my sin, that thou hast so hotly pursued after me?
+
+	hot (31): 
+		1 (3), Daniel (1), Deuteronomy (2), Exodus (6), Ezekiel (1), Hosea (1), Job (1), Joshua (1), Judges (5), Leviticus (1), Nehemiah (1), Proverbs (1), Psalms (4), Revelation (2), 
+
+instructer: Genesis 4.22
+	And Zillah, she also bare Tubalcain, an instructer of every artificer in brass and iron: and the sister of Tubalcain was Naamah.
+
+	instruct (9): 
+		1 Corinthians 2.16, Daniel 11.33, Deuteronomy 4.36, Isaiah 28.26, Job 40.2, Nehemiah 9.20, Psalms (prose) 16.7, Psalms (prose) 32.8, Song of Songs 8.2
+
+ishmael's: Genesis 36.3
+	And Bashemath Ishmael's daughter, sister of Nebajoth.
+
+	ishmael (47): 
+		1 (5), 2 (4), Ezra (1), Genesis (14), Jeremiah (19), 
+
+labans: Genesis 30.42
+	But when the cattle were feeble, he put them not in: so the feebler were Laban's, and the stronger Jacob's.
+
+	laban (51): 
+		Deuteronomy (1), Genesis (43), 
+
+lad's: Genesis 44.30
+	Now therefore when I come to thy servant my father, and the lad be not with us; seeing that his life is bound up in the lad's life;
+
+	lad (33): 
+		1 (8), 2 (2), Genesis (15), John (1), Judges (1), 
+
+lads: Genesis 48.16
+	The Angel which redeemed me from all evil, bless the lads; and let my name be named on them, and the name of my fathers Abraham and Isaac; and let them grow into a multitude in the midst of the earth.
+
+	lad (33): 
+		1 (8), 2 (2), Genesis (15), John (1), Judges (1), 
+
+maidservants': Genesis 31.33
+	And Laban went into Jacob's tent, and into Leah's tent, and into the two maidservants' tents; but he found them not. Then went he out of Leah's tent, and entered into Rachel's tent.
+
+	maidservant (16): 
+		Deuteronomy (6), Exodus (5), Jeremiah (2), Job (1), Judges (1), 
+
+messes: Genesis 43.34
+	And he took and sent messes unto them from before him: but Benjamin's mess was five times so much as any of their's. And they drank, and were merry with him.
+
+	mess (2): 
+		2 Samuel 11.8, Genesis 43.34
+
+sacks': Genesis 44.8
+	Behold, the money, which we found in our sacks' mouths, we brought again unto thee out of the land of Canaan: how then should we steal out of thy lord's house silver or gold?
+
+	sack (9): 
+		Genesis 42.25, Genesis 42.27, Genesis 42.28, Genesis 42.35, Genesis 43.21, Genesis 44.11, Genesis 44.12, Leviticus 11.32
+
+sadly: Genesis 40.7
+	And he asked Pharaoh's officers that were with him in the ward of his lord's house, saying, Wherefore look ye so sadly to day?
+
+	sad (11): 
+		1 (2), Ezekiel (1), Genesis (1), Luke (1), Mark (1), Matthew (1), Nehemiah (3), 
+
+sarai's: Genesis 16.8
+	And he said, Hagar, Sarai's maid, whence camest thou? and whither wilt thou go? And she said, I flee from the face of my mistress Sarai.
+
+	sarai (16): 
+		Genesis (13), 
+
+supplanted: Genesis 27.36
+	And he said, Is not he rightly named Jacob? for he hath supplanted me these two times: he took away my birthright; and, behold, now he hath taken away my blessing. And he said, Hast thou not reserved a blessing for me?
+
+	supplant (1): 
+		Jeremiah 9.4
+
+ten's: Genesis 18.32
+	And he said, Oh let not the LORD be angry, and I will speak yet but this once: Peradventure ten shall be found there. And he said, I will not destroy it for ten's sake.
+
+	ten (248): 
+		1 (34), 2 (31), Acts (2), Amos (2), Daniel (9), Deuteronomy (6), Ecclesiastes (1), Esther (5), Exodus (8), Ezekiel (11), Ezra (3), Genesis (15), Haggai (1), Isaiah (2), Jeremiah (4), Job (1), Joshua (6), Jude (1), Judges (20), Leviticus (4), Luke (9), Mark (1), Matthew (4), Micah (1), Nehemiah (3), Numbers (18), Psalms (7), Revelation (8), Ruth (2), Song (1), Zechariah (3), 
+
+tiller: Genesis 4.2
+	And she again bare his brother Abel. And Abel was a keeper of sheep, but Cain was a tiller of the ground.
+
+	till (169): 
+		1 (8), 2 (12), Acts (8), Daniel (14), Deuteronomy (2), Ecclesiastes (1), Ephesians (1), Exodus (5), Ezekiel (8), Ezra (3), Galatians (1), Genesis (7), Hebrews (1), Hosea (2), Isaiah (8), Jeremiah (10), Job (7), John (3), Jonah (1), Joshua (4), Judges (6), Lamentations (1), Luke (11), Mark (5), Matthew (15), Nehemiah (5), Numbers (1), Obadiah (1), Philippians (1), Proverbs (2), Psalms (3), Revelation (4), Ruth (1), Song (2), Zephaniah (1), 
+
+tillest: Genesis 4.12
+	When thou tillest the ground, it shall not henceforth yield unto thee her strength; a fugitive and a vagabond shalt thou be in the earth.
+
+	till (169): 
+		1 (8), 2 (12), Acts (8), Daniel (14), Deuteronomy (2), Ecclesiastes (1), Ephesians (1), Exodus (5), Ezekiel (8), Ezra (3), Galatians (1), Genesis (7), Hebrews (1), Hosea (2), Isaiah (8), Jeremiah (10), Job (7), John (3), Jonah (1), Joshua (4), Judges (6), Lamentations (1), Luke (11), Mark (5), Matthew (15), Nehemiah (5), Numbers (1), Obadiah (1), Philippians (1), Proverbs (2), Psalms (3), Revelation (4), Ruth (1), Song (2), Zephaniah (1), 
+
+trained: Genesis 14.14
+	And when Abram heard that his brother was taken captive, he armed his trained servants, born in his own house, three hundred and eighteen, and pursued them unto Dan.
+
+	train (3): 
+		1 Kings 10.2, Isaiah 6.1, Proverbs 22.6
+
+twenty's: Genesis 18.31
+	And he said, Behold now, I have taken upon me to speak unto the LORD: Peradventure there shall be twenty found there. And he said, I will not destroy it for twenty's sake.
+
+	twenty (293): 
+		1 (53), 2 (48), Acts (2), Daniel (2), Deuteronomy (2), Esther (3), Exodus (18), Ezekiel (27), Ezra (19), Genesis (9), Haggai (1), Jeremiah (2), John (1), Joshua (2), Judges (12), Leviticus (3), Luke (1), Nehemiah (18), Numbers (31), Psalms (1), Revelation (6), Zechariah (1), 
+
+united: Genesis 49.6
+	O my soul, come not thou into their secret; unto their assembly, mine honour, be not thou united: for in their anger they slew a man, and in their selfwill they digged down a wall.
+
+	unite (1): 
+		Psalms (prose) 86.11
+
+	unite (1): 
+		Psalms (prose) 86.11
+
+vestures: Genesis 41.42
+	And Pharaoh took off his ring from his hand, and put it upon Joseph's hand, and arrayed him in vestures of fine linen, and put a gold chain about his neck;
+
+	vesture (8): 
+		Deuteronomy 22.12, Hebrews 1.12, John 19.24, Matthew 27.35, Psalms (prose) 22.18, Psalms (prose) 102.26, Revelation 19.13, Revelation 19.16
+
+	vesture (8): 
+		Deuteronomy 22.12, Hebrews 1.12, John 19.24, Matthew 27.35, Psalms (prose) 22.18, Psalms (prose) 102.26, Revelation 19.13, Revelation 19.16
+
+whales: Genesis 1.21
+	And God created great whales, and every living creature that moveth, which the waters brought forth abundantly, after their kind, and every winged fowl after his kind: and God saw that it was good.
+
+	whale (2): 
+		Ezekiel 32.2, Job 7.12
+
+	whale (2): 
+		Ezekiel 32.2, Job 7.12
+
+wounding: Genesis 4.23
+	And Lamech said unto his wives, Adah and Zillah, Hear my voice; ye wives of Lamech, hearken unto my speech: for I have slain a man to my wounding, and a young man to my hurt.
+
+	wound (25): 
+		1 (2), Acts (1), Deuteronomy (1), Exodus (1), Hosea (1), Isaiah (1), Jeremiah (4), Job (1), John (1), Micah (1), Nahum (1), Obadiah (1), Proverbs (2), Psalms (2), Revelation (3), 
+
