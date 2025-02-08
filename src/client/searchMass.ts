@@ -7,6 +7,7 @@ function cleanWord(word: string) {
     }
     word = word.toLowerCase();
     word = word.replace("ᴏᴅ", "od");
+    word = word.replace("ᴏʀᴅ", "ord")
     let punctuation = [".", ",", ";", ":", "!", "?", "(", ")", "[", "]", "{", "}", "<", ">", "\"", "'", "“", "”", "‘", "’", "—", "–", "…", "·"];
     for (let i=0; i < punctuation.length; i++) {
         word = word.replace(punctuation[i], "");
