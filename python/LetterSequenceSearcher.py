@@ -74,5 +74,4 @@ def main(edition, numLetters, ignoreDiacritics = False):
 
     print("Found " + str(len(allSequences)) + " sequences")
 
-
 main("First Edition", 3)
