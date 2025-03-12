@@ -555,6 +555,7 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
 }
 
 async function getResultObjectStrict(result: WordKJVResult) {
+    console.log(result)
     let topDiv = getResultDiv(result);
 
     let triangleObject = createTriangleObject();
