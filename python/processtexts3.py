@@ -156,8 +156,6 @@ def updateAddresses(newAddresses, newCounts, oldAddressList, oldCountList):
     for i in range(len(newAddresses)):
         newCountDictionary[newAddresses[i]] = newCounts[i]
 
-
-
     object = {
         "addresses": [],
         "counts": [],
@@ -718,10 +716,8 @@ def fullReset():
     print(f"Total Massachusett headwords in database: {totalWords}")
     addAllKJV(connection)
 
-#connection = psycopg2.connect(DATABASE_URL)
-#clear_tables(connection)
-#addAllKJV(connection)
+fullReset()
 
 
 
-main()
+#main()
