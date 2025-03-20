@@ -1,107 +1,85 @@
 import os
 
 
-def checkEdition():
-    whichEdition = input("First (1) or second (2) edition? ").strip()
-    if whichEdition == "1":
-        return ".First Edition.txt"
-    elif whichEdition == "2":
-        return ".Second Edition.txt"
-    else:
-        checkEdition()
+def getKJVVerseDict():
+    verse_files = []
+    verse_count_dict = {}
 
-def getNumVersesInKJV():
-    files = []
-    for file in os.listdir('../texts/'):
-        if file.endswith('.KJV.txt') and os.path.isfile(os.path.join('../texts/', file)):
-            files.append(file)
+    texts_dir = os.path.join(os.path.dirname(__file__), '../texts/')
+    for file_name in os.listdir(texts_dir):
+        if file_name.endswith('KJV.txt'):
+            book = file_name.replace(".KJV.txt", "")
+            verse_files.append(book)
+            verse_count_dict[book] = 0
 
-    count = 0
-    for file in files:
-        with open(os.path.join('../texts/', file), 'r', encoding = "utf-8") as f:
-            for line in f:
-                if line.strip() != "":
-                    count += 1
-    #print(count)
-    print("Number of KJV files: " + str(len(files)))
-    return count
+            with open(os.path.join(texts_dir, file_name), 'r', encoding='utf-8') as f:
+                count = sum(1 for line in f if line.strip())
+                verse_count_dict[book] = count
+                #print(book + ": " + str(count))
+    return verse_count_dict
+    
+def getPercentage(numerator, denominator):
+    quotient = numerator / denominator
+    percent = round(quotient * 100, 2)
+    return str(percent) + "%"
+
 
 def main():
-    edition = checkEdition()
+    KJV_verse_dict = getKJVVerseDict()
 
-    matching_files = []
+    allBooks = list(KJV_verse_dict.keys())
+    #print(allBooks)
 
-    kjvToMissingDict = {}
-    for file in os.listdir('../texts/'):
-        if file.endswith(edition) and os.path.isfile(os.path.join('../texts/', file)):
-            matching_files.append(file)
+    whichEdition = input("First (1) or second (2) edition? ").strip()
 
-    print(matching_files[0])
+    fileSuffix = "First Edition.txt"
+    letter = "α"
+    if whichEdition == "2":
+        fileSuffix = "Second Edition.txt"
+        letter = "β"
 
-
-    finishedVersesCount = 0
-    for file in matching_files:
-        with open(os.path.join('../texts/', file), 'r', encoding = "utf-8") as f:
-            for line in f:
-                if line.strip() != "":
-                    finishedVersesCount += 1
-
-
-    totalFiles = len(matching_files)
-
-    filesNotDone = []
-    for file in os.listdir('../texts_in_progress/'):
-        if file.endswith(edition) and os.path.isfile(os.path.join('../texts_in_progress/', file)):
-            filesNotDone.append(file)
-            totalFiles += 1
-
-    startingLetter = "α"
-    if edition == ".Second Edition.txt":
-        startingLetter = "β"
-
-
-    versesDoneInOtherFiles = 0
-    for undoneFile in filesNotDone:
-        with open(os.path.join('../texts_in_progress/', undoneFile), 'r', encoding = "utf-8") as f:
-            for line in f:
-                if line.startswith(startingLetter):
-                    if len(line.strip().split()) > 1:
-                        #print(line)
-                        versesDoneInOtherFiles += 1
-
-        
     
+
+    editionToVerseCountDict = {}
+
+    bookToDifferenceDict = {}
+    totalDifference = 0
+    for book in allBooks:
+        fileName = book + "." + fileSuffix
+        finishedFilePath = os.path.join(os.path.dirname(__file__), '../texts/', fileName)
+
+        unfinishedFilePath = os.path.join(os.path.dirname(__file__), '../texts_in_progress/', fileName)
+
+        kjvCount = KJV_verse_dict[book]
+        if os.path.exists(finishedFilePath):
+            with open(finishedFilePath, 'r', encoding='utf-8') as f:
+                finishedCount = sum(1 for line in f if line.strip())
+                editionToVerseCountDict[book] = finishedCount
+        elif os.path.exists(unfinishedFilePath):
+            with open(unfinishedFilePath, 'r', encoding='utf-8') as f:
+                unfinishedCount = sum(1 for line in f if (line.startswith(letter) and len(line.strip().split(" ")) > 1))
+                editionToVerseCountDict[book] = unfinishedCount
+                difference = kjvCount - unfinishedCount
+                #print(book + ": " + str(unfinishedCount) + "/" + str(kjvCount))
+                bookToDifferenceDict[book] = difference
+
+                totalDifference += difference
+            
+        else:
+            print("No file for " + fileName)
+
+
+    allUnfinishedBooks = list(bookToDifferenceDict.keys())
+
+    allUnfinishedBooks.sort()
+
+    for book in allUnfinishedBooks:
+        thisDifference = bookToDifferenceDict[book]
+        proportionalDifference = getPercentage(thisDifference, totalDifference)
+        print(book + ": " + str(thisDifference) + " (" + proportionalDifference + ")")
+    print(str(totalDifference) + " total verses left to go")
+
+
     
-    totalVerses = getNumVersesInKJV()
-    totalDone = versesDoneInOtherFiles + finishedVersesCount
-    proportion = str(round((totalDone / totalVerses), 3) * 100) + "%"
-
-    numToGo = totalVerses - totalDone
-
-    print(f"{str(totalDone)}/{str(totalVerses)} ({proportion}) finished ({str(finishedVersesCount)} in finished transcripts, {str(versesDoneInOtherFiles)} in unfinished)\n")
-
-    print(f"{str(numToGo)} to go\n")
-
-    print(f"{str(totalFiles)} files found")
-    
-    allMatchingFiles = matching_files + filesNotDone
-    allMatchingFiles.sort()
-
-    KJVBooks = []
-    for file in os.listdir('../texts/'):
-        if file.endswith('.KJV.txt') and os.path.isfile(os.path.join('../texts/', file)):
-            KJVBooks.append(file.replace(".KJV.txt", ""))
-
-    matchingFileNames = []
-    for file in allMatchingFiles:
-        fileName = file.replace(edition, "")
-        matchingFileNames.append(fileName)
-    
-    for file in KJVBooks:
-        if file not in matchingFileNames:
-            print(file)
 
 main()
-
-    
-
