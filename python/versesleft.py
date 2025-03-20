@@ -23,16 +23,20 @@ def getNumVersesInKJV():
                 if line.strip() != "":
                     count += 1
     #print(count)
-    #print("Number of files: " + str(len(files)))
+    print("Number of KJV files: " + str(len(files)))
     return count
 
 def main():
     edition = checkEdition()
 
     matching_files = []
+
+    kjvToMissingDict = {}
     for file in os.listdir('../texts/'):
         if file.endswith(edition) and os.path.isfile(os.path.join('../texts/', file)):
             matching_files.append(file)
+
+    print(matching_files[0])
 
 
     finishedVersesCount = 0
@@ -42,10 +46,14 @@ def main():
                 if line.strip() != "":
                     finishedVersesCount += 1
 
+
+    totalFiles = len(matching_files)
+
     filesNotDone = []
     for file in os.listdir('../texts_in_progress/'):
         if file.endswith(edition) and os.path.isfile(os.path.join('../texts_in_progress/', file)):
             filesNotDone.append(file)
+            totalFiles += 1
 
     startingLetter = "α"
     if edition == ".Second Edition.txt":
@@ -62,7 +70,7 @@ def main():
                         versesDoneInOtherFiles += 1
 
         
-
+    
     
     totalVerses = getNumVersesInKJV()
     totalDone = versesDoneInOtherFiles + finishedVersesCount
@@ -72,8 +80,26 @@ def main():
 
     print(f"{str(totalDone)}/{str(totalVerses)} ({proportion}) finished ({str(finishedVersesCount)} in finished transcripts, {str(versesDoneInOtherFiles)} in unfinished)\n")
 
-    print(f"{str(numToGo)} to go")
-    #print(matching_files)
+    print(f"{str(numToGo)} to go\n")
+
+    print(f"{str(totalFiles)} files found")
+    
+    allMatchingFiles = matching_files + filesNotDone
+    allMatchingFiles.sort()
+
+    KJVBooks = []
+    for file in os.listdir('../texts/'):
+        if file.endswith('.KJV.txt') and os.path.isfile(os.path.join('../texts/', file)):
+            KJVBooks.append(file.replace(".KJV.txt", ""))
+
+    matchingFileNames = []
+    for file in allMatchingFiles:
+        fileName = file.replace(edition, "")
+        matchingFileNames.append(fileName)
+    
+    for file in KJVBooks:
+        if file not in matchingFileNames:
+            print(file)
 
 main()
 
