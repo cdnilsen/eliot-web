@@ -198,7 +198,7 @@ const editionToShorthandDict: EditionToShorthandDict = {
     "first_edition": "α (1661/1663)",
     "second_edition": "β (1685)",
     "mayhew": "M (1709)",
-    "zeroth_edition": "א (1655)",
+    "zeroth_edition": "\u202A\u05D0 (1655)",
     "kjv": "KJV",
     "grebrew": "G"
 };
