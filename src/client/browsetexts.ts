@@ -779,7 +779,7 @@ async function fetchChapter(state: EditionState) {
         let book = state.book;
         let chapter = state.chapter;
         
-        const editionsToFetch: Edition[] = [];
+        let editionsToFetch: Edition[] = [];
         if (editionNumber % 2 === 0) editionsToFetch.push('first_edition');
         if (editionNumber % 3 === 0) editionsToFetch.push('second_edition');
         if (editionNumber % 5 === 0) editionsToFetch.push('mayhew');
