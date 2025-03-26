@@ -9,7 +9,7 @@
 <body>
     <a href="index.html">Back to index</a>
     <br>
-    <div class="dropdown" id="book-dropdown-container">
+    <div class="dropdown" id="book-dropdown-container" style="padding-bottom: 5px;">
         Select a text in the:
         <select id="sectionDropdown" name="sectionDropdown" style="padding-right:5px">
             <option value="blank"></option>
@@ -37,10 +37,9 @@
         <span id="searchVerseLegend" hidden>Select verse:</span>
         <select id="verseSelectionDropdown" name="verseSelectionDropdown" style="padding-right:5px" hidden></select>
     </div>
-    <br>
 
     <span id="queryOptions">
-    <div class="checkboxes" id="editionCheckbox">
+    <div class="checkboxes" id="editionCheckbox" style="padding-bottom: 5px;">
         <span id="firstEditionContainer">
         <input type="checkbox" name="useFirstEdition" id="useFirstEdition" checked>
             <label for="useFirstEdition">First Edition (1661/1663)</label>
@@ -66,8 +65,7 @@
             <label for="useGrebrew" id="grebrewLabel">Show Hebrew/Greek</label>
         </span>
     </div>
-    <br>
-        <div id="differenceSelection">
+        <div id="differenceSelection" style="padding-bottom: 5px;">
             <span style="color:red"><b>Highlight</b></span> Differences:
             <input type="radio" name="show_differences" id="no_show" value = "no" checked>
                 <label for="no_show">No</label>
@@ -81,23 +79,22 @@
             <input type="radio" name="show_differences" id="proofreading" value = "proofreading">
                 <label for="proofreading">Proofreading mode (<i>Anm</i> ≠ <i>An<sup><b><span style="color:#FF6666">u</span></b></sup>m</i>—BUGGED)</label>
         </div>
-        <br>
 
-        <div id="HapaxSelection">
+        <div id="HapaxSelection" style="padding-bottom: 5px;">
             <u>Underline</u> Hapaxes (<span style="color: blue"><b>blue</b></span> in English/Hebrew/Greek):
             <input type="radio" name="show_hapaxes" id="dont_show" value = "no" checked>
-                <label for="dont_show">No</label>
+            <label for="dont_show">No</label>
 
             <input type="radio" name="show_hapaxes" id="hapaxes_strict" value="hapaxes_strict">
-                <label for="hapaxes_strict">Yes, including diacritics (<i><u>mátta</u></i> even if <i>matta</i>)</label>
+            <label for="hapaxes_strict">Yes, including diacritics (<i><u>mátta</u></i> even if <i>matta</i>)</label>
 
             <input type="radio" name="show_hapaxes" id="hapaxes_lax" value="hapaxes_lax">
-                <label for="hapaxes_lax">Yes, lax on diacritics (<i>mátta</i> not counted as a hapax if <i>matta</i>)</label>
+            <label for="hapaxes_lax">Yes, lax on diacritics (<i>mátta</i> not counted as a hapax if <i>matta</i>)</label>
         </div>
-        <br>
-        <div id="UncertainSelection">
+        <div id="UncertainSelection" style="padding-bottom: 5px;">
             <input type="checkbox" name="viewUncertain" id="viewUncertain">
             <label for="viewUncertain" checked>View [brackets] around uncertain characters</label>
+        </div>
     </span>
     <br>
 
