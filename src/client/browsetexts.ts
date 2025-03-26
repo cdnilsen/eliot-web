@@ -406,10 +406,8 @@ function isMassachusett(edition: Edition) {
 }
 
 function processMassText(text: string, edition: Edition) {
-    text = text.replaceAll('8', 'ꝏ̄').replaceAll("$", " ")
-    if (edition == "mayhew") {
-        text = text.replaceAll('{', '<i>').replaceAll('}', '</i>');
-    }
+    text = text.replaceAll('8', 'ꝏ̄').replaceAll("$", " ").replaceAll("ṡ", "s").replaceAll("ṣ", "s").replaceAll('{', '<i>').replaceAll('}', '</i>');
+
     return text
 }
 
