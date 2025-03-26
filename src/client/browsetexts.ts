@@ -639,6 +639,8 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     const table = document.createElement('table');
     table.className = 'verse-table';
 
+    console.log(editionsToFetch);
+    console.log("Line 643");
     const columnWidthObject = getColumnWidths(editionsToFetch);
     
     // Create a dummy verse object to get the shorthands.
