@@ -817,8 +817,7 @@ async function fetchChapter(state: EditionState) {
         createVerseGrid(verses, editionsToFetch, state);
 
         window.scrollTo({
-            top: 0,
-            behavior: 'smooth' // For smooth scrolling
+            top: 0
         });
         
     } catch (error) {
