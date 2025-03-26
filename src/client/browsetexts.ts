@@ -320,29 +320,39 @@ function sectionListener(state: EditionState) {
 function editionNumberListener(state: EditionState) {
     let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew"];
     let primesList = [2, 3, 5, 7, 11];
+    
+    type ContainerDictType = {
+        [key: string]: string
+    };
+    
+    type BookToContainerDictType = {
+        [key: string]: string
+    };
+    
+    const containerDict: ContainerDictType = {
+        "useFirstEdition": "firstEditionContainer", 
+        "useSecondEdition": "secondEditionContainer", 
+        "useMayhew": "mayhewContainer", 
+        "useZerothEdition": "zerothContainer", 
+        "useGrebrew": "grebrewContainer"
+    };
+
+    const bookToContainerDict: BookToContainerDictType = {
+        "Genesis": "useZerothEdition",
+        "Psalms (prose)": "useMayhew",
+        "John": "useMayhew"
+    };
+
     for (let i=0; i < primesList.length; i++) {
         let docID = editionListenerIDs[i];
         let p = primesList[i];
-        let checkbox = <HTMLInputElement>document.getElementById(docID)!;
-
-        let containerDict = {
-            "useFirstEdition": "firstEditionContainer", 
-            "useSecondEdition": "secondEditionContainer", 
-            "useMayhew": "mayhewContainer", 
-            "useZerothEdition": "zerothContainer", 
-            "useGrebrew": "grebrewContainer"
-        }
-
-        let bookToContainerDict = {
-            "Genesis": "useZerothEdition",
-            "Psalms (prose)": "useMayhew",
-            "John": "useMayhew"
-        }
+        let checkbox = document.getElementById(docID) as HTMLInputElement;
 
         // testing this
         if (p == 5 || p == 7) {
             if (state.book in bookToContainerDict && docID in containerDict) {
-                let container = <HTMLSpanElement>document.getElementById(containerDict[docID])!;
+                let containerID = containerDict[docID];
+                let container = document.getElementById(containerID) as HTMLSpanElement;
                 if (bookToContainerDict[state.book] != docID) {
                     checkbox.checked = false;
                     container.hidden = true;
