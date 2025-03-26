@@ -649,8 +649,6 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     const table = document.createElement('table');
     table.className = 'verse-table';
 
-    console.log(editionsToFetch);
-    console.log("Line 643");
     const columnWidthObject = getColumnWidths(editionsToFetch);
     
     // Create a dummy verse object to get the shorthands.
@@ -771,11 +769,10 @@ function fixEditionNumber(state: EditionState): number {
 
 async function fetchChapter(state: EditionState) {
     try {
-        console.log(state.editions);
-        let editionNumber = fixEditionNumber(state);
-        console.log(editionNumber);
-        state.editions = editionNumber;
-        console.log(state);
+        
+        state.editions = fixEditionNumber(state);
+
+        let editionNumber = state.editions;
         let book = state.book;
         let chapter = state.chapter;
         
