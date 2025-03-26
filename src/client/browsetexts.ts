@@ -320,6 +320,17 @@ function sectionListener(state: EditionState) {
 function editionNumberListener(docID: string, p: number, state: EditionState) {
     let checkbox = <HTMLInputElement>document.getElementById(docID);
 
+    // testing this
+    if (p == 5) {
+        if (state.book != "Psalms" && state.book != "John") {
+            checkbox.checked = false;
+            checkbox.hidden = true;
+        } else {
+            checkbox.checked = true;
+            checkbox.hidden = false;
+        }
+    }
+
     if (checkbox.checked) {
         state.editions = state.editions * p;
     }
@@ -607,7 +618,6 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     const table = document.createElement('table');
     table.className = 'verse-table';
 
-       
     const columnWidthObject = getColumnWidths(editionsToFetch);
     
     // Create a dummy verse object to get the shorthands.
