@@ -190,20 +190,6 @@ function processGreekLine(text: string, showHapaxes: boolean) {
 
 type Edition = 'first_edition' | 'second_edition' | 'mayhew' | 'zeroth_edition' | 'kjv' | 'grebrew';
 
-type EditionToShorthandDict = {
-    [K in Edition]: string;
-};
-
-const editionToShorthandDict: EditionToShorthandDict = {
-    "first_edition": "α (1661/1663)",
-    "second_edition": "β (1685)",
-    "mayhew": "M (1709)",
-    "zeroth_edition": "\u202A\u05D0 (1655)",
-    "kjv": "KJV",
-    "grebrew": "G"
-};
-
-
 type Highlighting = "none" | "ignoreCasing" | "includeCasing" | "proofreading"
 type Hapax = "none" | "strict" | "lax"
 
@@ -288,7 +274,8 @@ function sectionListener(state: EditionState) {
         let currentSection = sectionDropdown.value;
         refreshSectionDropdown();
         sectionDropdown.value = currentSection;
-        console.log(sectionDropdown.value);
+
+        state.isNT = (currentSection == "gospels_acts" || currentSection == "other_nt");
     });
 
     bookDropdown.addEventListener("change", function() {
@@ -503,15 +490,30 @@ function getColumnWidths(editions: Edition[]): EditionColumns {
     return object;
 }
 
-function createDummyVerse(editions: Edition[]) {
+function createDummyVerse(editions: Edition[], isNT: boolean) {
     let verse: Verse = {
         book: "Genesis",
         chapter: 1,
         verse: 1
     }
 
+    let editionToShorthandDict = {
+        "first_edition": "α (1663)",
+        "second_edition": "β (1685)",
+        "mayhew": "M (1709)",
+        "zeroth_edition": "\u202A\u05D0 (1655)",
+        "kjv": "KJV",
+        "grebrew": "G"
+    }
+
+    if (isNT) {
+        editionToShorthandDict["first_edition"] = "α (1661)"
+    }
+
     for (let i=0; i < editions.length; i++) {
-        verse[editions[i]] = editionToShorthandDict[editions[i]];
+        if (editions[i] in editionToShorthandDict) {
+            verse[editions[i]] = editionToShorthandDict[editions[i]];
+        }
     }
     return verse;
 }
@@ -656,7 +658,7 @@ function createNavBar(state: EditionState) {
     return navBar;
 }
 
-function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToShorthandDict: EditionToShorthandDict, state: EditionState) {
+function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], state: EditionState) {
     const displayDiv = document.getElementById('textColumns');
     if (!displayDiv) return;
 
@@ -675,7 +677,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     const columnWidthObject = getColumnWidths(editionsToFetch);
     
     // Create a dummy verse object to get the shorthands.
-    let dummyHeaderVerse = createDummyVerse(editionsToFetch);
+    let dummyHeaderVerse = createDummyVerse(editionsToFetch, state.isNT);
     
     let headerRow = createVerseRow(dummyHeaderVerse, columnWidthObject, 'th', state, true);
 
@@ -812,7 +814,7 @@ async function fetchChapter(state: EditionState) {
         const response = await fetch(`/chapter/${book}/${chapter}?editions=${editionsParam}`);
         const verses: Verse[] = await response.json();
         
-        createVerseGrid(verses, editionsToFetch, editionToShorthandDict, state);
+        createVerseGrid(verses, editionsToFetch, state);
         
     } catch (error) {
         console.error('Error fetching chapter:', error);
