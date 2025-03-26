@@ -211,6 +211,7 @@ type EditionState = {
     editions: number,
     highlighting: Highlighting,
     hapaxes: Hapax,
+    viewBrackets: boolean,
     book: string,
     chapter: number,
 }
@@ -401,12 +402,25 @@ function hapaxListener(docID: string, setting: Hapax, state: EditionState) {
     });
 }
 
+function viewBracketsListener(state: EditionState) { 
+    let checkbox = <HTMLInputElement>document.getElementById("viewUncertain")!;
+    state.viewBrackets = checkbox.checked;
+    
+    checkbox.addEventListener("change", function () {
+        state.viewBrackets = checkbox.checked;
+    });
+}
+
 function isMassachusett(edition: Edition) {
     return (edition == "first_edition" || edition == "second_edition" || edition == "mayhew" || edition == "zeroth_edition")
 }
 
-function processMassText(text: string, edition: Edition) {
+function processMassText(text: string, state: EditionState) {
     text = text.replaceAll('8', 'ꝏ̄').replaceAll("$", " ").replaceAll("ṡ", "s").replaceAll("ṣ", "s").replaceAll('{', '<i>').replaceAll('}', '</i>');
+
+    if (state.viewBrackets == false) {
+        text = text.replaceAll("[", "").replaceAll("]", "")
+    }
 
     return text
 }
@@ -568,7 +582,7 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
         if (isDummy) {
             cell.style.textAlign = "center";
         } else if (isMassachusett(edition) && verseText) {
-            verseText = processMassText(verseText, edition);
+            verseText = processMassText(verseText, state);
         }
         if (verseText && typeof verseText === 'string') {
             cell.innerHTML = verseText;
@@ -809,6 +823,7 @@ function main() {
         highlighting: "none",
         hapaxes: "none",
         book: "",
+        viewBrackets: true,
         chapter: 1
     };
      
@@ -832,6 +847,8 @@ function main() {
     sectionListener(editionState);
 
     submitButtonListener(editionState);
+
+    viewBracketsListener(editionState);
 }
 
 main();
