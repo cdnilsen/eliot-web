@@ -771,10 +771,13 @@ function fixEditionNumber(state: EditionState): number {
 
 async function fetchChapter(state: EditionState) {
     try {
+        console.log(state.editions);
         let editionNumber = fixEditionNumber(state);
+        console.log(editionNumber);
+        console.log(state);
         let book = state.book;
         let chapter = state.chapter;
-
+        
         const editionsToFetch: Edition[] = [];
         if (editionNumber % 2 === 0) editionsToFetch.push('first_edition');
         if (editionNumber % 3 === 0) editionsToFetch.push('second_edition');
