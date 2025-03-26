@@ -397,7 +397,7 @@ function viewBracketsListener(state: EditionState) {
     
     checkbox.addEventListener("change", function () {
         state.viewBrackets = checkbox.checked;
-        fetchChapter(state);
+        //fetchChapter(state); //Fix later
     });
 }
 
