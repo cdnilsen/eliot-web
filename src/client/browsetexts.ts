@@ -431,7 +431,7 @@ function processText(text: string, state: EditionState, edition: Edition, isDumm
         return text;
     }
     if (edition == "first_edition" || edition == "second_edition" || edition == "mayhew" || edition == "zeroth_edition") {
-        return processMassText(text, edition); //deal with hapaxes later
+        return processMassText(text, state); //deal with hapaxes later
     }
 
     if (edition == "grebrew" || edition == "kjv") {
