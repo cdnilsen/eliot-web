@@ -599,80 +599,96 @@ function createNavBar(state: EditionState) {
     navBar.style.display = 'flex';
     navBar.style.justifyContent = 'space-between';
     navBar.style.width = '100%';
+    navBar.style.marginBottom = '20px';
     navBar.style.padding = '10px 0';
-    navBar.style.position = 'sticky';
-    navBar.style.top = '0';
+    navBar.style.borderBottom = '1px solid #ddd';
     navBar.style.backgroundColor = 'white';
-    navBar.style.zIndex = '10';
+    navBar.style.position = 'relative'; // Using relative instead of sticky
+    navBar.style.clear = 'both';
+    navBar.style.zIndex = '1000';
 
-    // Left navigation container
-    const leftNav = document.createElement('div');
-    leftNav.style.width = '45%';
-    leftNav.style.textAlign = 'left';
+    // Left side - Previous button
+    const leftSide = document.createElement('div');
+    leftSide.style.width = '45%';
+    leftSide.style.textAlign = 'left';
+    
+    // Right side - Next button
+    const rightSide = document.createElement('div');
+    rightSide.style.width = '45%';
+    rightSide.style.textAlign = 'right';
 
-    // Right navigation container
-    const rightNav = document.createElement('div');
-    rightNav.style.width = '45%';
-    rightNav.style.textAlign = 'right';
-
-    // Previous button - only show if not on first chapter
+    // Previous button
     if (state.chapter > 1) {
         const prevButton = document.createElement('button');
         prevButton.innerHTML = '← Previous Chapter';
-        prevButton.style.padding = '5px 10px';
+        prevButton.style.width = 'auto';
         prevButton.onclick = () => {
             state.chapter -= 1;
             if (state.chapter >= 1) {
                 fetchChapter(state);
             } else {
-                state.chapter = 1; // Reset if we went too low
+                state.chapter = 1;
             }
         };
-        leftNav.appendChild(prevButton);
+        leftSide.appendChild(prevButton);
     }
 
-    // Next button - only show if not on last chapter
+    // Next button
     if (state.chapter < bookToChapterDict[state.book]) {
         const nextButton = document.createElement('button');
         nextButton.innerHTML = 'Next Chapter →';
-        nextButton.style.padding = '5px 10px';
+        nextButton.style.width = 'auto';
         nextButton.onclick = () => {
             state.chapter += 1;
             if (state.chapter <= bookToChapterDict[state.book]) {
                 fetchChapter(state);
             } else {
-                state.chapter = bookToChapterDict[state.book]; // Reset if we went too high
+                state.chapter = bookToChapterDict[state.book];
             }
         };
-        rightNav.appendChild(nextButton);
+        rightSide.appendChild(nextButton);
     }
 
-    // Add components to the navbar
-    navBar.appendChild(leftNav);
-    navBar.appendChild(rightNav);
-
+    navBar.appendChild(leftSide);
+    navBar.appendChild(rightSide);
+    
     return navBar;
 }
 
+// Modify the createVerseGrid function to set a clearer structure
 function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToShorthandDict: EditionToShorthandDict, state: EditionState) {
     const displayDiv = document.getElementById('textColumns');
     if (!displayDiv) return;
 
     displayDiv.innerHTML = '';
+    
+    // Create a container div for better structure
+    const contentContainer = document.createElement('div');
+    contentContainer.style.position = 'relative';
+    contentContainer.style.width = '100%';
+    
+    // Add the navigation bar at the top
     let navBar = createNavBar(state);
-    displayDiv.appendChild(navBar);
+    contentContainer.appendChild(navBar);
 
-    // Create container for the table
+    // Create container for the table with proper spacing
     const tableContainer = document.createElement('div');
     tableContainer.className = 'table-container';
+    tableContainer.style.marginTop = '20px';
+    tableContainer.style.position = 'relative';
+    tableContainer.style.width = '100%';
+    tableContainer.style.clear = 'both';
 
     // Create table element
     const table = document.createElement('table');
     table.className = 'verse-table';
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.tableLayout = 'fixed';
 
     const columnWidthObject = getColumnWidths(editionsToFetch);
     
-    // Create a dummy verse object to get the shorthands.
+    // Create a dummy verse object to get the shorthands
     let dummyHeaderVerse = createDummyVerse(editionsToFetch);
     
     let headerRow = createVerseRow(dummyHeaderVerse, columnWidthObject, 'th', state, true);
@@ -682,92 +698,51 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
-    //get highlighting setting (and hapax settings, eventually)
-    let highlighting = state.highlighting;
-
     // Create tbody for the verses
     const tbody = document.createElement('tbody');
     verses.forEach((verse: Verse) => {
         let row = createVerseRow(verse, columnWidthObject, 'td', state);
-
         tbody.appendChild(row);
     });
     table.appendChild(tbody);
 
     tableContainer.appendChild(table);
-    displayDiv.appendChild(table);
+    contentContainer.appendChild(tableContainer);
+    displayDiv.appendChild(contentContainer);
 
     // Add CSS style
     const style = document.createElement('style');
     style.textContent = `
-    .chapter-navigation {
-        position: sticky;
-        top: 0;
-        background: white;
-        padding: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-        z-index: 3;  /* Increased z-index */
-        border-bottom: 1px solid #ddd;
-    }
-
-    .chapter-navigation button {
-        padding: 5px 15px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background: white;
-        cursor: pointer;
-    }
-
-    .chapter-navigation button:hover {
-        background: #f5f5f5;
-    }
-
-    .chapter-navigation button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .chapter-indicator {
-        font-weight: bold;
-    }
-
-    .table-container {
-        max-height: calc(80vh - 50px);
-        overflow-y: auto;
-        position: relative;
-    }
-
-    .verse-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 1em 0;
-    }
-
-    .verse-table thead {
-        position: sticky;
-        top: 52px;  /* Height of navbar (including padding and border) */
-        z-index: 2;
-        background: white;  /* Ensure the header has a background */
-    }
-
     .verse-table th {
         background-color: #f5f5f5;
         font-weight: bold;
-        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+        padding: 10px 8px;
+        text-align: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border: 1px solid #ddd;
     }
-
-    .verse-table th, .verse-table td {
+    
+    .verse-table td {
         padding: 8px;
         border: 1px solid #ddd;
         text-align: left;
+        vertical-align: top;
+        word-wrap: break-word;
     }
-
+    
     .verse-number {
         font-weight: bold;
-        text-align: right;
+        text-align: center !important;
+    }
+    
+    .chapter-navigation button {
+        min-width: auto;
+        width: auto !important;
+        display: inline-block;
+        padding: 8px 15px;
+        margin: 0;
     }
     `;
     document.head.appendChild(style);
