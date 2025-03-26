@@ -336,7 +336,7 @@ function editionNumberListener(docID: string, p: number, state: EditionState) {
 
     // testing this
     if (p == 5 || p == 7) {
-        if (state.book in bookToContainerDict) {
+        if (state.book in bookToContainerDict && docID in containerDict) {
             let container = <HTMLSpanElement>document.getElementById(containerDict[docID])!;
             if (bookToContainerDict[state.book] == docID) {
                 checkbox.checked = false;
