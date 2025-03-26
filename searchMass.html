@@ -23,7 +23,7 @@
         <i>Use the numeral <span style="color: red"><b>8</b></span> for the double-O ligature, <span style="color: red"><b>*</b></span> for wildcard sequences, <span style="color: red"><b>(</b></span>parentheses<span style="color: red"><b>)</b></span> for optional characters, and <span style="color: red"><b>$</b></span> for spurious spaces (e.g. </i>nish$noh<i> for </i>nish noh<i>).</i>
     </div>
     <br>
-    <div id="diacriticsSelection">
+    <div id="diacriticsSelection" hidden>
         <input type="radio" name="diacritics" id="diacriticsStrict" value="diacriticsStrict" checked>
             <label for="diacriticsStrict"><b>Strict</b> diacritics: search for <i>matta</i> returns <i>matta</i> but <span style="color: red">not</span> <i>matt<b>á</b></i></label>
         <br>
@@ -33,7 +33,7 @@
     <br>
     <div id="sortWordsSelection">
         <input type="radio" name="sortWords" id="sortAlph" value="sortAlph" checked>
-            <label for="sortAlph">Sort words alphabetically (a bit bugged for some reason)</label>
+            <label for="sortAlph">Sort words alphabetically</label>
         <input type="radio" name="sortWords" id="sortFrequency" value="sortFrequency">
             <label for="sortFrequency">Sort words by frequency</label>
     </div>
