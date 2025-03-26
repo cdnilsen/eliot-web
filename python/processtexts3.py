@@ -12,7 +12,7 @@ import asyncio
 
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:Cb4-D5B2BEEg6*GBBB*Fga*b5FE6CbfF@monorail.proxy.rlwy.net:14224/railway')
 
-def clear_tables(connection):
+def clear_tables(connection, whichTable="6"):
     areYouSure = input("THIS WILL DELETE ALL YOUR DATA FROM ALL YOUR TABLES.\nIF YOU'RE SURE, TYPE 'YES' (ALL CAPS): ")
     if areYouSure != "YES":
         print("Aborting")
@@ -21,7 +21,8 @@ def clear_tables(connection):
         cursor = connection.cursor()
 
         executeStatement = ""
-        whichTable = input("Which table would you like to clear?\n(1) all_verses\n(2) verses_to_words\n(3) words_mass\n(4) words_kjv\n(5) all of them\n: ")
+        if whichTable == "6":
+            whichTable = input("Which table would you like to clear?\n(1) all_verses\n(2) verses_to_words\n(3) words_mass\n(4) words_kjv\n(5) all of them\n: ")
 
         if whichTable == "1":
             executeStatement = "DELETE FROM all_verses;"
@@ -460,8 +461,13 @@ def getWordAdditions(object):
             verseToWordDict[address] = wordObject["counts"]
             for i in range(len(wordObject["words"])):
                 word = wordObject["words"][i]
-                if word.strip() == "":
+                word = word.strip();
+                if word == "":
                     continue
+
+                if word.endswith("\n"):
+                    print(word)
+
                 count = wordObject["counts"][word]
                 verseToWordDict[word] = count
 
@@ -614,12 +620,11 @@ def addToKJV(connection, book):
     except:
         print("Error opening file for " + book)
         return {}
-    
     bookID = "1" + bookToIDDict[book]
 
-
     dict = {}
-    for line in fileLines:
+    for i in range(len(fileLines)):
+        line = fileLines[i]
         splitLine = line.split(" ")
         address = splitLine[0].strip()
         chapter = address.split(".")[0]
@@ -670,7 +675,7 @@ def addToKJV(connection, book):
 
 
 
-'''
+''' 
 allFilesInTextFolder = os.listdir("../texts")
 for file in allFilesInTextFolder:
     fileLines = open(f"../texts/{file}", "r", encoding="utf-8").readlines()
@@ -711,13 +716,25 @@ def fullReset():
     for book in allBookList:
         main(book)
         
-    print(f"Total time for all books: {time.time() - outerStartTime:.2f} seconds")
+    
     totalWords = getNumWords(connection)
     print(f"Total Massachusett headwords in database: {totalWords}")
     addAllKJV(connection)
 
-fullReset()
+    print(f"Total time for all books: {time.time() - outerStartTime:.2f} seconds")
 
+def resetKJV():
+    outerStartTime = time.time()
+    connection = psycopg2.connect(DATABASE_URL)
+    clear_tables(connection, "4")
+    addAllKJV(connection)
+
+    print(f"Total time for all books: {time.time() - outerStartTime:.2f} seconds")
+
+
+
+#fullReset()
+resetKJV()
 
 
 #main()

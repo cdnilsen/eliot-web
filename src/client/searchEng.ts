@@ -152,7 +152,6 @@ function processTextInBox(text: string, headword: string, keyNum: number): strin
 }
 
 function getResultDiv(result: WordKJVResult): HTMLDivElement {
-
     let resultDiv = document.createElement("div");
     resultDiv.className = "result-item";
     let headwordSpan = document.createElement("span");

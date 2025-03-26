@@ -198,7 +198,8 @@ def cleanWord(word):
     for char in punctuation:
         word = word.replace(char, "")
 
-    return word
+    return word.strip()
+
 
 cantillationMarksCodePoints = [
     "u0591",
