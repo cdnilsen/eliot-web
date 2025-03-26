@@ -317,47 +317,53 @@ function sectionListener(state: EditionState) {
     });
 }
 
-function editionNumberListener(docID: string, p: number, state: EditionState) {
-    let checkbox = <HTMLInputElement>document.getElementById(docID)!;
+function editionNumberListener(state: EditionState) {
+    let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew"];
+    let primesList = [2, 3, 5, 7, 11];
+    for (let i=0; i < primesList.length; i++) {
+        let docID = editionListenerIDs[i];
+        let p = primesList[i];
+        let checkbox = <HTMLInputElement>document.getElementById(docID)!;
 
-    let containerDict = {
-        "useFirstEdition": "firstEditionContainer", 
-        "useSecondEdition": "secondEditionContainer", 
-        "useMayhew": "mayhewContainer", 
-        "useZerothEdition": "zerothContainer", 
-        "useGrebrew": "grebrewContainer"
-    }
+        let containerDict = {
+            "useFirstEdition": "firstEditionContainer", 
+            "useSecondEdition": "secondEditionContainer", 
+            "useMayhew": "mayhewContainer", 
+            "useZerothEdition": "zerothContainer", 
+            "useGrebrew": "grebrewContainer"
+        }
 
-    let bookToContainerDict = {
-        "Genesis": "useZerothEdition",
-        "Psalms (prose)": "useMayhew",
-        "John": "useMayhew"
-    }
+        let bookToContainerDict = {
+            "Genesis": "useZerothEdition",
+            "Psalms (prose)": "useMayhew",
+            "John": "useMayhew"
+        }
 
-    // testing this
-    if (p == 5 || p == 7) {
-        if (state.book in bookToContainerDict && docID in containerDict) {
-            let container = <HTMLSpanElement>document.getElementById(containerDict[docID])!;
-            if (bookToContainerDict[state.book] == docID) {
-                checkbox.checked = false;
-                container.hidden = true;
-            } else {
-                checkbox.checked = true;
-                container.hidden = false;
+        // testing this
+        if (p == 5 || p == 7) {
+            if (state.book in bookToContainerDict && docID in containerDict) {
+                let container = <HTMLSpanElement>document.getElementById(containerDict[docID])!;
+                if (bookToContainerDict[state.book] == docID) {
+                    checkbox.checked = false;
+                    container.hidden = true;
+                } else {
+                    checkbox.checked = true;
+                    container.hidden = false;
+                }
             }
         }
-    }
 
-    if (checkbox.checked) {
-        state.editions = state.editions * p;
-    }
-    checkbox.addEventListener("change", function() {
         if (checkbox.checked) {
             state.editions = state.editions * p;
-        } else {
-            state.editions = state.editions / p;
         }
-    });
+        checkbox.addEventListener("change", function() {
+            if (checkbox.checked) {
+                state.editions = state.editions * p;
+            } else {
+                state.editions = state.editions / p;
+            }
+        });
+    }
 }
 
 function highlightingListener(docID: string, setting: Highlighting, state: EditionState) {
@@ -736,6 +742,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     document.head.appendChild(style);
 }
 
+// Kludgey fix, but (shrug emoji)
 function fixEditionNumber(state: EditionState) {
     if (state.editions % 5 == 0) {
         if (state.book != "Psalms (prose)" && state.book != "John") {
@@ -779,6 +786,7 @@ async function fetchChapter(state: EditionState) {
 function submitButtonListener(state: EditionState) {
     let submitButton = <HTMLButtonElement>document.getElementById("submitBookQuery");
     submitButton.addEventListener("click", function() {
+        editionNumberListener(state);
         fetchChapter(state);
     });
 }
@@ -792,12 +800,11 @@ function main() {
         chapter: 1
     };
 
-    let editionListenerIDs = ["useFirstEdition", "useSecondEdition", "useMayhew", "useZerothEdition", "useGrebrew"]
-    let primesList = [2, 3, 5, 7, 11]
+    
 
-    for (let i=0; i < primesList.length; i++) { 
-        editionNumberListener(editionListenerIDs[i], primesList[i], editionState);
-    }
+     
+    editionNumberListener(editionState);
+    
 
     let highlightingIDs = ["no_show", "include_casing", "exclude_casing", "proofreading"];
     let highlightingSettings: Highlighting[] = ["none", "includeCasing", "ignoreCasing", "proofreading"];
