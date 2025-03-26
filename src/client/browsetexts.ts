@@ -596,52 +596,61 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
 function createNavBar(state: EditionState) {
     const navBar = document.createElement('div');
     navBar.className = 'chapter-navigation';
+    navBar.style.display = 'flex';
+    navBar.style.justifyContent = 'space-between';
+    navBar.style.width = '100%';
+    navBar.style.padding = '10px 0';
+    navBar.style.position = 'sticky';
+    navBar.style.top = '0';
+    navBar.style.backgroundColor = 'white';
+    navBar.style.zIndex = '10';
 
-    const prevButton = document.createElement('button');
-    prevButton.innerHTML = '← Previous Chapter';
-    prevButton.style.width = '45%'; 
-    prevButton.onclick = () => {
-        state.chapter -= 1;
-        if (state.chapter >= 1) {
-            fetchChapter(state);
-        } else {
-            state.chapter = 1; // Reset if we went too low
-        }
-    };
+    // Left navigation container
+    const leftNav = document.createElement('div');
+    leftNav.style.width = '45%';
+    leftNav.style.textAlign = 'left';
 
-    const nextButton = document.createElement('button');
-    nextButton.innerHTML = 'Next Chapter →';
-    nextButton.style.width = '45%';
-    nextButton.style.float = 'right';
-    nextButton.onclick = () => {
-        state.chapter += 1;
-        if (state.chapter <= bookToChapterDict[state.book]) {
-            fetchChapter(state);
-        } else {
-            state.chapter = bookToChapterDict[state.book]; // Reset if we went too high
-        }
-    };
+    // Right navigation container
+    const rightNav = document.createElement('div');
+    rightNav.style.width = '45%';
+    rightNav.style.textAlign = 'right';
 
-    const chapterIndicator = document.createElement('span');
-    chapterIndicator.innerHTML = `Chapter ${state.chapter}`;
-    chapterIndicator.className = 'chapter-indicator';
-
+    // Previous button - only show if not on first chapter
     if (state.chapter > 1) {
-        navBar.appendChild(prevButton);
-    } else {
-        let blankSpan = document.createElement('span');
-        blankSpan.style.width = '45%';
-        navBar.appendChild(blankSpan);
+        const prevButton = document.createElement('button');
+        prevButton.innerHTML = '← Previous Chapter';
+        prevButton.style.padding = '5px 10px';
+        prevButton.onclick = () => {
+            state.chapter -= 1;
+            if (state.chapter >= 1) {
+                fetchChapter(state);
+            } else {
+                state.chapter = 1; // Reset if we went too low
+            }
+        };
+        leftNav.appendChild(prevButton);
     }
-    //navBar.appendChild(chapterIndicator);
+
+    // Next button - only show if not on last chapter
     if (state.chapter < bookToChapterDict[state.book]) {
-        navBar.appendChild(nextButton);
-    } else {
-        let blankSpan = document.createElement('span');
-        blankSpan.style.width = '45%';
-        blankSpan.style.float = 'right';
-        navBar.appendChild(blankSpan);
+        const nextButton = document.createElement('button');
+        nextButton.innerHTML = 'Next Chapter →';
+        nextButton.style.padding = '5px 10px';
+        nextButton.onclick = () => {
+            state.chapter += 1;
+            if (state.chapter <= bookToChapterDict[state.book]) {
+                fetchChapter(state);
+            } else {
+                state.chapter = bookToChapterDict[state.book]; // Reset if we went too high
+            }
+        };
+        rightNav.appendChild(nextButton);
     }
+
+    // Add components to the navbar
+    navBar.appendChild(leftNav);
+    navBar.appendChild(rightNav);
+
     return navBar;
 }
 
