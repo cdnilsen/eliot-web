@@ -815,6 +815,11 @@ async function fetchChapter(state: EditionState) {
         const verses: Verse[] = await response.json();
         
         createVerseGrid(verses, editionsToFetch, state);
+
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth' // For smooth scrolling
+        });
         
     } catch (error) {
         console.error('Error fetching chapter:', error);
