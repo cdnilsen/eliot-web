@@ -743,23 +743,23 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
 }
 
 // Kludgey fix, but (shrug emoji)
-function fixEditionNumber(state: EditionState) {
-    if (state.editions % 5 == 0) {
+function fixEditionNumber(state: EditionState): number {
+    let number = state.editions;
+    if (number % 5 == 0) {
         if (state.book != "Psalms (prose)" && state.book != "John") {
-            state.editions = state.editions / 5;
+            number = state.editions / 5;
         }
     }
 
-    if (state.editions % 7 == 0 && state.book != "Genesis") {
-        state.editions = state.editions / 7
+    if (number % 7 == 0 && state.book != "Genesis") {
+        number = state.editions / 7
     }
+    return number;
 }
 
 async function fetchChapter(state: EditionState) {
     try {
-        fixEditionNumber(state);
-
-        let editionNumber = state.editions;
+        let editionNumber = fixEditionNumber(state);
         let book = state.book;
         let chapter = state.chapter;
 
