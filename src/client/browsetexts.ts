@@ -802,6 +802,7 @@ async function fetchChapter(state: EditionState) {
 function submitButtonListener(state: EditionState) {
     let submitButton = <HTMLButtonElement>document.getElementById("submitBookQuery");
     submitButton.addEventListener("click", function() {
+        state.editions = fixEditionNumber(state);
         editionNumberListener(state);
         fetchChapter(state);
     });
