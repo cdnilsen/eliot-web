@@ -416,8 +416,6 @@ function processText(text: string, state: EditionState, edition: Edition, isDumm
     
 }
 
-
-
 type EditionColumns = {
     right: Edition[],
     left: Edition[],
@@ -738,8 +736,22 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], editionToS
     document.head.appendChild(style);
 }
 
+function fixEditionNumber(state: EditionState) {
+    if (state.editions % 5 == 0) {
+        if (state.book != "Psalms (prose)" && state.book != "John") {
+            state.editions = state.editions / 5;
+        }
+    }
+
+    if (state.editions % 7 == 0 && state.book != "Genesis") {
+        state.editions = state.editions / 7
+    }
+}
+
 async function fetchChapter(state: EditionState) {
     try {
+        fixEditionNumber(state);
+
         let editionNumber = state.editions;
         let book = state.book;
         let chapter = state.chapter;
