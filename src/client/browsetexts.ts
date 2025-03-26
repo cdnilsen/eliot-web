@@ -318,7 +318,7 @@ function sectionListener(state: EditionState) {
 }
 
 function editionNumberListener(docID: string, p: number, state: EditionState) {
-    let checkbox = <HTMLInputElement>document.getElementById(docID);
+    let checkbox = <HTMLInputElement>document.getElementById(docID)!;
 
     let containerDict = {
         "useFirstEdition": "firstEditionContainer", 
@@ -337,7 +337,7 @@ function editionNumberListener(docID: string, p: number, state: EditionState) {
     // testing this
     if (p == 5 || p == 7) {
         if (state.book in bookToContainerDict) {
-            let container = <HTMLSpanElement>document.getElementById(containerDict[docID]);
+            let container = <HTMLSpanElement>document.getElementById(containerDict[docID])!;
             if (bookToContainerDict[state.book] == docID) {
                 checkbox.checked = false;
                 container.hidden = true;
