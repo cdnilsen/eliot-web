@@ -774,6 +774,7 @@ async function fetchChapter(state: EditionState) {
         console.log(state.editions);
         let editionNumber = fixEditionNumber(state);
         console.log(editionNumber);
+        state.editions = editionNumber;
         console.log(state);
         let book = state.book;
         let chapter = state.chapter;
