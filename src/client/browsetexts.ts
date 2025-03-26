@@ -320,14 +320,31 @@ function sectionListener(state: EditionState) {
 function editionNumberListener(docID: string, p: number, state: EditionState) {
     let checkbox = <HTMLInputElement>document.getElementById(docID);
 
+    let containerDict = {
+        "useFirstEdition": "firstEditionContainer", 
+        "useSecondEdition": "secondEditionContainer", 
+        "useMayhew": "mayhewContainer", 
+        "useZerothEdition": "zerothContainer", 
+        "useGrebrew": "grebrewContainer"
+    }
+
+    let bookToContainerDict = {
+        "Genesis": "useZerothEdition",
+        "Psalms (prose)": "useMayhew",
+        "John": "useMayhew"
+    }
+
     // testing this
-    if (p == 5) {
-        if (state.book != "Psalms" && state.book != "John") {
-            checkbox.checked = false;
-            checkbox.hidden = true;
-        } else {
-            checkbox.checked = true;
-            checkbox.hidden = false;
+    if (p == 5 || p == 7) {
+        if (state.book in bookToContainerDict) {
+            let container = <HTMLSpanElement>document.getElementById(containerDict[docID]);
+            if (bookToContainerDict[state.book] == docID) {
+                checkbox.checked = false;
+                container.hidden = true;
+            } else {
+                checkbox.checked = true;
+                container.hidden = false;
+            }
         }
     }
 
