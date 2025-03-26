@@ -195,11 +195,11 @@ type EditionToShorthandDict = {
 };
 
 const editionToShorthandDict: EditionToShorthandDict = {
-    "first_edition": "α",
-    "second_edition": "β",
-    "mayhew": "M",
-    "zeroth_edition": "א",
-    "kjv": "E",
+    "first_edition": "α (1661/1663)",
+    "second_edition": "β (1685)",
+    "mayhew": "M (1709)",
+    "zeroth_edition": "א (1655)",
+    "kjv": "KJV",
     "grebrew": "G"
 };
 
