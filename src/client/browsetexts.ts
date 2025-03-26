@@ -212,6 +212,7 @@ type EditionState = {
     highlighting: Highlighting,
     hapaxes: Hapax,
     viewBrackets: boolean,
+    isNT: boolean,
     book: string,
     chapter: number,
 }
@@ -287,6 +288,7 @@ function sectionListener(state: EditionState) {
         let currentSection = sectionDropdown.value;
         refreshSectionDropdown();
         sectionDropdown.value = currentSection;
+        console.log(sectionDropdown.value);
     });
 
     bookDropdown.addEventListener("change", function() {
@@ -831,6 +833,7 @@ function main() {
         editions: 1,
         highlighting: "none",
         hapaxes: "none",
+        isNT: false,
         book: "",
         viewBrackets: true,
         chapter: 1
