@@ -733,8 +733,8 @@ def resetKJV():
 
 
 
-#fullReset()
-resetKJV()
+fullReset()
+#resetKJV()
 
 
 #main()
