@@ -56,8 +56,8 @@ type UnicodeCharCollection = {
 }
 
 let CopticBlock1: UnicodeBlock = {
-    start: "0E32",
-    end: "0E3F",
+    start: "03E2",
+    end: "03EF",
     exceptions: [],
     additions: []
 }
@@ -102,9 +102,11 @@ type InputBlock = {
     outputSpan: HTMLSpanElement
 }
 
-function createInputBlock(target: string): InputBlock {
+function createInputBlock(target: string, isColumn: boolean = true): InputBlock {
     let container = document.createElement("div");
-    container.classList.add('column');
+    if (isColumn) {
+        container.classList.add('column');
+    }
 
     let inputBox = document.createElement("input");
     inputBox.type = "text";
@@ -202,7 +204,7 @@ function main() {
         state.language = options[selectedOption];
         //console.log(`Selected language: ${state.language.name}`);
 
-        let exampleOutput = createInputBlock("");
+        let exampleOutput = createInputBlock("", false);
         state.topExample = exampleOutput;
         let outputDiv = document.getElementById("regex-output")!;
         outputDiv.innerHTML = ""; // Clear previous content
