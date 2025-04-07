@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Regex</title>
-    <link rel="stylesheet" type="text/css" href="./styles.css">
+    
     <script src="index.js"></script>
 </head>
 <body>
@@ -16,10 +16,11 @@
     <button id="submit-button">Submit</button>
 
     <div id="regex-output">
-        <form>
-            <label for="fname">First name:</label>
-            <input type="text" id="fname" name="fname"><br><br>
-        </form>
+        <div>
+            <input type="text" id="regex-input" placeholder="Enter text here">
+            <span>→</span>
+            <span id="regex-result"></span>
+        </div>
 
     </div>
 </body>
