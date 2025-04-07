@@ -205,8 +205,6 @@ function processTopExample(state: State) {
 }
 
 function addRegexBoxListeners(state: State, blocks: InputBlock[]) {
-    let topExampleInput = state.topExample.inputBox;
-    let topExampleSpan = state.topExample.outputSpan;
     for (let i=0; i < blocks.length; i++) {
         let input = blocks[i].inputBox;
         input.addEventListener("change", (event) => {
@@ -221,8 +219,6 @@ function main() {
     let dummyInputBlock = createInputBlock("");
 
     let topExampleTextDiv = document.getElementById("top-example-text")!;
-
-    let allReplacementRules: CharReplacementDict = {}
 
     let state: State = {
         language: Coptic,
@@ -263,18 +259,11 @@ function main() {
         outputDiv.innerHTML = ""; // Clear previous content
         outputDiv.appendChild(exampleOutput.container);
 
-        let allRegexBoxes = generateRegexBoxes(state);
 
-        for (let i = 0; i < state.targetChars.length; i++) {
-        let char = state.targetChars[i];
-        let thisRegexBox = allRegexBoxes[char];
-        outputDiv.appendChild(thisRegexBox.container);
-        }
+        
     });
 
     let submitButton = document.getElementById("submit-button")!;
-
-    
 
     submitButton.addEventListener("click", () => {
         let selectedOption = (regexDropdown as HTMLSelectElement).value;
@@ -287,13 +276,22 @@ function main() {
         outputDiv.innerHTML = ""; // Clear previous content
         outputDiv.appendChild(exampleOutput.container);
 
+        processTopExample(state);
+
         let allRegexBoxes = generateRegexBoxes(state);
 
-        for (let i=0; i < state.targetChars.length; i++) {
+        for (let i = 0; i < state.targetChars.length; i++) {
             let char = state.targetChars[i];
             let thisRegexBox = allRegexBoxes[char];
             outputDiv.appendChild(thisRegexBox.container);
         }
+
+        let allInputBlockList: InputBlock[] = [];
+        for (let i=0; i < state.targetChars.length; i++) {
+            allInputBlockList.push(allRegexBoxes[state.targetChars[i]]);
+        }
+
+        addRegexBoxListeners(state, allInputBlockList);
     });
 
 
