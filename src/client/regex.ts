@@ -108,6 +108,7 @@ type State = {
 type InputBlock = {
     container: HTMLSpanElement,
     inputBox: HTMLInputElement,
+    targetChar: string,
     outputSpan: HTMLSpanElement
 }
 
@@ -145,6 +146,7 @@ function createInputBlock(target: string, isColumn: boolean = true): InputBlock 
     let object: InputBlock = {
         container: container,
         inputBox: inputBox,
+        targetChar: target,
         outputSpan: foreignTextSpan
     }
 
@@ -216,8 +218,12 @@ function addRegexBoxListeners(state: State, blocks: InputBlock[]) {
 
 
     for (let i=0; i < blocks.length; i++) {
-        let input = blocks[i].inputBox;
+        let block = blocks[i];
+        let target = block.targetChar;
+        let input = block.inputBox;
         input.addEventListener("input", (event) => {
+            state.targetToLatin[target] = input.value;
+            state.latinToTargetRegex[input.value] = target;
             processTopExample(state);
         });
     }
