@@ -197,7 +197,7 @@ function processTopExample(state: State) {
     keys.sort((a, b) => b.length - a.length);
 
     let exampleInput = state.topExample.inputBox.value;
-    let exampleText = state.topExample.outputSpan.textContent;
+    let exampleText = state.topExample.outputSpan.innerHTML;
     for (let i=0; i < keys.length; i++) {
         let k = keys[i];
         exampleText = exampleInput!.replaceAll(k, state.latinToTargetRegex[k])
@@ -205,6 +205,12 @@ function processTopExample(state: State) {
 }
 
 function addRegexBoxListeners(state: State, blocks: InputBlock[]) {
+    let topExampleInputBox = state.topExample.inputBox;
+    topExampleInputBox.addEventListener("change", (event) => {
+        processTopExample(state);
+    });
+
+
     for (let i=0; i < blocks.length; i++) {
         let input = blocks[i].inputBox;
         input.addEventListener("change", (event) => {
