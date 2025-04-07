@@ -106,11 +106,16 @@ function createInputBlock(target: string, isColumn: boolean = true): InputBlock 
     let container = document.createElement("div");
     if (isColumn) {
         container.classList.add('column');
+    } else {
+        container.style.paddingBottom = "10px";
+        container.style.textAlign = "center";
     }
 
     let inputBox = document.createElement("input");
     inputBox.type = "text";
-    inputBox.style.width = "20px";
+    if (isColumn) {
+        inputBox.style.width = "20px";
+    }
     inputBox.placeholder = "";
 
     let arrowSpan = document.createElement("span");
