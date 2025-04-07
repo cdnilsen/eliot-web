@@ -104,6 +104,7 @@ type InputBlock = {
 
 function createInputBlock(target: string): InputBlock {
     let container = document.createElement("div");
+    container.classList.add('column');
 
     let inputBox = document.createElement("input");
     inputBox.type = "text";
