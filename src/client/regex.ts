@@ -103,10 +103,11 @@ type InputBlock = {
 }
 
 function createInputBlock(target: string): InputBlock {
-    let container = document.createElement("span");
+    let container = document.createElement("div");
 
     let inputBox = document.createElement("input");
     inputBox.type = "text";
+    inputBox.style.width = "20px";
     inputBox.placeholder = "";
 
     let arrowSpan = document.createElement("span");
