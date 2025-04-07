@@ -56,6 +56,7 @@ type UnicodeBlock = {
 
 type UnicodeCharCollection = {
     name: string,
+    exampleText: string,
     blocks: UnicodeBlock[]
 }
 
@@ -75,6 +76,7 @@ let CopticBlock2: UnicodeBlock = {
 
 let Coptic: UnicodeCharCollection = {
     name: "Coptic",
+    exampleText: "Ⲡⲉϫⲟⲉⲓⲥ ⲛⲁⲕⲣⲓⲛⲉ ⲛ̄ ⲛⲉⲗⲁⲟⲥ",
     blocks: [CopticBlock1, CopticBlock2]
 }
 
@@ -87,6 +89,7 @@ let RussianBlock: UnicodeBlock = {
 
 let Russian: UnicodeCharCollection = {
     name: "Russian",
+    exampleText: "Выходила на берег Катюша",
     blocks: [RussianBlock]
 }
 
@@ -217,6 +220,8 @@ function main() {
 
     let dummyInputBlock = createInputBlock("");
 
+    let topExampleTextDiv = document.getElementById("top-example-text")!;
+
     let allReplacementRules: CharReplacementDict = {}
 
     let state: State = {
@@ -242,6 +247,30 @@ function main() {
         option.textContent = unicode.name;
         regexDropdown.appendChild(option);
     }
+
+    let defaultOption = (regexDropdown as HTMLSelectElement).value;
+    let defaultLanguage = options[defaultOption]
+    topExampleTextDiv.innerHTML = "<i>" + defaultLanguage.exampleText + "</i>"
+
+    regexDropdown.addEventListener("change", () => {
+        let selectedOption = (regexDropdown as HTMLSelectElement).value;
+        state.language = options[selectedOption];
+        topExampleTextDiv.innerHTML = "<i>" + state.language.exampleText + "</i>"
+        // Update the UI or perform any necessary actions when the dropdown changes
+        let exampleOutput = createInputBlock("", false);
+        state.topExample = exampleOutput;
+        let outputDiv = document.getElementById("regex-output")!;
+        outputDiv.innerHTML = ""; // Clear previous content
+        outputDiv.appendChild(exampleOutput.container);
+
+        let allRegexBoxes = generateRegexBoxes(state);
+
+        for (let i = 0; i < state.targetChars.length; i++) {
+        let char = state.targetChars[i];
+        let thisRegexBox = allRegexBoxes[char];
+        outputDiv.appendChild(thisRegexBox.container);
+        }
+    });
 
     let submitButton = document.getElementById("submit-button")!;
 
