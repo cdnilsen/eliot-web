@@ -42,6 +42,10 @@ function generateUnicodeRange(startHex: string, endHex: string, exceptions: stri
     
     return characters;
 }
+
+type CharReplacementDict = {
+    [key: string]: string
+}
   
 type UnicodeBlock = {
     start: string,
@@ -92,14 +96,20 @@ type StringToUnicodeCollection = {
 
 type State = {
     language: UnicodeCharCollection,
-    topExample: InputBlock
+    topExample: InputBlock,
+    targetChars: string[],
+    latinToTargetRegex: CharReplacementDict,
+    targetToLatin: CharReplacementDict
 }
-
 
 type InputBlock = {
     container: HTMLSpanElement,
     inputBox: HTMLInputElement,
     outputSpan: HTMLSpanElement
+}
+
+type TargetToInputBlockDict = {
+    [key: string]: InputBlock
 }
 
 function createInputBlock(target: string, isColumn: boolean = true): InputBlock {
@@ -113,10 +123,11 @@ function createInputBlock(target: string, isColumn: boolean = true): InputBlock 
 
     let inputBox = document.createElement("input");
     inputBox.type = "text";
+    inputBox.placeholder = "";
     if (isColumn) {
         inputBox.style.width = "20px";
     }
-    inputBox.placeholder = "";
+    
 
     let arrowSpan = document.createElement("span");
     arrowSpan.textContent = "→";
@@ -132,7 +143,6 @@ function createInputBlock(target: string, isColumn: boolean = true): InputBlock 
         container: container,
         inputBox: inputBox,
         outputSpan: foreignTextSpan
-        
     }
 
     return object;
@@ -160,20 +170,46 @@ function getAllUnicodeChars(language: UnicodeCharCollection) {
     return allChars; 
 }
 
-function generateRegexBoxes(state: State): InputBlock[] {
+function generateRegexBoxes(state: State): TargetToInputBlockDict {
     let language = state.language;
 
     let allTargetChars = getAllUnicodeChars(language);
+    state.targetChars = allTargetChars;
 
 
-    let outputList: InputBlock[] = []
+    let outputDict: TargetToInputBlockDict = {}
     for (let i=0; i < allTargetChars.length; i++) {
         let char = allTargetChars[i];
         let inputBlock = createInputBlock(char);
-        outputList.push(inputBlock);
+        outputDict[char] = inputBlock;
     }
 
-    return outputList;
+    return outputDict;
+}
+
+function processTopExample(state: State) {
+    let keys = Object.keys(state.latinToTargetRegex);
+
+    //Sort keys in descending order by length.
+    keys.sort((a, b) => b.length - a.length);
+
+    let exampleText = state.topExample.outputSpan.textContent;
+    for (let i=0; i < keys.length; i++) {
+        let k = keys[i];
+        exampleText = exampleText!.replaceAll(k, state.latinToTargetRegex[k])
+    }
+}
+
+function addRegexBoxListeners(state: State, blocks: InputBlock[]) {
+    let topExampleInput = state.topExample.inputBox;
+    let topExampleSpan = state.topExample.outputSpan;
+
+    for (let i=0; i < blocks.length; i++) {
+        let input = blocks[i].inputBox;
+        input.addEventListener("change", (event) => {
+
+        });
+    }
 }
 
 function main() {
@@ -181,9 +217,14 @@ function main() {
 
     let dummyInputBlock = createInputBlock("");
 
+    let allReplacementRules: CharReplacementDict = {}
+
     let state: State = {
         language: Coptic,
-        topExample: dummyInputBlock
+        topExample: dummyInputBlock,
+        targetChars: [],
+        latinToTargetRegex: {},
+        targetToLatin: {}
     }
 
     let options: StringToUnicodeCollection = {
@@ -204,6 +245,8 @@ function main() {
 
     let submitButton = document.getElementById("submit-button")!;
 
+    
+
     submitButton.addEventListener("click", () => {
         let selectedOption = (regexDropdown as HTMLSelectElement).value;
         state.language = options[selectedOption];
@@ -217,8 +260,9 @@ function main() {
 
         let allRegexBoxes = generateRegexBoxes(state);
 
-        for (let i=0; i < allRegexBoxes.length; i++) {
-            let thisRegexBox = allRegexBoxes[i];
+        for (let i=0; i < state.targetChars.length; i++) {
+            let char = state.targetChars[i];
+            let thisRegexBox = allRegexBoxes[char];
             outputDiv.appendChild(thisRegexBox.container);
         }
     });
