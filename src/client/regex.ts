@@ -79,10 +79,18 @@ type StringToUnicodeCollection = {
     [key: string]: UnicodeCharCollection
 }
 
+type State = {
+    language: UnicodeCharCollection
 
+}
 
 function main() {
     let regexDropdown = document.getElementById("regex-options")!
+
+    let state: State = {
+        language: Coptic
+
+    }
 
     let options: StringToUnicodeCollection = {
         "Coptic": Coptic,
@@ -92,15 +100,21 @@ function main() {
     let optionNames = ["Coptic", "Russian"];
 
     for (let i = 0; i < optionNames.length; i++) {
-        console.log(optionNames[i]);
         let unicode = options[optionNames[i]];
         let option = document.createElement("option");
         option.value = optionNames[i];
-        console.log(unicode.name);
         option.label = unicode.name;
         option.textContent = unicode.name;
         regexDropdown.appendChild(option);
     }
+
+    let submitButton = document.getElementById("submit-button")!;
+
+    submitButton.addEventListener("click", () => {
+        let selectedOption = (regexDropdown as HTMLSelectElement).value;
+        state.language = options[selectedOption];
+        console.log(`Selected language: ${state.language.name}`);
+    });
 
 
 }
