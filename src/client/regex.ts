@@ -197,7 +197,7 @@ function processTopExample(state: State) {
     let exampleText = state.topExample.outputSpan.textContent;
     for (let i=0; i < keys.length; i++) {
         let k = keys[i];
-        exampleText = exampleText!.replaceAll(k, state.latinToTargetRegex[k])
+        exampleText = exampleInput!.replaceAll(k, state.latinToTargetRegex[k])
     }
 }
 
