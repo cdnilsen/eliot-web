@@ -197,11 +197,15 @@ function processTopExample(state: State) {
     keys.sort((a, b) => b.length - a.length);
 
     let exampleInput = state.topExample.inputBox.value;
-    let exampleText = state.topExample.outputSpan.innerHTML;
+    let result = exampleInput;
+    
     for (let i=0; i < keys.length; i++) {
         let k = keys[i];
-        exampleText = exampleInput!.replaceAll(k, state.latinToTargetRegex[k])
+        result = result.replaceAll(k, state.latinToTargetRegex[k]);
     }
+    
+    // Update the DOM with our result
+    state.topExample.outputSpan.textContent = result;
 }
 
 function addRegexBoxListeners(state: State, blocks: InputBlock[]) {
@@ -264,9 +268,6 @@ function main() {
         let outputDiv = document.getElementById("regex-output")!;
         outputDiv.innerHTML = ""; // Clear previous content
         outputDiv.appendChild(exampleOutput.container);
-
-
-        
     });
 
     let submitButton = document.getElementById("submit-button")!;
@@ -274,7 +275,6 @@ function main() {
     submitButton.addEventListener("click", () => {
         let selectedOption = (regexDropdown as HTMLSelectElement).value;
         state.language = options[selectedOption];
-        //console.log(`Selected language: ${state.language.name}`);
 
         let exampleOutput = createInputBlock("", false);
         state.topExample = exampleOutput;
