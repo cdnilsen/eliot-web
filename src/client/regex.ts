@@ -92,6 +92,7 @@ function main() {
     let optionNames = ["Coptic", "Russian"];
 
     for (let i = 0; i < optionNames.length; i++) {
+        console.log(optionNames[i]);
         let unicode = options[optionNames[i]];
         let option = document.createElement("option");
         option.value = optionNames[i];
