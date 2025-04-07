@@ -222,8 +222,10 @@ function addRegexBoxListeners(state: State, blocks: InputBlock[]) {
         let target = block.targetChar;
         let input = block.inputBox;
         input.addEventListener("input", (event) => {
-            state.targetToLatin[target] = input.value;
-            state.latinToTargetRegex[input.value] = target;
+            if (input.value != "") {
+                state.targetToLatin[target] = input.value;
+                state.latinToTargetRegex[input.value] = target;
+            }
             processTopExample(state);
         });
     }
