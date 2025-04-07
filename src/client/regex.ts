@@ -202,7 +202,7 @@ function main() {
 
         let exampleOutput = createInputBlock("");
         state.topExample = exampleOutput;
-        let outputDiv = document.getElementById("output")!;
+        let outputDiv = document.getElementById("regex-output")!;
         outputDiv.innerHTML = ""; // Clear previous content
         outputDiv.appendChild(exampleOutput.container);
 
