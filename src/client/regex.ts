@@ -95,6 +95,7 @@ function main() {
         let unicode = options[optionNames[i]];
         let option = document.createElement("option");
         option.value = optionNames[i];
+        option.label = unicode.name;
         option.textContent = unicode.name;
         regexDropdown.appendChild(option);
     }
