@@ -113,7 +113,7 @@ function main() {
     submitButton.addEventListener("click", () => {
         let selectedOption = (regexDropdown as HTMLSelectElement).value;
         state.language = options[selectedOption];
-        console.log(`Selected language: ${state.language.name}`);
+        //console.log(`Selected language: ${state.language.name}`);
     });
 
 
