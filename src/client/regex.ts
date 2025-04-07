@@ -206,14 +206,14 @@ function processTopExample(state: State) {
 
 function addRegexBoxListeners(state: State, blocks: InputBlock[]) {
     let topExampleInputBox = state.topExample.inputBox;
-    topExampleInputBox.addEventListener("change", (event) => {
+    topExampleInputBox.addEventListener("input", (event) => {
         processTopExample(state);
     });
 
 
     for (let i=0; i < blocks.length; i++) {
         let input = blocks[i].inputBox;
-        input.addEventListener("change", (event) => {
+        input.addEventListener("input", (event) => {
             processTopExample(state);
         });
     }
