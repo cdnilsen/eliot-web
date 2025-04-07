@@ -105,5 +105,5 @@ function main() {
 
 }
 
-main()
+main();
 
