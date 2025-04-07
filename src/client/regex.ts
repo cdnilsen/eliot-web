@@ -153,7 +153,6 @@ function createInputBlock(target: string, isColumn: boolean = true): InputBlock 
     return object;
 }
 
-
 function getAllUnicodeChars(language: UnicodeCharCollection) {
     let blocks = language.blocks;
     let allChars: string[] = []
