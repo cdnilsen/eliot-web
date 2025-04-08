@@ -306,8 +306,6 @@ function main() {
 
         addRegexBoxListeners(state, allInputBlockList);
     });
-
-
 }
 
 main();
