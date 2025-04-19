@@ -23,8 +23,62 @@ def getPercentage(numerator, denominator):
     percent = round(quotient * 100, 2)
     return str(percent) + "%"
 
+def custom_sort(word_list, alphabet):
+    """
+    Sorts a list of words based on a custom alphabet.
+
+    Args:
+        word_list: A list of strings to be sorted.
+        alphabet: A string representing the custom alphabet order.
+
+    Returns:
+        A new list with words sorted according to the custom alphabet.
+    """
+    alphabet_index = {char: index for index, char in enumerate(alphabet)}
+    return sorted(word_list, key=lambda word: [alphabet_index.get(char, float('inf')) for char in word])
+
+
+def alphabetizeLines(dict):
+    allHeadwords = list(dict.keys())
+    
+    characterList = ["a", "á", "à", "â", "b", "c", "d", "e", "é", "è", "ê", "f", "g", "h", "i", "í", "ì", "î", "j", "k", "l", "m", "n", "ñ", "o", "ó", "ò", "ô", "p", "q", "r", "s", "ṡ", "ṣ", "t", "u", "ú", "ù", "û", "8", "v", "w", "x", "y", "z"]
+
+    return custom_sort(allHeadwords, characterList)
+
+def sortInterestingWords():
+    file = open('../interesting_words.txt', 'r', encoding="utf-8")
+
+    fileLines = file.readlines()
+
+    headwordToLineDict = {}
+
+    punctuation = ["(", ")", "-"]
+    for line in fileLines:
+        if "'" not in line:
+            print(line)
+        else:
+            headword = line.split("'")[0].strip().lower()
+            for char in punctuation:
+                headword = headword.replace(char, "")
+            if headword in headwordToLineDict:
+                print(f"{headword} already in dictionary")
+            else:
+                headwordToLineDict[headword] = line
+
+    sortedHeadwords = alphabetizeLines(headwordToLineDict)
+
+    file.close()
+    
+    reopenFile = open('../interesting_words.txt', 'w', encoding="utf-8")
+    allLines = []
+    for headword in sortedHeadwords:
+        allLines.append(headwordToLineDict[headword])
+
+    reopenFile.writelines(allLines)
+    reopenFile.close()
 
 def main():
+    sortInterestingWords()
     KJV_verse_dict = getKJVVerseDict()
 
     allBooks = list(KJV_verse_dict.keys())
@@ -78,8 +132,5 @@ def main():
         proportionalDifference = getPercentage(thisDifference, totalDifference)
         print(book + ": " + str(thisDifference) + " (" + proportionalDifference + ")")
     print(str(totalDifference) + " total verses left to go")
-
-
-    
 
 main()
