@@ -133,6 +133,7 @@ def getVerseObject(line, bookID, edition):
         object["specificID"] = editionID + idTail
 
     splitText = text.split(" ")
+    splitText = text.replace("|", " ")
     if edition != "Grebrew" and edition != "KJV":
         wordToCountDict = {}
         for word in splitText:
