@@ -57,6 +57,8 @@ def sortInterestingWords():
         if "'" not in line:
             print(line)
         else:
+            if not line.endswith("\n"):
+                line = line + "\n"
             headword = line.split("'")[0].strip().lower()
             for char in punctuation:
                 headword = headword.replace(char, "")
@@ -93,7 +95,7 @@ def main():
         letter = "β"
 
     
-
+    print("\n")
     editionToVerseCountDict = {}
 
     bookToDifferenceDict = {}
@@ -131,6 +133,6 @@ def main():
         thisDifference = bookToDifferenceDict[book]
         proportionalDifference = getPercentage(thisDifference, totalDifference)
         print(book + ": " + str(thisDifference) + " (" + proportionalDifference + ")")
-    print(str(totalDifference) + " total verses left to go")
+    print(str(totalDifference) + " total verses left to go\n")
 
 main()
