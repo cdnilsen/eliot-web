@@ -131,8 +131,10 @@ def main():
 
     for book in allUnfinishedBooks:
         thisDifference = bookToDifferenceDict[book]
+        if (thisDifference == 0):
+            continue
         proportionalDifference = getPercentage(thisDifference, totalDifference)
         print(book + ": " + str(thisDifference) + " (" + proportionalDifference + ")")
-    print(str(totalDifference) + " total verses left to go\n")
+    print("\n" + str(totalDifference) + " total verses left to go\n")
 
 main()
