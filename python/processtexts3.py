@@ -365,6 +365,15 @@ def addRawText(connection, bookObject, updateKJV=False):
     return returnObject
 
 
+def preprocessLine(line):
+    line = line.strip()
+    line = line.replace("|", " ")
+    line = line.replace("ṣ", "s")
+    line = line.replace("ṡ", "s")
+
+    return line
+
+
 def processBookToDict(bookName):
     fileDirectory = os.listdir("../texts")
     rightFiles = []
@@ -388,7 +397,7 @@ def processBookToDict(bookName):
         editions.append(edition)
         with open(f"../texts/{file}", "r", encoding="utf-8") as file:
             for line in file.readlines():
-                line = line.strip()
+                line = preprocessLine(line)
                 if line == "":
                     continue
                 thisVerseObject = getVerseObject(line, bookID, edition)
@@ -732,7 +741,7 @@ def resetKJV():
 
     print(f"Total time for all books: {time.time() - outerStartTime:.2f} seconds")
 
-
+#print("test|1|2".replace("|", " "))
 
 fullReset()
 #resetKJV()
