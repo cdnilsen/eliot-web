@@ -23,7 +23,6 @@ def clear_tables(connection, whichTable="6"):
         executeStatement = ""
         if whichTable == "6":
             whichTable = input("Which table would you like to clear?\n(1) all_verses\n(2) verses_to_words\n(3) words_mass\n(4) words_kjv\n(5) all of them\n: ")
-
         if whichTable == "1":
             executeStatement = "DELETE FROM all_verses;"
         elif whichTable == "2":
