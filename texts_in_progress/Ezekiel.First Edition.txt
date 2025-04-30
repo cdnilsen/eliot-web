@@ -2546,31 +2546,31 @@ E.Eze.33.32: And, lo, thou art unto them as a very lovely song of one that hath 
 α.Eze.33.33 Kah yeu ânak, (kusseh, piṣh n$nih) neit piṣh wahteauog quoshodtumwaenúh kenukshâog.
 E.Eze.33.33: And when this cometh to pass, (lo, it will come,) then shall they know that a prophet hath been among them.
 
-α.Eze.34.1 
+α.Eze.34.1 KAh wuttinn8waonk Jehovah nuppeyaónuk, n8wau,
 E.Eze.34.1: And the word of the LORD came unto me, saying,
 
-α.Eze.34.2 
+α.Eze.34.2 Wosketompae wunnaumoniin, ayeuhkonittue quoshoe missohhamouṣh Israelle shephersdog, quoshodtuṣh kah nag us, Lord Jehovah yeu wuttinnon shepherdsoh, missi wutonkapunnaongan8 Israelle shepherdsog neg nehenwonche assamoncheg wuhhogkauh: sunnummatta woh shepherdsog assamauoog flocksoh?
 E.Eze.34.2: Son of man, prophesy against the shepherds of Israel, prophesy, and say unto them, Thus saith the Lord GOD unto the shepherds; Woe be to the shepherds of Israel that do feed themselves! should not the shepherds feed the flocks?
 
-α.Eze.34.3 
+α.Eze.34.3 Kummeechumw8 wees, kah kuthogkumw8 w8l, kenushoog neg wânogqutcheg: qut matta kutassamomw8 flockoh
 E.Eze.34.3: Ye eat the fat, and ye clothe you with the wool, ye kill them that are fed: but ye feed not the flock.
 
-α.Eze.34.4 
+α.Eze.34.4 Mahchinácheg matta kummenuhkéheóog, kah matta keneetskeheomw8 noh mahchinadt, kah matta kutaséhpanomw8 ne pohquag, kah matta wonk kuppaudtauomw8 ne moncha8hkomuk, kah matta kenatinneáham8mw8 ne wanteómuk, qut chekeeyeuuk kah unkqueneunkquog nag kenanawunauóog.
 E.Eze.34.4: The diseased have ye not strengthened, neither have ye healed that which was sick, neither have ye bound up that which was broken, neither have ye brought again that which was driven away, neither have ye sought that which was lost; but with force and with cruelty have ye ruled them.
 
-α.Eze.34.5 
+α.Eze.34.5 Kah nag seahwhóog newutche na matta shephersun8h: kah neg 8meetsuonganunneauh wame ohteuhkone puppinashimwog, seáhwhut.
 E.Eze.34.5: And they were scattered, because there is no shepherd: and they became meat to all the beasts of the field, when they were scattered.
 
-α.Eze.34.6 
+α.Eze.34.6 Nutshepsumog nanwiyeuog pannuppe wame wadchútu, kah ut nishnoh kussohkói wadchu; nux nuf-flockum nanwiyeum8p, ut wame wosketohkeit, kah matta howan natinohteaou, kah wunnátinneawhoh.
 E.Eze.34.6: My sheep wandered through all the mountains, and upon every high hill: yea, my flock was scattered upon all the face of the earth, and none did search or seek after them.
 
-α.Eze.34.7 
+α.Eze.34.7 Newutche kenaau shepherdsog n8tam8k wuttinn8waonk Lord.
 E.Eze.34.7: Therefore, ye shepherds, hear the word of the LORD;
 
-α.Eze.34.8 
+α.Eze.34.8 Pomantamon, wussin Lord Jehovah, wunnamuhkut, newutche nuf$flockum, tohqunnumwonkanú8, kah nuf$flockum ummeechummuwonganin nishnoh ohteuhkone puppinashim, newutch matta shepherdunn8, kah nutsheperdumog matta natinneuhkóntam8og nuf-flockum, qut shepherdsog meetseheaog wuhhogkauh, kah matta meetsehteau8og nuf$flockum.
 E.Eze.34.8: As I live, saith the Lord GOD, surely because my flock became a prey, and my flock became meat to every beast of the field, because there was no shepherd, neither did my shepherds search for my flock, but the shepherds fed themselves, and fed not my flock;
 
-α.Eze.34.9 
+α.Eze.34.9 Newutche, woi shepherdsog, n8tam8k wuttinn8waonk Lord.
 E.Eze.34.9: Therefore, O ye shepherds, hear the word of the LORD;
 
 α.Eze.34.10 
@@ -3572,7 +3572,7 @@ E.Eze.45.24: And he shall prepare a meat offering of an ephah for a bullock, and
 α.Eze.45.25 
 E.Eze.45.25: In the seventh month, in the fifteenth day of the month, shall he do the like in the feast of the seven days, according to the sin offering, according to the burnt offering, and according to the meat offering, and according to the oil.
 
-α.Eze.46.1 \YEu wussin Lord Jehovah, anomie chippinnutunkane squont ne anaquohtag wutchepwoiyeu, ne piṣh kuppuhhausu nequtta tahshe anakausuwae kesukodtaṣh: qut ut Sabbath piṣh woshinumun, kah ut wuske nepauzsae kesukodtut piṣh woshinumun.
+α.Eze.46.1 YEu wussin Lord Jehovah, anomie chippinnutunkane squont ne anaquohtag wutchepwoiyeu, ne piṣh kuppuhhausu nequtta tahshe anakausuwae kesukodtaṣh: qut ut Sabbath piṣh woshinumun, kah ut wuske nepauzsae kesukodtut piṣh woshinumun.
 E.Eze.46.1: Thus saith the Lord GOD; The gate of the inner court that looketh toward the east shall be shut the six working days; but on the sabbath it shall be opened, and in the day of the new moon it shall be opened.
 
 α.Eze.46.2 Kah sontim piṣh petutteau, ut ne porche squontamwe mayut poquadchit, kah sephausuenuog piṣh quaguoshwunnumwog wutchikohtae mag8onk, kah wunohteae mag8ongaṣh, kah noh piṣh wowussummuau, ut ahhut anuishkhamuk squontamut: neit piṣh sohham, qut squont matta piṣh kuppuhhausin8 pajeh wunnonk8ut.
