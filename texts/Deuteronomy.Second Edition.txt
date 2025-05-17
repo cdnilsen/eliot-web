@@ -1,6 +1,6 @@
 1.1 YEush kutt8wongansh nish Moses ánoncheh wame Israeloh, wutuhshame Jordan, ut touohkomukqut, ut mukoshquttaut piúhsuke musque ketahhannit, nashaue Paran, kah Tophel, kah Laban, kah Hazeroth, kah Dizahab
 1.2 (Nabo nequttukquinshon wutch Horeb, kishke mayut wadchuut Seir en Kadesh-Barnea.)
-1.3 Onk n nih, yauunchage kodtum8k, nabo noquttúit nepauz, negonne kesukok ne nepauz, Moses ken8nau wunnaumonuh Israel, neaunag wame Jehovah wuttann8naonk papaume nahoh.
+1.3 Onk n$nih, yauunchage kodtum8k, nabo noquttúit nepauz, negonne kesukok ne nepauz, Moses ken8nau wunnaumonuh Israel, neaunag wame Jehovah wuttann8naonk papaume nahoh.
 1.4 Mahche nushont Sìhon Amoritse ketass8t, noh wadohket Heshbon, kah Og Bashane ketass8t, noh wadohket Ashteroth ut Edrei.
 1.5 Wutúhshame Jordan, ut ohkit Moab, Moses n8che wahteauwahuau yeu naumatuonk, n8wau,
 1.6 Jehovah num-Manitt8mun nukken8nukqun ut Horeb, n8wau, kenaau wamut kuppomantamuneau yeuut wachuut.
@@ -19,7 +19,7 @@
 1.19 Kah moncheog wutch horeb, nuppannupwushaumunnonup wame ne mohsag kah úhqunneunkquok touohkomuk, ne naumogkup ut mayut keshke Amoritse wodchuut, neane Jehovah kum-Manitt8mun anann8nukqueogkup: kah kuppeyomunonup Kadesh Bernea.
 1.20 Kah kuttinnumwop, kuppeyomw8 ut Amorìtse wadchuut, ne Jehovah kummanitt8mun anumungqueog.
 1.21 Kusseh, Jehovah kum Manitt8m, ponam ohke anaquabean: kuhkuhqush, kah ohtauush neane Jehovah um-Manitt8moh k8sh8wóog kuttugqun, ahque wabesish asuh pohquaj kuttah.
-1.22 Kah kuppas8sukiimwop nish noh pasuk kenaau, kah kussimwop, nutann8nomun wosketompaog negonáe, kah nag pish kenatinneahamungqunonog ohke, kah nag pish kuppaudtunkqunnónog wonk kutt8wonk, uttiyeu woh ayn kuhquéog, kah uttóh otanash pish páoontamagish,
+1.22 Kah kuppas8sukiimwop nish$noh pasuk kenaau, kah kussimwop, nutann8nomun wosketompaog negonáe, kah nag pish kenatinneahamungqunonog ohke, kah nag pish kuppaudtunkqunnónog wonk kutt8wonk, uttiyeu woh ayn kuhquéog, kah uttóh otanash pish páoontamagish,
 1.23 Kah n8waonk n8sinaûwohkongqun: kah neemun nabo nesuog wosketompaog kenaau, pasuk wutch nishnoh chippan8onk.
 1.24 Kah nag qushkeog, kah kuhqueog en wadchuut, kah peyaog Eshkolle 8nohkóiyeuut, kah wunnatinneakontamuneau.
 1.25 Kah neemunnumwog ne ohkée ummeechummuongash, ut wunnutchegan8óut, kah n8w8msúuttunkqunan, kah nuppaudtunkqunnônog wonk kutt8wonk, ne wunnegen ohke, ne Jehovah num Manitt8mun anumungqueog.
@@ -77,7 +77,7 @@
 2.31 Kah Jehovah nuttinuk, kusseh, nunn8che mag Sihon kah wutohke ut anaquabean, n8che ohtaush, onk woh kuto(h)tau wutohke.
 2.32 Neit Sihon ayeuuhkonittue sohweehtunkqun, nagum kah wame ummissinninnúmoh, ayeuwuttinneat ut Jahaz.
 2.33 Kah Jehovah kum Manitt8mun upponuh ut anaquabeog, kah nuttogkamóun, kah wunnaumonuh, kah wame ummissinninneumoh.
-2.34 Kah neemunnumumun wame ukkeit8tanash na ut ahquompag, kah nuttunkque paguanomun wosketompaog, kah mittamwussissog, kah mukkiesog nish noh ut otan wanne howan ushqueu.
+2.34 Kah neemunnumumun wame ukkeit8tanash na ut ahquompag, kah nuttunkque paguanomun wosketompaog, kah mittamwussissog, kah mukkiesog nish$noh ut otan wanne howan ushqueu.
 2.35 Webe neetassuog, neemunómun wutch sequttahhamóonk, wutche nenawun, kah sequttahham8ongash ut 8tanat nish sohkomogish.
 2.36 Wutch Aroer ne kishke Arnone sepuut, kah wutch ne otanat ne kishke sepuut, wehque Gilead, na wanne pasuk otan nummenuhkéseumuk8mun, Jehovah num-Manitt8mun nuttinnumunkqunan wame.
 2.37 Webe ut wutohtuóut wunnaumonuh Ammon matta kuppeyôon, asuh matta wóhohut ayeuonganit Jabboke sepuut, asuh wadchuekontu otanehtu, asuh matta woh toh ut ne Jehovah num-Manitt8mun ne quohtinukqueog.
@@ -86,7 +86,7 @@
 3.3 Nemehkuh Jehovah num-Manitt8mun upponuh nunnutcheganónut wonk, Og Bashane ketass8t, kah wame umissinninneumoh, kah nuttogkomounonup, nô pajeh matta howan sequnneanóunneat.
 3.4 Kah nuppetukauounonuppanneg wame wutotanash ne ahquompak, na mo matta otan, uttiyeu mo neemunnumauóogkut, nequtta tahshinchagkodtash keitotanash, wame Argobe wutohtimoin, ukketass8tamóonk Og, ut Bashan.
 3.5 Wame yeush otanash quinuppeneuseupash nashpe qunnunkqueneutungash, squontamash kah pummetunkqshittuongash, chaubohkish pameneusun8kish otánash monatash.
-3.6 Kah nutunkque nag paguanounonog, neaunheogkutup Sihon Heshbone ketass8t, nuppapaquane paguanomun, wosketompaog mittamwussissog, kah mukkiesog, nish noh ut otanat.
+3.6 Kah nutunkque nag paguanounonog, neaunheogkutup Sihon Heshbone ketass8t, nuppapaquane paguanomun, wosketompaog mittamwussissog, kah mukkiesog, nish$noh ut otanat.
 3.7 Qut wame neetasuog, kah otanae sequttahham8ongash, nunneemunnumonanonash neenawun.
 3.8 Kah na ahqompak nunneemunnomun, wutch wunnutchegan8óut, nees8og Ammoritse ketass8tam(w)og, ohke ne wutuhsháme Jordan, wutch Arnone sepuut, wehque wadchuut Hermon.
 3.9 (Ne Hermon Sidoniansog wuttissowetamunneau Sirion, kah Ammoritsog wuttissowetamuneau Shenir.)
@@ -113,7 +113,7 @@
 4.1 NEwutche yeuyeu woi Israel, n8tam8k kuhk8waongash kah wussittum8ongash, nish kohk8tomauunogish, nish ussenat, onk woh kuppomantamumw8, onk woh kuppetutteamw8, kah kutohtauunneau ohke, ne Jehovah um-Manitt8moh k8sh8ôog aninnumungqueog
 4.2 Matta pish kukk8tinn8mw8 kutt8onk ne ann8nog, asuh mat pish kutamaunum8uneau, onk woh kenanawehteamw8 wuttinn8waongash Jehovah kum-Manitt8mw8, ne ann8nogish.
 4.3 Kuskesuk8oash naum uttoh Jehovah aseip newutche Baal-Peor, newutche wame wosketompaog neg asukauoncheg Baal-Peoroh, Jehovah kum-Manitt8mw8, uppaguanuh wutch kenugke kuhhogkaóout,
-4.4 Qut kenaau kummosogquehtauômw8 Jehovah kum-Manitt8mw8, kenáau kuppomantamumw8, nish noh pasuk, yeu pajeh kesukok.
+4.4 Qut kenaau kummosogquehtauômw8 Jehovah kum-Manitt8mw8, kenáau kuppomantamumw8, nish$noh pasuk, yeu pajeh kesukok.
 4.5 Kusseh, kukkuhk8tomauonumw8 kuhk8waongash kah wussittum8ongash, neáne Jehovah num-Manitt8m ann8sit, onk woh ne kutússeneau ohkeit uttoh aôóg ohtauunat.
 4.6 Newutche nish nanaeiteog, kah ussek, newutche yeu k8aantam8ongan8, kah wohwohtam8ongan8 ut anaquohtag wutohtimóneash, neg n8togig wame yeush kuhk8waongash, kah an8wacheg, wunnamuhkut yeu mishe wutohtimóin, waantamwe kah wohwohtamwe missinninnuog.
 4.7 Newutche teague mishe wutohtimóin, ne wuttinne nah pas8sukauon GOD, neane Jehovah num-Manitt8mun, ut wame teanteaquasinehtu, nish waj wehquetumauogqutcheh.
@@ -181,7 +181,7 @@
 5.20 Kah pann8wáe wauwaúhkon keetatteamung.
 5.21 Ahchewontukon keetatteamung ummittamwussoh, asuh ahchewontukon ketattamung wek, wutohteuk, asuh wosketompae wuttinneum, asuh mittatwossisse wuttinneum, wutoxumoh, asuh wutassumoh, asuh ne teaguas ahtunk ketatteamung
 5.22 Yeush kutt8wongash an8wohpash Jehovah ut wame kummukkinneongan8óut, ut wadchuut, wutch nóeu n8taut matokqsut, kah pogkiyeue pohkenai, nashpe mishont8waonk, kah matta ukk8tnauóun, kah yeush 8sukuhhamunash ut neeswe qussukquane tablesut, kah nuttinnumunkqunash.
-5.23 Onk n nih, n8tamóg wadtauatonkqussuonk wutch nóeu pohkenahtu (newutche wadchu n8táe chikohtau) kuppas8su(k)iimwop, wame wabuhkúhk8utcheg ut kutchippan8ongan8óut, kah kut-eldersum8óog.
+5.23 Onk n$nih, n8tamóg wadtauatonkqussuonk wutch nóeu pohkenahtu (newutche wadchu n8táe chikohtau) kuppas8su(k)iimwop, wame wabuhkúhk8utcheg ut kutchippan8ongan8óut, kah kut-eldersum8óog.
 5.24 Kah kussimwop, kusseh, Jehovah kum-Manitt8mun kenáhtinukqun wussohsumóonk, kah ummissugken8ônk, kah n8tamumun 8wadtauatonkqussuonk, wutch nôeu n8taut, nunnaumumun yeu kesukok, GOD ken8nau wosketompoh, kah ash pomantam.
 5.25 Newutche yeuyeu tohwutch woh nupp8og? newutche yeu mishe n8tau pish kummahchekussukqunnan. n8tamog wonk 8wadtauatonkqussuonk Jehovah kum-Manitt8mun, neit woh nunnupmun.
 5.26 Newutche howan kenugke wame weyaus, n8togkus 8wadtuatonkqussuonk pomantamwae GOD, kôdt8hkont wutch nôeu n8taut (neane nenawun) kah ásh pomantam?
@@ -228,7 +228,7 @@
 7.9 Newutche wahteau8k Jehovah kum-Manitt8mw8 noh GOD pabuhtanumwae Manit, noh nanawehteunk wunn8waonk kah monaneteaonk wutche nah womonukqutcheh, kah nanawéhteauunutche wuttinn8waongash: wutche muttannongane pometeongash.
 7.10 Kah wunnompenúmauoh neh sekeneunkqutcheh, anaquábenit paguanonat, matta quohquéhtauwó8 neh sekeneunkqutcheh, pish wunnompenumauoh anaquabenit.
 7.11 Newutchepish kenanauwehteau wuttinn8waongash kah kuhk8waongash, kah wussittum8ongash, nish an8nonch yeu kesukod, nish ussenat.
-7.12 Newutche pish n nih, kukkeihtamóg yeush wussittum8ongash, kah nish nanawehteauóg kah usséog, Jehovah kum-Manitt8m, nanawehteau wunn8waonk, kah monaneteaonk nogque en kuhhogkat, nish chadchekeimompash k8sh8oh.
+7.12 Newutche pish n$nih, kukkeihtamóg yeush wussittum8ongash, kah nish nanawehteauóg kah usséog, Jehovah kum-Manitt8m, nanawehteau wunn8waonk, kah monaneteaonk nogque en kuhhogkat, nish chadchekeimompash k8sh8oh.
 7.13 Kah pish k8womonuk, kah pish k8nanumuk kah pish kummuttaanhik, kah wonk pish wunnantam ôotómuk ummeechummuonk kutohke k8wea(t)chiminneash, kah k8wineum, kah kuppummeim, kukkoashinime monaonk, kah kus sheepse flocksum8og ut ohkeit ne chadshekeimont k8shog kittinnumunkqunat.
 7.14 Pish kutanue wunánumit wame missinninnuog, matta na pish mehcheeu nomposhim asuh squoshim, kenugke kenaau, asuh kenugke kenee[t]aséumog.
 7.15 Kah Jehovah pish kutamaunumunk wame mahchinnaongash, kah matta kupponamauun8 matta pasuk machuk Egypte onkquomom8ongesh, nish wahteauanish, qut upponamunash neg sekeneunkqueanneg.
@@ -245,7 +245,7 @@
 7.26 Asuh matta pish kuppaudtauoh nish keneunkquok keekit, ishkont ken kummatchenanumit neane ne, qut pish pannuppe kussekeneamun, kah pish pannuppe kutuhquontamun, newutche ne, mattantamwae teaguas.
 8.1 WAme wuttinn8waongash nish ann8nogish yeu knsukok, kuhkineasek kah ussek, onk woh kuppomantamw8. kah kummuttaanumw8, kah petutteamw8, kah kutohtauunneau ohke, ne Jehovah chadchekeimomp k8sh8oh,
 8.2 Kah pish kummequantam wame ne may Jehovah kum-Manitt8m ane sagkompagunukquean, yauunchage kodtumwae. ut touohkômuk, toh hohpahikqunat, kukqutchhikqunat, kah wahteauunat teáguas ohtag kuttahhut, uttoh kittin nanawehteauun wuttinnaumatuongash asuh matta.
-8.3 Kah kuttahhóhpahik, kah kukkodtupwehuk, kah kussohkom8nuk Manna, ne matta wahteau8an, asuh matta k8sh8og wahtteau8unaoh, kah woh k8wahteauwahukqun wosketomp matta wutch pomantam webe pétukqunnunk, qut nashpe nish noh kutt8onk ne wom8uk wutch Jehovah wutt8nut wosketomp wutch pomantamun.
+8.3 Kah kuttahhóhpahik, kah kukkodtupwehuk, kah kussohkom8nuk Manna, ne matta wahteau8an, asuh matta k8sh8og wahtteau8unaoh, kah woh k8wahteauwahukqun wosketomp matta wutch pomantam webe pétukqunnunk, qut nashpe nish$noh kutt8onk ne wom8uk wutch Jehovah wutt8nut wosketomp wutch pomantamun.
 8.4 Kuthogk8unash matta nukkonean8ash ut kuhhogkat, asuh matta kusseet mogqueinn8, yeush yauunchage kodtumm8ash.
 8.5 Natwontash wonk ut kuttahhut, onatuh wosketomp sasamatahwhont wunnaumonuh, ne kittinne Jehovah kum-Manitt8m sasámatahhukqun. |
 8.6 Newajeh pish nanawehteauan wuttinnaumatuongash Jehovah kum-Manitt8m, pomushonat ummayash, kah qushonat.
@@ -261,7 +261,7 @@
 8.16 Noh sohkom8nukquean Manna ut touohkomuk, ne k8sh8og matta wahteauhetteg, onk woh kutóhhohpahikqunat, onkwoh kukqutchhik, onk woh k8nenehikqun maumachish.)
 8.17 Kah kussim ut kuttahhut nummenuhkesuonk, kah nunnutchegane menuhkesuonk n8tattauun yeu weenaieetuonk.
 8.18 Qut ken mehquanum Jehovah kum-Manitt8m, newutche nagum anumungquean menuhkesuonk 8tahtauunat weenaieetuonk; onk woh menehketeau 8n8waonk, ne chadchekeimomp k8shoh, neane yeu kesukok.
-8.19 Kah pish n nih, wananumadt Jehovah kum-Manitt8m, kah asuhkauadt onkatogig Manitt8og, kah nag noswehteaudt kah waussumadt, kutayeuuhkonittue wauwonumw8, pish wunnamuhkut kutawakompanomw8.
+8.19 Kah pish n$nih, wananumadt Jehovah kum-Manitt8m, kah asuhkauadt onkatogig Manitt8og, kah nag noswehteaudt kah waussumadt, kutayeuuhkonittue wauwonumw8, pish wunnamuhkut kutawakompanomw8.
 8.20 Neane wutohtimóneash nish Jehovah paguatunkish ut anaquabeôg, neit pish kutushpunóneau, newutche matta n8swehtam8ôg 8wadtauatunkqussuonk Jehoveh kum-Manitt8mw8.
 9.1 NOOtam8k woi Israel, mos kukqushkodteam Jordan yeu kesukok, petukontamunat, ohtaunat wutohtimóneash, anue mogkiyeuash kah menuhkiyeuash onk ken, mogke ketotanash, & kesukqut ninneus8ash
 9.2 Missinninnuog matiken8og kah quogquononkqussuog, wunneechan8oh Anakimsog, neg waheadcheg, kah papaume nag n8tamohpanneg. howan woh neepauit anaquabhettit wunnaumonuh Anak
@@ -273,7 +273,7 @@
 9.8 Wonk ut Horeb kumm8m8sqheomw8 Jehovah musquantamunat, nemehkuh Jehovah kummusquanumukou kuppaguanukqunnaóut.
 9.9 Kohkukquéan wadchuut, nutattumunumunat hassune tableash, 8n8wae tableash nish Jehovah ayimungqueógish, neit nutapip wadchuut yauunchage kesukquáe, kah yauunchage nukkonae, matta nummeech8 petukqunnunk asuh n8tattam nippe.
 9.10 Kah Jehovah nuttinninnumunk neesinash qussukqunne tableash, wusskwhosuash nashpe wuttinnuhwhunitch GOD, kah naut wussukwhosu neane wame wuttinn8waongash, nish Jehovah anukqueogkupash wadchuut, wutch nôeu n8taut, ut mukkinneâe kesukodtut.
-9.11 Kah n nih mahche mahtshunk yauunchage kesukodtash kah yauunchage nukonash, Jehovah nuttinnumunkup neesinash qussukquanne tableash, wunn8wae tableash.
+9.11 Kah n$nih mahche mahtshunk yauunchage kesukodtash kah yauunchage nukonash, Jehovah nuttinnumunkup neesinash qussukquanne tableash, wunn8wae tableash.
 9.12 Kah Jehovah nuttinuk, neepaush, teanuk 8msish yeu wutch, newutche kummissinninnumog, neg sohh8wunadcheg wutch Egypt, nag anusheáog, nag teanuk qushkeog wutch mayut, ne ann8nog, nag ayimóog sabassumwe nunnekontunk.
 9.13 Nano Jehovah nukken8nuk, nuttinuk, yeug nauóog missinninnuog, kah kusseh chetauwussittippukane missinninnuog.
 9.14 Mukk8náaeh onk woh nuppaguanóog, kah woh nutjishkham 8wesuongan8 wutch agwe kesuk, kah kutayimaush wutohtimóin, anue menuhki kah missi onk nag.
@@ -305,7 +305,7 @@
 10.11 Kah Jehovah nuttinuk, Omkish, negonuhkau missinninnuog, onk woh nag petutteaog, kah ohtoog ohke, ne chadchekeumomp 8sh8oh, nah wuttinnumauónat.
 10.12 Kah yeuyeu Israel, teag Jehovah kum Manitt8m kodtantamungquean, qut webe qushonat Jehovah kum-Manitt8m, pomushonat wame ummayash, kah womononat, kah nosweetauonat Jehovah kumManitt8m nashpe wame kuttah, kah nashpe wame kukketeahogkou.
 10.13 Nanawehteauunat wuttinn8waongash Jehovah, kah ukkuhk8waongash, nish ann8nonish yeu kesukok, wutche k8neetuonk.
-10.14 Kusseh, kesuk, kah ukkesuk8m kesuk, nish wutchiyeuash Jehovah kum-Manitt8m ohke wonk, kah nish noh na ohtag.
+10.14 Kusseh, kesuk, kah ukkesuk8m kesuk, nish wutchiyeuash Jehovah kum-Manitt8m ohke wonk, kah nish$noh na ohtag.
 10.15 Webe Jehovah weeteanumop k8sh8oh: womononat, kah pepenauau 8skannemunnéoh nahohtôeu nagoh, kenaau, anue onk wame missinninnuog neane yeu kesukok.
 10.16 Newutche quosqussum8k metahhuwae keyausue wodtuhquab, kah ahque wonk chetauwussittippikanunk.
 10.17 Newutche Jehovah kum-Manitt8mw8 noh um-Manitt8m8oh manitt8og, kah wul-Lordum8uh lordog, missugke GOD, kah menuhkesu, kah uhqunneunkqussu, matta toh hen tuppanumunk howane, kah mo neemunnum8 onkquatunk.
@@ -326,7 +326,7 @@
 11.10 Kah newutche ohké uttoh petutteaan ohtauunat, matta, netatuppeinn8 ohkit Egypt, nô waj sohhamog, uttoh adt ohkehteaap k8skannemunneash, kah k8tattipattauun nashpe kusseet, onatuh moskehtue tanohketeaonganit.
 11.11 Qut ohke uttoh aóyog kutahtauunnaont, wadchuuhkontu8, kah 8nóuhkóiyeu8 kah wuttattam8m8 kesukque sokanon.
 11.12 Ohke ne Jehovah kum-Manitt8m wohquontog, wuskesukquash Jehovah kum-Manitt8m nagwutteae kenompattam8m8, wutch waj kutchissik kodtum8, kah adt wohkukquoshik kodtumm8.
-11.13 Onk pish n nih, menuhke n8tamog nuttinnaumatuongash, nish ann8nunogish yeu kesukok, womononat Jehovah kum-Manitt8mw8, kah waussumónat nashpe wame kuttahhou, kah nashpe wame kukketeahogkon8óog.
+11.13 Onk pish n$nih, menuhke n8tamog nuttinnaumatuongash, nish ann8nunogish yeu kesukok, womononat Jehovah kum-Manitt8mw8, kah waussumónat nashpe wame kuttahhou, kah nashpe wame kukketeahogkon8óog.
 11.14 Onk woh kittinnumauúnnumw8 sokanon kutohkeyeuwóut, uttoh adt tapeneunkquok, negonne sokanon, kah maumachish sokanunk, onk woh kummohmóunum k8weatchimineash, kah k8wineum, kah kuppummeim.
 11.15 Kah nuttinninnumau moskehtuash ut kutohkeit, wutche keneetasum8óog, onk woh kummeets kah woh k8wamup.
 11.16 Nunnukqussek, ahque kuttahhou as8kekomunach, kukquinuppenaont kah 8tinninneumunnaóont onkatogig Manitt8og, kah nag waussumonat.
@@ -353,7 +353,7 @@
 12.5 Qut en ayeuonganit ne Jehovah kum-Manitt8mw8 pish pepénam, wutch wame kutchippan8ongan8óut, na ponamunat 8wesuonk, en wutayeuonganit natinnáhteagk, kah na pish kuppeyam.
 12.6 Kah na pish kuppaudtauuneau chikohtae kummag8ongan8oash, kah kussephausuongan8oash, kah kuppiukque chippiyeum8oash, kah kenutchegane tahshinnumwe kummag8ongash, kah kukquoshaumuwaongan8ash, kah nanouwe kummag8ongan8ash, kah mohtommegitcheg ut kutherdsumut kah ut kuf-flocksumut.
 12.7 Kah na pish kuttit meetsinneau anaquabit Jehovah kum-Manitt8mw8, kah pish kummuskouantamw8 wame ne ponamóg kenutchegan88ash, kenaau, kah neg kekuout, uttoh adt Jehovah kum-Manitt8m wunnanumukquean.
-12.8 Matta pish kutusseumw8, neaunag wame ne usseóg yeu ne kesukok, nish noh wosketomp ne sampwag ut nehenwonche wuskesukqut.
+12.8 Matta pish kutusseumw8, neaunag wame ne usseóg yeu ne kesukok, nish$noh wosketomp ne sampwag ut nehenwonche wuskesukqut.
 12.9 Newutche asquam kuppeyaum8 anwohsinn8onganit, ut ohtoonganit ne Jehovah kum-Manitt8mw8 anumungqueog.
 12.10 Qut qushkodteáog Jordan, kah wutohkeóg ohkeit ne Jehovah kum-Manitt8mw8 anumungqueog ohtauunat, kah anwohsinnehikqueóg wutch wame kummatwomog wéenu, neit k8niyimw8.
 12.11 Neit pish na ayeuonk, ne Jehovah kum-Manitt8mw8 pish pepenog, na wodohkehteunk 8wesuonk, na pish paudtauog wame ne ann8nog, kutchikohtae mag8ongash, kah kussephausuongash, kuppiukquechippiyeum8ash, kah kenutchegane tahshinnumwe mag8ongash, kah wame kuppepenamwe quoshomuwáongan8oash nish quoshomógish Jehovahut.
@@ -376,7 +376,7 @@
 12.28 Kuhkinneasish kah n8tash wame yeush kutt8wongash nish ann8nonish, onk woh k8niyeuhikqun, kah keneechanog nahhóhtôeu ken micheme, ussean ne wanegik kah sampwagk ut anaquabit Jehovah kum-Manitt8m.
 12.29 Jehovah kum-Manitt8m pâguatunk wutohtimoneash wutch anáquabean, uttoh ayoan ohtauunat, kah kenompenoog, kah wutohkean wutohtuóut.
 12.30 Nunnukqusish kuhhog ishkont kupputtohwhit nag asuhkauonat, mahche paguanit wutch anaquabean, kah ahque nat8tomwehteash papaume ummanitt8m8uh, n8waan, uttoh wuttinne yeush wutohtimoneash waussumonaous um-Manitt8m8uh; ne nanug pish nutussen.
-12.31 Matta ne pish kuttinheon Jehovah kum-Manitt8m, newutche nish noh uhqueneunkquok en Jehovah ut ne sekeneauoncheh, ne wuttinheoneau um Manitt8m8oh: newutche wunnaumoniyeuoh, kah wuttaun8oh wutchikoswouh n8taut ut um-Manitt8m8out.
+12.31 Matta ne pish kuttinheon Jehovah kum-Manitt8m, newutche nish$noh uhqueneunkquok en Jehovah ut ne sekeneauoncheh, ne wuttinheoneau um Manitt8m8oh: newutche wunnaumoniyeuoh, kah wuttaun8oh wutchikoswouh n8taut ut um-Manitt8m8out.
 12.32 Uttoh anann8nun kuhkinneasek ussenat ahque k8tnish, asuh nohwuttinsh.
 13.1 KEnugke kenaau waapit quoshodtumwaenin, asuh unnukquomuwaenin unnukquomuwongash, kah unninnumungquean kuhkinneasuonk asuh monchanatamwahuwaonk.
 13.2 Kah kuhkinneasuonk asuh monchanatamwahuwaonk nnag, uttoh adt ken8nukquean, n8wod, Asuhkauontuh onkatogig manitt8og (neg mat waheoogig) kah nag wuttinneumuhkauontuh.
@@ -409,15 +409,15 @@
 14.11 Wame pahke psuksesog m8hh8k.
 14.12 Qut yeug matta pish m8hwh8ógig, wompussik8k, kah ossifrage, kah ospray
 14.13 Kah glede, kah weenont, kah vulture neanussit.
-14.14 Kah nish noh kutchikkonkont neanussit.
+14.14 Kah nish$noh kutchikkonkont neanussit.
 14.15 Kah k8hk8hkaus, kah peeskq, kah kukkow, kah owôhshaog ne anussehettit,
 14.16 K8k8khomwem, kah kehche k8k8khaus, kah swan.
 14.17 Kah pellican, kah gier-eagle, kah kuttúhsuog.
 14.18 Kah stork, kah haron neanussit, kah lapwing, kah matabpusques.
-14.19 Káh nish noh hawaas uppomompagin noh t8it, noh nishkeneunkqussu wutche kenaau, nag matta pish m8hwhóog.
+14.19 Káh nish$noh hawaas uppomompagin noh t8it, noh nishkeneunkqussu wutche kenaau, nag matta pish m8hwhóog.
 14.20 Qut wame pahke puppinshasog woh kumm8hwhôog.
 14.21 M8hwheteôgk noh nehenwonchu napuk: woh kutassamónuh pen8wot noh kuttinnomsquontamtu, onk woh umm8whôh, asuh woh kukkodtauwompamónuh pen8wot, newutche kenaau wunneetupanatamwe missinninnuog en Jehovah kum-Manitt8m8óut. Nepataúuhkon kid okase sogkodtunkanit.
-14.22 Ken pish wunnamuhkut kuppiukque chippunnum wame k8skannemuneash, nish ohteuk nekittunkish nish noh kodtumm8.
+14.22 Ken pish wunnamuhkut kuppiukque chippunnum wame k8skannemuneash, nish ohteuk nekittunkish nish$noh kodtumm8.
 14.23 Kah pish kummeets ut anaquabit Jehovah kum-Manitt8m, ut ayeuonganit ne Jehovah pish pepenog na upponamunat 8wesuonk, piukque chippag k8weatchiminneash, k8wineum, kah kuppummeem, kah mohtomegitcheg ut kutherdumut, kah ut kufflocksumut, onk woh kenetuhtoh nagwutteae qushonat Jehovah kum-Mánitt8mw8.
 14.24 Kah wussaume nóohk, neit matta tapenum8an na kuppaudtauunat, kah ayeuonk wussaume na8sukoman, ne Jehovah kum-Manitt8m pepénog, na ponamunat 8wesuonk, Jehovah kum-Manitt8m wunnanumukquean.
 14.25 Neit pish kutteagôadtûhkóntean, kah wesquabunish teaguash ut kenutcheganit, kah pish kuttom en ayeuonganit noh Jehovah pepenog.
@@ -425,8 +425,8 @@
 14.27 Kah Levit noh apit kuttinnom squontamehtu, ohquánumuhkon; newutche matta wutchippiyeumeh, asuh matta k8weeche wutohtoonganeumuk8,
 14.28 Adt mahtshunk nishwe kodtum8, pish kuppaudto wame kuppiukque chippiyeum, tahsheganit ne kodtumuk, kah ponsh kuttinnômekuhheganit.
 14.29 Kah Levite (newutche matta k8weeche wutchippiyeumuk8h, asuh matta ahtóonk) kah pen8wot, kah touwyés kah sekousq, neg apitcheg kuttinnnómekuhheganit, pish peyaog, kah meetsuog, kah wamep8og, onk woh Jehovah kum-Manitt8m k8nanumuk wame kenutchegane anakausuongash, uttoh aséanish.
-15.1 NIsh noh mahtsheau nesausuk tahshe kodtumm8, pish kutayim ahquontamóadtuonk.
-15.2 Kah yeu unniyeue ahquontomóadtuonk, nish noh howan wunnoguhkouheuh wetatteámunguh, pish kutahquoantaúsim8, matta pish wutchekèe neemunnumauóun weetatteamunguh asuh wematuh, newutche hettamun wutahquoantûhsuonk Jehovah.
+15.1 nish$noh mahtsheau nesausuk tahshe kodtumm8, pish kutayim ahquontamóadtuonk.
+15.2 Kah yeu unniyeue ahquontomóadtuonk, nish$noh howan wunnoguhkouheuh wetatteámunguh, pish kutahquoantaúsim8, matta pish wutchekèe neemunnumauóun weetatteamunguh asuh wematuh, newutche hettamun wutahquoantûhsuonk Jehovah.
 15.3 Wutch pen8wot woh chekée nemunum, qut ne wadtiheéan, ne kemat ahtunk kenutcheg pish wutahquontamun.
 15.4 Onk woh mo matchéku k8wéamukshom8, newutche Jehovah pish kummishe wunnanumuk, ut ohkeit ne Jehovah kum-Manitt8mw8 ánumungquean wutch ahtóonk, ahtauunat.
 15.5 Webe ahchúwussittaman 8wadtauatonqussuonk Jehovah kum-Manitt8m, kuhkinneasinneat ussenat wame yeush wutann8team8ongash nish ann8nonish yeu kesukok.
@@ -464,7 +464,7 @@
 16.14 Kah pish kummuskouantam ut kummishadtupp8onganit, ken, kah kenaumon kah kuttaunes, kah wosketompae kittinneum kah mittumwossisse kittinneum, kah Levit, kah pen8wot kah touwyes kah sekousq neg kittìnnome squoantamut.
 16.15 Nesausuk tahshe quinogok pish nanawehteau wunneetupanatamwe mishadtupp8onk en Jehovah kum-Manitt8m ut, ut ayeuonganit ne Jehovah pepenog, newutche Jehovah kum-Manitt8m pish k8nanumuk ut wame kenekitteaonganit, kah ut wame kenutchegane anakausuwongash, newajeh pish muskauantamwe muskouantaman.
 16.16 Nishwudt, nequt kodtumwae, wame kenompaassumog pish nogqussuog ut anaquabit Jehovah kum-Manitt8m, ut ayeuonganit ne pepenog ut mat seanin8g petukqunnegane mishadtupp8onganit, kah ut weekse mishadtupp8onganit, kah ut Tabernaklse mishadtupp8onganit: kah matta nag pish nogqusseog ut anaquahit Jehovah mehtompwe.
-16.17 Nish noh wosketomp nean tapenuk, neaunak 8nuneteaonk Jehovah kum-Manitt8m ne anumungquean.
+16.17 nish$noh wosketomp nean tapenuk, neaunak 8nuneteaonk Jehovah kum-Manitt8m ne anumungquean.
 16.18 Wussittumwaenuog kah aninnohsuenuog, pish kutayimom ut wame kuttinnome kuhheganehtu, nish Jehovah kummanitt8m anumungqueanish pannuppe kutchipan8wonganehtu, kah nag pish wussumaog missinninnuh, nashpe sampe wussittum8onk.
 16.19 Wounketeauuhkon wussittumóonk, papen8eneheuhkon missinninnuog, asuh onkquatòntteohkon, newutche mag8onk uppogkenumwahukqun waantam, kah woonkqutteau wuttinn8waongash sampweussecheg.
 16.20 Sampweusseonk sampweusseonk ne pish kutasukkomun, onk woh kuppomantam, kah kutohtoh ohke, ne Jehovah kum-Manitt8m anumunkquean.
@@ -508,13 +508,13 @@
 18.16 Neaunag wame ne wehquetumauadt Jehovah kum-Manitt8m ut Horeb, ut moeongane kesukodtut, kussip, ahque wonk n8tamutti 8wadtauatonkqussuonk Jehovah num-Manitt8m, asuh ahque wonk naumutti yeu mishe n8tau, ishkont woh nunnup,
 18.17 Kah Jehovah nuttugkup, nag wunne kutt8og, kodt8koncheg.
 18.18 N8waapin manittowomp wutch kenugke wematt8out, en kuhhogkaiyeu, kah nupponam nukkutt8ongash wutt8nut, kah noh pish nish wussinneash wame nean ann8nog,
-18.19 Kah pish n nih, howan matta kohkuttam8g nukkutt8wongash, nish pish án8wáche ut n8wesuonganit, n8nompagunûmauon.
+18.19 Kah pish n$nih, howan matta kohkuttam8g nukkutt8wongash, nish pish án8wáche ut n8wesuonganit, n8nompagunûmauon.
 18.20 Qut quoshodtumwaen noh pittuanmwe n8wadt ut n8wesuonganit, ne matta ánunn8náog wussinneat, asuh n8wadt 8wesuonganehtu onkatogik manitt8og, noh quoshodt(a)mwaen pish nupp8.
 18.21 Kah n8waan ut kuttahhut, uttoh woh nuttin wahteauunan kutt8wonk ne Jehovah matta an8wog,
 18.22 Quoshodtumwaen ket8hkont ut 8wesuonganit Jehovah, ne teag, matta asuhkomómuk asuh nan8g, yau teag ne matta Jehovah an8wog, qut quoshodtumwaen uppehtuánumwein, noh wabesuónuhkon
 19.1 JEhovah kum-Manitt8m tâmetahhóg wutohtimóneash, neg wutohke8 Jehovah kum-Manitt8m ánumunkquean, kah nompohteômadt, kah k8táht wut8tanatu, kah wekuóont
 19.2 Pish kutchippenumam shwinash otanash, ut nashaue kutohkit, ne Jehovah kum-Manitt8m anumungquean kutahtauunat,
-19.3 Pish kenanashwunum may, kah pish kutchippinnum kutohke (ne Jehovah kum-Manitt8m ânumunkquean ahtauunat) nishwe chippe, onk woh nish noh nushehteaen na woh wutussishon.
+19.3 Pish kenanashwunum may, kah pish kutchippinnum kutohke (ne Jehovah kum-Manitt8m ânumunkquean ahtauunat) nishwe chippe, onk woh nish$noh nushehteaen na woh wutussishon.
 19.4 Kah yeu wuttinniyeuonk nushehteaen na pish ashph8adt, onk woh pomantam, noh matwahteaue nashont weetatteamunguh, neh matta sekeneauunkeh negonâe.
 19.5 Neane wetatteamunguh weechauont en touohkomuk, tummehthamunat wuttuhqunash; kah waanuhteadt wunutcheg nashpe wuttogkunk tummehthamunat mehtugk, kah kodtanishik wuttogkunk, kah pogkushik wetatteamunganit, kah nuppuk, pish wutusphoan pasuk yeush otanash, & pish pomantam
 19.6 Ishkont noh ann8tantog wusqueheonk wunn8sukauoh nushehteaenuh, wuttah ásh kussopitag, kah, ummatanuh, newutche may nôohteau, kah wunnushuh, noh matta woh ne waj nushomuk, newutche matta negonne wussekeneauoh.
@@ -541,9 +541,9 @@
 20.6 Asuh howan ahkétadt wenominneohtekontu, asquam wadchipp8g? monchitch kah qushkitch en wekit, ishkont nupp8 ut ayeuwuttinneat, kah onkatuk 8chippun.
 20.7 Kah howan quoshomont ummittamwussoh, kah asq nemununk? monchitch kah qushkitch en weekit, ishkont nupp8 ut ayeuwuttinneat, kah onkatuk wunnemunuh.
 20.8 Kah annohsuénuog pish nano, ken8naog missinninnuh, kah n8waog, howan wabefit kah sohquteahont, monchitch kah qushkeitch en wekit, ishkont wematoh sokhqutteaoh, neane wuttah.
-20.9 Onk pish n nih, annohsuenuog mahche ken8nahettit miffinninnuh, pish ayeuaog ayeuteáe mugquompoh, 8puhkuhk8winnat missinninnóh.
+20.9 Onk pish n$nih, annohsuenuog mahche ken8nahettit miffinninnuh, pish ayeuaog ayeuteáe mugquompoh, 8puhkuhk8winnat missinninnóh.
 20.10 Pas8sukoman otan kutayouuhkontamunat, neit pish ken8tamwahteauun wunohteaonk.
-20.11 Kah pish n nih, wunohteáe namp8hamunquean, kah wôshitnanumungquean, neit pish n nih, wame missinninnuog neg noh adt namehetcheg, pish kutômpwunnukquog kah pish k8tinninneumunneunk.
+20.11 Kah pish n$nih, wunohteáe namp8hamunquean, kah wôshitnanumungquean, neit pish n$nih, wame missinninnuog neg noh adt namehetcheg, pish kutômpwunnukquog kah pish k8tinninneumunneunk.
 20.12 Kah matta wunohkonukk8an, qut ayeuuhkonukquean, neit pish kukquinupuhkauóog.
 20.13 Kah Jehovah kum-Manitt8m písh kittinnumunkqun ut kenutcheganit, kah pish kuttogkom nishnoh nompaes naut, en kenag togkodteg.
 20.14 Qut mittamwossissog kah mukkiog, kah netasuog, kah wame ne ohtag otanat, wame sequttahham8ongash naut. pish k8ta(i)hein, kah pish kummeech sequttaham8ongash wutch kummatwomog, neh Jehovah kum Manitt8m anumunkqueaneh.
@@ -555,9 +555,9 @@
 20.20 Qut webe mehtug, ne wahteauan matta meetsue mehtug, ne woh kummatchteauun, kah kuttummetahhamun, kah woh kutayim wokonous ayeuuhkontamunat ne otan ne ayeuhkonukquean, no pajeh sohkomunat.
 21.1 HOwan namehit nushau ut ohkit ne Jehovah kum-Manitt8m anumunkquean a[h]tauunat, seepsuk ohteakonit, kah matta wahteomuk howan nashont,
 21.2 Neit kut-eldersumog kah k8fittumwaenuog pish sohhamwog, kah pish quaquadhumwog en otanahtu nish quanupuhkonkqutcheh noh nashit.
-21.3 Onk pish n nih, otan ne paswohtag noh nashit, ne otanáe eldersog pish ncmunaog cowishinneme(s)oh wutch herdut, noh asquam anakauseg, asquam wadtonchimunk yoakoh.
+21.3 Onk pish n$nih, otan ne paswohtag noh nashit, ne otanáe eldersog pish ncmunaog cowishinneme(s)oh wutch herdut, noh asquam anakauseg, asquam wadtonchimunk yoakoh.
 21.4 Kah ne otane eldersog, pish w8msuunaog cowashinemesoh, en matohteáeyeue8nauhkoiyeuut, matta anaskuhhôsin8g, asuh ahtegôsin8g, kah nag pish na tummukquohwhoog cowashìnemesoh ut 8nauhkóiyeuut.
-21.5 Kah séphausuenuog wunnaumonuh Levi pish pas8tshaog, newutche Jehovah kum-Manitt8m uppepenauóh 8tinneumuhkauonaóont, kah 8nanikonáóont ut 8wesuonganit Jehovah, kah nashpe nag wutt8n8ash nishnoh chann8waonk, kah nish noh togkodtuonk pish qutchehteauun.
+21.5 Kah séphausuenuog wunnaumonuh Levi pish pas8tshaog, newutche Jehovah kum-Manitt8m uppepenauóh 8tinneumuhkauonaóont, kah 8nanikonáóont ut 8wesuonganit Jehovah, kah nashpe nag wutt8n8ash nishnoh chann8waonk, kah nish$noh togkodtuonk pish qutchehteauun.
 21.6 Kah wame ne otanae Eldersog, paswopitcheg noh noshit, pish kussenitchaog piuhsukeh cowashinnemesut ne adt tumikquohwhut ut 8nouhkoiyeuut
 21.7 Kah nag pish namp8hamwog, kah pish n8waog, nunnutchegannunnónash matta wuss8ksquotham8unneau yeu squeheonk kah nuskesukqunnonash matta wunnauuh.
 21.8 Wussikkìtteah kummissinninnumog Israel nég pohquohwhunacheg, woi Jehovah, kah ahque ponsh mattá woskehuwae musqueheonk ut nashaue kummissinninneumut Israel, kah yeu wusqueheonk pish ahquontamauoneau,
@@ -578,9 +578,9 @@
 21.23 Wuhhog matta pish wompanohtano mehtugqut, qut posekinadt pish kupposakin ne kesukok, newutche noh kechequabinit ummattanumoh GOD, kah matta pish kenishketeau kutohke ne Jehovah kum Manitt8m anumukquean wutch ahtoonk.
 22.1 NAuadt kemat wutoxinumoh asuh wutshepsumoh, wauônit, puttogquehtauwúhkon, wunamuhkut pish kuppadtáuonuh kemat.
 22.2 Kah kemat matta pas8sukonk8an, asuh matta waheauadt, neit pish kuppas8 kekit, kah pish k8wetom, nô pajeh kemat natinnewhont, kah pish nompe kittinnumauóneau.
-22.3 Kah ne pish keáne neheun wutassumoh, kah ne pish keáne unnehteauun wuthogk8, kah ne pish kittinteauun nish noh teag kemat wanteunk, ne woh wanteunk, kah namehteauan, matta pish kupputhogk8
+22.3 Kah ne pish keáne neheun wutassumoh, kah ne pish keáne unnehteauun wuthogk8, kah ne pish kittinteauun nish$noh teag kemat wanteunk, ne woh wanteunk, kah namehteauan, matta pish kupputhogk8
 22.4 Nauadt kemat wutassumoh asuh wutoxumoh kepshont ut mayut, puttogquetauwuhkon, wunnamuhkut pish k8weeche tahshin.
-22.5 Wosketomp wuthogk8 matta pish wuthogk8un mittamwossis, asuh matta pish wosketomp hogk8 mittamwossis wuthogk8onk, newutche nish noh pasuk yeush asechish noh uhquontam8onk ut Jehovah kum-Manitt8mut.
+22.5 Wosketomp wuthogk8 matta pish wuthogk8un mittamwossis, asuh matta pish wosketomp hogk8 mittamwossis wuthogk8onk, newutche nish$noh pasuk yeush asechish noh uhquontam8onk ut Jehovah kum-Manitt8mut.
 22.6 Psuksese wadj naumun ut mayut anaquabean, ut ne teague mehtugqut, asuh ut ohkeit, wuskisheasuhettit, asu(h) woanu8k kah keichish quenapit wuskisheásoh, asuh woanehtu, nemunuhkon kehchish weeche wuskisheasoh.
 22.7 Moncheaheae moncheah keichish, kah wuskisheasog pish kenumunumonunk, onk woh k8niyeuhikqun, onk woh kussepe pomantam.
 22.8 Ayiman wehchikkommuk, neit pish kutayim aninnuhk8unash woskeche kommuk ishkont noh kupponam musqueheongash kekit, penushae penushont howan.
@@ -614,11 +614,11 @@
 23.6 Matta pish kenatinneáham8 8nohteaongan8, asuh oniyeuongan8, wame kukkesukkodtumut micheme.
 23.7 Sekeneauuhkon wut-Edomit, newutche noh kemat, sekeneauuhkon wut-Egyptian, newutche kuppen8wohteaop ut wutohkeit.
 23.8 Wunnaumóniinneunk nag nekhéahetticheh ut nishwudt pometuonganit, pish petutteaog ummoeuwehkomonganit Jehovah.
-23.9 Tuppukfinn8wonk ayeuuhkonittue sohwehtauont, kummatwomoh, neit ahqueteaush nish noh matchit.
+23.9 Tuppukfinn8wonk ayeuuhkonittue sohwehtauont, kummatwomoh, neit ahqueteaush nish$noh matchit.
 23.10 Howan kenugke kenaau matta pahkeseg, nashpe nukkonae unnukquonk, neit pish sohham wutch tuppuksinn8wonganit. kah matta pish petutteau tuppuksinn8onganit.
-23.11 Qut pish n nih wunnonk8uk, pish kutchissum8 ut nippekontu: kah wayont, pish petutteau tuppuksinn8onganit.
+23.11 Qut pish n$nih wunnonk8uk, pish kutchissum8 ut nippekontu: kah wayont, pish petutteau tuppuksinn8onganit.
 23.12 Kah pish k8wadchanum ayeuonk poquadche tuppuksinn8onganit, kah na pish kuttinsohham.
-23.13 Kah pish k8wadchan wuttuhhunk ut kutauwohteaonganit, kah pish n nih, appean poquadchit, neit pish na kuttit woonuhkon kah pish kukquinnuppem, kah pish kenuhkinum ne nogunukquean.
+23.13 Kah pish k8wadchan wuttuhhunk ut kutauwohteaonganit, kah pish n$nih, appean poquadchit, neit pish na kuttit woonuhkon kah pish kukquinnuppem, kah pish kenuhkinum ne nogunukquean.
 23.14 Newutche Jehovah kum-Manitt8m pomushau nashaue kuttuppuksinn8wonganit, kuppohquohwhunukqunat, kah kittinnumunkqunat kummatwomoh ut anaquabean, ne waje pish kuttuppukksin8onk wunnetupanatamweyeu8, matta kenaumunk8unat ne teagwe nishkeneunkquok, kah qushkenat wutch ken.
 23.15 Matta pish kummak8 wuttinneumin wussontimomut, p(a)dchippuhh8wonukquean wutch wussontimomut.
 23.16 Noh pish k8wetomuk, ut noeu kenaau en ayeuonganit ne pish pepenog, ut pasuk k8squontamehtu, ne adt tapeneóg, matta pish kumm8m8squheóh.
@@ -646,7 +646,7 @@
 24.13 Nompenuman pish kenompe aninnumauon ukkinnohtosuonk wayont, woh nashpe sepsin wuthogk8, kah woh k8nanumuk, kah en kuhhogkat, ne pish sampweusseonk ut anaquabit Jehovah kum-Manitt8m.
 24.14 Ass8kekomwe mukk8kinnuhkon matcheku kah quenauwehikquit noh ann8nadt, noh waemattea(n), asuh pen8wot, noh ápit kutohkit, anome k8squontamut.
 24.15 Ut ukkesukodtumut, pish kutoadtuhkau wutonkquatunk, kah matta pish nepauz wunnashpe waôun, newutche noh matcheku, kah 8tahh8wontamun, onk woh mo kutayeuuhkonittue mauunnitteauóou Jehovah wutche ken, kah k8matcheseonganinneat.
-24.16 Wut8shimau matta pish nushóun wutche wunnechanoh, kah wunneechanneunk matta pish nushóog wutch wut8shinneuh: nag pish nushóog nish noh wosketomp wutch nehenwonche ummatcheseonk.
+24.16 Wut8shimau matta pish nushóun wutche wunnechanoh, kah wunneechanneunk matta pish nushóog wutch wut8shinneuh: nag pish nushóog nish$noh wosketomp wutch nehenwonche ummatcheseonk.
 24.17 Anwoshitteuhkon, wussumaonk pen8wot, asuh touwies, kenotohsue neemunnum8kon wuthogk8onk sekoousq.
 24.18 Qut mehquontash ken wuttinneumunneah ut Egypt kah Jehovah kum-Manitt8m na k8tch pohquohwhunukqun, newaje ann8nun yeu ussenat.
 24.19 Kepenuman ut kutokteakonit, kah wananataman nequttassepsuash ut ohteakonit, matta pish kukqushk8 kenemunumunat ne pish wutch pen8wot, wutch touwies, kah wutch sekousq, onk woh Jehovah kum-Manitt8m k8nanumuk ut wame kenutchegane anakausuonganit.
@@ -658,7 +658,7 @@
 25.3 Woh weyeuunnehchauguhkomuh, matta pish ukk8tinnumauuh, ishkont anuuhkomont onk yeush nashpe m8chekuhkadtuonk, neit kemat woh mishananumau ut kuskesukqut.
 25.4 Kupputt8napunuhkon ox, tattashkukog weatchiminneash.
 25.5 Nematog weechayeuutteg, kah pasuk nuppuk, kah matta wunnaumonieg, ummittumwussoh noh napuk matta pish wutauomoou penuwohteuh, wasukeh wematoh pish uppetukunkquoh, kah pish 8mittamwussissineuh, kah pish wuttìnheuh, ne woh anheunt wessukeh wematuh.
-25.6 Kah pish n nih móhtomeginitche neechagcheh, noh pish neepau ut 8wesuonganit wematuh, noh napuki, 8wesuonk matta woh jishkhom8un wutch Israel.
+25.6 Kah pish n$nih móhtomeginitche neechagcheh, noh pish neepau ut 8wesuonganit wematuh, noh napuki, 8wesuonk matta woh jishkhom8un wutch Israel.
 25.7 Kah wosketomp matta tapeneauonk nemunon wematuh ummittamwussoh, neit wematuh ummittamwussoh kukkuhquenitch en squontamut, en Eldersut, kah n8waj, nasuk wematuh, sekeneam tahshinnumunneat 8wesuonk wematoh ut Israel, matta wekontam8 nuttinhukqunat uttoh woh afit 8wesukiin wematoh.
 25.8 Kah wutotanae Eldersoh pish 8wehkomouh, kah ukkeket8hkonouh: kah menuhke n8wadt, matta n8wekontam8 nemunonat.
 25.9 Neit pish wematoh ummitumwussoh pas8sukongquoh, ut anaquabhettit Eldersog kah pish kodtinnum ummokis wutch wussetut, kah pish wussuhquontamauoh wuskesuk: kah pish wunnamp8(h)amau, kah n8wau, ne pish unneheon wosketomp matta ayim8g wematoh wek.
@@ -672,7 +672,7 @@
 25.17 Mehquontash ne Amalek anhikqueop ut mayut, sohhamog wutch Egypt.
 25.18 Uttoh ane nogkushkunkqueop ut mayut, kah togkomop neh wuttat wamunutcheh wame neh n8chumwesinitche wuttat, kah kenahtwomaushabp, kah kussauwunnumup kah matta qushop Goduh
 25.19 Newajeh pish nag, Jehovah kum-Manitt8m anwohfimukquean, wutch wame kummatwomut quâquinnuppe, en ohkeit ne Jehovah kum-Manitt8m anumungquean, wutche ahtóonk ahtauunat, pish kutchiskho(m) waanumaonk Amelek wutch agwe kesukquehtu, wanantogkon.
-26.1 ONk pish n nih, petutteaan ohkeit ne Jehovah kum-Manitt8m anumungquean wutohtoonk ohtauunat, kah na wutohkean.
+26.1 ONk pish n$nih, petutteaan ohkeit ne Jehovah kum-Manitt8m anumungquean wutohtoonk ohtauunat, kah na wutohkean.
 26.2 Pish nohk8tnum wame kakeneumuneash ut ohkeit, nish pish paudtauanish wutch kutohkit, ne Jehovah kum-Manitt8m anumungquean, kah pish ponamunash mun8tut kah pish kutom ayeuonganit ne Jehovah kum-Manitt8m pish pepenog, na wutayimwahtinneat 8wesuónk.
 26.3 Kah pish kuppeyaun sephausuen, noh apit yeush kesukodtash, kah pish kuttin, nussampum Jehovah kum-Manitt8m yeu kesukok, nuppetutteam ohkit, ne Jehovah chadchekeimomp n8shinonuh kittinnumukqunnanonut.
 26.4 Kah sephausuen pish nemunum man8t wutch kenutcheganit, kah pish upponamun anaquohtag wut-Altarum Jehovah kum Manitt8m.
@@ -692,7 +692,7 @@
 26.18 Kah Jehovah yeu kesukok wunn8wau kenaau ummissinninneumunneat, pepenamwe wunnompakou, neane ken8nukquean, kah nanauwehteauunat wame wutann8team8ongash.
 26.19 Kah kittinnumunkqunat, qunnukquiyeuunneat, aneuhkomunat wame wutohtimoneash nish kesteunkuppash, ut woweenodtinneat, kah ut wesuonganit, kah wunnegenit sohsumóonk, kah onk woh kenaau wunnetupanatamwe missinninnumw8 en Jehovah kum Manitt8mut, ne an8wop.
 27.1 KAh Moses, kah Israelle Eldersog, ann8naog missinninneuh, n8waog, nanawehteau8k wame ann8team8ongash, nish ann8nogish yeu kesukok.
-27.2 Kah pish n nih, ne kesukok paumushaóg Jordan, en ohkit ne Jehovah kum-Manitt8m anumungquean, pish kukquenohtoh mogke qussukquanash, kah pish kussiss8numun suss8neg.
+27.2 Kah pish n$nih, ne kesukok paumushaóg Jordan, en ohkit ne Jehovah kum-Manitt8m anumungquean, pish kukquenohtoh mogke qussukquanash, kah pish kussiss8numun suss8neg.
 27.3 Kah kuttit wussukhumun wame yeush naumatuongane kutt8wongash, qushkodtean, woh kuppetuttem ohkit, ne Jehovah kum-Manitt8m anumungquean, ohke ne tomogog sogkodtunk kah hony, ne Jehovah um Manitt8m8oh k8shinnonog quóshauomp
 27.4 Onk pish nnih paumukomog Jordan pish kupponamunash yeush qussukquanash ne anann8nun yeu kesukok, ut wadchuut Ebal, kah pish kussiss8numuash suss8neg.
 27.5 Kah na pish kuttit ayimun Altar en Jehovah kum-Manitt8mut, qussukquane Alzar tahshinnumwontogon ne teagwe missehchuog.
@@ -731,7 +731,7 @@
 28.12 Jehovah pish k8wóshwunumunk 8nc nompakou, kesukquash kussokanonukkongqunat ut kutohkit, ut utt8cheyeu8ut; kah wunnanittamunat wame kenutchegane anakausuonk, kah pish kenogguhkoue monaog wutohtimoneash, kah matta pish kenógohkóou.
 28.13 Kah Jehovah k8puhkehk8wahik, kah matta wussukqunaiyeh, kah pish ken webe anue, kah matta agwe, kukkeitaman wutann8teám8ongash Jehovah kum-Manitt8m nish ann8nonish yeu kesukok, kuhkinneasineat kah ussenat.
 28.14 Kah matta pish kuppanneaonóntam8 ne teague kutt8wongash nish ann8nonish yeu kesukoh, en nogque unninuhkounit, asuh nogque en menadcheanit, asuhkauonat onkatogig manitt8og, neg waussumónat,
-28.15 Onk pish n nih, matta n8tam8an 8wadtauatunkqussuonk Jehovah kum-Manitt8m, kuhkinneasinneat ussenat wame wutann8team8ongash, kah ukkuhk8waongash nish ann8nonish yeu kesukok, neit wame yeush matanittuongash pish kenuhkukongqunash, kah kummattanukqunash.
+28.15 Onk pish n$nih, matta n8tam8an 8wadtauatunkqussuonk Jehovah kum-Manitt8m, kuhkinneasinneat ussenat wame wutann8team8ongash, kah ukkuhk8waongash nish ann8nonish yeu kesukok, neit wame yeush matanittuongash pish kenuhkukongqunash, kah kummattanukqunash.
 28.16 Kummattanumit pish ut otanat kah kummattanumit pish ut ohteakonit,
 28.17 Pish matanittamun kummun8t, kah kuttitappinumwe wunnonk.
 28.18 Pish mattanittaman kutôóntomuk8me meechummuonk, kah kutohkee meechummuonk wunnetuonk kukkowashinumog, kah kussheepsume flocksog.
@@ -811,10 +811,10 @@
 29.24 Wame wutohtimoneash pish n8waog, Tohwaj Jehovah yeu unnehteunk yeu ohke teagua yeu kûsoppittag yeu mishé musquanittam8onk.
 29.25 Neit nag pish n8waog, newutche ahquontamwog 8n8waonk Jehovah um-Manitt8m8oh 8sh8oh, ne nashpe togomómp, sohh8wunont wutch ohkit Egypt
 29.26 Newutche nag moncheig & wowussumaog onkatogih Manitt8h, kah wunnauwaaìhtauouh; Manitt8h neh mat wahteahettegeh kah neh matta anumauonkeh.
-29.27 Kah ummusquanittam8onk Jehovah nashqunau ayeuuhkonittue yeu ohkeit, wunuhkukkomwatinneat nish noh mattannittuonk ne wósuk8whosik yeuut b8kut.
+29.27 Kah ummusquanittam8onk Jehovah nashqunau ayeuuhkonittue yeu ohkeit, wunuhkukkomwatinneat nish$noh mattannittuonk ne wósuk8whosik yeuut b8kut.
 29.28 Kah Jehovah ummattuttuhchabohkohwhoh wutch wutohtuout musquantog, kah unkquontog kah nashpe jishontog, kah wuttinuhkonuh onkatoganit ohkeit, neane yeu kesukok.
 29.29 Keme8gish wutchayeum8ash Jehovah num-Manitt8mun, kah pohquaeogish wutchayeum8ash nuhhogkanonut, kah en naumonanonut micheme, ussenat wame yeush naumatuongane kutt8ongash.
-30.1 ONk pish n nih, wame yeush nuhkukkonkquean, wunanittuonk kah matanitt8onk nish ponamanish anaquabean, nish qushkeahtéauan en kutahhut, ut wame wutohtimoneat uttoh Jehovah kum-Manitt8m an8hkunkquean.
+30.1 ONk pish n$nih, wame yeush nuhkukkonkquean, wunanittuonk kah matanitt8onk nish ponamanish anaquabean, nish qushkeahtéauan en kutahhut, ut wame wutohtimoneat uttoh Jehovah kum-Manitt8m an8hkunkquean.
 30.2 Kah quinnuppean en Jehovah kum-Manitt8mut, & kukkeihtaman 8wadtauatonkqussuonk, neane wame kutann8n8onk yeu kesukok ken kah kenáumonunk, ntshpe wame kuttah, kah nashpe wame kukketeahogkou
 30.3 Neit Jehovah kum-Manitt8m pish quinnuppinum kummissinninno8onk kah kukkitteamonteanumuk, kah pish qushkeu, kah kummohmounuk wutch kenugke wame missinninnutu, uttoh an Jehovah kum-Mânitt8m seohukqueop.
 30.4 Howanig kuttaiheog en sohh8kauut aongkóúe kesukquehtu, na pish k8ch mukkinnukqun Jehovah kum-Manitt8m, kah ne pish k8tinukqun.
@@ -822,7 +822,7 @@
 30.6 Kah Jehovah kum-Manitt8m pish qushqussum kuttah, kah wuttah k8skannemunneog, womononat Jehovah kum Manitt8m nashpe mamusse kuttah, kah nashpe mamusse kukketeahogkou, onk woh kuppomantam.
 30.7 Kah Jehovah kum-Manitt8m pish ponamauau wame yeush matanittuongash ut kummatwomut, kah ut neg sekeneunkqueaneg, neg wuskhukqueaneg.
 30.8 Kah pish kukqushkem, kah pish ken8swehtam 8wadtauahtonkqussuonk Jehovah kah pish kutussen wame wutann8teamowongash, nish ann8nonish yeu kesukkok.
-30.9 Kah Jehovah kum Manitt8m pish kummishteunk ut nish noh kenutchegane ánakausuonganit, ut kutóontamuk8me mechummuonganit, kah ut kenetaseume meechummuongan8, kah ut kutohkee mechumuonganit wutch wanegik, newutche Jehovah pish qushken, k8wekontam8onukqunnat wutch wanegik, neane wekontam8onomp k8shikoh.
+30.9 Kah Jehovah kum Manitt8m pish kummishteunk ut nish$noh kenutchegane ánakausuonganit, ut kutóontamuk8me mechummuonganit, kah ut kenetaseume meechummuongan8, kah ut kutohkee mechumuonganit wutch wanegik, newutche Jehovah pish qushken, k8wekontam8onukqunnat wutch wanegik, neane wekontam8onomp k8shikoh.
 30.10 Kukkeihtamán 8wadtauatonkqussuonk Jehovah kum-Manitt8m, nanawehtinneat wutann8team8ongash, kah ukkuhk8waongash, nish wasukuhwhosikish ut naumatuongane b8k ut, quinnuppean en Jehovah kum-Manitt8mut, nashpe mamusse kuttah, kah nashpe mamusse kukketeahogkou.
 30.11 Newutche yeu ann8team8onk ann8nun yeu kesukok, matta kutattahtonteaun, asuh matta nôohtano.
 30.12 Matta kesukquehtu ohtano; n8wonat howan pish kohkuhqueanishhikqueog ne kesukquehtu, kah nemunumwanshhikqueog kah n8tamwahikqueog, onk woh nutussenan, 30.13 Asuh matta ongkoue ketahhannit ahtano, n8wonat, howen pish quoshkodteanshikqueog, kah nemunnumwanshikqueog kah n8tamwahikqueog onk woh nutussenan.
