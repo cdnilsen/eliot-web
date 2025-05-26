@@ -79,6 +79,39 @@ def sortInterestingWords():
     reopenFile.writelines(allLines)
     reopenFile.close()
 
+
+def countMetricals(edition):
+    filePath = "../texts_in_progress/Psalms (metrical)." + edition
+
+    if os.path.exists(filePath):
+        file = open(filePath, "r", encoding="utf-8")
+        fileLines = file.readlines()
+        
+        allNums = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+        unfinishedVerseCount = 0
+        finishedVerseCount = 0
+        for i in range(len(fileLines) - 1):
+            line = fileLines[i]
+            nextLine = fileLines[i + 1]
+            if line.strip() != "" and nextLine.strip() != "":
+                if line.strip()[0] in allNums and line.strip()[-1] in allNums:
+                    if nextLine.strip()[0] in allNums and nextLine.strip()[-1] in allNums:
+                        unfinishedVerseCount += 1
+                    else:
+                        finishedVerseCount += 1
+
+        allVerseCount = unfinishedVerseCount + finishedVerseCount
+
+        proportion = str(round((finishedVerseCount / allVerseCount * 100), 2))
+        if proportion[-2] == ".":
+            proportion += "0"
+        proportion += "%"
+
+        print(f"Finished {str(finishedVerseCount)}/{str(allVerseCount)} verses ({proportion})")
+        print(f"{str(unfinishedVerseCount)} verses left")
+
+
 def main():
     sortInterestingWords()
     KJV_verse_dict = getKJVVerseDict()
@@ -94,7 +127,8 @@ def main():
         fileSuffix = "Second Edition.txt"
         letter = "β"
 
-    
+    countMetricals(fileSuffix)
+
     print("\n")
     editionToVerseCountDict = {}
 
@@ -135,6 +169,7 @@ def main():
             continue
         proportionalDifference = getPercentage(thisDifference, totalDifference)
         print(book + ": " + str(thisDifference) + " (" + proportionalDifference + ")")
+
     print("\n" + str(totalDifference) + " total verses left to go\n")
 
 main()
