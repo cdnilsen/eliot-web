@@ -228,9 +228,7 @@ function refreshSectionDropdown() {
         option.innerHTML = labelsList[i];
         sectionDropdown.appendChild(option);
     }
-
 }
-
 
 //This has a bug where I have the gospels as options in the Pentateuch. Fix at some point?
 function sectionListener(state: EditionState) {
