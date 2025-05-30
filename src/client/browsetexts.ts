@@ -227,10 +227,6 @@ function refreshSectionDropdown() {
         option.value = valuesList[i];
         option.innerHTML = labelsList[i];
         sectionDropdown.appendChild(option);
-
-        if (valuesList[i] == "mishnaic") {
-            option.hidden = true;
-        }
     }
 
 }

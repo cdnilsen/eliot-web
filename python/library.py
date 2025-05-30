@@ -67,7 +67,8 @@ bookToIDDict = {
     "2 John": "063",
     "3 John": "064",
     "Jude": "065",
-    "Revelation": "066"
+    "Revelation": "066",
+    "Psalms (metrical)": "067"
 }
 
 # Export the dictionary
