@@ -162,7 +162,8 @@ export let sectionToBookDict: stringToStringListDict = {
     "major_prophets": ["Isaiah", "Jeremiah", "Lamentations", "Ezekiel", "Daniel"],
     "minor_prophets": ["Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi"],
     "gospels_acts": ["Matthew", "Mark", "Luke", "John", "Acts"],
-    "other_nt": ["Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"]
+    "other_nt": ["Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"],
+    "mishnaic": ["Family Religion", "Milk for Babes"]
 }
 
 export let bookToChapterDict: stringToIntDict = {
