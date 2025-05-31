@@ -7,7 +7,7 @@ type HighlightedObject = {
 }
 
 
-function refreshMayhewBox(book) {
+function refreshMayhewBox(book: string) {
     return "b"
 }
 
