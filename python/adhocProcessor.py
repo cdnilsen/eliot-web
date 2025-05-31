@@ -1,24 +1,55 @@
 import os
 import math
 
-file = open("../texts_in_progress/Family Religion.Unknown.txt", "r", encoding="utf-8")
+englishFile = open("../texts_in_progress/Lord's Day (Mayhew).txt", "r", encoding="UTF-8")
 
-lines = file.readlines()
+massFile = open("../texts_in_progress/Lord's Day (for processing).txt", "r", encoding="UTF-8")
 
-lineList = []
 
-for i in range(len(lines)):
-    line = lines[i]
-    n = str(math.floor(i / 3))
-    if i % 3 == 0:
-        lineList.append(line)
-    elif i % 3 == 1:
-        lineList.append(n + ".E " + line)
-    else:
-        lineList.append(n + ".M " + line)
+englishLines = englishFile.readlines()
 
-file.close()
+massLines = massFile.readlines()
 
-file = open("../texts/Family Religion.Unknown.txt", "w", encoding="utf-8")
 
-file.writelines(lineList)
+
+addressToEnglishTextDict = {}
+addressToMassTextDict = {}
+finalEnglishLines = []
+finalMassLines = []
+finalAddresses = []
+for line in englishLines:
+    if line.strip() != "" and line.strip() != "¶":
+        address = line.split(" ")[0].strip()
+        address = address[0:-2]
+        finalAddresses.append(address)
+        finalEnglishLines.append(line)
+
+for line in massLines:
+    if line.strip() != "" and line.strip() != "¶":  
+        finalMassLines.append(line)
+
+#print(len(finalEnglishLines))
+#print(len(finalMassLines))
+#print(len(finalAddresses))
+
+
+outputLineList = []
+for i in range(len(finalEnglishLines)):
+    englishText = " ".join(finalEnglishLines[i].split(" ")[1:])
+    englishLine = finalAddresses[i] + ".E " + englishText
+
+    massLine = finalAddresses[i] + ".μ " + finalMassLines[i]
+
+    outputLineList.append(massLine)
+
+    outputLineList.append(englishLine)
+    outputLineList.append("\n")
+
+
+englishFile.close()
+massFile.close()
+
+outputFile = open("../texts/Lord's Day.Mayhew.txt", "w", encoding="utf-8")
+outputFile.writelines(outputLineList)
+
+outputFile.close()
