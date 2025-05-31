@@ -232,7 +232,10 @@ export let bookToChapterDict: stringToIntDict = {
     "2 John": 1,
     "3 John": 1,
     "Jude": 1,
-    "Revelation": 22
+    "Revelation": 22,
+    "Milk for Babes": 13,
+    "Family Religion": 3,
+    "Lord's Day": 36
 }
 
 export const allBookList = [

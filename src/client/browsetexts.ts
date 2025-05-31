@@ -258,6 +258,8 @@ function sectionListener(state: EditionState) {
         zerothContainer!.hidden = (state.book != "Genesis");
 
         let numChapters = bookToChapterDict[state.book];
+        console.log(numChapters)
+        console.log("Line 262...")
         chapterDropdown.innerHTML = "";
         for (let i=1; i < numChapters + 1; i++) {
             let option = document.createElement("option");
