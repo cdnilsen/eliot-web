@@ -6,6 +6,11 @@ type HighlightedObject = {
     str2: string
 }
 
+
+function refreshMayhewBox(book) {
+    return "b"
+}
+
 function findLCS(str1: string, str2: string): string {
     if (!str1 || !str2) return '';
     
@@ -289,7 +294,9 @@ function sectionListener(state: EditionState) {
 
         let mayhewContainer = document.getElementById("mayhewContainer")!;
         let mayhewCheckbox = <HTMLInputElement>document.getElementById("useMayhew");
-        if (book == "John" || book == "Psalms") {
+
+        //kludge kludge kludge
+        if (book == "John" || book == "Psalms" || book == "Family Religion" || book == "Lord's Day") {
             mayhewContainer!.hidden = false;
         } else {
             mayhewContainer!.hidden = true;
