@@ -80,7 +80,12 @@ def getIDFromAddress(document, address):
     
 
 def processTextToDict(documentName):
+    if documentName == "Lord's Day":
+        documentName = "Lord's Day.Mayhew"
     file = open("../texts/" + documentName + ".txt", "r", encoding="utf-8")
+    
+    if documentName == "Lord's Day.Mayhew":
+        documentName = "Lord's Day"
     verseNumberDict = {}
     for line in file.readlines():
         if line.strip() == "":
@@ -171,6 +176,6 @@ def main(documentList):
 
 
 
-documentList = ["Milk for Babes", "Family Religion"]
+documentList = ["Milk for Babes", "Family Religion", "Lord's Day"]
 
 main(documentList)
