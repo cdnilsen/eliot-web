@@ -333,7 +333,8 @@ function editionNumberListener(state: EditionState) {
     const bookToContainerDict: BookToContainerDictType = {
         "Genesis": "useZerothEdition",
         "Psalms (prose)": "useMayhew",
-        "John": "useMayhew"
+        "John": "useMayhew",
+        "Family Religion": "useMayhew"
     };
 
     for (let i=0; i < primesList.length; i++) {
@@ -840,6 +841,8 @@ async function fetchChapter(state: EditionState) {
         window.scrollTo({
             top: 0
         });
+
+        editionNumberListener(state);
         
     } catch (error) {
         console.error('Error fetching chapter:', error);
@@ -850,7 +853,6 @@ function submitButtonListener(state: EditionState) {
     let submitButton = <HTMLButtonElement>document.getElementById("submitBookQuery");
     submitButton.addEventListener("click", function() {
         state.editions = fixEditionNumber(state);
-        editionNumberListener(state);
         fetchChapter(state);
     });
 }
