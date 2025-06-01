@@ -516,7 +516,7 @@ type WordObject = {
 }
 
 
-function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean, bookName): HTMLTableElement {
+function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean, bookName: string): HTMLTableElement {
     let dictKeys = Object.keys(rawDict) as (keyof VerseDisplayDict)[];
 
     console.log("HERE ARE DICTKEYS")
@@ -558,8 +558,11 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
 
     let mishnaicTexts = ["Family Religion", "Milk for Babes", "Lord's Day", "Confession of Faith"]
 
+    console.log(bookName)
+    console.log(headword)
+
     if (mishnaicTexts.includes(bookName)) {
-        editionNumToTitleHTML['4'] = "English"
+        editionNumToTitleHTML['4'] = "<b><u>KJV</b></u>"
     }
     
 
