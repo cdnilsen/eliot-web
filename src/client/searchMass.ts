@@ -556,9 +556,9 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
 
     // Not KJV if it's Mishnaic...
 
-    let mishnaicTexts = ["Family Religion", "Milk for Babes", "Lord's Day", "Confession of Faith"]
+    let mishnaicTexts = ["Family Religion", "Milk for Babes", "Lord's Day", "Confession of Faith"];
 
-    console.log(bookName)
+    console.log("<" + bookName + ">")
     console.log(headword)
 
     if (mishnaicTexts.includes(bookName)) {
