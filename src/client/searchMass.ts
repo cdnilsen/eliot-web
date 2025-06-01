@@ -562,8 +562,10 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     console.log(headword)
 
     if (mishnaicTexts.includes(bookName)) {
-        editionNumToTitleHTML['4'] = "<b><u>KJV</b></u>"
+        editionNumToTitleHTML['4'] = "<b><u>English</b></u>"
     }
+
+    console.log(editionNumToTitleHTML)
     
 
     const desiredOrder = ['7', '2', '3', '5', '4', '8'];
