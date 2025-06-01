@@ -15,7 +15,8 @@ export type BookName = "Genesis" | "Exodus" | "Leviticus" | "Numbers" | "Deutero
     "Mark" | "Luke" | "John" | "Acts" | "Romans" | "1 Corinthians" | "2 Corinthians" | 
     "Galatians" | "Ephesians" | "Philippians" | "Colossians" | "1 Thessalonians" | 
     "2 Thessalonians" | "1 Timothy" | "2 Timothy" | "Titus" | "Philemon" | "Hebrews" | 
-    "James" | "1 Peter" | "2 Peter" | "1 John" | "2 John" | "3 John" | "Jude" | "Revelation";
+    "James" | "1 Peter" | "2 Peter" | "1 John" | "2 John" | "3 John" | "Jude" | "Revelation" | 
+    "Family Religion" | "Milk for Babes" | "Lord's Day" | "Confession of Faith"; 
 
 export const bookToIDDict: Record<BookName, string> = {
     "Genesis": "001",
@@ -83,7 +84,11 @@ export const bookToIDDict: Record<BookName, string> = {
     "2 John": "063",
     "3 John": "064",
     "Jude": "065",
-    "Revelation": "066"
+    "Revelation": "066",
+    "Family Religion": "068",
+    "Milk for Babes": "069",
+    "Lord's Day": "070",
+    "Confession of Faith": "071"
 };
 
 export const IDToBookDict: Record<string, string> = {
@@ -152,7 +157,11 @@ export const IDToBookDict: Record<string, string> = {
     "063": "2 John",
     "064": "3 John",
     "065": "Jude",
-    "066": "Revelation"
+    "066": "Revelation",
+    "068": "Family Religion",
+    "069": "Milk for Babes",
+    "070": "Lord's Day",
+    "071": "Confession of Faith"
 };
 
 export let sectionToBookDict: stringToStringListDict = {

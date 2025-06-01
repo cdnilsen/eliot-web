@@ -85,6 +85,27 @@ def getIDTail(bookID, object):
 
     return bookID + chapter + verse
 
+def getWordsAndCountsInObject(verseObject, edition):
+    splitText = verseObject["text"].replace("|", "")
+    splitText = splitText.split(" ")
+    
+    if edition != "Grebrew" and edition != "KJV":
+        wordToCountDict = {}
+        for word in splitText:
+            word = cleanWord(word)
+            for word in splitText:
+                word = cleanWord(word)
+                if word in wordToCountDict:
+                    wordToCountDict[word] += 1
+                else:
+                    wordToCountDict[word] = 1
+                    verseObject["words"].append(word)
+
+        for word in verseObject["words"]:
+            verseObject["counts"].append(wordToCountDict[word])
+
+    return verseObject
+
 def getVerseObject(line, bookID, edition):
 
     splitLine = line.split(" ")
@@ -131,22 +152,9 @@ def getVerseObject(line, bookID, edition):
         object["genericID"] = "1" + idTail
         object["specificID"] = editionID + idTail
 
-    splitText = text.split(" ")
-    splitText = text.replace("|", " ")
-    if edition != "Grebrew" and edition != "KJV":
-        wordToCountDict = {}
-        for word in splitText:
-            word = cleanWord(word)
-            if word in wordToCountDict:
-                wordToCountDict[word] += 1
-            else:
-                wordToCountDict[word] = 1
-                object["words"].append(word)
 
-        for word in object["words"]:
-            object["counts"].append(wordToCountDict[word])
-
-    return object
+    return getWordsAndCountsInObject(object, edition)
+    
 
 def updateAddresses(newAddresses, newCounts, oldAddressList, oldCountList):
     oldCountDictionary = {}
@@ -500,6 +508,34 @@ def getWordAdditions(object):
     return object
 
 
+def getMassWordsTuples(object):
+    allWordsMassTuples = []
+    for word in object["words"]:
+        if word.strip() == "":
+            continue
+        noDiacritics = cleanDiacritics(word)
+        if word not in object["wordToVerse"]:
+            print("Problem with word: " + word + " at " + str(object["wordToVerse"][word]))
+            continue
+        verseDict = object["wordToVerse"][word]
+        addresses = []
+        counts = []
+        for address in verseDict:
+            addresses.append(int(address))
+            counts.append(verseDict[address])
+        lemma = "" # For now.
+        noDiacritics = cleanDiacritics(word)
+        editionNum = 1 # fix this later
+        totalCount = sum(counts)
+
+        tuple = (word, addresses, counts, lemma, noDiacritics, editionNum, totalCount)
+
+
+        allWordsMassTuples.append(tuple)
+    print(allWordsMassTuples[50])
+    return allWordsMassTuples
+
+
 def processWordAdditions(connection, object):
     cursor = connection.cursor()
 
@@ -532,28 +568,7 @@ def processWordAdditions(connection, object):
         raise Exception(f"Error inserting into verses_to_words: {str(e)}")
 
     # add to words_mass
-    allWordsMassTuples = []
-    for word in object["words"]:
-        if word.strip() == "":
-            continue
-        noDiacritics = cleanDiacritics(word)
-        if word not in object["wordToVerse"]:
-            print("Problem with word: " + word + " at " + str(object["wordToVerse"][word]))
-            continue
-        verseDict = object["wordToVerse"][word]
-        addresses = []
-        counts = []
-        for address in verseDict:
-            addresses.append(int(address))
-            counts.append(verseDict[address])
-        lemma = "" # For now.
-        noDiacritics = cleanDiacritics(word)
-        editionNum = 1 # fix this later
-        totalCount = sum(counts)
-
-        tuple = (word, addresses, counts, lemma, noDiacritics, editionNum, totalCount)
-
-        allWordsMassTuples.append(tuple)
+    allWordsMassTuples = getMassWordsTuples(object)
 
     words_query = """
         INSERT INTO words_mass (headword, verses, counts, lemma, no_diacritics, editions, total_count)
@@ -724,13 +739,14 @@ def fullReset():
     clear_tables(connection)
     for book in allBookList:
         main(book)
-        
+    
     
     totalWords = getNumWords(connection)
     print(f"Total Massachusett headwords in database: {totalWords}")
     addAllKJV(connection)
 
     print(f"Total time for all books: {time.time() - outerStartTime:.2f} seconds")
+  
 
 def resetKJV():
     outerStartTime = time.time()
@@ -745,5 +761,3 @@ def resetKJV():
 fullReset()
 #resetKJV()
 
-
-#main()

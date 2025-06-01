@@ -196,6 +196,12 @@ def cleanWord(word):
 
     punctuation = ['.', ',', ';', ':', '!', '?', '(', ')', '[', ']', '{', '}', '"', "'", '“', '”', '‘', '’', '—', '–', '…', '•', '·', '«', '»', '„', '¶', '\n']
 
+    while word.startswith("-"):
+        word = word[1:]
+      
+    while word.endswith("-"):
+        word = word[0:-1]
+
     for char in punctuation:
         word = word.replace(char, "")
 
