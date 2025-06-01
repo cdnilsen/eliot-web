@@ -243,7 +243,7 @@ export let bookToChapterDict: stringToIntDict = {
     "Jude": 1,
     "Revelation": 22,
     "Milk for Babes": 13,
-    "Family Religion": 3,
+    "Family Religion": 27,
     "Lord's Day": 36
 }
 
