@@ -426,6 +426,8 @@ function processEnglishText(text: string, state: EditionState) {
 
 //bugged, presumably hapaxes aren't actually being changed?
 function processText(text: string, state: EditionState, edition: Edition, isDummy: boolean) {
+
+    console.log(edition)
     if (isDummy) {
         return text;
     }
