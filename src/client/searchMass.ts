@@ -267,7 +267,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     addressInnerSpan.style.cursor = 'pointer';
     addressInnerSpan.innerHTML = spanInnerHTML;
 
-    let displayBox = getDisplayBox(textDict, headword, isHebrew);
+    let displayBox = getDisplayBox(textDict, headword, isHebrew, bookName);
  
     addressSpan.addEventListener("mouseover", (event) => {
         mouseoverAddressSpan(addressInnerSpan, displayBox, window);
@@ -464,6 +464,14 @@ function processTextInBox(text: string, headword: string, isMass: boolean) {
             }
             word = word.replaceAll("8", "ꝏ̄");
             word = word.replaceAll("$", " ");
+            word = word.replaceAll("八", "8");
+
+            word = word.replaceAll("{{", "<b>");
+            word = word.replaceAll("}}", "</b>");
+
+            word = word.replaceAll("{", "<i>");
+            word = word.replaceAll("}", "</i>");
+
             finalString += word;
             if (i < splitText.length - 1) {
                 finalString += " ";
@@ -471,6 +479,11 @@ function processTextInBox(text: string, headword: string, isMass: boolean) {
         }
         return finalString;
     } else {
+        text = text.replaceAll("{{", "<b>");
+        text = text.replaceAll("}}", "</b>");
+
+        text = text.replaceAll("{", "<i>");
+        text = text.replaceAll("}", "</i>");
         return text;
     }
 }
@@ -503,7 +516,7 @@ type WordObject = {
 }
 
 
-function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean): HTMLTableElement {
+function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean, bookName): HTMLTableElement {
     let dictKeys = Object.keys(rawDict) as (keyof VerseDisplayDict)[];
 
     console.log("HERE ARE DICTKEYS")
@@ -540,6 +553,15 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         '4': '<b><u>KJV</b></u>',
         '8': isHebrew ? '<b><u>Heb.</u></b>' : '<b><u>Grk.</u></b>'
     };
+
+    // Not KJV if it's Mishnaic...
+
+    let mishnaicTexts = ["Family Religion", "Milk for Babes", "Lord's Day", "Confession of Faith"]
+
+    if (mishnaicTexts.includes(bookName)) {
+        editionNumToTitleHTML['4'] = "English"
+    }
+    
 
     const desiredOrder = ['7', '2', '3', '5', '4', '8'];
     const validKeys = Object.keys(newDict)
