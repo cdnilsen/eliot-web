@@ -83,22 +83,21 @@ def getIDFromAddress(document, address):
 def getWordsAndCountsInObject(verseObject):
     splitText = verseObject["text"].replace("|", "")
     splitText = splitText.split(" ")
-    
-    if verseObject["isMass"]:
-        allWords = []
-        wordToCountDict = {}
-        for word in splitText:
-            cleanedWord = cleanWord(word)
-            if cleanedWord in wordToCountDict:
-                wordToCountDict[cleanedWord] += 1
-            else:
-                wordToCountDict[cleanedWord] = 1
-                allWords.append(cleanedWord)
-        allWords.sort()
-        for cleanedWord in allWords:
-            count = wordToCountDict[cleanedWord]
-            verseObject["words"].append(cleanedWord)
-            verseObject["counts"].append(count)
+
+    allWords = []
+    wordToCountDict = {}
+    for word in splitText:
+        cleanedWord = cleanWord(word)
+        if cleanedWord in wordToCountDict:
+            wordToCountDict[cleanedWord] += 1
+        else:
+            wordToCountDict[cleanedWord] = 1
+            allWords.append(cleanedWord)
+    allWords.sort()
+    for cleanedWord in allWords:
+        count = wordToCountDict[cleanedWord]
+        verseObject["words"].append(cleanedWord)
+        verseObject["counts"].append(count)
 
         
 
@@ -276,25 +275,40 @@ def getMassWordTuples(verseToWordTupleList):
 
         allWordsMassTuples.append(tuple)
 
-    print(allWordsMassTuples[50])
+    #print(allWordsMassTuples[50])
     return allWordsMassTuples
 
 def processWords(object, connection, cursor):
     verseToWordTuples = []
+    
     allIDs = object["IDs"]
 
+
+    englishData = {}
+    englishWords = []
     for id in allIDs:
         superdict = object["dict"][id]
         editions = list(superdict.keys())
         for edition in editions:
+            thisDict = superdict[edition]
+            wordList = thisDict["words"]
+            countList = thisDict["counts"]
+            specificID = thisDict["specificID"]
             if edition != "KJV":
-                thisDict = superdict[edition]
-                wordList = thisDict["words"]
-                countList = thisDict["counts"]
-                specificID = thisDict["specificID"]
-
                 tuple = (int(specificID), wordList, countList)
                 verseToWordTuples.append(tuple)
+            else:
+                for word in wordList:
+                    if word not in englishData:
+                        englishData[word] = [int(specificID)]
+                        englishWords.append(word)
+                    else:
+                        englishData[word].append(int(specificID))
+    
+    for word in englishWords:
+        englishData[word].sort()
+
+
 
     # Batch insert into verses_to_words
     insert_query = """
@@ -334,6 +348,35 @@ def processWords(object, connection, cursor):
     except Exception as e:
         connection.rollback()
         raise Exception(f"Error inserting into words_mass: {str(e)}")
+
+    # Now put words into the KJV table
+    allEnglishTuples = []
+    for word in englishWords:
+        tuple = (word, englishData[word])
+        allEnglishTuples.append(tuple)
+    print(allEnglishTuples[50])
+    try:
+        execute_values(
+            cursor,
+            """
+            INSERT INTO words_kjv (word, verses) 
+            VALUES %s
+            ON CONFLICT (word) DO UPDATE 
+            SET verses = (
+                SELECT ARRAY(
+                    SELECT DISTINCT UNNEST(
+                        words_kjv.verses || EXCLUDED.verses
+                    )
+                    ORDER BY 1
+                )
+            )
+            """,
+            allEnglishTuples,
+            template="(%s, %s)",
+            page_size=100
+        )
+        connection.commit()
+    
     finally:
         cursor.close()
 

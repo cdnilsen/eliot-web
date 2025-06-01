@@ -140,6 +140,13 @@ function processTextInBox(text: string, headword: string, keyNum: number): strin
             }
             word = word.replaceAll("8", "ꝏ̄");
             word = word.replaceAll("$", " ");
+
+            word = word.replaceAll("{{", "<b>");
+            word = word.replaceAll("}}", "</b>");
+
+            word = word.replaceAll("{", "<i>");
+            word = word.replaceAll("}", "</i>");
+
             finalString += word;
             if (i < splitText.length - 1) {
                 finalString += " ";
@@ -147,6 +154,12 @@ function processTextInBox(text: string, headword: string, keyNum: number): strin
         }
         return finalString;
     } else {
+        text = text.replaceAll("{{", "<b>");
+        text = text.replaceAll("}}", "</b>");
+
+        text = text.replaceAll("{", "<i>");
+        text = text.replaceAll("}", "</i>");
+        
         return text;
     }
 }
@@ -237,7 +250,7 @@ type AddressSpanObject = {
     count: number;
 }
 
-function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean): HTMLTableElement {
+function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean, bookName: string): HTMLTableElement {
     let dictKeys = Object.keys(rawDict) as (keyof VerseDisplayDict)[];
     let newDict: StringToStringDict = {};
     
@@ -271,6 +284,16 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         '4': '<b><u>KJV</b></u>',
         '8': isHebrew ? '<b><u>Heb.</u></b>' : '<b><u>Grk.</u></b>'
     };
+
+    // Not KJV if it's Mishnaic...
+    let mishnaicTexts = ["Family Religion", "Milk for Babes", "Lord's Day", "Confession of Faith"];
+
+    if (mishnaicTexts.includes(bookName)) {
+        editionNumToTitleHTML['2'] = "<b><u>Mass.</b></u>"
+        editionNumToTitleHTML['4'] = "<b><u>English</b></u>"
+        editionNumToTitleHTML['5'] = "<b><u>Mayhew</b></u>"
+    }
+
 
     const validKeys = Object.keys(newDict).filter(key => 
         newDict[key]?.toString().trim() !== '' && 
@@ -401,7 +424,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     addressInnerSpan.style.cursor = 'pointer';
     addressInnerSpan.innerHTML = spanInnerHTML;
 
-    let displayBox = getDisplayBox(textDict, headword, isHebrew);
+    let displayBox = getDisplayBox(textDict, headword, isHebrew, bookName);
  
     addressSpan.addEventListener("mouseover", (event) => {
         addressInnerSpan.style.fontWeight = "bold";
