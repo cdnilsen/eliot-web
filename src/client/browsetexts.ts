@@ -457,7 +457,7 @@ type EditionColumns = {
     leftWidth: number
 }
 
-function getColumnWidths(editions: Edition[]): EditionColumns {
+function getColumnWidths(editions: Edition[], state: EditionState): EditionColumns {
     let leftHandSideEditions: Edition[] = []
     let rightHandSideEditions: Edition[] = []
 
@@ -471,7 +471,7 @@ function getColumnWidths(editions: Edition[]): EditionColumns {
         leftHandSideEditions.push("first_edition");
     }
     
-    if (editions.includes("second_edition")) {
+    if (editions.includes("second_edition") && !sectionToBookDict["mishnaic"].includes(state.book)) {
         if (secondEditionOnRight) {
             rightHandSideEditions.push("second_edition");
         } else {
@@ -696,7 +696,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], state: Edi
     const table = document.createElement('table');
     table.className = 'verse-table';
 
-    const columnWidthObject = getColumnWidths(editionsToFetch);
+    const columnWidthObject = getColumnWidths(editionsToFetch, state);
     
     // Create a dummy verse object to get the shorthands.
     let dummyHeaderVerse = createDummyVerse(editionsToFetch, state.isNT);
@@ -811,6 +811,11 @@ function fixEditionNumber(state: EditionState): number {
     if (number % 7 == 0 && state.book != "Genesis") {
         number = state.editions / 7
     }
+
+    if (sectionToBookDict["mishnaic"].includes(state.book) && number % 3 == 0) {
+        number = state.editions / 3
+    }
+
     return number;
 }
 
