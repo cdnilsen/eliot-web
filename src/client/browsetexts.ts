@@ -409,11 +409,17 @@ function isMassachusett(edition: Edition) {
 }
 
 function processMassText(text: string, state: EditionState) {
-    text = text.replaceAll('8', 'ꝏ̄').replaceAll("$", " ").replaceAll("ṡ", "s").replaceAll("ṣ", "s").replaceAll('{', '<i>').replaceAll('}', '</i>');
+    text = text.replaceAll('8', 'ꝏ̄').replaceAll("$", " ").replaceAll("ṡ", "s").replaceAll("ṣ", "s").replaceAll("{{", "<b>").replaceAll("}}", "</b>").replaceAll('{', '<i>').replaceAll('}', '</i>').replaceAll("八", "8");
 
     if (state.viewBrackets == false) {
         text = text.replaceAll("[", "").replaceAll("]", "")
     }
+
+    return text
+}
+
+function processEnglishText(text: string, state: EditionState) {
+    text = text.replaceAll("{{", "<b>").replaceAll("}}", "</b>").replaceAll('{', '<i>').replaceAll('}', '</i>').replaceAll("八", "8");
 
     return text
 }
@@ -425,6 +431,10 @@ function processText(text: string, state: EditionState, edition: Edition, isDumm
     }
     if (edition == "first_edition" || edition == "second_edition" || edition == "mayhew" || edition == "zeroth_edition") {
         return processMassText(text, state); //deal with hapaxes later
+    }
+
+    if (edition == "kjv") {
+        return processEnglishText(text, state); 
     }
 
     if (edition == "grebrew" || edition == "kjv") {
