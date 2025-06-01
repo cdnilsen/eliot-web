@@ -555,18 +555,14 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     };
 
     // Not KJV if it's Mishnaic...
-
     let mishnaicTexts = ["Family Religion", "Milk for Babes", "Lord's Day", "Confession of Faith"];
 
-    console.log("<" + bookName + ">")
-    console.log(headword)
-
     if (mishnaicTexts.includes(bookName)) {
+        editionNumToTitleHTML['2'] = "<b><u>Mass.</b></u>"
         editionNumToTitleHTML['4'] = "<b><u>English</b></u>"
-    }
+        editionNumToTitleHTML['5'] = "<b><u>Mayhew</b></u>"
 
-    console.log(editionNumToTitleHTML)
-    
+    }
 
     const desiredOrder = ['7', '2', '3', '5', '4', '8'];
     const validKeys = Object.keys(newDict)
