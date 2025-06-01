@@ -26,7 +26,6 @@ textNames = [
 ]
 
 
-
 def preprocessLine(line):
     line = line.strip()
     line = line.replace("|", " ")
