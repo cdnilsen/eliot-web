@@ -603,7 +603,7 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
             cell.style.textAlign = "center";
         } else if (isMassachusett(edition) && verseText) {
             verseText = processMassText(verseText, state);
-        } else {
+        } else if (verseText) {
             console.log(edition)
             if (edition == "kjv") {
                 verseText = processEnglishText(verseText, state);
