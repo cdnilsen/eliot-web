@@ -652,6 +652,7 @@ function createNavBar(state: EditionState) {
                 fetchChapter(state);
             } else {
                 state.chapter = 1; // Reset if we went too low
+                fetchChapter(state)
             }
         };
         leftNav.appendChild(prevButton);
@@ -668,6 +669,7 @@ function createNavBar(state: EditionState) {
                 fetchChapter(state);
             } else {
                 state.chapter = bookToChapterDict[state.book]; // Reset if we went too high
+                fetchChapter(state);
             }
         };
         rightNav.appendChild(nextButton);
@@ -821,7 +823,6 @@ function fixEditionNumber(state: EditionState): number {
 
 async function fetchChapter(state: EditionState) {
     try {
-        
         state.editions = fixEditionNumber(state);
 
         let editionNumber = state.editions;
@@ -857,7 +858,6 @@ async function fetchChapter(state: EditionState) {
 function submitButtonListener(state: EditionState) {
     let submitButton = <HTMLButtonElement>document.getElementById("submitBookQuery");
     submitButton.addEventListener("click", function() {
-        state.editions = fixEditionNumber(state);
         fetchChapter(state);
     });
 }
