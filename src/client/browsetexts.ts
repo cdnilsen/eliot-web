@@ -826,49 +826,43 @@ function fixEditionNumber(state: EditionState): number {
 }
 
 // Kludge function to prevent dead columns
+// Kludge function to prevent dead columns
 function cleanColumns(verses: Verse[]): Edition[] {
-    let possibleEditions = ["first_edition", "second_edition", "zeroth_edition", "kjv", "grebrew"]
+    let possibleEditions: Edition[] = ["first_edition", "second_edition", "zeroth_edition", "kjv", "grebrew"]
 
     let editionsAreBlank: String2BoolDict = {}
     let editionsExist: String2BoolDict = {}
 
-    for (let i=0; i < possibleEditions.length; i++) {
+    for (let i = 0; i < possibleEditions.length; i++) {
         let thisEdition = possibleEditions[i];
         editionsExist[thisEdition] = false;
         editionsAreBlank[thisEdition] = true;
     }
 
-    for(let i=0; i<verses.length; i++) {
+    for (let i = 0; i < verses.length; i++) {
         let thisVerseObject = verses[i];
-        for(let j=0; j < possibleEditions.length; j++) {
+        for (let j = 0; j < possibleEditions.length; j++) {
             let thisEdition = possibleEditions[j];
-            if (thisEdition in thisVerseObject) {
+            // Use bracket notation to access the property dynamically
+            if (thisEdition in thisVerseObject && thisVerseObject[thisEdition] !== undefined) {
                 editionsExist[thisEdition] = true;
-                if (thisVerseObject[thisEdition] != "") {
-                    editionsAreBlank[thisEdition] = false
+                if (thisVerseObject[thisEdition] !== "") {
+                    editionsAreBlank[thisEdition] = false;
                 }
             }
         }
     }
 
-    let existingEditions: string[] = []
-
-    for(let i=0; i < possibleEditions.length; i++) {
-        let edition = possibleEditions[i];
-        if (editionsExist[edition]) {
-            existingEditions.push(edition);
-        }
-    }
-
     let editionsToKill: Edition[] = []
 
-    for(let i=0; i < existingEditions.length; i++) {
-        let edition = existingEditions[i];
-        if (editionsAreBlank[edition]) {
-            editionsToKill.push(edition as Edition);
+    for (let i = 0; i < possibleEditions.length; i++) {
+        let edition = possibleEditions[i];
+        if (editionsExist[edition] && editionsAreBlank[edition]) {
+            editionsToKill.push(edition);
         }
     }
-    return editionsToKill
+    
+    return editionsToKill;
 }
 
 async function fetchChapter(state: EditionState) {
