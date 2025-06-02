@@ -280,3 +280,19 @@ export function reverseDictionary(dict: StringToStringDict): StringToStringDict 
     return reversedDict;
 }
 
+export let bookToShorthandDict = {
+    "Family Religion": {
+        "first_edition": "α (anonymous, 1714)",
+        "mayhew": "Mayhew (early 1720s)",
+        "kjv": "English"
+    },
+    "Lord's Day": {
+        "mayhew": "Mayhew (1707)",
+        "kjv": "English"
+    },
+    "Milk for Babes": {
+        "first_edition": "α (Rawson, 1691)",
+        "kjv": "English (John Cotton, 1657)"
+    }
+}
+

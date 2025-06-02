@@ -1,4 +1,4 @@
-import { sectionToBookDict, bookToChapterDict } from "./library.js"
+import { sectionToBookDict, bookToChapterDict, bookToShorthandDict } from "./library.js"
 
 //All courtesy of Claude
 type HighlightedObject = {
@@ -511,7 +511,7 @@ function getColumnWidths(editions: Edition[], state: EditionState): EditionColum
     return object;
 }
 
-function createDummyVerse(editions: Edition[], isNT: boolean) {
+function createDummyVerse(editions: Edition[], isNT: boolean, book: string) {
     let verse: Verse = {
         book: "Genesis",
         chapter: 1,
@@ -521,10 +521,18 @@ function createDummyVerse(editions: Edition[], isNT: boolean) {
     let editionToShorthandDict = {
         "first_edition": "α (1663)",
         "second_edition": "β (1685)",
-        "mayhew": "M (1709)",
+        "mayhew": "Mayhew (1709)",
         "zeroth_edition": "\u05D0\u202A (1655)",
         "kjv": "KJV",
         "grebrew": "G"
+    }
+    //kludge, but...
+    if (book in bookToShorthandDict) {
+        let allKeys = Object.keys(bookToShorthandDict[book])
+        for (let i=0; i < allKeys.length; i++) {
+            let key = allKeys[i];
+            editionToShorthandDict[key] = bookToShorthandDict[book][key]
+        }
     }
 
     if (isNT) {
@@ -705,7 +713,7 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], state: Edi
     const columnWidthObject = getColumnWidths(editionsToFetch, state);
     
     // Create a dummy verse object to get the shorthands.
-    let dummyHeaderVerse = createDummyVerse(editionsToFetch, state.isNT);
+    let dummyHeaderVerse = createDummyVerse(editionsToFetch, state.isNT, state.book);
     
     let headerRow = createVerseRow(dummyHeaderVerse, columnWidthObject, 'th', state, true);
 
