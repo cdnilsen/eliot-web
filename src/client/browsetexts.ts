@@ -899,6 +899,8 @@ async function fetchChapter(state: EditionState) {
                 correctedEditions.push(thisEdition)
             }
         }
+        console.log("Line 902...")
+        console.log(columnsToNuke)
 
         createVerseGrid(verses, correctedEditions, state);
 
