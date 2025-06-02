@@ -280,7 +280,14 @@ export function reverseDictionary(dict: StringToStringDict): StringToStringDict 
     return reversedDict;
 }
 
-export let bookToShorthandDict = {
+export type BookToShorthandDictType = {
+    [bookName: string]: {
+        [editionKey: string]: string
+    }
+}
+
+
+export let bookToShorthandDict: BookToShorthandDictType = {
     "Family Religion": {
         "first_edition": "α (anonymous, 1714)",
         "mayhew": "Mayhew (early 1720s)",

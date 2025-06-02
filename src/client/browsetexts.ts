@@ -1,4 +1,4 @@
-import { sectionToBookDict, bookToChapterDict, bookToShorthandDict } from "./library.js"
+import { sectionToBookDict, bookToChapterDict, bookToShorthandDict, BookToShorthandDictType } from "./library.js"
 
 //All courtesy of Claude
 type HighlightedObject = {
@@ -526,14 +526,20 @@ function createDummyVerse(editions: Edition[], isNT: boolean, book: string) {
         "kjv": "KJV",
         "grebrew": "G"
     }
-    //kludge, but...
+
+    
+    // Kludge, but with proper typing
     if (book in bookToShorthandDict) {
-        let allKeys = Object.keys(bookToShorthandDict[book])
-        for (let i=0; i < allKeys.length; i++) {
-            let key = allKeys[i];
-            editionToShorthandDict[key] = bookToShorthandDict[book][key]
+        const bookShorthands = bookToShorthandDict[book];
+        const allKeys = Object.keys(bookShorthands);
+        for (let i = 0; i < allKeys.length; i++) {
+            const key = allKeys[i];
+            if (key in editionToShorthandDict) {
+                editionToShorthandDict[key] = bookShorthands[key];
+            }
         }
     }
+
 
     if (isNT) {
         editionToShorthandDict["first_edition"] = "α (1661)"
