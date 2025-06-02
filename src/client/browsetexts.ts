@@ -826,55 +826,58 @@ function fixEditionNumber(state: EditionState): number {
 }
 
 // Kludge function to prevent dead columns
-function cleanColumns(verses: Verse[]) {
+// Fixed cleanColumns function
+function cleanColumns(verses: Verse[]): Edition[] {
     let possibleEditions: Edition[] = ["first_edition", "second_edition", "zeroth_edition", "mayhew", "kjv", "grebrew"]
 
     let editionsAreBlank: String2BoolDict = {}
     let editionsExist: String2BoolDict = {}
 
+    // Initialize tracking objects
     for (let i = 0; i < possibleEditions.length; i++) {
         let thisEdition = possibleEditions[i];
         editionsExist[thisEdition] = false;
         editionsAreBlank[thisEdition] = true;
     }
 
+    // Check each verse for edition data
     for (let i = 0; i < verses.length; i++) {
         let thisVerseObject = verses[i];
         for (let j = 0; j < possibleEditions.length; j++) {
             let thisEdition = possibleEditions[j];
-            // Use bracket notation to access the property dynamically
+            
+            // Check if this edition exists and has content
             if (thisEdition in thisVerseObject && thisVerseObject[thisEdition] !== undefined) {
                 editionsExist[thisEdition] = true;
-                if (thisVerseObject[thisEdition] !== "") {
+                
+                // Check if the content is not empty/blank
+                let content = thisVerseObject[thisEdition];
+                if (content && content.trim() !== "") {
                     editionsAreBlank[thisEdition] = false;
                 }
             }
         }
     }
 
+    // Return editions that exist but are completely blank (should be removed)
     let editionsToKill: Edition[] = []
-
-    let editionsToAdd: Edition[] = []
-
     for (let i = 0; i < possibleEditions.length; i++) {
         let edition = possibleEditions[i];
-        if (editionsAreBlank[edition]) {
+        // Kill editions that exist but are completely blank
+        if (editionsExist[edition] && editionsAreBlank[edition]) {
             editionsToKill.push(edition);
-        } else if (editionsExist[edition] == false) {
-            editionsToAdd.push(edition);
         }
     }
-    console.log("line 863")
-    console.log(editionsAreBlank)
-    console.log(editionsExist)
     
-    let returnObject = {
-        ["add"]: editionsToAdd,
-        ["kill"]: editionsToKill
-    }
-    return returnObject;
+    console.log("cleanColumns debug:");
+    console.log("editionsExist:", editionsExist);
+    console.log("editionsAreBlank:", editionsAreBlank);
+    console.log("editionsToKill:", editionsToKill);
+    
+    return editionsToKill;
 }
 
+// Fixed fetchChapter function (just the relevant part)
 async function fetchChapter(state: EditionState) {
     try {
         state.editions = fixEditionNumber(state);
@@ -899,23 +902,22 @@ async function fetchChapter(state: EditionState) {
         console.log("Line 845")
         console.log(verses);
         
-        let cleanColumnObject = cleanColumns(verses);
-        let columnsToNuke = cleanColumnObject["kill"]
-        let columnsToAdd = cleanColumnObject["add"]
+        // Get editions that should be removed (blank columns)
+        let columnsToNuke = cleanColumns(verses);
 
+        // Filter out the blank editions
         let correctedEditions: Edition[] = []
-
         for(let i=0; i < editionsToFetch.length; i++) {
             let thisEdition = editionsToFetch[i];
             if (!columnsToNuke.includes(thisEdition)) {
-                correctedEditions.push(thisEdition)
-            } else if (columnsToAdd.includes(thisEdition)) {
-                correctedEditions.push(thisEdition)
+                correctedEditions.push(thisEdition);
             }
         }
 
-        console.log("Line 902...")
-        console.log(columnsToNuke)
+        console.log("Line 902...");
+        console.log("editionsToFetch:", editionsToFetch);
+        console.log("columnsToNuke:", columnsToNuke);
+        console.log("correctedEditions:", correctedEditions);
 
         createVerseGrid(verses, correctedEditions, state);
 
