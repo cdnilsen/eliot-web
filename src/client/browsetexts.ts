@@ -827,7 +827,7 @@ function fixEditionNumber(state: EditionState): number {
 
 // Kludge function to prevent dead columns
 function cleanColumns(verses: Verse[]): Edition[] {
-    let possibleEditions: Edition[] = ["first_edition", "second_edition", "zeroth_edition", "kjv", "grebrew"]
+    let possibleEditions: Edition[] = ["first_edition", "second_edition", "zeroth_edition", "mayhew", "kjv", "grebrew"]
 
     let editionsAreBlank: String2BoolDict = {}
     let editionsExist: String2BoolDict = {}
