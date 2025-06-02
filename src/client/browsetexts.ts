@@ -826,7 +826,6 @@ function fixEditionNumber(state: EditionState): number {
 }
 
 // Kludge function to prevent dead columns
-// Kludge function to prevent dead columns
 function cleanColumns(verses: Verse[]): Edition[] {
     let possibleEditions: Edition[] = ["first_edition", "second_edition", "zeroth_edition", "kjv", "grebrew"]
 
@@ -861,6 +860,9 @@ function cleanColumns(verses: Verse[]): Edition[] {
             editionsToKill.push(edition);
         }
     }
+    console.log("line 863")
+    console.log(editionsAreBlank)
+    console.log(editionsExist)
     
     return editionsToKill;
 }
@@ -899,6 +901,7 @@ async function fetchChapter(state: EditionState) {
                 correctedEditions.push(thisEdition)
             }
         }
+
         console.log("Line 902...")
         console.log(columnsToNuke)
 
