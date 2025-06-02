@@ -358,3 +358,49 @@ button {
 .ketiv:hover .hover-tooltip {
     visibility: visible;
 }
+
+body {
+    counter-reset: footnote;
+}
+
+/* Style for footnote references in text */
+.footnote-ref {
+    counter-increment: footnote;
+    text-decoration: none;
+    color: blue;
+    font-size: 0.8em;
+    vertical-align: super;
+}
+
+.footnote-ref::before {
+    content: counter(footnote);
+}
+
+/* Style for footnote definitions */
+.footnote {
+    font-size: 0.9em;
+    margin: 10px 0;
+    padding-left: 20px;
+    position: relative;
+}
+
+.footnote::before {
+    content: counter(footnote) ". ";
+    counter-increment: footnote;
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+/* Reset counter for footnote definitions section */
+.footnotes {
+    counter-reset: footnote;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #ccc;
+}
+
+/* Hover effect */
+.footnote-ref:hover {
+    background-color: #ffffcc;
+}
