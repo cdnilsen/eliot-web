@@ -354,7 +354,7 @@ def processWords(object, connection, cursor):
     for word in englishWords:
         tuple = (word, englishData[word])
         allEnglishTuples.append(tuple)
-    print(allEnglishTuples[50])
+        
     try:
         execute_values(
             cursor,
@@ -401,11 +401,22 @@ def processDocument(document, connection):
     # Add words
     processWords(textDict, connection, cursor)
 
+# Does not delete stuff from the vocab databases, but does reset the text entries.
+def nukeMishnaicText(documentName, connection):
+    cursor = connection.cursor()
+
+    delete_query = f"DELETE FROM all_verses WHERE book = %s"
+    cursor.execute(delete_query, (documentName,))
+
+    print(f"Deleted rows where book = {documentName}")
+
 
         
 def main(documentList):
     connection = psycopg2.connect(DATABASE_URL)
     for document in documentList:
+        nukeMishnaicText(document, connection)
+        time.sleep(0.5)
         processDocument(document, connection)
     
 
