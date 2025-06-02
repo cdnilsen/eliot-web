@@ -899,7 +899,7 @@ async function fetchChapter(state: EditionState) {
         let editionNumber = state.editions;
         let book = state.book;
         let chapter = state.chapter;
-        
+        /*
         let editionsToFetch: Edition[] = [];
         if (editionNumber % 2 === 0) editionsToFetch.push('first_edition');
         if (editionNumber % 3 === 0) editionsToFetch.push('second_edition');
@@ -907,14 +907,16 @@ async function fetchChapter(state: EditionState) {
         if (editionNumber % 7 === 0) editionsToFetch.push('zeroth_edition');
         if (editionNumber % 11 === 0) editionsToFetch.push('grebrew');
         editionsToFetch.push('kjv');
+        */
         
 
         
         // Convert editions array to comma-separated string for query parameter
+        let editionsToFetch: Edition[] = ['first_edition', 'second_edition', 'mayhew', 'zeroth_edition', 'grebrew', 'kjv'];
         const editionsParam = editionsToFetch.join(',');
 
         //test just doing every edition
-        editionsToFetch = ['first_edition', "second_edition", "mayhew", "zeroth_edition", "grebrew", "kjv"]
+        
         const response = await fetch(`/chapter/${book}/${chapter}?editions=${editionsParam}`);
         const verses: Verse[] = await response.json();
 
