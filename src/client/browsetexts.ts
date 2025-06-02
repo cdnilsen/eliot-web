@@ -856,7 +856,7 @@ function cleanColumns(verses: Verse[]): Edition[] {
 
     for (let i = 0; i < possibleEditions.length; i++) {
         let edition = possibleEditions[i];
-        if (editionsExist[edition] && editionsAreBlank[edition]) {
+        if (editionsAreBlank[edition]) {
             editionsToKill.push(edition);
         }
     }
