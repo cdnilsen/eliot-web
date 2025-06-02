@@ -527,7 +527,7 @@ function createDummyVerse(editions: Edition[], isNT: boolean, book: string) {
         "grebrew": "G"
     }
 
-    
+
     // Kludge, but with proper typing
     if (book in bookToShorthandDict) {
         const bookShorthands = bookToShorthandDict[book];
@@ -535,7 +535,7 @@ function createDummyVerse(editions: Edition[], isNT: boolean, book: string) {
         for (let i = 0; i < allKeys.length; i++) {
             const key = allKeys[i];
             if (key in editionToShorthandDict) {
-                editionToShorthandDict[key] = bookShorthands[key];
+                (editionToShorthandDict as any)[key] = bookShorthands[key];
             }
         }
     }
