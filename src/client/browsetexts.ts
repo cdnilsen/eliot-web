@@ -6,6 +6,10 @@ type HighlightedObject = {
     str2: string
 }
 
+type String2BoolDict = {
+    [key: string]: boolean
+}
+
 
 function refreshMayhewBox(book: string) {
     return "b"
@@ -821,6 +825,52 @@ function fixEditionNumber(state: EditionState): number {
     return number;
 }
 
+// Kludge function to prevent dead columns
+function cleanColumns(verses: Verse[]): Edition[] {
+    let possibleEditions = ["first_edition", "second_edition", "zeroth_edition", "kjv", "grebrew"]
+
+    let editionsAreBlank: String2BoolDict = {}
+    let editionsExist: String2BoolDict = {}
+
+    for (let i=0; i < possibleEditions.length; i++) {
+        let thisEdition = possibleEditions[i];
+        editionsExist[thisEdition] = false;
+        editionsAreBlank[thisEdition] = true;
+    }
+
+    for(let i=0; i<verses.length; i++) {
+        let thisVerseObject = verses[i];
+        for(let j=0; j < possibleEditions.length; j++) {
+            let thisEdition = possibleEditions[j];
+            if (thisEdition in thisVerseObject) {
+                editionsExist[thisEdition] = true;
+                if (thisVerseObject[thisEdition] != "") {
+                    editionsAreBlank[thisEdition] = false
+                }
+            }
+        }
+    }
+
+    let existingEditions: string[] = []
+
+    for(let i=0; i < possibleEditions.length; i++) {
+        let edition = possibleEditions[i];
+        if (editionsExist[edition]) {
+            existingEditions.push(edition);
+        }
+    }
+
+    let editionsToKill: Edition[] = []
+
+    for(let i=0; i < existingEditions.length; i++) {
+        let edition = existingEditions[i];
+        if (editionsAreBlank[edition]) {
+            editionsToKill.push(edition as Edition);
+        }
+    }
+    return editionsToKill
+}
+
 async function fetchChapter(state: EditionState) {
     try {
         state.editions = fixEditionNumber(state);
@@ -845,7 +895,18 @@ async function fetchChapter(state: EditionState) {
         console.log("Line 845")
         console.log(verses);
         
-        createVerseGrid(verses, editionsToFetch, state);
+        let columnsToNuke = cleanColumns(verses);
+
+        let correctedEditions: Edition[] = []
+
+        for(let i=0; i < editionsToFetch.length; i++) {
+            let thisEdition = editionsToFetch[i];
+            if (!columnsToNuke.includes(thisEdition)) {
+                correctedEditions.push(thisEdition)
+            }
+        }
+
+        createVerseGrid(verses, correctedEditions, state);
 
         window.scrollTo({
             top: 0
