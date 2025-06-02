@@ -841,6 +841,9 @@ async function fetchChapter(state: EditionState) {
         const editionsParam = editionsToFetch.join(',');
         const response = await fetch(`/chapter/${book}/${chapter}?editions=${editionsParam}`);
         const verses: Verse[] = await response.json();
+
+        console.log("Line 845")
+        console.log(verses);
         
         createVerseGrid(verses, editionsToFetch, state);
 
