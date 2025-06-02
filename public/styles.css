@@ -388,7 +388,7 @@ body {
     content: counter(footnote) ". ";
     counter-increment: footnote;
     position: absolute;
-    left: 0;
+    left: 130px;
     font-weight: bold;
 }
 
@@ -403,4 +403,9 @@ body {
 /* Hover effect */
 .footnote-ref:hover {
     background-color: #ffffcc;
+}
+
+ul.normal li {
+    text-align: left;
+    padding-bottom: 5px;
 }
