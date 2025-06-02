@@ -864,7 +864,7 @@ function cleanColumns(verses: Verse[]): Edition[] {
     for (let i = 0; i < possibleEditions.length; i++) {
         let edition = possibleEditions[i];
         // Kill editions that exist but are completely blank
-        if (editionsExist[edition] && editionsAreBlank[edition]) {
+        if (editionsAreBlank[edition]) {
             editionsToKill.push(edition);
         }
     }
