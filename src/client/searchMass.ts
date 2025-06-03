@@ -628,13 +628,21 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
 
     // Calculate appropriate column widths
     validKeys.forEach(key => {
+        const baseWidth = 8; // pixels per character
+        const padding = 24;  // extra padding
+        let width = Math.max(
+            175,
+            maxLengths[key] * baseWidth + padding
+        );
+        
         let th = document.createElement('th');
-        // Remove width setting - let CSS handle it
+        th.style.width = `${width}px`;
         th.innerHTML = editionNumToTitleHTML[key];
         headerRow.appendChild(th);
         
         let td = document.createElement('td');
-        // Remove width setting - let CSS handle it
+        td.style.width = `${width}px`;
+        td.style.maxWidth = `${width}px`;
         td.innerHTML = processTextInBox(newDict[key], headword, (parseInt(key) % 4 != 0));
         verseRow.appendChild(td);
     });
