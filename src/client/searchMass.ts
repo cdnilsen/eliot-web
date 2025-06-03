@@ -166,7 +166,7 @@ function clickOnCiteSpan(object: AddressSpanObject) {
 
 function mouseoverAddressSpan(innerSpan: HTMLSpanElement, displayBox: HTMLTableElement, window: Window) {
     innerSpan.style.fontWeight = "bold";
-    innerSpan.style.color = "blue";
+    //innerSpan.style.color = "blue";
     innerSpan.style.borderBottom = '2px dotted black';
 
     // Get the position relative to the viewport
@@ -285,7 +285,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     let addressSpan = document.createElement("span");
     let addressInnerSpan = document.createElement("span");
     //addressSpan.classList.add("address-span-hello");
-    addressInnerSpan.style.borderBottom= '1px dotted black';
+    addressInnerSpan.style.borderBottom = '1px dotted black';
     addressInnerSpan.classList.add("address-inner-span")
     addressInnerSpan.style.cursor = 'pointer';
     addressInnerSpan.innerHTML = spanInnerHTML;
@@ -294,16 +294,15 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
  
     addressSpan.addEventListener("mouseover", (event) => {
         addressInnerSpan.style.fontWeight = "bold";
-        addressInnerSpan.style.borderBottom= '2px dotted black';
-        displayBox.style.display = "none";
-        mouseoverAddressSpan(addressInnerSpan, displayBox, window);
+        addressInnerSpan.style.borderBottom = '2px dotted black';
+        //displayBox.style.display = "none";
+        //mouseoverAddressSpan(addressInnerSpan, displayBox, window);
     });
 
     addressSpan.addEventListener("mouseleave", () => {
         addressInnerSpan.style.fontWeight = "normal";
         addressInnerSpan.style.color = "";
-        addressInnerSpan.style.borderBottom= '1px dotted black';
-        displayBox.style.display = "none";
+        addressInnerSpan.style.borderBottom = '1px dotted black';
     });
 
     let object: AddressSpanObject = {
