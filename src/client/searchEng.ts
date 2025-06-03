@@ -165,7 +165,7 @@ function processTextInBox(text: string, headword: string, keyNum: number): strin
 }
 
 function getResultDiv(result: WordKJVResult): HTMLDivElement {
-
+    // See the function `resultDiv` in searchMass for details on this
     let totalCount = 0;
     
     let verseIDs: number[] = [];

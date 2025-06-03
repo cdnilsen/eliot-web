@@ -389,11 +389,9 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
 }
 
 function resultDiv(result: WordMassResult): HTMLDivElement {
-    console.log("Line 392");
     /* 
         The way it calculates the total count is correct, but there's a backend issue that results in many verses being counted multiple times. That will need to be fixed at some point but for the time being we'll kludge in a fix.
     */
-    console.log(result);
 
     let totalCount = 0;
     
