@@ -153,6 +153,14 @@ function clickOnCiteSpan(object: AddressSpanObject) {
         thisSpan.style.borderBottom = "1px dotted black";
     }
 
+    let outerAddressSpans = document.getElementsByClassName('address-outer-span') as HTMLCollectionOf<HTMLSpanElement>
+    for (let i=0; i < outerAddressSpans.length; i++) {
+        let thisSpan = outerAddressSpans[i];
+        thisSpan.classList.remove('active');
+    }
+
+    let outerSpan = object.innerSpan;
+    outerSpan.classList.add("active");
     let triggeringSpan = object.innerSpan;
     triggeringSpan.style.fontWeight = "bold";
     triggeringSpan.style.borderBottom = "2px dotted blue";
@@ -284,7 +292,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     }
 
     let addressSpan = document.createElement("span");
-    addressSpan.classList.add("address-inner-span");
+    addressSpan.classList.add("address-outer-span");
     let addressInnerSpan = document.createElement("span");
     //addressSpan.classList.add("address-span-hello");
     addressInnerSpan.style.borderBottom = '1px dotted black';
@@ -304,9 +312,12 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
 
     //fix this so it doesn't fire if you're looking at something else
     addressSpan.addEventListener("mouseleave", () => {
-        addressInnerSpan.style.fontWeight = "normal";
-        addressInnerSpan.style.color = "";
-        addressInnerSpan.style.borderBottom = '1px dotted black';
+        if (!addressSpan.classList.contains("active")) {
+            addressInnerSpan.style.fontWeight = "normal";
+            addressInnerSpan.style.color = "";
+            addressInnerSpan.style.borderBottom = '1px dotted black';
+        }
+        
     });
 
     let object: AddressSpanObject = {
@@ -317,7 +328,6 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     }
 
     object.outerSpan.addEventListener("click", () => {
-        object.outerSpan.classList.add("active");
         clickOnCiteSpan(object);
     });
 
