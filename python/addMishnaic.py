@@ -422,6 +422,6 @@ def main(documentList):
 
 
 
-documentList = ["Milk for Babes", "Family Religion", "Lord's Day"]
+documentList = ["Milk for Babes", "Family Religion", "Lord's Day", "Confession of Faith"]
 
 main(documentList)
