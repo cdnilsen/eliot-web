@@ -1,5 +1,5 @@
 import { StringLiteral } from 'typescript';
-import { stringToStringListDict, BookName, bookToIDDict, bookToChapterDict, sectionToBookDict, stringToIntDict } from './library.js';
+import { stringToStringListDict, BookName, bookToIDDict, bookToChapterDict, sectionToBookDict, StringToIntDict } from './library.js';
 import { get } from 'http';
 
 
@@ -225,7 +225,7 @@ function cleanWord(word: string) {
 }
 
 function getVerseWordDict(wordList: string[]) {
-    let dict: stringToIntDict = {};
+    let dict: StringToIntDict = {};
 
     for (let i=0; i < wordList.length; i++) {
         let word = cleanWord(wordList[i]);
@@ -451,13 +451,13 @@ type WordChangeObject = {
     id: string,
     removeWords: string[],
     addWords: string[],
-    addWordCounts: stringToIntDict,
+    addWordCounts: StringToIntDict,
     countChanges: string[],
-    changeWordCounts: stringToIntDict,
+    changeWordCounts: StringToIntDict,
     changeStuff: boolean
 }
 
-function getWordChanges(oldVerseDict: WordCountDict, newVerseDict: stringToIntDict, id: string): WordChangeObject {
+function getWordChanges(oldVerseDict: WordCountDict, newVerseDict: StringToIntDict, id: string): WordChangeObject {
     let object: WordChangeObject = {
         id: id,
         removeWords: [],
