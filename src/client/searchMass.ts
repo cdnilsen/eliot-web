@@ -145,9 +145,9 @@ type AddressSpanObject = {
 }
 
 function clickOnCiteSpan(object: AddressSpanObject) {
-    let addressSpans = document.getElementsByClassName('address-inner-span') as HTMLCollectionOf<HTMLSpanElement>;
-    for (let i=0; i < addressSpans.length; i++) {
-        let thisSpan = addressSpans[i];
+    let innerAddressSpans = document.getElementsByClassName('address-inner-span') as HTMLCollectionOf<HTMLSpanElement>;
+    for (let i=0; i < innerAddressSpans.length; i++) {
+        let thisSpan = innerAddressSpans[i];
         thisSpan.style.fontWeight = "normal";
         thisSpan.style.color = "";
         thisSpan.style.borderBottom = "1px dotted black";
@@ -284,6 +284,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     }
 
     let addressSpan = document.createElement("span");
+    addressSpan.classList.add("address-inner-span");
     let addressInnerSpan = document.createElement("span");
     //addressSpan.classList.add("address-span-hello");
     addressInnerSpan.style.borderBottom = '1px dotted black';
@@ -303,9 +304,9 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
 
     //fix this so it doesn't fire if you're looking at something else
     addressSpan.addEventListener("mouseleave", () => {
-        //addressInnerSpan.style.fontWeight = "normal";
-        //addressInnerSpan.style.color = "";
-        //addressInnerSpan.style.borderBottom = '1px dotted black';
+        addressInnerSpan.style.fontWeight = "normal";
+        addressInnerSpan.style.color = "";
+        addressInnerSpan.style.borderBottom = '1px dotted black';
     });
 
     let object: AddressSpanObject = {
@@ -316,6 +317,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     }
 
     object.outerSpan.addEventListener("click", () => {
+        object.outerSpan.classList.add("active");
         clickOnCiteSpan(object);
     });
 
