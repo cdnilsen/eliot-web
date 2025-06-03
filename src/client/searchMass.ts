@@ -159,6 +159,7 @@ function clickOnCiteSpan(object: AddressSpanObject) {
     triggeringSpan.style.color = "blue";
 
     let verseBoxContainer = document.getElementById("verse-box-column") as HTMLDivElement;
+    verseBoxContainer.innerHTML = "";
     //verseBoxContainer.innerHTML = 'HELLO';
 
     verseBoxContainer.appendChild(object.table);
@@ -631,7 +632,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         const baseWidth = 8; // pixels per character
         const padding = 24;  // extra padding
         let width = Math.max(
-            150, // minimum width
+            200, // minimum width
             maxLengths[key] * baseWidth + padding
         );
         
