@@ -150,7 +150,7 @@ function clickOnCiteSpan(object: AddressSpanObject) {
         let thisSpan = addressSpans[i];
         thisSpan.style.fontWeight = "normal";
         thisSpan.style.color = "";
-        thisSpan.style.borderBottom = "black";
+        thisSpan.style.borderBottom = "1px dotted black";
     }
 
     let triggeringSpan = object.innerSpan;
@@ -159,9 +159,9 @@ function clickOnCiteSpan(object: AddressSpanObject) {
     triggeringSpan.style.color = "blue";
 
     let verseBoxContainer = document.getElementById("verse-box-column") as HTMLDivElement;
-    verseBoxContainer.innerHTML = '';
+    verseBoxContainer.innerHTML = 'HELLO';
 
-    verseBoxContainer.appendChild(object.table);
+    //verseBoxContainer.appendChild(object.table);
 }
 
 function mouseoverAddressSpan(innerSpan: HTMLSpanElement, displayBox: HTMLTableElement, window: Window) {
