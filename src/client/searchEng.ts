@@ -63,7 +63,13 @@ function killLeadingZeros(address: string) {
 function getVerseAddress(address: string): string {
     let rawChapter = address.slice(4, 7);
     let rawVerse = address.slice(7, 10);
-    return killLeadingZeros(rawChapter) + "." + killLeadingZeros(rawVerse)
+
+    //Kludge but fixes an issue with 'verse zero'.
+    let result = killLeadingZeros(rawChapter) + "." + killLeadingZeros(rawVerse);
+    if (result.endsWith(".")) {
+        result = result + "0";
+    }
+    return result;
 }
 
 function sortByAlphabet(results: WordKJVResult[]): WordKJVResult[] {

@@ -138,9 +138,30 @@ function createTriangleObject(): TriangleObject {
 
 
 type AddressSpanObject = {
-    span: HTMLSpanElement;
+    outerSpan: HTMLSpanElement;
+    innerSpan: HTMLSpanElement;
     table: HTMLTableElement;
     count: number;
+}
+
+function clickOnCiteSpan(object: AddressSpanObject) {
+    let addressSpans = document.getElementsByClassName('address-inner-span') as HTMLCollectionOf<HTMLSpanElement>;
+    for (let i=0; i < addressSpans.length; i++) {
+        let thisSpan = addressSpans[i];
+        thisSpan.style.fontWeight = "normal";
+        thisSpan.style.color = "";
+        thisSpan.style.borderBottom = "black";
+    }
+
+    let triggeringSpan = object.innerSpan;
+    triggeringSpan.style.fontWeight = "bold";
+    triggeringSpan.style.borderBottom = "2px dotted blue";
+    triggeringSpan.style.color = "black";
+
+    let verseBoxContainer = document.getElementById("verse-box-column") as HTMLDivElement;
+    verseBoxContainer.innerHTML = '';
+
+    verseBoxContainer.append(object.table);
 }
 
 function mouseoverAddressSpan(innerSpan: HTMLSpanElement, displayBox: HTMLTableElement, window: Window) {
@@ -263,14 +284,18 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
 
     let addressSpan = document.createElement("span");
     let addressInnerSpan = document.createElement("span");
-    addressSpan.classList.add("address-span-hello");
+    //addressSpan.classList.add("address-span-hello");
     addressInnerSpan.style.borderBottom= '1px dotted black';
+    addressInnerSpan.classList.add("address-inner-span")
     addressInnerSpan.style.cursor = 'pointer';
     addressInnerSpan.innerHTML = spanInnerHTML;
 
     let displayBox = getDisplayBox(textDict, headword, isHebrew, bookName);
  
     addressSpan.addEventListener("mouseover", (event) => {
+        addressInnerSpan.style.fontWeight = "bold";
+        addressInnerSpan.style.borderBottom= '2px dotted black';
+        displayBox.style.display = "none";
         mouseoverAddressSpan(addressInnerSpan, displayBox, window);
     });
 
@@ -281,15 +306,19 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
         displayBox.style.display = "none";
     });
 
-    
-    addressSpan.appendChild(addressInnerSpan);
-    addressSpan.appendChild(displayBox);
-
     let object: AddressSpanObject = {
-        span: addressSpan,
+        outerSpan: addressSpan,
+        innerSpan: addressInnerSpan,
         table: displayBox,
         count: totalCount
     }
+
+    object.outerSpan.addEventListener("click", () => {
+        clickOnCiteSpan(object);
+    });
+
+    object.outerSpan.appendChild(object.innerSpan);
+    //addressSpan.appendChild(displayBox);
 
     return object;
 }
@@ -323,7 +352,7 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
 
         // Create a container for the address span and comma
         let container = document.createElement('span');
-        container.appendChild(addressSpanObject.span);
+        container.appendChild(addressSpanObject.outerSpan);
         
         // Add comma after the span (not inside it) if not the last item
         if (i < genericIDs.length - 1) {
@@ -463,7 +492,13 @@ function killLeadingZeros(address: string) {
 function getVerseAddress(address: string): string {
     let rawChapter = address.slice(4, 7);
     let rawVerse = address.slice(7, 10);
-    return killLeadingZeros(rawChapter) + "." + killLeadingZeros(rawVerse)
+
+    //Kludge but fixes an issue with 'verse zero'.
+    let result = killLeadingZeros(rawChapter) + "." + killLeadingZeros(rawVerse);
+    if (result.endsWith(".")) {
+        result = result + "0";
+    }
+    return result;
 }
 
 function processTextInBox(text: string, headword: string, isMass: boolean) {
