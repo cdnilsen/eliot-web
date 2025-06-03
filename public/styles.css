@@ -258,7 +258,7 @@ button {
     text-decoration-style: dotted;
 }
 
-/* Style for the table cells */
+/* Modify the existing .display-box rule to exclude tables in verse-box-column */
 .display-box {
     position: fixed;
     background-color: #fff;
@@ -420,37 +420,35 @@ ul.normal li {
 .results-column {
     min-height: 100px;
 }
-#verse-box-column {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    width: 100%; /* Ensure it takes full column width */
+/* Override for tables specifically in the verse-box-column */
+#verse-box-column .display-box {
+    position: static; /* Remove fixed positioning */
+    width: 100%; /* Use full width */
+    max-width: 100%;
     box-sizing: border-box;
 }
 
-#verse-box-column table {
+#verse-box-column .display-box table {
     width: 100%;
-    max-width: 100%; /* Prevent overflow */
+    max-width: 100%;
     table-layout: fixed;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
 }
 
-#verse-box-column th,
-#verse-box-column td {
+#verse-box-column .display-box th,
+#verse-box-column .display-box td {
     width: auto;
-    max-width: 0; /* This forces equal distribution with table-layout: fixed */
+    max-width: 0; /* Forces equal distribution */
     overflow: hidden;
-    text-overflow: ellipsis;
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
-    padding: 8px 4px; /* Reduce padding if needed */
+    padding: 6px 4px;
+    white-space: normal;
+    line-height: 1.3;
 }
 
-/* Allow text content to wrap properly */
-#verse-box-column td {
-    white-space: normal;
-    line-height: 1.4;
+/* Remove the min-width constraint for tables in verse-box-column */
+#verse-box-column .display-box td,
+#verse-box-column .display-box th {
+    min-width: 0; /* Override the 90px min-width */
 }
