@@ -304,7 +304,7 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
         totalCount += addressToCountDict[Object.keys(addressToCountDict)[i]];
     }
 
-    bookSpan.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<i>" + bookName + "</i> (" + totalCount + "zzzzzz): ";
+    bookSpan.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<i>" + bookName + "</i> (" + totalCount + "): ";
     bookDiv.appendChild(bookSpan);
 
     let thisBookVerseDisplaySuperDict: {[key: string]: VerseDisplayDict} = {};
@@ -389,7 +389,9 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
 }
 
 function resultDiv(result: WordMassResult): HTMLDivElement {
-
+    console.log("Line 392");
+    console.log(result);
+    
     let resultDiv = document.createElement("div");
     resultDiv.className = "result-item";
     let headwordSpan = document.createElement("span");
