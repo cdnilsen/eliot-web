@@ -429,5 +429,12 @@ ul.normal li {
 }
 
 #verse-box-column table {
-    margin: 10px 0; /* Add some vertical margin between tables if multiple are added */
+    width: 100%;
+    table-layout: fixed;
+    margin: 10px 0;
+}
+
+#verse-box-column th,
+#verse-box-column td {
+    width: auto; /* Let CSS distribute evenly */
 }
