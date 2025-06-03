@@ -427,7 +427,7 @@ ul.normal li {
     align-items: center;
     padding: 20px; /* Add padding around the content */
 }
-
+/*
 #verse-box-column table {
     width: 100%;
     table-layout: fixed;
@@ -436,5 +436,6 @@ ul.normal li {
 
 #verse-box-column th,
 #verse-box-column td {
-    width: auto; /* Let CSS distribute evenly */
+    width: auto; 
 }
+*/
