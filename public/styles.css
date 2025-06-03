@@ -302,6 +302,7 @@ button {
 .display-box table {
     border-collapse: collapse;
     margin: 0;
+    min-width: 80%;
     table-layout: fixed;
 }
 
