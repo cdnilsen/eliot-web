@@ -16,13 +16,15 @@ DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:Cb4-D5B2BEE
 textToIDDict = {
     "Family Religion": "068",
     "Milk for Babes": "069",
-    "Lord's Day": "070"
+    "Lord's Day": "070",
+    "Confession of Faith": "071"
 }
 
 textNames = [
     "Family Religion",
     "Milk for Babes",
-    "Lord's Day"
+    "Lord's Day",
+    "Confession of Faith"
 ]
 
 
@@ -410,8 +412,6 @@ def nukeMishnaicText(documentName, connection):
 
     print(f"Deleted rows where book = {documentName}")
 
-
-        
 def main(documentList):
     connection = psycopg2.connect(DATABASE_URL)
     for document in documentList:
@@ -419,8 +419,6 @@ def main(documentList):
         time.sleep(0.5)
         processDocument(document, connection)
     
-
-
 
 documentList = ["Milk for Babes", "Family Religion", "Lord's Day", "Confession of Faith"]
 

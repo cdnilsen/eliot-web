@@ -172,7 +172,7 @@ export let sectionToBookDict: stringToStringListDict = {
     "minor_prophets": ["Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi"],
     "gospels_acts": ["Matthew", "Mark", "Luke", "John", "Acts"],
     "other_nt": ["Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"],
-    "mishnaic": ["Family Religion", "Milk for Babes", "Lord's Day"]
+    "mishnaic": ["Family Religion", "Milk for Babes", "Lord's Day", "Confession of Faith"]
 }
 
 export let bookToChapterDict: stringToIntDict = {
@@ -244,7 +244,8 @@ export let bookToChapterDict: stringToIntDict = {
     "Revelation": 22,
     "Milk for Babes": 13,
     "Family Religion": 27,
-    "Lord's Day": 36
+    "Lord's Day": 36,
+    "Confession of Faith": 32
 }
 
 export const allBookList = [
@@ -260,7 +261,7 @@ export const allBookList = [
     "Philippians", "Colossians", "1 Thessalonians", "2 Thessalonians",
     "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews",
     "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation",
-    "Milk for Babes", "Family Religion", "Lord's Day"
+    "Milk for Babes", "Family Religion", "Lord's Day", "Confession of Faith"
 ]
 
 export type StringToStringDict = {
@@ -300,6 +301,10 @@ export let bookToShorthandDict: BookToShorthandDictType = {
     "Milk for Babes": {
         "first_edition": "α (Rawson, 1691)",
         "kjv": "English (John Cotton, 1657)"
+    },
+    "Confession of Faith": {
+        "first_edition": "α (Rawson, 1699)",
+        "kjv": "English (1680)"
     }
 }
 
