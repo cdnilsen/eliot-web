@@ -1,5 +1,5 @@
 import { totalmem } from "os";
-import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, StringToStringDict, allBookList, stringToIntDict, bookToIDDict, BookName } from "./library.js"
+import { sectionToBookDict, bookToChapterDict, IDToBookDict, stringToStringListDict, StringToStringDict, allBookList, StringToIntDict, bookToIDDict, BookName } from "./library.js"
 
 
 type WordKJVResult = {
@@ -165,10 +165,29 @@ function processTextInBox(text: string, headword: string, keyNum: number): strin
 }
 
 function getResultDiv(result: WordKJVResult): HTMLDivElement {
+
+    let totalCount = 0;
+    
+    let verseIDs: number[] = [];
+    let countDict: StringToIntDict = {}
+
+    for (let i=0; i < result.verses.length; i++) {
+        let thisVerse = result.verses[i];
+        let thisCount = result.counts[i];
+
+        if (!(thisVerse in countDict)) {
+            countDict[thisVerse] = thisCount;
+            verseIDs.push(thisVerse);
+        }
+    }
+
+    for (let j=0; j < verseIDs.length; j++) {
+        totalCount += countDict[verseIDs[j]]
+    }
+
     let resultDiv = document.createElement("div");
     resultDiv.className = "result-item";
     let headwordSpan = document.createElement("span");
-    let totalCount = result.counts.reduce((sum, val) => sum + val, 0);
     let formattedHeadword = result.headword.replaceAll("8", "ꝏ̄").replaceAll("$", " ");
     headwordSpan.innerHTML = `<strong>${formattedHeadword} (${totalCount})</strong> `; 
     resultDiv.appendChild(headwordSpan);
@@ -536,7 +555,7 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
 
 
 
-    let bookToCountDict: {[key: string]: stringToIntDict} = {};
+    let bookToCountDict: {[key: string]: StringToIntDict} = {};
     for (let i=0; i < allEditionIDs.length; i++) {
         let generic = allEditionIDs[i].slice(0, -1);
         console.log(generic);
@@ -567,7 +586,7 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
           });
         let thisBookGenerics = bookToGenericListDict[book];
         console.log(thisBookGenerics);
-        let thisBookCountDictionary: stringToIntDict = {};
+        let thisBookCountDictionary: StringToIntDict = {};
         let thisBookDiv = getOneBookDiv(book, allTexts, thisBookGenerics, bookToCountDict[book], headword);
         divArray.push(thisBookDiv);
     });
