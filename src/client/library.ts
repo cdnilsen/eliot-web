@@ -2,7 +2,7 @@ export type stringToStringListDict = {
     [key: string]: string[]
 }
 
-export type stringToIntDict = {
+export type StringToIntDict = {
     [key: string]: number
 }
 
@@ -175,7 +175,7 @@ export let sectionToBookDict: stringToStringListDict = {
     "mishnaic": ["Family Religion", "Milk for Babes", "Lord's Day", "Confession of Faith"]
 }
 
-export let bookToChapterDict: stringToIntDict = {
+export let bookToChapterDict: StringToIntDict = {
     "Genesis": 50,
     "Exodus": 40,
     "Leviticus": 27,
