@@ -156,12 +156,12 @@ function clickOnCiteSpan(object: AddressSpanObject) {
     let triggeringSpan = object.innerSpan;
     triggeringSpan.style.fontWeight = "bold";
     triggeringSpan.style.borderBottom = "2px dotted blue";
-    triggeringSpan.style.color = "black";
+    triggeringSpan.style.color = "blue";
 
     let verseBoxContainer = document.getElementById("verse-box-column") as HTMLDivElement;
     verseBoxContainer.innerHTML = '';
 
-    verseBoxContainer.append(object.table);
+    verseBoxContainer.appendChild(object.table);
 }
 
 function mouseoverAddressSpan(innerSpan: HTMLSpanElement, displayBox: HTMLTableElement, window: Window) {
