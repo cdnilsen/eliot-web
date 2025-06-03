@@ -420,22 +420,37 @@ ul.normal li {
 .results-column {
     min-height: 100px;
 }
-
 #verse-box-column {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px; /* Add padding around the content */
+    padding: 20px;
+    width: 100%; /* Ensure it takes full column width */
+    box-sizing: border-box;
 }
-/*
+
 #verse-box-column table {
     width: 100%;
+    max-width: 100%; /* Prevent overflow */
     table-layout: fixed;
-    margin: 10px 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 #verse-box-column th,
 #verse-box-column td {
-    width: auto; 
+    width: auto;
+    max-width: 0; /* This forces equal distribution with table-layout: fixed */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    padding: 8px 4px; /* Reduce padding if needed */
 }
-*/
+
+/* Allow text content to wrap properly */
+#verse-box-column td {
+    white-space: normal;
+    line-height: 1.4;
+}
