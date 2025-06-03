@@ -265,7 +265,6 @@ button {
     border: 1px solid #bbb;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     padding: 5px;
-    padding-left: 25px;
     z-index: 9999;
     width: fit-content;
 }
@@ -426,4 +425,9 @@ ul.normal li {
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 20px; /* Add padding around the content */
+}
+
+#verse-box-column table {
+    margin: 10px 0; /* Add some vertical margin between tables if multiple are added */
 }

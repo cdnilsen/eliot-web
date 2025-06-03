@@ -362,7 +362,6 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
             commaSpan.textContent = ', ';
             container.appendChild(commaSpan);
         }
-        
         bookDiv.appendChild(container);
     }
     
@@ -632,7 +631,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         const baseWidth = 8; // pixels per character
         const padding = 24;  // extra padding
         let width = Math.max(
-            400, // minimum width
+            400,
             maxLengths[key] * baseWidth + padding
         );
         
