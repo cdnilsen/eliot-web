@@ -303,9 +303,9 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
 
     //fix this so it doesn't fire if you're looking at something else
     addressSpan.addEventListener("mouseleave", () => {
-        addressInnerSpan.style.fontWeight = "normal";
-        addressInnerSpan.style.color = "";
-        addressInnerSpan.style.borderBottom = '1px dotted black';
+        //addressInnerSpan.style.fontWeight = "normal";
+        //addressInnerSpan.style.color = "";
+        //addressInnerSpan.style.borderBottom = '1px dotted black';
     });
 
     let object: AddressSpanObject = {
@@ -631,10 +631,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     validKeys.forEach(key => {
         const baseWidth = 8; // pixels per character
         const padding = 24;  // extra padding
-        let width = Math.max(
-            200, // minimum width
-            maxLengths[key] * baseWidth + padding
-        );
+        let width = maxLengths[key] * baseWidth + padding;
         
         let th = document.createElement('th');
         th.style.width = `${width}px`;
