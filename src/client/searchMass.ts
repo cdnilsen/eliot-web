@@ -631,7 +631,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         const baseWidth = 8; // pixels per character
         const padding = 24;  // extra padding
         let width = Math.max(
-            400,
+            175,
             maxLengths[key] * baseWidth + padding
         );
         
