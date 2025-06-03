@@ -249,7 +249,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     }
     spanInnerHTML += address;
     if (totalCount > 1) {
-        spanInnerHTML += " (" + totalCount + ")";
+        spanInnerHTML += " (" + totalCount + "nnnn)";
     }
 
     if (notAllCountsSame) {
