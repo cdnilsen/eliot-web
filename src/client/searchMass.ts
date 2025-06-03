@@ -159,9 +159,9 @@ function clickOnCiteSpan(object: AddressSpanObject) {
     triggeringSpan.style.color = "blue";
 
     let verseBoxContainer = document.getElementById("verse-box-column") as HTMLDivElement;
-    verseBoxContainer.innerHTML = 'HELLO';
+    //verseBoxContainer.innerHTML = 'HELLO';
 
-    //verseBoxContainer.appendChild(object.table);
+    verseBoxContainer.appendChild(object.table);
 }
 
 function mouseoverAddressSpan(innerSpan: HTMLSpanElement, displayBox: HTMLTableElement, window: Window) {
@@ -286,7 +286,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     let addressInnerSpan = document.createElement("span");
     //addressSpan.classList.add("address-span-hello");
     addressInnerSpan.style.borderBottom = '1px dotted black';
-    addressInnerSpan.classList.add("address-inner-span")
+    addressInnerSpan.classList.add("address-inner-span");
     addressInnerSpan.style.cursor = 'pointer';
     addressInnerSpan.innerHTML = spanInnerHTML;
 
