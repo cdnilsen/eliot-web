@@ -420,3 +420,9 @@ ul.normal li {
 .results-column {
     min-height: 100px;
 }
+
+#verse-box-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
