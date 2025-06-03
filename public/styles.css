@@ -267,7 +267,6 @@ button {
     padding: 5px;
     z-index: 9999;
     width: fit-content;
-    display: none;
 }
 
 .display-box td, .display-box th {

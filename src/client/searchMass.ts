@@ -298,7 +298,9 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
         //displayBox.style.display = "none";
         //mouseoverAddressSpan(addressInnerSpan, displayBox, window);
     });
+    
 
+    //fix this so it doesn't fire if you're looking at something else
     addressSpan.addEventListener("mouseleave", () => {
         addressInnerSpan.style.fontWeight = "normal";
         addressInnerSpan.style.color = "";
