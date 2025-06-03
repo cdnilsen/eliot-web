@@ -409,3 +409,14 @@ ul.normal li {
     text-align: left;
     padding-bottom: 5px;
 }
+
+#results-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding-right: 100px;
+}
+
+.results-column {
+    min-height: 100px;
+}

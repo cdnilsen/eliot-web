@@ -532,7 +532,6 @@ def getMassWordsTuples(object):
 
 
         allWordsMassTuples.append(tuple)
-    print(allWordsMassTuples[50])
     return allWordsMassTuples
 
 

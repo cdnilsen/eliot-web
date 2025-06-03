@@ -263,6 +263,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
 
     let addressSpan = document.createElement("span");
     let addressInnerSpan = document.createElement("span");
+    addressSpan.classList.add("address-span-hello");
     addressInnerSpan.style.borderBottom= '1px dotted black';
     addressInnerSpan.style.cursor = 'pointer';
     addressInnerSpan.innerHTML = spanInnerHTML;
@@ -738,12 +739,14 @@ async function getResultObjectStrict(result: WordMassResult) {
 }
 
 async function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
-    let resultsContainer = document.getElementById("results-container") as HTMLDivElement;
+    let citationContainer = document.getElementById("citation-column") as HTMLDivElement;
+    let verseBoxContainer = document.getElementById("verse-box-column") as HTMLDivElement;
     let headlineContainer = document.getElementById("headline-container") as HTMLDivElement;
     headlineContainer.style.textAlign = 'center';
 
     // Clear previous results
-    resultsContainer.innerHTML = ''; 
+    citationContainer.innerHTML = ''; 
+    verseBoxContainer.innerHTML = '';
     headlineContainer.innerHTML = '';
 
     // Create all WordObjects first
@@ -838,7 +841,7 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
 
     // Display results in sorted order
     allObjects.forEach(obj => {
-        resultsContainer.appendChild(obj.wordObj.parentDiv);
+        citationContainer.appendChild(obj.wordObj.parentDiv);
     });
 }
 
