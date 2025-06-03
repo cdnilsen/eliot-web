@@ -249,7 +249,7 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     }
     spanInnerHTML += address;
     if (totalCount > 1) {
-        spanInnerHTML += " (" + totalCount + "nnnn)";
+        spanInnerHTML += " (" + totalCount + ")";
     }
 
     if (notAllCountsSame) {
@@ -304,7 +304,7 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
         totalCount += addressToCountDict[Object.keys(addressToCountDict)[i]];
     }
 
-    bookSpan.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<i>" + bookName + "</i> (" + totalCount + "): ";
+    bookSpan.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<i>" + bookName + "</i> (" + totalCount + "zzzzzz): ";
     bookDiv.appendChild(bookSpan);
 
     let thisBookVerseDisplaySuperDict: {[key: string]: VerseDisplayDict} = {};
