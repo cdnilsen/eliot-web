@@ -185,6 +185,9 @@ def cleanWord(word):
         "ᴅ": "d"
     }
 
+    word = word.replace("ṣ", "s")
+    word = word.replace("ṡ", "s")
+
     if (word.startswith("OO") and word.upper() != word):
         word = "8" + word[2:]
 
