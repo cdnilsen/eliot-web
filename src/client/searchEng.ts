@@ -126,7 +126,14 @@ function cleanWord(word: string) {
 function processTextInBox(text: string, headword: string, keyNum: number): string {
     //if (!text) return '';
     if (keyNum % 4 != 0) {
-        return text.replaceAll("8", "ꝏ̄").replaceAll("$", " ");
+        text = text.replaceAll("8", "ꝏ̄").replaceAll("$", " ");
+        text = text.replaceAll("{{", "<b>");
+        text = text.replaceAll("}}", "</b>");
+
+        text = text.replaceAll("{", "<i>");
+        text = text.replaceAll("}", "</i>");
+        
+        return text;
     } else if (keyNum == 4) {
         const splitText = text.split(' ');
         let finalString = "";
