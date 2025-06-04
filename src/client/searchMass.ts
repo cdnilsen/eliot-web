@@ -656,6 +656,7 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     
     return table;
 }
+
 async function grabMatchingVerses(addresses: string[]) {
     // Remove the number conversion - just pass the strings directly
     try {
