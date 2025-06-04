@@ -494,11 +494,12 @@ function getColumnWidths(editions: Edition[], state: EditionState): EditionColum
     if (editions.includes("kjv")) {
         rightHandSideEditions.push("kjv");
     }
-
+    /*
     if (editions.includes("grebrew")) {
         rightHandSideEditions.push("grebrew");
     }
-
+    */
+   
     let rightHandSideWidth = 45 / rightHandSideEditions.length;
     let leftHandSideWidth = 45 / leftHandSideEditions.length;
 
