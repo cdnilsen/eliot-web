@@ -202,15 +202,14 @@ function getResultDiv(result: WordKJVResult): HTMLDivElement {
 }
 
 async function displayAllResults(results: WordKJVResult[], sortAlphabetically: boolean) {
-    console.log("Here are the results on line 140...")
-    console.log(results);
-
-    let resultsContainer = document.getElementById("results-container") as HTMLDivElement;
+    let citationContainer = document.getElementById("citation-column") as HTMLDivElement;
+    let verseBoxContainer = document.getElementById("verse-box-column") as HTMLDivElement;
     let headlineContainer = document.getElementById("headline-container") as HTMLDivElement;
     headlineContainer.style.textAlign = 'center';
 
     // Clear previous results
-    resultsContainer.innerHTML = ''; 
+    citationContainer.innerHTML = ''; 
+    verseBoxContainer.innerHTML = '';
     headlineContainer.innerHTML = '';
 
     // Sort results based on user preference
@@ -233,8 +232,7 @@ async function displayAllResults(results: WordKJVResult[], sortAlphabetically: b
     // Process each result
     for (const result of results) {
         const resultObject = await getResultObjectStrict(result);
-        resultsContainer.appendChild(resultObject.parentDiv);
-
+        citationContainer.appendChild(resultObject.parentDiv);
     }
 }
 
