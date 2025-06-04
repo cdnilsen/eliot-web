@@ -423,10 +423,17 @@ ul.normal li {
 }
 /* Override for tables specifically in the verse-box-column */
 #verse-box-column .display-box {
-    position: static;
+    position: sticky;
+    top: 20px; /* Distance from top when it becomes sticky */
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    margin: 10px 0;
+    background-color: #fff;
+    border: 1px solid #bbb;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 5px;
+    z-index: 100; /* Lower than tooltips but above normal content */
 }
 
 #verse-box-column .display-box table {

@@ -140,6 +140,9 @@ def compareOtherAuthors(allObjects, thisAuthor, authors):
         if word not in nonUniqueObject["not-unique-no-diacritics"]:
             thisAuthorObject["unique-no-diacritics"].append(word)
 
+    thisAuthorObject["unique-diacritics"].sort()
+    thisAuthorObject["unique-no-diacritics"].sort()
+
     return thisAuthorObject
 
 
