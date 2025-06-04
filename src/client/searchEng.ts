@@ -270,13 +270,17 @@ type WordObject = {
 }
 
 type AddressSpanObject = {
-    span: HTMLSpanElement;
+    outerSpan: HTMLSpanElement;
+    innerSpan: HTMLSpanElement;
     table: HTMLTableElement;
     count: number;
 }
 
 function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: boolean, bookName: string): HTMLTableElement {
     let dictKeys = Object.keys(rawDict) as (keyof VerseDisplayDict)[];
+
+    console.log("HERE ARE DICTKEYS")
+    console.log(dictKeys);
     let newDict: StringToStringDict = {};
     
     // Populate newDict with verse texts and calculate content lengths
@@ -319,29 +323,18 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
         editionNumToTitleHTML['5'] = "<b><u>Mayhew</b></u>"
     }
 
-
-    const validKeys = Object.keys(newDict).filter(key => 
-        newDict[key]?.toString().trim() !== '' && 
-        editionNumToTitleHTML[key]
-    );
+    const desiredOrder = ['7', '2', '3', '5', '4', '8'];
+    const validKeys = Object.keys(newDict)
+        .filter(key => newDict[key]?.toString().trim() !== '' && editionNumToTitleHTML[key])
+        .sort((a, b) => desiredOrder.indexOf(a) - desiredOrder.indexOf(b));
 
     // Calculate appropriate column widths
     validKeys.forEach(key => {
-        const baseWidth = 8; // pixels per character
-        const padding = 24;  // extra padding
-        let width = Math.max(
-            150, // minimum width
-            maxLengths[key] * baseWidth + padding
-        );
-        
         let th = document.createElement('th');
-        th.style.width = `${width}px`;
         th.innerHTML = editionNumToTitleHTML[key];
         headerRow.appendChild(th);
         
         let td = document.createElement('td');
-        td.style.width = `${width}px`;
-        td.style.maxWidth = `${width}px`;
         td.innerHTML = processTextInBox(newDict[key], headword, (parseInt(key)));
         verseRow.appendChild(td);
     });
@@ -354,8 +347,36 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     return table;
 }
 
-function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string, bookName: string, textDict: VerseDisplayDict, headword: string): AddressSpanObject {
+function clickOnCiteSpan(object: AddressSpanObject) {
+    let innerAddressSpans = document.getElementsByClassName('address-inner-span') as HTMLCollectionOf<HTMLSpanElement>;
+    for (let i=0; i < innerAddressSpans.length; i++) {
+        let thisSpan = innerAddressSpans[i];
+        thisSpan.style.fontWeight = "normal";
+        thisSpan.style.color = "";
+        thisSpan.style.borderBottom = "1px dotted black";
+    }
 
+    let outerAddressSpans = document.getElementsByClassName('address-outer-span') as HTMLCollectionOf<HTMLSpanElement>
+    for (let i=0; i < outerAddressSpans.length; i++) {
+        let thisSpan = outerAddressSpans[i];
+        thisSpan.classList.remove('active');
+    }
+
+    let outerSpan = object.innerSpan;
+    outerSpan.classList.add("active");
+    let triggeringSpan = object.innerSpan;
+    triggeringSpan.style.fontWeight = "bold";
+    triggeringSpan.style.borderBottom = "2px dotted blue";
+    triggeringSpan.style.color = "blue";
+
+    let verseBoxContainer = document.getElementById("verse-box-column") as HTMLDivElement;
+    verseBoxContainer.innerHTML = "";
+    //verseBoxContainer.innerHTML = 'HELLO';
+
+    verseBoxContainer.appendChild(object.table);
+}
+
+function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string, bookName: string, textDict: VerseDisplayDict, headword: string): AddressSpanObject {
     console.log(countDict);
     let rawKeys = Object.keys(countDict);
     console.log("Here's the raw key list in getAddressSpan")
@@ -442,10 +463,11 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
     }
 
     let addressSpan = document.createElement("span");
-    
-
+    addressSpan.classList.add("address-outer-span");
     let addressInnerSpan = document.createElement("span");
-    addressInnerSpan.style.borderBottom= '1px dotted black';
+    //addressSpan.classList.add("address-span-hello");
+    addressInnerSpan.style.borderBottom = '1px dotted black';
+    addressInnerSpan.classList.add("address-inner-span");
     addressInnerSpan.style.cursor = 'pointer';
     addressInnerSpan.innerHTML = spanInnerHTML;
 
@@ -453,54 +475,35 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
  
     addressSpan.addEventListener("mouseover", (event) => {
         addressInnerSpan.style.fontWeight = "bold";
-        addressInnerSpan.style.color = "blue";
         addressInnerSpan.style.borderBottom = '2px dotted black';
-        
-        // Get the position relative to the viewport
-        const rect = addressInnerSpan.getBoundingClientRect();
-        
-        // Position the tooltip relative to the viewport
-        displayBox.style.display = "block";
-        
-        // Calculate position to ensure tooltip stays on screen
-        const viewportWidth = window.innerWidth;
-        const tooltipWidth = displayBox.offsetWidth;
-        
-        // Start with default position to the right
-        let left = rect.right + 10;
-        
-        // If tooltip would go off right edge, position to the left instead
-        if (left + tooltipWidth > viewportWidth - 20) {
-            left = rect.left - tooltipWidth - 10;
-        }
-        
-        // If tooltip would go off left edge, position below instead
-        if (left < 20) {
-            left = Math.max(20, rect.left);
-        }
-        
-        displayBox.style.left = `${left}px`;
-        displayBox.style.top = `${rect.top}px`;
+        //displayBox.style.display = "none";
+        //mouseoverAddressSpan(addressInnerSpan, displayBox, window);
     });
+    
 
+    //fix this so it doesn't fire if you're looking at something else
     addressSpan.addEventListener("mouseleave", () => {
-        addressInnerSpan.style.fontWeight = "normal";
-        addressInnerSpan.style.color = "";
-        addressInnerSpan.style.borderBottom= '1px dotted black';
-        displayBox.style.display = "none";
+        if (!addressSpan.classList.contains("active")) {
+            addressInnerSpan.style.fontWeight = "normal";
+            addressInnerSpan.style.color = "";
+            addressInnerSpan.style.borderBottom = '1px dotted black';
+        }
+        
     });
-
-    
-    addressSpan.appendChild(addressInnerSpan);
-    addressSpan.appendChild(displayBox);
-    
-
 
     let object: AddressSpanObject = {
-        span: addressSpan,
+        outerSpan: addressSpan,
+        innerSpan: addressInnerSpan,
         table: displayBox,
         count: totalCount
     }
+
+    object.outerSpan.addEventListener("click", () => {
+        clickOnCiteSpan(object);
+    });
+
+    object.outerSpan.appendChild(object.innerSpan);
+    //addressSpan.appendChild(displayBox);
 
     return object;
 }
@@ -534,7 +537,7 @@ function getOneBookDiv(bookName: string, matchingVerseTexts: VerseDisplayDict[],
 
         // Create a container for the address span and comma
         let container = document.createElement('span');
-        container.appendChild(addressSpanObject.span);
+        container.appendChild(addressSpanObject.outerSpan);
         
         // Add comma after the span (not inside it) if not the last item
         if (i < genericIDs.length - 1) {

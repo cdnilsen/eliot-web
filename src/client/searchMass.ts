@@ -317,7 +317,6 @@ function getAddressSpan(countDict: { [key: string]: number }, rawAddress: string
             addressInnerSpan.style.color = "";
             addressInnerSpan.style.borderBottom = '1px dotted black';
         }
-        
     });
 
     let object: AddressSpanObject = {
