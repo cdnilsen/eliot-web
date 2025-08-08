@@ -676,8 +676,12 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         const noteId = noteResult.rows[0].note_id;
         console.log('Created note with ID:', noteId, 'Type:', typeof noteId);
         
+        // Convert to integer to be absolutely sure
+        const noteIdInt = parseInt(noteId);
+        console.log('Note ID as integer:', noteIdInt);
+        
         // Verify the note exists in the current transaction
-        const verifyNote = await client.query('SELECT note_id FROM notes WHERE note_id = $1', [noteId]);
+        const verifyNote = await client.query('SELECT note_id FROM notes WHERE note_id = $1', [noteIdInt]);
         console.log('Note verification within transaction:', verifyNote.rows);
         
         const cardIds: number[] = [];
@@ -687,16 +691,26 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
             
             for (let i = 0; i < card_configs.length; i++) {
                 const config = card_configs[i];
-                console.log(`Inserting card ${i + 1} for note_id:`, noteId);
+                console.log(`Inserting card ${i + 1} for note_id:`, noteIdInt);
                 console.log('Card config:', JSON.stringify(config, null, 2));
                 
+                // Let's try a simpler insert first to isolate the issue
                 try {
+                    console.log('About to insert card with values:', [
+                        noteIdInt,
+                        deck,
+                        config.card_format,
+                        config.field_names,
+                        config.field_values,
+                        config.field_processing
+                    ]);
+                    
                     const cardResult = await client.query(
-                        `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, created) 
-                         VALUES ($1, $2, $3, $4, $5, $6, NOW()) 
+                        `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing) 
+                         VALUES ($1, $2, $3, $4, $5, $6) 
                          RETURNING card_id`,
                         [
-                            noteId,
+                            noteIdInt,  // Use the integer version
                             deck,
                             config.card_format || null,
                             config.field_names || null,
@@ -709,7 +723,12 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                     console.log(`Successfully inserted card ${cardId}`);
                 } catch (cardError) {
                     console.error(`Error inserting card ${i + 1}:`, cardError);
-                    throw cardError; // Re-throw to trigger rollback
+                    console.error('Card error details:', {
+                        message: cardError.message,
+                        code: cardError.code,
+                        constraint: cardError.constraint
+                    });
+                    throw cardError;
                 }
             }
             
@@ -731,7 +750,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         
         res.json({ 
             status: 'success', 
-            note_id: noteId,
+            note_id: noteIdInt,
             card_ids: cardIds,
             message: `Note and ${cardIds.length} cards added successfully` 
         });
@@ -739,6 +758,13 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('Transaction rolled back due to error:', err);
+        console.error('Full error object:', {
+            message: err.message,
+            code: err.code,
+            constraint: err.constraint,
+            table: err.table,
+            column: err.column
+        });
         res.status(500).json({ 
             status: 'error', 
             error: 'Error adding note and cards', 
