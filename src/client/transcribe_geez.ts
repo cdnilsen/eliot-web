@@ -364,10 +364,14 @@ function renderGeez(token: ParsedToken): string {
     return internalToOutput[internal] || "";
 }
 
+type S2SDict = {
+    [key: string]: string
+}
+
 function preprocessLatin(str: string): string {
     str = str.replaceAll("ṣ́", "ḍ").replaceAll("ś", "š").replaceAll("x", "ḫ")
     str = str.toLowerCase()
-    const alts = {
+    const alts: S2SDict = {
         "ḳ": "q",
         "š": "ś",
         "'": "ʾ",
