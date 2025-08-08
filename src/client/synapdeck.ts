@@ -23,7 +23,12 @@ fileInput.addEventListener('change', (event) => {
                 console.log('File content:', fileContent);
                 // Example: split into lines, parse data, etc.
                 const lines = fileContent.split('\n');
-                console.log('Lines:', lines);
+                for (let i=0; i < lines.length; i ++) {
+                    let line = lines[i];
+                    let strippedLine = lines[i].trim();
+                    console.log(line);
+                    console.log(strippedLine)
+                }
             };
 
             reader.readAsText(file); // Read the file as text
