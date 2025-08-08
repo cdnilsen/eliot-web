@@ -12,13 +12,13 @@
     <div class="container">
         <h1>Welcome to Synapdeck!</h1>
         <div class="button-row">
-            <button type="button" id="upload_cards">Upload Card Data</button>
+            <button type="button" id="upload_cards" class="active">Upload Card Data</button>
             <button type="button" id="browse_cards">Browse Cards</button>
             <button type="button" id="review_cards">Do Reviews</button>
             <button type="button" id="check_work">Check Your Work</button>
         </div>
 
-        <div id="mainDiv">
+        <div id="upload_mainDiv" class="tab-content active">
             <label for="dropdownMenu">Choose a deck:</label>
             <select id="dropdownMenu" name="dropdownMenu">
                 <option value="" disabled selected>Select your option</option>
@@ -38,6 +38,22 @@
             </div>
             
             <div id="output"></div>
+        </div>
+
+        <!-- Add placeholder divs for other tabs -->
+        <div id="browse_mainDiv" class="tab-content">
+            <h2>Browse Cards</h2>
+            <p>Browse cards content will go here...</p>
+        </div>
+
+        <div id="review_mainDiv" class="tab-content">
+            <h2>Do Reviews</h2>
+            <p>Review content will go here...</p>
+        </div>
+
+        <div id="check_mainDiv" class="tab-content">
+            <h2>Check Your Work</h2>
+            <p>Check work content will go here...</p>
         </div>
     </div>
     
