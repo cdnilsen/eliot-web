@@ -664,25 +664,38 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         await client.query('BEGIN');
         console.log('Transaction started');
         
+        // Format arrays properly for PostgreSQL
+        const fieldNamesArray = Array.isArray(field_names) ? field_names : [];
+        const fieldValuesArray = Array.isArray(field_values) ? field_values : [];
+        
+        console.log('Formatted arrays:', { fieldNamesArray, fieldValuesArray });
+        
         // Insert the note and get its ID
-        console.log('Inserting note with:', [deck, note_type, field_names, field_values]);
+        console.log('About to insert note with:', [deck, note_type, fieldNamesArray, fieldValuesArray]);
+        
         const noteResult = await client.query(
             `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
              VALUES ($1, $2, $3, $4, NOW()) 
              RETURNING note_id`,
-            [deck, note_type, field_names, field_values]
+            [deck, note_type, fieldNamesArray, fieldValuesArray]
         );
+        
+        console.log('Note insert result:', noteResult.rows);
+        
+        if (noteResult.rows.length === 0) {
+            throw new Error('Note insert failed - no rows returned');
+        }
         
         const noteId = noteResult.rows[0].note_id;
         console.log('Created note with ID:', noteId, 'Type:', typeof noteId);
         
-        // Convert to integer to be absolutely sure
-        const noteIdInt = parseInt(noteId);
-        console.log('Note ID as integer:', noteIdInt);
-        
         // Verify the note exists in the current transaction
-        const verifyNote = await client.query('SELECT note_id FROM notes WHERE note_id = $1', [noteIdInt]);
+        const verifyNote = await client.query('SELECT note_id FROM notes WHERE note_id = $1', [noteId]);
         console.log('Note verification within transaction:', verifyNote.rows);
+        
+        if (verifyNote.rows.length === 0) {
+            throw new Error(`Note with ID ${noteId} not found after insert`);
+        }
         
         const cardIds: number[] = [];
         
@@ -691,31 +704,34 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
             
             for (let i = 0; i < card_configs.length; i++) {
                 const config = card_configs[i];
-                console.log(`Inserting card ${i + 1} for note_id:`, noteIdInt);
-                console.log('Card config:', JSON.stringify(config, null, 2));
+                console.log(`Inserting card ${i + 1} for note_id:`, noteId);
                 
-                // Let's try a simpler insert first to isolate the issue
+                // Format card arrays properly
+                const cardFieldNames = Array.isArray(config.field_names) ? config.field_names : [];
+                const cardFieldValues = Array.isArray(config.field_values) ? config.field_values : [];
+                const cardFieldProcessing = Array.isArray(config.field_processing) ? config.field_processing : [];
+                
+                console.log('Card data:', {
+                    noteId,
+                    deck,
+                    card_format: config.card_format,
+                    cardFieldNames,
+                    cardFieldValues,
+                    cardFieldProcessing
+                });
+                
                 try {
-                    console.log('About to insert card with values:', [
-                        noteIdInt,
-                        deck,
-                        config.card_format,
-                        config.field_names,
-                        config.field_values,
-                        config.field_processing
-                    ]);
-                    
                     const cardResult = await client.query(
                         `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing) 
                          VALUES ($1, $2, $3, $4, $5, $6) 
                          RETURNING card_id`,
                         [
-                            noteIdInt,  // Use the integer version
+                            noteId,
                             deck,
                             config.card_format || null,
-                            config.field_names || null,
-                            config.field_values || null,
-                            config.field_processing || null
+                            cardFieldNames,
+                            cardFieldValues,
+                            cardFieldProcessing
                         ]
                     );
                     const cardId = cardResult.rows[0].card_id;
@@ -723,11 +739,6 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                     console.log(`Successfully inserted card ${cardId}`);
                 } catch (cardError) {
                     console.error(`Error inserting card ${i + 1}:`, cardError);
-                    console.error('Card error details:', {
-                        message: cardError.message,
-                        code: cardError.code,
-                        constraint: cardError.constraint
-                    });
                     throw cardError;
                 }
             }
@@ -736,10 +747,12 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
             console.log('Updating peer relationships for cards:', cardIds);
             for (let i = 0; i < cardIds.length; i++) {
                 const peers = cardIds.filter((_, index) => index !== i);
-                await client.query(
-                    `UPDATE cards SET peers = $1 WHERE card_id = $2`,
-                    [`{${peers.join(',')}}`, cardIds[i]]
-                );
+                if (peers.length > 0) {
+                    await client.query(
+                        `UPDATE cards SET peers = $1 WHERE card_id = $2`,
+                        [peers, cardIds[i]]  // Let pg handle array formatting
+                    );
+                }
             }
         } else {
             console.log('No card configs provided');
@@ -750,7 +763,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         
         res.json({ 
             status: 'success', 
-            note_id: noteIdInt,
+            note_id: noteId,
             card_ids: cardIds,
             message: `Note and ${cardIds.length} cards added successfully` 
         });
@@ -758,13 +771,6 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('Transaction rolled back due to error:', err);
-        console.error('Full error object:', {
-            message: err.message,
-            code: err.code,
-            constraint: err.constraint,
-            table: err.table,
-            column: err.column
-        });
         res.status(500).json({ 
             status: 'error', 
             error: 'Error adding note and cards', 
