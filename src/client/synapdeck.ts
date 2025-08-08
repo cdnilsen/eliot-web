@@ -1,4 +1,5 @@
 import {transliterateGeez} from './transcribe_geez.js';
+import {Tracker} from './synapdeck_lib.js';
 
 let inputBox = document.getElementById('userInput') as HTMLInputElement;
 let outputDiv = document.getElementById("output") as HTMLDivElement;
