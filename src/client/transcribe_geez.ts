@@ -366,6 +366,5 @@ function renderGeez(token: ParsedToken): string {
 
 export function transliterateGeez(str: string): string {
     const tokens = maximumMunchTokenizeGeez(str, geezTrie);
-    console.log(tokens);
     return tokens.map(renderGeez).join("");
 }
