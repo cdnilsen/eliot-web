@@ -1,4 +1,4 @@
-import {transliterateGeez} from './transcribe_geez';
+import {transliterateGeez} from './transcribe_geez.js';
 
 let inputBox = document.getElementById('userInput') as HTMLInputElement;
 let outputDiv = document.getElementById("output") as HTMLDivElement;
