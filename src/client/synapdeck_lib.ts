@@ -27,3 +27,10 @@ export type Tracker = {
     bury_tomorrow: boolean,
     is_suspended: boolean
 }
+
+export type Pretracker = {
+    deck: string,
+    note_type: string,
+    field_values: string[],
+    field_processing: string[]
+}

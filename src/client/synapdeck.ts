@@ -1,7 +1,6 @@
 import {transliterateGeez} from './transcribe_geez.js';
-import {Tracker} from './synapdeck_lib.js';
+import {Tracker, Pretracker} from './synapdeck_lib.js';
 let outputDiv = document.getElementById("output") as HTMLDivElement;
-
 
 /*
 let inputBox = document.getElementById('userInput') as HTMLInputElement;
@@ -45,13 +44,40 @@ fileInput.addEventListener('change', (event) => {
     }
 });
 
+
+function cleanFieldDatum(datum: string, process: string) {
+    switch (process) {
+        case "Ge'ez":
+            return transliterateGeez(datum);
+        default:
+            return datum;
+    }
+}
+
+// The program creates a 'pretracker' which gets handed off to the backend.
+function createPretracker(deck: string, note_type: string, rawFieldData: string[], processingList: string[]) {
+    let cleanedFieldData: string[] = []
+    for (let i=0; i < rawFieldData.length; i++) {
+        let thisDatum = rawFieldData[i];
+        let thisProcess = processingList[i];
+        let cleanedDatum = cleanFieldDatum(thisDatum, thisProcess);
+        cleanedFieldData.push(cleanedDatum);
+    }
+    let pretracker: Pretracker = {
+        deck: deck,
+        note_type: note_type,
+        field_values: cleanedFieldData,
+        field_processing: processingList
+    }
+    return pretracker;
+}
+
 submitButton.addEventListener('click', () => {
     // Example: perform submit action, e.g., process uploaded file or user input
     //console.log('Submit button clicked');
     // Hide buttons after submit
 
     let currentNoteType = "";
-    let currentProcessing = "";
     let currentProcessList: string[] = [];
     let currentDataList: string[] = [];
     const lines = currentFileContent.split('\n');
@@ -71,23 +97,26 @@ submitButton.addEventListener('click', () => {
                     console.log(thisProcess.length);
                     currentProcessList.push(thisProcessList[i].trim())
                 }
-            } else if (line.length > 0) {
+            } else if (line.length > 0 && line.includes("/")) {
                 let thisNoteFieldData = line.split("/");
-                currentDataList = [];
+                let thisNoteDataList: string[] = [];
+                let thisNoteProcessList: string[] = currentProcessList;
                 for (let i=0; i < thisNoteFieldData.length; i++) {
                     let thisDatum = thisNoteFieldData[i].trim();
-                    currentDataList.push(thisDatum);
+                    thisNoteDataList.push(thisDatum);
                 }
-                if (currentProcessList.length != currentDataList.length) {
-                    const maxLength = Math.max(currentProcessList.length, currentDataList.length);
-                    while (currentProcessList.length < maxLength) {
-                        currentProcessList.push("");
+                if (thisNoteProcessList.length != thisNoteDataList.length) {
+                    const maxLength = Math.max(thisNoteProcessList.length, thisNoteDataList.length);
+                    while (thisNoteProcessList.length < maxLength) {
+                        thisNoteProcessList.push("");
                     }
-                    while (currentDataList.length < maxLength) {
-                        currentDataList.push("");
+                    while (thisNoteDataList.length < maxLength) {
+                        thisNoteDataList.push("");
                     }
                 }
-                console.log(line);
+                let thisNotePretracker = createPretracker(currentDeck, currentNoteType, thisNoteDataList, thisNoteProcessList);
+
+                console.log(thisNotePretracker);
             }
         }
     submitButton.style.visibility = "hidden";
