@@ -67,6 +67,7 @@ submitButton.addEventListener('click', () => {
                 let thisProcessList = line.split("/");
                 for (let i=0; i < thisProcessList.length; i++) {
                     let thisProcess = thisProcessList[i].trim();
+                    console.log(thisProcess);
                     console.log(thisProcess.length);
                     currentProcessList.push(thisProcessList[i].trim())
                 }
