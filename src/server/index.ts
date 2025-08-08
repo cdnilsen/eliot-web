@@ -658,58 +658,76 @@ app.get('/search_kjv', wrapAsync(async (req, res) => {
 app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
     const { deck, note_type, field_names, field_values, field_processing, card_configs } = req.body;
     
-    // Start a transaction
+    console.log('Received request:', { deck, note_type, field_names, field_values, card_configs });
+    
     try {
         await client.query('BEGIN');
+        console.log('Transaction started');
         
         // Insert the note and get its ID
+        console.log('Inserting note with:', [deck, note_type, field_names, field_values]);
         const noteResult = await client.query(
             `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
              VALUES ($1, $2, $3, $4, NOW()) 
              RETURNING note_id`,
-            [
-                deck,
-                note_type,
-                field_names,    // Array of field names
-                field_values    // Array of field values
-            ]
+            [deck, note_type, field_names, field_values]
         );
         
         const noteId = noteResult.rows[0].note_id;
+        console.log('Created note with ID:', noteId, 'Type:', typeof noteId);
         
-        // Insert all cards and collect their IDs
+        // Verify the note exists in the current transaction
+        const verifyNote = await client.query('SELECT note_id FROM notes WHERE note_id = $1', [noteId]);
+        console.log('Note verification within transaction:', verifyNote.rows);
+        
         const cardIds: number[] = [];
         
         if (card_configs && card_configs.length > 0) {
-            for (const config of card_configs) {
-                const cardResult = await client.query(
-                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, created) 
-                     VALUES ($1, $2, $3, $4, $5, $6, NOW()) 
-                     RETURNING card_id`,
-                    [
-                        noteId,
-                        deck,
-                        config.card_format,
-                        config.field_names,
-                        config.field_values,
-                        config.field_processing
-                    ]
-                );
-                cardIds.push(cardResult.rows[0].card_id);
+            console.log('Processing', card_configs.length, 'card configs');
+            
+            for (let i = 0; i < card_configs.length; i++) {
+                const config = card_configs[i];
+                console.log(`Inserting card ${i + 1} for note_id:`, noteId);
+                console.log('Card config:', JSON.stringify(config, null, 2));
+                
+                try {
+                    const cardResult = await client.query(
+                        `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, created) 
+                         VALUES ($1, $2, $3, $4, $5, $6, NOW()) 
+                         RETURNING card_id`,
+                        [
+                            noteId,
+                            deck,
+                            config.card_format || null,
+                            config.field_names || null,
+                            config.field_values || null,
+                            config.field_processing || null
+                        ]
+                    );
+                    const cardId = cardResult.rows[0].card_id;
+                    cardIds.push(cardId);
+                    console.log(`Successfully inserted card ${cardId}`);
+                } catch (cardError) {
+                    console.error(`Error inserting card ${i + 1}:`, cardError);
+                    throw cardError; // Re-throw to trigger rollback
+                }
             }
             
-            // Update each card with peer relationships (all other cards from the same note)
+            // Update peers
+            console.log('Updating peer relationships for cards:', cardIds);
             for (let i = 0; i < cardIds.length; i++) {
-                const peers = cardIds.filter((_, index) => index !== i); // All other cards
+                const peers = cardIds.filter((_, index) => index !== i);
                 await client.query(
                     `UPDATE cards SET peers = $1 WHERE card_id = $2`,
                     [`{${peers.join(',')}}`, cardIds[i]]
                 );
             }
+        } else {
+            console.log('No card configs provided');
         }
         
-        // Commit the transaction
         await client.query('COMMIT');
+        console.log('Transaction committed successfully');
         
         res.json({ 
             status: 'success', 
@@ -719,9 +737,8 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         });
         
     } catch (err) {
-        // Rollback on error
         await client.query('ROLLBACK');
-        console.error('Error adding synapdeck note:', err);
+        console.error('Transaction rolled back due to error:', err);
         res.status(500).json({ 
             status: 'error', 
             error: 'Error adding note and cards', 

@@ -59,15 +59,24 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
     // Generate card configurations based on note type
     let card_configs: any[] = [];
     
-    if (note_type === "Two-Way Card") {
+    if (note_type === "Two-Way") {
         card_configs = TwoWayCard(deck, field_values, field_processing);
-    } else if (note_type === "One-Way Card") {
+    } else if (note_type === "One-Way") {
         card_configs = OneWayCard(deck, field_values, field_processing);
     }
-    // Add more note types as needed
     
-    // Extract field names (you might need to adjust this based on your data structure)
     const field_names = field_processing.map((_, index) => `field_${index + 1}`);
+    
+    const payload = {
+        deck: deck,
+        note_type: note_type,
+        field_names: field_names,
+        field_values: field_values,
+        field_processing: field_processing,
+        card_configs: card_configs
+    };
+    
+    console.log('Sending payload:', JSON.stringify(payload, null, 2));
     
     try {
         const response = await fetch('/add_synapdeck_note', {
@@ -75,17 +84,11 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                deck: deck,
-                note_type: note_type,
-                field_names: field_names,
-                field_values: field_values,
-                field_processing: field_processing,
-                card_configs: card_configs  // Include the card configurations
-            })
+            body: JSON.stringify(payload)
         });
         
         const result = await response.json();
+        console.log('Server response:', result);
         
         if (result.status === 'success') {
             console.log(`Note ${result.note_id} with ${result.card_ids.length} cards created successfully`);
