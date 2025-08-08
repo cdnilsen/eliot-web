@@ -658,67 +658,67 @@ app.get('/search_kjv', wrapAsync(async (req, res) => {
 app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
     const { deck, note_type, field_names, field_values, field_processing, card_configs } = req.body;
     
-    console.log('Received request:', { deck, note_type, field_names, field_values, card_configs });
+    console.log('Raw request data:', JSON.stringify(req.body, null, 2));
     
     try {
         await client.query('BEGIN');
-        console.log('Transaction started');
         
-        // Format arrays properly for PostgreSQL
+        // Format the data exactly like the working SQL
         const fieldNamesArray = Array.isArray(field_names) ? field_names : [];
         const fieldValuesArray = Array.isArray(field_values) ? field_values : [];
         
-        console.log('Formatted arrays:', { fieldNamesArray, fieldValuesArray });
+        console.log('Formatted for PostgreSQL:', {
+            deck,
+            note_type, 
+            fieldNamesArray,
+            fieldValuesArray
+        });
         
-        // Insert the note and get its ID
-        console.log('About to insert note with:', [deck, note_type, fieldNamesArray, fieldValuesArray]);
+        let noteResult;
+        try {
+            // Try the note insert with detailed logging
+            console.log('Executing note insert...');
+            noteResult = await client.query(
+                `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
+                 VALUES ($1, $2, $3, $4, NOW()) 
+                 RETURNING note_id`,
+                [deck, note_type, fieldNamesArray, fieldValuesArray]
+            );
+            console.log('Note insert succeeded:', noteResult.rows);
+        } catch (noteError) {
+            console.error('Note insert failed:', noteError);
+            console.error('Note error details:', {
+                message: noteError.message,
+                code: noteError.code,
+                constraint: noteError.constraint,
+                detail: noteError.detail
+            });
+            throw new Error(`Note insertion failed: ${noteError.message}`);
+        }
         
-        const noteResult = await client.query(
-            `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
-             VALUES ($1, $2, $3, $4, NOW()) 
-             RETURNING note_id`,
-            [deck, note_type, fieldNamesArray, fieldValuesArray]
-        );
-        
-        console.log('Note insert result:', noteResult.rows);
-        
-        if (noteResult.rows.length === 0) {
-            throw new Error('Note insert failed - no rows returned');
+        if (!noteResult.rows || noteResult.rows.length === 0) {
+            throw new Error('Note insert returned no rows');
         }
         
         const noteId = noteResult.rows[0].note_id;
-        console.log('Created note with ID:', noteId, 'Type:', typeof noteId);
+        console.log('Got note_id:', noteId);
         
-        // Verify the note exists in the current transaction
-        const verifyNote = await client.query('SELECT note_id FROM notes WHERE note_id = $1', [noteId]);
-        console.log('Note verification within transaction:', verifyNote.rows);
+        // Verify the note exists
+        const verifyResult = await client.query('SELECT note_id FROM notes WHERE note_id = $1', [noteId]);
+        console.log('Verification result:', verifyResult.rows);
         
-        if (verifyNote.rows.length === 0) {
-            throw new Error(`Note with ID ${noteId} not found after insert`);
+        if (verifyResult.rows.length === 0) {
+            throw new Error(`Note ${noteId} was not found after insert`);
         }
         
+        // Only proceed with cards if note was successful
         const cardIds: number[] = [];
         
         if (card_configs && card_configs.length > 0) {
-            console.log('Processing', card_configs.length, 'card configs');
+            console.log(`Proceeding with ${card_configs.length} cards for note_id ${noteId}`);
             
             for (let i = 0; i < card_configs.length; i++) {
                 const config = card_configs[i];
-                console.log(`Inserting card ${i + 1} for note_id:`, noteId);
-                
-                // Format card arrays properly
-                const cardFieldNames = Array.isArray(config.field_names) ? config.field_names : [];
-                const cardFieldValues = Array.isArray(config.field_values) ? config.field_values : [];
-                const cardFieldProcessing = Array.isArray(config.field_processing) ? config.field_processing : [];
-                
-                console.log('Card data:', {
-                    noteId,
-                    deck,
-                    card_format: config.card_format,
-                    cardFieldNames,
-                    cardFieldValues,
-                    cardFieldProcessing
-                });
                 
                 try {
                     const cardResult = await client.query(
@@ -729,51 +729,36 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                             noteId,
                             deck,
                             config.card_format || null,
-                            cardFieldNames,
-                            cardFieldValues,
-                            cardFieldProcessing
+                            config.field_names || null,
+                            config.field_values || null,
+                            config.field_processing || null
                         ]
                     );
-                    const cardId = cardResult.rows[0].card_id;
-                    cardIds.push(cardId);
-                    console.log(`Successfully inserted card ${cardId}`);
+                    cardIds.push(cardResult.rows[0].card_id);
+                    console.log(`Inserted card ${cardResult.rows[0].card_id}`);
                 } catch (cardError) {
-                    console.error(`Error inserting card ${i + 1}:`, cardError);
+                    console.error(`Card insert failed:`, cardError);
                     throw cardError;
                 }
             }
-            
-            // Update peers
-            console.log('Updating peer relationships for cards:', cardIds);
-            for (let i = 0; i < cardIds.length; i++) {
-                const peers = cardIds.filter((_, index) => index !== i);
-                if (peers.length > 0) {
-                    await client.query(
-                        `UPDATE cards SET peers = $1 WHERE card_id = $2`,
-                        [peers, cardIds[i]]  // Let pg handle array formatting
-                    );
-                }
-            }
-        } else {
-            console.log('No card configs provided');
         }
         
         await client.query('COMMIT');
-        console.log('Transaction committed successfully');
+        console.log('Transaction committed');
         
         res.json({ 
             status: 'success', 
             note_id: noteId,
             card_ids: cardIds,
-            message: `Note and ${cardIds.length} cards added successfully` 
+            message: `Success: note ${noteId} with ${cardIds.length} cards` 
         });
         
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('Transaction rolled back due to error:', err);
+        console.error('Full error:', err);
         res.status(500).json({ 
             status: 'error', 
-            error: 'Error adding note and cards', 
+            error: err.message,
             details: err instanceof Error ? err.message : 'Unknown error' 
         });
     }
