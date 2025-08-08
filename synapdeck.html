@@ -8,11 +8,13 @@
 <body>
     <div class="container">
         <h1>Welcome to Synapdeck!</h1>
-        
-        <div class="input-group">
-            <label for="uploadTextFile">Upload Text File:</label>
-            <input type="file" id="uploadTextFile" accept=".txt">
-        </div>
+        <label for="dropdownMenu">Choose an option:</label>
+        <select id="dropdownMenu" name="dropdownMenu">
+            <option value="" disabled selected>Select your option</option>
+            <option value="Ge'ez">Ge'ez</option>
+            <option value="Ancient Greek">Ancient Greek</option>
+            <option value="Russian">Russian</option>
+        </select>
         
         <div class="button-group">
             <button id="submitBtn" class="hidden">Submit</button>
