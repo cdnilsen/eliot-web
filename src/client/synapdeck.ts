@@ -11,10 +11,13 @@ if (inputBox) {
 }
 
 let fileInput = document.getElementById("uploadTextFile") as HTMLInputElement;
+let submitButton = document.getElementById("submitBtn") as HTMLButtonElement;
+let cancelButton = document.getElementById("cancel") as HTMLButtonElement;
 fileInput.addEventListener('change', (event) => {
         const file = (event.target as HTMLInputElement).files?.[0];
-
         if (file && file.type === 'text/plain') { // Check file type for safety
+            submitButton.style.visibility = "visible";
+            cancelButton.style.visibility = "visible";
             const reader = new FileReader();
 
             reader.onload = (e) => {
