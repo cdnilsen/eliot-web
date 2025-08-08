@@ -385,7 +385,7 @@ function preprocessLatin(str: string): string {
         "ē": "e"
     }
 
-    let allKeys = Object.keys(alts)
+    let allKeys = Object.keys(alts);
     for (let i=0; i < allKeys.length; i++) {
         str = str.replaceAll(allKeys[i], alts[allKeys[i]]);
     }
