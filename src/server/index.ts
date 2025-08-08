@@ -660,41 +660,26 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
     
     console.log('Raw request data:', JSON.stringify(req.body, null, 2));
     
+    // Get a dedicated client for this transaction
+    const transactionClient = await client.connect();
+    
     try {
-        await client.query('BEGIN');
+        await transactionClient.query('BEGIN');
+        console.log('Transaction started on dedicated connection');
         
-        // Format the data exactly like the working SQL
+        // Format the data
         const fieldNamesArray = Array.isArray(field_names) ? field_names : [];
         const fieldValuesArray = Array.isArray(field_values) ? field_values : [];
         
-        console.log('Formatted for PostgreSQL:', {
-            deck,
-            note_type, 
-            fieldNamesArray,
-            fieldValuesArray
-        });
+        console.log('Inserting note...');
+        const noteResult = await transactionClient.query(
+            `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
+             VALUES ($1, $2, $3, $4, NOW()) 
+             RETURNING note_id`,
+            [deck, note_type, fieldNamesArray, fieldValuesArray]
+        );
         
-        let noteResult;
-        try {
-            // Try the note insert with detailed logging
-            console.log('Executing note insert...');
-            noteResult = await client.query(
-                `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
-                 VALUES ($1, $2, $3, $4, NOW()) 
-                 RETURNING note_id`,
-                [deck, note_type, fieldNamesArray, fieldValuesArray]
-            );
-            console.log('Note insert succeeded:', noteResult.rows);
-        } catch (noteError) {
-            console.error('Note insert failed:', noteError);
-            console.error('Note error details:', {
-                message: noteError.message,
-                code: noteError.code,
-                constraint: noteError.constraint,
-                detail: noteError.detail
-            });
-            throw new Error(`Note insertion failed: ${noteError.message}`);
-        }
+        console.log('Note insert result:', noteResult.rows);
         
         if (!noteResult.rows || noteResult.rows.length === 0) {
             throw new Error('Note insert returned no rows');
@@ -703,15 +688,18 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         const noteId = noteResult.rows[0].note_id;
         console.log('Got note_id:', noteId);
         
-        // Verify the note exists
-        const verifyResult = await client.query('SELECT note_id FROM notes WHERE note_id = $1', [noteId]);
+        // Verify the note exists IN THE SAME TRANSACTION
+        const verifyResult = await transactionClient.query(
+            'SELECT note_id FROM notes WHERE note_id = $1', 
+            [noteId]
+        );
         console.log('Verification result:', verifyResult.rows);
         
         if (verifyResult.rows.length === 0) {
-            throw new Error(`Note ${noteId} was not found after insert`);
+            throw new Error(`Note ${noteId} was not found after insert in same transaction`);
         }
         
-        // Only proceed with cards if note was successful
+        // Proceed with cards using the same connection
         const cardIds: number[] = [];
         
         if (card_configs && card_configs.length > 0) {
@@ -720,31 +708,37 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
             for (let i = 0; i < card_configs.length; i++) {
                 const config = card_configs[i];
                 
-                try {
-                    const cardResult = await client.query(
-                        `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing) 
-                         VALUES ($1, $2, $3, $4, $5, $6) 
-                         RETURNING card_id`,
-                        [
-                            noteId,
-                            deck,
-                            config.card_format || null,
-                            config.field_names || null,
-                            config.field_values || null,
-                            config.field_processing || null
-                        ]
+                const cardResult = await transactionClient.query(
+                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing) 
+                     VALUES ($1, $2, $3, $4, $5, $6) 
+                     RETURNING card_id`,
+                    [
+                        noteId,
+                        deck,
+                        config.card_format || null,
+                        config.field_names || null,
+                        config.field_values || null,
+                        config.field_processing || null
+                    ]
+                );
+                cardIds.push(cardResult.rows[0].card_id);
+                console.log(`Inserted card ${cardResult.rows[0].card_id}`);
+            }
+            
+            // Update peers using the same connection
+            for (let i = 0; i < cardIds.length; i++) {
+                const peers = cardIds.filter((_, index) => index !== i);
+                if (peers.length > 0) {
+                    await transactionClient.query(
+                        `UPDATE cards SET peers = $1 WHERE card_id = $2`,
+                        [peers, cardIds[i]]
                     );
-                    cardIds.push(cardResult.rows[0].card_id);
-                    console.log(`Inserted card ${cardResult.rows[0].card_id}`);
-                } catch (cardError) {
-                    console.error(`Card insert failed:`, cardError);
-                    throw cardError;
                 }
             }
         }
         
-        await client.query('COMMIT');
-        console.log('Transaction committed');
+        await transactionClient.query('COMMIT');
+        console.log('Transaction committed successfully');
         
         res.json({ 
             status: 'success', 
@@ -754,12 +748,15 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         });
         
     } catch (err) {
-        await client.query('ROLLBACK');
-        console.error('Full error:', err);
+        await transactionClient.query('ROLLBACK');
+        console.error('Transaction rolled back:', err);
         res.status(500).json({ 
             status: 'error', 
             error: err.message,
             details: err instanceof Error ? err.message : 'Unknown error' 
         });
+    } finally {
+        // Always release the connection back to the pool
+        transactionClient.release();
     }
 }));
