@@ -604,7 +604,6 @@ app.get('/search_mass', wrapAsync(async (req, res) => {
     }
 }));
 
-// Add this endpoint after your existing endpoints
 app.get('/search_kjv', wrapAsync(async (req, res) => {
     const { pattern, searchType } = req.query;
     

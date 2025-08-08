@@ -307,4 +307,3 @@ export let bookToShorthandDict: BookToShorthandDictType = {
         "kjv": "English (1680)"
     }
 }
-
