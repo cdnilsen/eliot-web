@@ -8,26 +8,34 @@
 <body>
     <div class="container">
         <h1>Welcome to Synapdeck!</h1>
+        <div class="button-row">
+            <button type="button">Home</button>
+            <button type="button">Decks</button>
+            <button type="button">Import</button>
+            <button type="button">Settings</button>
+        </div>
 
-        <label for="dropdownMenu">Choose a deck:</label>
-        <select id="dropdownMenu" name="dropdownMenu">
-            <option value="" disabled selected>Select your option</option>
-            <option value="Ge'ez">Ge'ez</option>
-            <option value="Ancient Greek">Ancient Greek</option>
-            <option value="Russian">Russian</option>
-        </select>
-        
-        <div class="input-group">
-            <label for="uploadTextFile">Upload Text File:</label>
-            <input type="file" id="uploadTextFile" accept=".txt">
+        <div id="mainDiv">
+            <label for="dropdownMenu">Choose a deck:</label>
+            <select id="dropdownMenu" name="dropdownMenu">
+                <option value="" disabled selected>Select your option</option>
+                <option value="Ge'ez">Ge'ez</option>
+                <option value="Ancient Greek">Ancient Greek</option>
+                <option value="Russian">Russian</option>
+            </select>
+            
+            <div class="input-group">
+                <label for="uploadTextFile">Upload Text File:</label>
+                <input type="file" id="uploadTextFile" accept=".txt">
+            </div>
+            
+            <div class="button-group">
+                <button id="submitBtn" class="hidden">Submit</button>
+                <button id="cancel" class="hidden">Cancel</button>
+            </div>
+            
+            <div id="output"></div>
         </div>
-        
-        <div class="button-group">
-            <button id="submitBtn" class="hidden">Submit</button>
-            <button id="cancel" class="hidden">Cancel</button>
-        </div>
-        
-        <div id="output"></div>
     </div>
     
     <script src="synapdeck.js" type="module"></script>
