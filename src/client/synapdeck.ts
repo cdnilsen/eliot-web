@@ -97,8 +97,9 @@ submitButton.addEventListener('click', () => {
                     console.log(thisProcess.length);
                     currentProcessList.push(thisProcessList[i].trim())
                 }
-            } else if (line.length > 0 && line.includes("/")) {
-                let thisNoteFieldData = line.split("/");
+            } else if (line.length > 0 && line.includes(" / ")) {
+                line = line.replaceAll(" / ", " // ") //Necessary to deal with HTML
+                let thisNoteFieldData = line.split("//");
                 let thisNoteDataList: string[] = [];
                 let thisNoteProcessList: string[] = currentProcessList;
                 for (let i=0; i < thisNoteFieldData.length; i++) {
