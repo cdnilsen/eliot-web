@@ -26,8 +26,8 @@ fileInput.addEventListener('change', (event) => {
                 for (let i=0; i < lines.length; i ++) {
                     let line = lines[i];
                     let strippedLine = lines[i].trim();
-                    console.log(line);
-                    console.log(strippedLine)
+                    console.log('"' + line + '"');
+                    console.log('"' + strippedLine + '"')
                 }
             };
 
