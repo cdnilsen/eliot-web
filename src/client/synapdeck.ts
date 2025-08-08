@@ -19,8 +19,6 @@ if (deckDropdown) {
     deckDropdown.addEventListener('change', (event) => {
         const selectedValue = (event.target as HTMLSelectElement).value;
         currentDeck = selectedValue;
-        // Optionally update outputDiv or perform other actions based on selection
-        console.log(`Deck changed to: ${currentDeck}`);
     });
 }
 
