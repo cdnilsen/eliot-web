@@ -1,5 +1,5 @@
 import {transliterateGeez} from './transcribe_geez.js';
-import {Tracker, Pretracker} from './synapdeck_lib.js';
+import {OneWayCard, TwoWayCard} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("output") as HTMLDivElement;
 
 /*
@@ -44,7 +44,7 @@ fileInput.addEventListener('change', (event) => {
     }
 });
 
-
+// This will probably be later on...
 function cleanFieldDatum(datum: string, process: string) {
     switch (process) {
         case "Ge'ez":
@@ -55,21 +55,49 @@ function cleanFieldDatum(datum: string, process: string) {
 }
 
 // The program creates a 'pretracker' which gets handed off to the backend.
-function createPretracker(deck: string, note_type: string, rawFieldData: string[], processingList: string[]) {
-    let cleanedFieldData: string[] = []
-    for (let i=0; i < rawFieldData.length; i++) {
-        let thisDatum = rawFieldData[i];
-        let thisProcess = processingList[i];
-        let cleanedDatum = cleanFieldDatum(thisDatum, thisProcess);
-        cleanedFieldData.push(cleanedDatum);
+async function sendNoteToBackend(deck: string, note_type: string, field_values: string[], field_processing: string[]) {
+    // Generate card configurations based on note type
+    let card_configs: any[] = [];
+    
+    if (note_type === "Two-Way Card") {
+        card_configs = TwoWayCard(deck, field_values, field_processing);
+    } else if (note_type === "One-Way Card") {
+        card_configs = OneWayCard(deck, field_values, field_processing);
     }
-    let pretracker: Pretracker = {
-        deck: deck,
-        note_type: note_type,
-        field_values: cleanedFieldData,
-        field_processing: processingList
+    // Add more note types as needed
+    
+    // Extract field names (you might need to adjust this based on your data structure)
+    const field_names = field_processing.map((_, index) => `field_${index + 1}`);
+    
+    try {
+        const response = await fetch('/add_synapdeck_note', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                deck: deck,
+                note_type: note_type,
+                field_names: field_names,
+                field_values: field_values,
+                field_processing: field_processing,
+                card_configs: card_configs  // Include the card configurations
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            console.log(`Note ${result.note_id} with ${result.card_ids.length} cards created successfully`);
+        } else {
+            console.error('Error sending note:', result.error);
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('Network error sending note:', error);
+        return { status: 'error', error: 'Network error' };
     }
-    return pretracker;
 }
 
 submitButton.addEventListener('click', () => {
@@ -79,13 +107,12 @@ submitButton.addEventListener('click', () => {
 
     let currentNoteType = "";
     let currentProcessList: string[] = [];
-    let currentDataList: string[] = [];
     const lines = currentFileContent.split('\n');
         for (let i=0; i < lines.length; i ++) {
             let line = lines[i].trim();
             if (line.startsWith("$FORMAT:")) {
                 line = line.replaceAll("$FORMAT:", "").trim();
-                currentNoteType = line
+                currentNoteType = line;
                 console.log('\"' + currentNoteType + '\"')
             } else if (line.startsWith("$PROCESSING:")) {
                 currentProcessList = [];
@@ -93,12 +120,10 @@ submitButton.addEventListener('click', () => {
                 let thisProcessList = line.split("/");
                 for (let i=0; i < thisProcessList.length; i++) {
                     let thisProcess = thisProcessList[i].trim();
-                    console.log(thisProcess);
-                    console.log(thisProcess.length);
-                    currentProcessList.push(thisProcessList[i].trim())
+                    currentProcessList.push(thisProcess.trim())
                 }
             } else if (line.length > 0 && line.includes(" / ")) {
-                line = line.replaceAll(" / ", " // ") //Necessary to deal with HTML
+                line = line.replaceAll(" / ", " // ") //Necessary to deal with HTML tags in the fields
                 let thisNoteFieldData = line.split("//");
                 let thisNoteDataList: string[] = [];
                 let thisNoteProcessList: string[] = currentProcessList;
@@ -115,9 +140,7 @@ submitButton.addEventListener('click', () => {
                         thisNoteDataList.push("");
                     }
                 }
-                let thisNotePretracker = createPretracker(currentDeck, currentNoteType, thisNoteDataList, thisNoteProcessList);
-
-                console.log(thisNotePretracker);
+                sendNoteToBackend(currentDeck, currentNoteType, thisNoteDataList, currentProcessList);
             }
         }
     submitButton.style.visibility = "hidden";
