@@ -61,8 +61,11 @@ submitButton.addEventListener('click', () => {
                 console.log('\"' + currentNoteType + '\"')
             } else if (line.startsWith("$PROCESSING:")) {
                 line = line.replaceAll("$PROCESSING:", "").trim();
-                currentProcessing = line
-                console.log('\"' + currentProcessing + '\"')
+                let processList = line.split("/");
+                console.log(processList)  
+                //
+                //currentProcessing = line
+                //console.log('\"' + currentProcessing + '\"')
             } else if (line.length > 0) {
                 console.log(line);
             }
