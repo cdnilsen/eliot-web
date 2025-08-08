@@ -52,6 +52,8 @@ submitButton.addEventListener('click', () => {
 
     let currentNoteType = "";
     let currentProcessing = "";
+    let currentProcessList: string[] = [];
+    let currentDataList: string[] = [];
     const lines = currentFileContent.split('\n');
         for (let i=0; i < lines.length; i ++) {
             let line = lines[i].trim();
@@ -60,13 +62,30 @@ submitButton.addEventListener('click', () => {
                 currentNoteType = line
                 console.log('\"' + currentNoteType + '\"')
             } else if (line.startsWith("$PROCESSING:")) {
+                currentProcessList = [];
                 line = line.replaceAll("$PROCESSING:", "").trim();
-                let processList = line.split("/");
-                console.log(processList)  
-                //
-                //currentProcessing = line
-                //console.log('\"' + currentProcessing + '\"')
+                let thisProcessList = line.split("/");
+                for (let i=0; i < thisProcessList.length; i++) {
+                    let thisProcess = thisProcessList[i].trim();
+                    console.log(thisProcess.length);
+                    currentProcessList.push(thisProcessList[i].trim())
+                }
             } else if (line.length > 0) {
+                let thisNoteFieldData = line.split("/");
+                currentDataList = [];
+                for (let i=0; i < thisNoteFieldData.length; i++) {
+                    let thisDatum = thisNoteFieldData[i].trim();
+                    currentDataList.push(thisDatum);
+                }
+                if (currentProcessList.length != currentDataList.length) {
+                    const maxLength = Math.max(currentProcessList.length, currentDataList.length);
+                    while (currentProcessList.length < maxLength) {
+                        currentProcessList.push("");
+                    }
+                    while (currentDataList.length < maxLength) {
+                        currentDataList.push("");
+                    }
+                }
                 console.log(line);
             }
         }
