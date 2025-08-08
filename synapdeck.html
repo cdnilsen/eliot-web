@@ -3,15 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <title>Synapdeck</title>
+    <link rel="stylesheet" type="text/css" href="./synapdeck_styles.css">
 </head>
 <body>
-    <input type="text" id="userInput" placeholder="Enter text here">
-    <br>
-    <input type="file" id="uploadTextFile" placeholder="Upload a text file...">
-    <br>
-    <button id="submitBtn" style="visibility: hidden;">Submit</button> <button id="cancel" style="visibility: hidden;">Cancel</button>
-    <br>
-    <div id="output"></div>
+    <div class="container">
+        <h1>Synapdeck</h1>
+        
+        <div class="input-group">
+            <label for="userInput">Enter Text:</label>
+            <input type="text" id="userInput" placeholder="Type your text here...">
+        </div>
+        
+        <div class="input-group">
+            <label for="uploadTextFile">Upload Text File:</label>
+            <input type="file" id="uploadTextFile" accept=".txt">
+        </div>
+        
+        <div class="button-group">
+            <button id="submitBtn" class="hidden">Submit</button>
+            <button id="cancel" class="hidden">Cancel</button>
+        </div>
+        
+        <div id="output"></div>
+    </div>
+    
+    <script src="synapdeck.js" type="module"></script>
 </body>
 <script src="synapdeck.js" type="module"></script>
 </html>
