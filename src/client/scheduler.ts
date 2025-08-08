@@ -1,1 +1,0 @@
-import {Tracker, CardRating} from './synapdeck_lib.ts';
