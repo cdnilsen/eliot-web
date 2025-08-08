@@ -11,6 +11,8 @@ if (inputBox) {
     });
 }
 
+let currentFileContent: string = "";
+
 let fileInput = document.getElementById("uploadTextFile") as HTMLInputElement;
 let submitButton = document.getElementById("submitBtn") as HTMLButtonElement;
 let cancelButton = document.getElementById("cancel") as HTMLButtonElement;
@@ -23,16 +25,25 @@ fileInput.addEventListener('change', (event) => {
                 cancelButton.style.visibility = "visible";
                 const fileContent = e.target?.result as string;
                 // Process the fileContent here
-                console.log('File content:', fileContent);
-                // Example: split into lines, parse data, etc.
-                const lines = fileContent.split('\n');
-                for (let i=0; i < lines.length; i ++) {
-                    let line = lines[i].trim();
-                }
+                currentFileContent = fileContent;
             };
 
             reader.readAsText(file); // Read the file as text
         } else {
             console.warn('Please select a valid text file.');
         }
-    });
+});
+
+submitButton.addEventListener('click', () => {
+    // Example: perform submit action, e.g., process uploaded file or user input
+    //console.log('Submit button clicked');
+    // Hide buttons after submit
+    const lines = currentFileContent.split('\n');
+        for (let i=0; i < lines.length; i ++) {
+            let line = lines[i].trim();
+            console.log(line);
+        }
+    submitButton.style.visibility = "hidden";
+    cancelButton.style.visibility = "hidden";
+    // You can add further processing logic here
+});
