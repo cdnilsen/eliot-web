@@ -16,21 +16,17 @@ let cancelButton = document.getElementById("cancel") as HTMLButtonElement;
 fileInput.addEventListener('change', (event) => {
         const file = (event.target as HTMLInputElement).files?.[0];
         if (file && file.type === 'text/plain') { // Check file type for safety
-            submitButton.style.visibility = "visible";
-            cancelButton.style.visibility = "visible";
             const reader = new FileReader();
-
             reader.onload = (e) => {
+                submitButton.style.visibility = "visible";
+                cancelButton.style.visibility = "visible";
                 const fileContent = e.target?.result as string;
                 // Process the fileContent here
                 console.log('File content:', fileContent);
                 // Example: split into lines, parse data, etc.
                 const lines = fileContent.split('\n');
                 for (let i=0; i < lines.length; i ++) {
-                    let line = lines[i];
-                    let strippedLine = lines[i].trim();
-                    console.log('"' + line + '"');
-                    console.log('"' + strippedLine + '"')
+                    let line = lines[i].trim();
                 }
             };
 
