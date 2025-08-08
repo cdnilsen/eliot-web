@@ -11,6 +11,33 @@ if (inputBox) {
     });
 }
 */
+
+document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('.button-row button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Hide all tab contents
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Show corresponding content
+            const targetId = this.id.replace('_cards', '_mainDiv').replace('check_work', 'check_mainDiv');
+            const targetDiv = document.getElementById(targetId);
+            if (targetDiv) {
+                targetDiv.classList.add('active');
+            }
+        });
+    });
+});
+
+
 let currentFileContent: string = "";
 let currentDeck: string = "";
 let deckDropdown = document.getElementById("dropdownMenu") as HTMLSelectElement;
