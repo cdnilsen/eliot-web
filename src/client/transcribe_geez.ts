@@ -364,7 +364,32 @@ function renderGeez(token: ParsedToken): string {
     return internalToOutput[internal] || "";
 }
 
+function preprocessLatin(str: string): string {
+    str = str.replaceAll("ṣ́", "ḍ").replaceAll("ś", "š").replaceAll("x", "ḫ")
+    str = str.toLowerCase()
+    const alts = {
+        "ḳ": "q",
+        "š": "ś",
+        "'": "ʾ",
+        "3": "ʿ",
+        "ʕ": "ʿ",
+        "kw": "kʷ",
+        "gw": "gʷ",
+        "ḳʷ": "qʷ",
+        "ḫw": "ḫʷ",
+        "ā": "a",
+        "ē": "e"
+    }
+
+    let allKeys = Object.keys(alts)
+    for (let i=0; i < allKeys.length; i++) {
+        str = str.replaceAll(allKeys[i], alts[allKeys[i]]);
+    }
+    return str
+}
+
 export function transliterateGeez(str: string): string {
+    str = preprocessLatin(str);
     const tokens = maximumMunchTokenizeGeez(str, geezTrie);
     return tokens.map(renderGeez).join("");
 }
