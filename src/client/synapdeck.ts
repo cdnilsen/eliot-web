@@ -39,7 +39,6 @@ fileInput.addEventListener('change', (event) => {
             // Process the fileContent here
             currentFileContent = fileContent;
         };
-
         reader.readAsText(file); // Read the file as text
     } else {
         console.warn('Please select a valid text file.');
@@ -59,12 +58,12 @@ submitButton.addEventListener('click', () => {
             if (line.startsWith("$FORMAT:")) {
                 line = line.replaceAll("$FORMAT:", "").trim();
                 currentNoteType = line
-                console.log('"' + currentNoteType + '"')
+                console.log('\"' + currentNoteType + '\"')
             } else if (line.startsWith("$PROCESSING:")) {
                 line = line.replaceAll("$PROCESSING:", "").trim();
                 currentProcessing = line
-                console.log('"' + currentProcessing + '"')
-            } else {
+                console.log('\"' + currentProcessing + '\"')
+            } else if (line.length > 0) {
                 console.log(line);
             }
         }
