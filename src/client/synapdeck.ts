@@ -653,6 +653,9 @@ if (reviewSubmitButton) {
             // Check if we need to refresh the cache (deck changed or review options changed)
             const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
             const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
+            const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
+
+            console.log(reviewAheadNumCards.value + " cards picked")
             
             const currentReviewAhead = reviewAheadCheckbox?.checked || false;
             const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
