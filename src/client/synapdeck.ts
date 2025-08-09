@@ -371,7 +371,8 @@ function groupCardsByDueDate(cards: CardDue[], groupByDateOnly = false) {
     return sortedGroups;
 }
 
-function shuffleCardArray(cards: CardDue[]) {
+
+function shuffleCardArray(cards: CardDue[]): CardDue[] {
     const shuffled = [...cards]; // Create a copy to avoid mutating original
   
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -380,11 +381,47 @@ function shuffleCardArray(cards: CardDue[]) {
     }
   
     return shuffled;
-
 }
 
 type idToCardDict = {
     [key: string]: CardDue
+}
+
+
+function selectCardsFromGroup(
+        candidateCards: CardDue[], 
+        alreadySelected: Set<number>, 
+        maxCards: number, 
+        cardDict: idToCardDict
+        ): CardDue[] {
+    const selectedFromGroup: CardDue[] = [];
+    const shuffledCandidates = shuffleCardArray(candidateCards);
+    
+    for (const card of shuffledCandidates) {
+        // Stop if we've reached our limit
+        if (alreadySelected.size >= maxCards) {
+            break;
+        }
+        
+        // Skip if this card is already selected
+        if (alreadySelected.has(card.card_id)) {
+            continue;
+        }
+        
+        // Check if any peers of this card are already selected
+        const hasPeerConflict = card.peers.some(peerId => alreadySelected.has(peerId));
+        
+        if (!hasPeerConflict) {
+            // This card is safe to add
+            selectedFromGroup.push(card);
+            alreadySelected.add(card.card_id);
+            console.log(`✓ Added card ${card.card_id} (no peer conflicts)`);
+        } else {
+            console.log(`⚠ Skipped card ${card.card_id} (peer conflict with: ${card.peers.filter(id => alreadySelected.has(id))})`);
+        }
+    }
+    
+    return selectedFromGroup;
 }
 
 function sortDueDateArray(rawCards: CardDue[], existingList: CardDue[], numCards: number, cardDict: idToCardDict): CardDue[] {
@@ -410,36 +447,54 @@ function sortDueDateArray(rawCards: CardDue[], existingList: CardDue[], numCards
 }
 
 
-function produceReviewSheet(cards: CardDue[], numCards: number) {
+function produceReviewSheet(cards: CardDue[], numCards: number): CardDue[] {
+    console.log(`🎯 Producing review sheet: ${numCards} cards from ${cards.length} available`);
 
-    let cardDict: idToCardDict = {};
-
-    for (let i=0; i < cards.length; i++) {
-        let card = cards[i];
+    // Create lookup dictionary for cards
+    const cardDict: idToCardDict = {};
+    for (const card of cards) {
         cardDict[card.card_id.toString()] = card;
     }
     
-    let sortedCards: CardDue[][] = groupCardsByDueDate(cards);
-    console.log("רשׁימת הרשׁימות :");
-    console.log(sortedCards);
+    // Group cards by due date (date only, not time)
+    const sortedGroups: CardDue[][] = groupCardsByDueDate(cards, true); // true for date-only grouping
+    console.log(`📅 Found ${sortedGroups.length} due date groups:`, 
+        sortedGroups.map(group => `${group[0].time_due.split('T')[0]} (${group.length} cards)`));
 
-    let finalCardList: CardDue[] = [];
-    for (let i=0; i < sortedCards.length; i++) {
-        let cardSubArray = sortedCards[i];
-        let thisSubArrayList = sortDueDateArray(cardSubArray, finalCardList, numCards, cardDict);
-        console.log("Array #" + (i + 1).toString() + ":")
-        console.log(thisSubArrayList);
-        for (let j=0; j < thisSubArrayList.length; j++) {
-            let shuffledCard = thisSubArrayList[j];
-            finalCardList.push(shuffledCard);
-        }
-        if (finalCardList.length >= numCards) {
-            break;
-        }
+    const finalCardList: CardDue[] = [];
+    const selectedCardIds = new Set<number>();
+    
+    // Process each due date group in order (earliest first)
+    for (let i = 0; i < sortedGroups.length && selectedCardIds.size < numCards; i++) {
+        const group = sortedGroups[i];
+        const remainingSlots = numCards - selectedCardIds.size;
+        
+        console.log(`\n📋 Processing group ${i + 1}/${sortedGroups.length}: ${group[0].time_due.split('T')[0]}`);
+        console.log(`   Available in group: ${group.length}, Remaining slots: ${remainingSlots}`);
+        
+        const selectedFromGroup = selectCardsFromGroup(
+            group, 
+            selectedCardIds, 
+            numCards, 
+            cardDict
+        );
+        
+        finalCardList.push(...selectedFromGroup);
+        console.log(`   Selected ${selectedFromGroup.length} cards from this group`);
+        
+        // Log current progress
+        console.log(`   📊 Progress: ${selectedCardIds.size}/${numCards} cards selected`);
     }
-    console.log("Should be showing " + numCards.toString() + " cards")
-    console.log(finalCardList);
-    return shuffleCardArray(finalCardList);
+    
+    console.log(`\n🎉 Final selection: ${finalCardList.length} cards`);
+    console.log('Selected card IDs:', finalCardList.map(c => c.card_id));
+    
+    // Final shuffle of the selected cards to randomize order within the review session
+    const shuffledFinalList = shuffleCardArray(finalCardList);
+    
+    console.log('🔀 Final shuffled order:', shuffledFinalList.map(c => c.card_id));
+    
+    return shuffledFinalList;
 }
 
 // Enhanced display function that shows review ahead info
