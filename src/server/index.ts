@@ -871,6 +871,7 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
     console.log(`Checking cards for deck: ${deck} - Mode: ${modeText} - Time: ${checkTime.toISOString()}`);
     
     try {
+        const currentTime = new Date();
         const query = await client.query(
             `SELECT 
                 card_id,
@@ -885,20 +886,14 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
                 retrievability,
                 peers,
                 CASE 
-                    WHEN time_due <= NOW() THEN 'due_now'
-                    WHEN time_due <= $2 THEN 'due_ahead'
-                    ELSE 'not_due'
+                    WHEN time_due <= $3 THEN 'due_now'
+                    ELSE 'due_ahead'
                 END as due_status
             FROM cards 
             WHERE deck = $1 
             AND time_due <= $2
-            ORDER BY 
-                CASE 
-                    WHEN time_due <= NOW() THEN 0  -- Due now cards first
-                    ELSE 1                         -- Then ahead cards
-                END,
-                time_due ASC`,
-            [deck, checkTime]
+            ORDER BY time_due ASC`,
+            [deck, checkTime, currentTime]
         );
         
         const dueNow = query.rows.filter(card => card.due_status === 'due_now');
