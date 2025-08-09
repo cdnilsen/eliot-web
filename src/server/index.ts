@@ -866,6 +866,11 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
     // Use provided times
     const checkTime = current_time ? new Date(current_time) : new Date();
     const actualCurrentTime = actual_current_time ? new Date(actual_current_time) : new Date();
+
+    console.log('Request body:', req.body);
+    console.log('Deck:', deck);
+    console.log('Current time:', current_time);
+    console.log('Actual current time:', actual_current_time);
     
     const modeText = review_ahead ? `review ahead (${hours_ahead || 24}h)` : 'due now';
     console.log(`Checking cards for deck: ${deck} - Mode: ${modeText} - Check time: ${checkTime.toISOString()} - Actual current time: ${actualCurrentTime.toISOString()}`);
