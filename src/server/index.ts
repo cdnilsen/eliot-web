@@ -871,6 +871,19 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
     console.log(`Checking cards for deck: ${deck} - Mode: ${modeText} - Check time: ${checkTime.toISOString()} - Actual current time: ${actualCurrentTime.toISOString()}`);
     
     try {
+        const allCards = await client.query(
+            `SELECT card_id, time_due, deck FROM cards WHERE deck = $1 ORDER BY time_due`,
+            [deck]
+        );
+        
+        console.log(`DEBUG: Found ${allCards.rows.length} total cards in deck "${deck}":`);
+        allCards.rows.forEach(card => {
+            console.log(`  Card ${card.card_id}: due ${card.time_due}`);
+        });
+        
+        console.log(`DEBUG: Looking for cards where time_due <= ${checkTime.toISOString()}`);
+        console.log(`DEBUG: Current actual time: ${actualCurrentTime.toISOString()}`);
+
         const query = await client.query(
             `SELECT 
                 card_id,
