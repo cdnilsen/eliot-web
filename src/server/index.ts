@@ -706,9 +706,9 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         
         console.log('Inserting note...');
         const noteResult = await transactionClient.query(
-            `INSERT INTO notes (deck, note_type, field_names, field_values, created_at, due_date, interval_days) 
-             VALUES ($1, $2, $3, $4, NOW(), $5, $6) 
-             RETURNING note_id`,
+            `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
+             VALUES ($1, $2, $3, $4, NOW()) 
+             RETURNING note_id`, // We don't update stability or difficulty until the first review.
             [deck, note_type, fieldNamesArray, fieldValuesArray, dueDate, intervalDays]
         );
         
@@ -747,9 +747,9 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                 const cardIntervalDays = Math.ceil(cardIntervalMs / (1000 * 60 * 60 * 24));
                 
                 const cardResult = await transactionClient.query(
-                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, due_date, interval_days) 
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-                     RETURNING card_id`,
+                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, time_due, interval, retrievability) 
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+                     RETURNING card_id`, // We don't update stability or difficulty until after the first review.
                     [
                         noteId,
                         deck,
@@ -758,7 +758,8 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                         config.field_values || null,
                         config.field_processing || null,
                         cardDueDate,
-                        cardIntervalDays
+                        cardIntervalDays,
+                        1
                     ]
                 );
                 cardIds.push(cardResult.rows[0].card_id);
