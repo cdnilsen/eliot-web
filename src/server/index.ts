@@ -706,10 +706,10 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         
         console.log('Inserting note...');
         const noteResult = await transactionClient.query(
-            `INSERT INTO notes (deck, note_type, field_names, field_values, created_at, due_date, interval_days) 
-             VALUES ($1, $2, $3, $4, NOW(), $5, $6) 
+            `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
+             VALUES ($1, $2, $3, $4, NOW()) 
              RETURNING note_id`,
-            [deck, note_type, fieldNamesArray, fieldValuesArray, dueDate, intervalDays]
+            [deck, note_type, fieldNamesArray, fieldValuesArray]
         );
         
         console.log('Note insert result:', noteResult.rows);
