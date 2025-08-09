@@ -322,6 +322,7 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
             body: JSON.stringify({ 
                 deck: deckName,
                 current_time: checkTime.toISOString(),
+                actual_current_time: new Date().toISOString(), // Add this
                 review_ahead: reviewAheadCheckbox?.checked || false,
                 hours_ahead: reviewAheadCheckbox?.checked ? parseInt(reviewAheadHours?.value || '24') : 0
             })

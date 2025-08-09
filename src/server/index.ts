@@ -855,7 +855,7 @@ app.post('/wipe_synapdeck_database', express.json(), wrapAsync(async (req, res) 
 
 // Enhanced backend endpoint that handles review ahead
 app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) => {
-    const { deck, current_time, review_ahead, hours_ahead } = req.body;
+    const { deck, current_time, actual_current_time, review_ahead, hours_ahead } = req.body;
     
     if (!deck) {
         return res.status(400).json({ 
@@ -864,14 +864,14 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
         });
     }
     
-    // Use provided time or current time
+    // Use provided times
     const checkTime = current_time ? new Date(current_time) : new Date();
+    const actualCurrentTime = actual_current_time ? new Date(actual_current_time) : new Date();
     
     const modeText = review_ahead ? `review ahead (${hours_ahead || 24}h)` : 'due now';
-    console.log(`Checking cards for deck: ${deck} - Mode: ${modeText} - Time: ${checkTime.toISOString()}`);
+    console.log(`Checking cards for deck: ${deck} - Mode: ${modeText} - Check time: ${checkTime.toISOString()} - Actual current time: ${actualCurrentTime.toISOString()}`);
     
     try {
-        const currentTime = new Date();
         const query = await client.query(
             `SELECT 
                 card_id,
@@ -893,7 +893,7 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
             WHERE deck = $1 
             AND time_due <= $2
             ORDER BY time_due ASC`,
-            [deck, checkTime, currentTime]
+            [deck, checkTime, actualCurrentTime] // Changed $3 to use actualCurrentTime
         );
         
         const dueNow = query.rows.filter(card => card.due_status === 'due_now');
@@ -922,6 +922,7 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
         });
     }
 }));
+
 // Additional endpoint to get deck statistics
 app.get('/deck_stats/:deckName', wrapAsync(async (req, res) => {
     const { deckName } = req.params;
