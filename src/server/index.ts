@@ -656,7 +656,15 @@ app.get('/search_kjv', wrapAsync(async (req, res) => {
 }));
 
 app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
-    const { deck, note_type, field_names, field_values, field_processing, card_configs } = req.body;
+    const { 
+        deck, 
+        note_type, 
+        field_names, 
+        field_values, 
+        field_processing, 
+        card_configs,
+        initial_interval_ms = 86400000 // Default to 24 hours (1 day) if not provided
+    } = req.body;
     
     console.log('Raw request data:', JSON.stringify(req.body, null, 2));
     
@@ -667,16 +675,41 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         await transactionClient.query('BEGIN');
         console.log('Transaction started on dedicated connection');
         
+        // ===== DEBUG: DATABASE WIPE SUBROUTINE (COMMENT OUT WHEN NOT NEEDED) =====
+        console.log('🧹 WIPING DATABASE FOR DEBUG...');
+        
+        // Delete in order to respect foreign key constraints
+        await transactionClient.query('DELETE FROM cards');
+        console.log('  ✓ Cleared cards table');
+        
+        await transactionClient.query('DELETE FROM notes');
+        console.log('  ✓ Cleared notes table');
+        
+        // Reset auto-increment sequences if you're using them
+        await transactionClient.query('ALTER SEQUENCE IF EXISTS notes_note_id_seq RESTART WITH 1');
+        await transactionClient.query('ALTER SEQUENCE IF EXISTS cards_card_id_seq RESTART WITH 1');
+        console.log('  ✓ Reset ID sequences');
+        
+        console.log('🧹 Database wipe complete!');
+        // ===== END DEBUG SUBROUTINE =====
+        
+        // Calculate due date and interval
+        const now = new Date();
+        const dueDate = new Date(now.getTime() + initial_interval_ms);
+        const intervalDays = Math.ceil(initial_interval_ms / (1000 * 60 * 60 * 24)); // Convert ms to days
+        
+        console.log(`Due date calculated: ${dueDate.toISOString()}, Interval: ${intervalDays} days`);
+        
         // Format the data
         const fieldNamesArray = Array.isArray(field_names) ? field_names : [];
         const fieldValuesArray = Array.isArray(field_values) ? field_values : [];
         
         console.log('Inserting note...');
         const noteResult = await transactionClient.query(
-            `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
-             VALUES ($1, $2, $3, $4, NOW()) 
+            `INSERT INTO notes (deck, note_type, field_names, field_values, created_at, due_date, interval_days) 
+             VALUES ($1, $2, $3, $4, NOW(), $5, $6) 
              RETURNING note_id`,
-            [deck, note_type, fieldNamesArray, fieldValuesArray]
+            [deck, note_type, fieldNamesArray, fieldValuesArray, dueDate, intervalDays]
         );
         
         console.log('Note insert result:', noteResult.rows);
@@ -708,9 +741,14 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
             for (let i = 0; i < card_configs.length; i++) {
                 const config = card_configs[i];
                 
+                // Each card can have its own interval, or inherit from the note
+                const cardIntervalMs = config.initial_interval_ms || initial_interval_ms;
+                const cardDueDate = new Date(now.getTime() + cardIntervalMs);
+                const cardIntervalDays = Math.ceil(cardIntervalMs / (1000 * 60 * 60 * 24));
+                
                 const cardResult = await transactionClient.query(
-                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing) 
-                     VALUES ($1, $2, $3, $4, $5, $6) 
+                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, due_date, interval_days) 
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
                      RETURNING card_id`,
                     [
                         noteId,
@@ -718,11 +756,13 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                         config.card_format || null,
                         config.field_names || null,
                         config.field_values || null,
-                        config.field_processing || null
+                        config.field_processing || null,
+                        cardDueDate,
+                        cardIntervalDays
                     ]
                 );
                 cardIds.push(cardResult.rows[0].card_id);
-                console.log(`Inserted card ${cardResult.rows[0].card_id}`);
+                console.log(`Inserted card ${cardResult.rows[0].card_id} with due date: ${cardDueDate.toISOString()}`);
             }
             
             // Update peers using the same connection
@@ -744,7 +784,9 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
             status: 'success', 
             note_id: noteId,
             card_ids: cardIds,
-            message: `Success: note ${noteId} with ${cardIds.length} cards` 
+            due_date: dueDate.toISOString(),
+            interval_days: intervalDays,
+            message: `Success: note ${noteId} with ${cardIds.length} cards, due ${dueDate.toISOString()}` 
         });
         
     } catch (err) {

@@ -1,6 +1,6 @@
 import {transliterateGeez} from './transcribe_geez.js';
 import {OneWayCard, TwoWayCard} from './synapdeck_lib.js'
-let outputDiv = document.getElementById("output") as HTMLDivElement;
+let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 
 /*
 let inputBox = document.getElementById('userInput') as HTMLInputElement;
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 let currentFileContent: string = "";
 let currentDeck: string = "";
-let deckDropdown = document.getElementById("dropdownMenu") as HTMLSelectElement;
+let deckDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
 
 if (deckDropdown) {
     deckDropdown.addEventListener('change', (event) => {
@@ -50,8 +50,8 @@ if (deckDropdown) {
 }
 
 let fileInput = document.getElementById("uploadTextFile") as HTMLInputElement;
-let submitButton = document.getElementById("submitBtn") as HTMLButtonElement;
-let cancelButton = document.getElementById("cancel") as HTMLButtonElement;
+let submitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
+let cancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
 fileInput.addEventListener('change', (event) => {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file && file.type === 'text/plain') { // Check file type for safety
