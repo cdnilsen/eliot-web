@@ -656,7 +656,7 @@ if (reviewSubmitButton) {
             const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
 
             console.log(reviewAheadNumCards.value + " cards picked")
-            
+            console.log(typeof reviewAheadNumCards.value)
             const currentReviewAhead = reviewAheadCheckbox?.checked || false;
             const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
             
