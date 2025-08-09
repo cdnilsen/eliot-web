@@ -338,8 +338,38 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
     }
 }
 
+// Function to group cards by due date with configurable precision
+function groupCardsByDueDate(cards, groupByDateOnly = false) {
+    const groupedCards = new Map();
+    
+    cards.forEach(card => {
+        // Use either full timestamp or date-only based on parameter
+        const groupKey = groupByDateOnly 
+            ? card.time_due.split('T')[0]  // Extract just YYYY-MM-DD
+            : card.time_due;               // Use full timestamp
+        
+        if (!groupedCards.has(groupKey)) {
+            groupedCards.set(groupKey, []);
+        }
+        groupedCards.get(groupKey).push(card);
+    });
+    
+    // Convert Map to array of arrays and sort by due date
+    const sortedGroups = Array.from(groupedCards.entries())
+        .sort(([dateA], [dateB]) => {
+            return new Date(dateA).getTime() - new Date(dateB).getTime();
+        })
+        .map(([date, cards]) => cards);
+    
+    return sortedGroups;
+}
+
+
 function produceReviewSheet(cards: CardDue[], numCards: number) {
-    console.log(cards.slice(0, numCards - 1));
+    let sortedCards: CardDue[] = groupCardsByDueDate(cards);
+
+    console.log(sortedCards)
+    
 }
 
 // Enhanced display function that shows review ahead info
