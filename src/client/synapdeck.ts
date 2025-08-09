@@ -428,6 +428,7 @@ function produceReviewSheet(cards: CardDue[], numCards: number) {
             break;
         }
     }
+    console.log("Should be showing " + numCards.toString() + " cards")
     console.log(finalCardList);
     return finalCardList;
 }
