@@ -663,7 +663,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         field_values, 
         field_processing, 
         card_configs,
-        time,
+        timeCreated,
         initial_interval_ms = 86400000, // Default to 24 hours (1 day) if not provided
         wipe_database = false // Add flag to control database wiping
     } = req.body;
@@ -713,7 +713,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
             `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
              VALUES ($1, $2, $3, $4, $5) 
              RETURNING note_id`,
-            [deck, note_type, fieldNamesArray, fieldValuesArray, time]
+            [deck, note_type, fieldNamesArray, fieldValuesArray, timeCreated]
         );
         
         console.log('Note insert result:', noteResult.rows);
@@ -764,7 +764,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                         cardDueDate,
                         cardIntervalDays,
                         1,
-                        time
+                        timeCreated
                     ]
                 );
                 cardIds.push(cardResult.rows[0].card_id);
