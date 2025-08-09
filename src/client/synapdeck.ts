@@ -171,7 +171,7 @@ submitButton.addEventListener('click', () => {
                 sendNoteToBackend(currentDeck, currentNoteType, thisNoteDataList, currentProcessList);
             }
         }
-    submitButton.style.visibility = "hidden";
-    cancelButton.style.visibility = "hidden";
+    //submitButton.style.visibility = "hidden";
+    //cancelButton.style.visibility = "hidden";
     // You can add further processing logic here
 });
