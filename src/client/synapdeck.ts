@@ -542,6 +542,10 @@ if (reviewDeckDropdown) {
             
             try {
                 // Pre-load the card data silently
+                const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
+
+            
+            let numCards = parseInt(reviewAheadNumCards.value)
                 cachedCardResults = await checkAvailableCardsWithOptions(selectedReviewDeck);
                 lastCheckedDeck = selectedReviewDeck;
                 
@@ -552,9 +556,9 @@ if (reviewDeckDropdown) {
                 const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
                 
                 if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
-                    updateSubmitButtonText(cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
+                    updateSubmitButtonText(numCards, cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
                 } else {
-                    updateSubmitButtonText(0, currentReviewAhead, currentHoursAhead);
+                    updateSubmitButtonText(numCards, 0, currentReviewAhead, currentHoursAhead);
                 }
                 
                 console.log(`Pre-loaded ${cachedCardResults.cards?.length || 0} cards for ${selectedReviewDeck}`);
@@ -583,8 +587,10 @@ if (reviewDeckDropdown) {
 async function refreshCardCache(): Promise<void> {
     if (!selectedReviewDeck) return;
     
+    const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
+
     console.log('Refreshing card cache due to setting change...');
-    
+    let numCards = parseInt(reviewAheadNumCards.value)
     const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
     if (submitButton) {
         submitButton.textContent = 'Updating...';
@@ -601,9 +607,9 @@ async function refreshCardCache(): Promise<void> {
         const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
         
         if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
-            updateSubmitButtonText(cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
+            updateSubmitButtonText(numCards, cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
         } else {
-            updateSubmitButtonText(0, currentReviewAhead, currentHoursAhead);
+            updateSubmitButtonText(numCards, 0, currentReviewAhead, currentHoursAhead);
         }
     } catch (error) {
         console.error('Error refreshing card cache:', error);
@@ -651,16 +657,16 @@ let cachedCardResults: CheckCardsResponse | null = null;
 let lastCheckedDeck: string = "";
 let reviewSubmitButton = document.getElementById("review_submitBtn");
 
-function updateSubmitButtonText(cardCount: number, reviewAhead: boolean, hoursAhead: number): void {
+function updateSubmitButtonText(numCards: number, totalCardCount: number, reviewAhead: boolean, hoursAhead: number): void {
     const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
     if (submitButton) {
-        if (cardCount === 0) {
+        if (totalCardCount === 0) {
             const timeText = reviewAhead ? ` (${hoursAhead}h ahead)` : '';
             submitButton.textContent = `No Cards Available${timeText}`;
             submitButton.disabled = true;
         } else {
             const timeText = reviewAhead ? ` (${hoursAhead}h ahead)` : '';
-            submitButton.textContent = `Review ${cardCount} Card${cardCount !== 1 ? 's' : ''}${timeText}`;
+            submitButton.textContent = `Review ${numCards} of ${totalCardCount} Card${totalCardCount !== 1 ? 's' : ''}${timeText}`;
             submitButton.disabled = false;
         }
     }
@@ -722,12 +728,12 @@ if (reviewSubmitButton) {
                 );*/
                 
                 // Update submit button text to show count
-                updateSubmitButtonText(cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
+                updateSubmitButtonText(numCards, cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
             } else {
                 if (outputDiv) {
                     outputDiv.innerHTML = `<p class="error">Error: ${cachedCardResults.error}</p>`;
                 }
-                updateSubmitButtonText(0, currentReviewAhead, currentHoursAhead);
+                updateSubmitButtonText(numCards, 0, currentReviewAhead, currentHoursAhead);
             }
         } catch (error) {
             console.error('Error in review submit:', error);
