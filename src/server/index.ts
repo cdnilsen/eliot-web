@@ -747,7 +747,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                 const cardIntervalDays = Math.ceil(cardIntervalMs / (1000 * 60 * 60 * 24));
                 
                 const cardResult = await transactionClient.query(
-                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, due_date, interval_days) 
+                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, time_due, interval) 
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
                      RETURNING card_id`,
                     [
