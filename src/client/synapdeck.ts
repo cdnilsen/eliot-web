@@ -371,12 +371,65 @@ function groupCardsByDueDate(cards: CardDue[], groupByDateOnly = false) {
     return sortedGroups;
 }
 
+function shuffleCardArray(cards: CardDue[]) {
+    const shuffled = [...cards]; // Create a copy to avoid mutating original
+  
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+  
+    return shuffled;
+
+}
+
+type idToCardDict = {
+    [key: string]: CardDue
+}
+
+function sortDueDateArray(rawCards: CardDue[], existingList: CardDue[], numCards: number, cardDict: idToCardDict): CardDue[] {
+    let existingListCopy = existingList;
+    let shuffledCards = shuffleCardArray(rawCards);
+    let cardsDrawn = existingList.length;
+    for (let i=0; i < shuffledCards.length; i++) {
+        let card = rawCards[i];
+        for (let j=0; j < card.peers.length; j++) {
+            let thisPeerID = card.peers[j].toString();
+            if (existingListCopy.includes(cardDict[thisPeerID])) {
+                continue;
+            } else if (cardsDrawn >= numCards) {
+                return existingListCopy;
+            } else {
+                existingListCopy.push(card);
+                cardsDrawn += 1;
+            }
+        }
+        return existingListCopy;
+    }
+    return existingListCopy;
+}
+
 
 function produceReviewSheet(cards: CardDue[], numCards: number) {
-    let sortedCards: CardDue[][] = groupCardsByDueDate(cards);
 
-    console.log(sortedCards);
-    
+    let cardDict: idToCardDict = {};
+
+    for (let i=0; i < cards.length; i++) {
+        let card = cards[i];
+        cardDict[card.card_id.toString()] = card;
+    }
+
+    let sortedCards: CardDue[][] = groupCardsByDueDate(cards);
+    let finalCardList: CardDue[] = [];
+    for (let i=0; i < sortedCards.length; i++) {
+        let cardSubArray = sortedCards[i];
+        finalCardList = sortDueDateArray(cardSubArray, finalCardList, numCards, cardDict);
+        if (finalCardList.length >= numCards) {
+            break;
+        }
+    }
+    console.log(finalCardList);
+    return finalCardList;
 }
 
 // Enhanced display function that shows review ahead info

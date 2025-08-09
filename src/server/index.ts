@@ -872,8 +872,7 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
     
     try {
         const allCards = await client.query(
-            `SELECT card_id, time_due, deck FROM cards WHERE deck = $1 ORDER BY time_due`,
-            [deck]
+            `SELECT card_id, time_due, deck FROM cards WHERE deck = $1 ORDER BY time_due`
         );
         
         console.log(`DEBUG: Found ${allCards.rows.length} total cards in deck "${deck}":`);
