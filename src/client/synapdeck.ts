@@ -107,7 +107,7 @@ async function wipeSynapdeckDatabase() {
 }
 
 // Add delay function to avoid overwhelming the database
-function delay(ms) {
+function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
