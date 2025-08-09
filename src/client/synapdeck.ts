@@ -12,6 +12,14 @@ if (inputBox) {
 }
 */
 
+// Add type definitions at the top of your file
+interface NoteToProcess {
+    deck: string;
+    noteType: string;
+    dataList: string[];
+    processList: string[];
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const buttons = document.querySelectorAll('.button-row button');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -79,6 +87,30 @@ function cleanFieldDatum(datum: string, process: string) {
     }
 }
 
+// Add this new function to wipe the database before processing
+async function wipeSynapdeckDatabase() {
+    try {
+        const response = await fetch('/wipe_synapdeck_database', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        console.log('Database wipe response:', result);
+        return result.status === 'success';
+    } catch (error) {
+        console.error('Error wiping database:', error);
+        return false;
+    }
+}
+
+// Add delay function to avoid overwhelming the database
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // The program creates a 'pretracker' which gets handed off to the backend.
 async function sendNoteToBackend(deck: string, note_type: string, field_values: string[], field_processing: string[]) {
     // Generate card configurations based on note type
@@ -128,50 +160,101 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
     }
 }
 
-submitButton.addEventListener('click', () => {
-    // Example: perform submit action, e.g., process uploaded file or user input
-    //console.log('Submit button clicked');
-    // Hide buttons after submit
 
+// Modified submit button event listener
+submitButton.addEventListener('click', async () => {
+    console.log('Submit button clicked');
+    
+    // First, wipe the database
+    console.log('Wiping database before processing...');
+    const wipeSuccess = await wipeSynapdeckDatabase();
+    if (!wipeSuccess) {
+        console.error('Failed to wipe database, aborting');
+        return;
+    }
+    
     let currentNoteType = "";
     let currentProcessList: string[] = [];
     const lines = currentFileContent.split('\n');
-        for (let i=0; i < lines.length; i ++) {
-            let line = lines[i].trim();
-            if (line.startsWith("$FORMAT:")) {
-                line = line.replaceAll("$FORMAT:", "").trim();
-                currentNoteType = line;
-                console.log('\"' + currentNoteType + '\"')
-            } else if (line.startsWith("$PROCESSING:")) {
-                currentProcessList = [];
-                line = line.replaceAll("$PROCESSING:", "").trim();
-                let thisProcessList = line.split("/");
-                for (let i=0; i < thisProcessList.length; i++) {
-                    let thisProcess = thisProcessList[i].trim();
-                    currentProcessList.push(thisProcess.trim())
-                }
-            } else if (line.length > 0 && line.includes(" / ")) {
-                line = line.replaceAll(" / ", " // ") //Necessary to deal with HTML tags in the fields
-                let thisNoteFieldData = line.split("//");
-                let thisNoteDataList: string[] = [];
-                let thisNoteProcessList: string[] = currentProcessList;
-                for (let i=0; i < thisNoteFieldData.length; i++) {
-                    let thisDatum = thisNoteFieldData[i].trim();
-                    thisNoteDataList.push(thisDatum);
-                }
-                if (thisNoteProcessList.length != thisNoteDataList.length) {
-                    const maxLength = Math.max(thisNoteProcessList.length, thisNoteDataList.length);
-                    while (thisNoteProcessList.length < maxLength) {
-                        thisNoteProcessList.push("");
-                    }
-                    while (thisNoteDataList.length < maxLength) {
-                        thisNoteDataList.push("");
-                    }
-                }
-                sendNoteToBackend(currentDeck, currentNoteType, thisNoteDataList, currentProcessList);
+    
+    // Collect all notes first
+    const notesToProcess: NoteToProcess[] = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (line.startsWith("$FORMAT:")) {
+            line = line.replaceAll("$FORMAT:", "").trim();
+            currentNoteType = line;
+            console.log('Note type: "' + currentNoteType + '"');
+        } else if (line.startsWith("$PROCESSING:")) {
+            currentProcessList = [];
+            line = line.replaceAll("$PROCESSING:", "").trim();
+            let thisProcessList = line.split("/");
+            for (let j = 0; j < thisProcessList.length; j++) {
+                let thisProcess = thisProcessList[j].trim();
+                currentProcessList.push(thisProcess.trim());
             }
+        } else if (line.length > 0 && line.includes(" / ")) {
+            line = line.replaceAll(" / ", " // "); // Necessary to deal with HTML tags in the fields
+            let thisNoteFieldData = line.split("//");
+            let thisNoteDataList: string[] = [];
+            let thisNoteProcessList = [...currentProcessList]; // Create a copy
+            
+            for (let j = 0; j < thisNoteFieldData.length; j++) {
+                let thisDatum = thisNoteFieldData[j].trim();
+                thisNoteDataList.push(thisDatum);
+            }
+            
+            if (thisNoteProcessList.length != thisNoteDataList.length) {
+                const maxLength = Math.max(thisNoteProcessList.length, thisNoteDataList.length);
+                while (thisNoteProcessList.length < maxLength) {
+                    thisNoteProcessList.push("");
+                }
+                while (thisNoteDataList.length < maxLength) {
+                    thisNoteDataList.push("");
+                }
+            }
+            
+            // Add to collection instead of sending immediately
+            notesToProcess.push({
+                deck: currentDeck,
+                noteType: currentNoteType,
+                dataList: thisNoteDataList,
+                processList: thisNoteProcessList
+            });
         }
-    //submitButton.style.visibility = "hidden";
-    //cancelButton.style.visibility = "hidden";
-    // You can add further processing logic here
+    }
+    
+    // Now process notes sequentially with delays to avoid deadlocks
+    console.log(`Processing ${notesToProcess.length} notes sequentially...`);
+    
+    for (let i = 0; i < notesToProcess.length; i++) {
+        const note = notesToProcess[i];
+        console.log(`Processing note ${i + 1}/${notesToProcess.length}`);
+        
+        try {
+            const result = await sendNoteToBackend(
+                note.deck, 
+                note.noteType, 
+                note.dataList, 
+                note.processList
+            );
+            
+            if (result.status === 'success') {
+                console.log(`✓ Note ${i + 1} processed successfully`);
+            } else {
+                console.error(`✗ Note ${i + 1} failed:`, result.error);
+            }
+            
+            // Add a small delay between requests to avoid overwhelming the database
+            if (i < notesToProcess.length - 1) {
+                await delay(100); // 100ms delay between requests
+            }
+            
+        } catch (error) {
+            console.error(`✗ Note ${i + 1} error:`, error);
+        }
+    }
+    
+    console.log('All notes processed!');
 });

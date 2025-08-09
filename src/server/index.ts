@@ -663,7 +663,8 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         field_values, 
         field_processing, 
         card_configs,
-        initial_interval_ms = 86400000 // Default to 24 hours (1 day) if not provided
+        initial_interval_ms = 86400000, // Default to 24 hours (1 day) if not provided
+        wipe_database = false // Add flag to control database wiping
     } = req.body;
     
     console.log('Raw request data:', JSON.stringify(req.body, null, 2));
@@ -676,21 +677,23 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         console.log('Transaction started on dedicated connection');
         
         // ===== DEBUG: DATABASE WIPE SUBROUTINE (COMMENT OUT WHEN NOT NEEDED) =====
-        console.log('🧹 WIPING DATABASE FOR DEBUG...');
-        
-        // Delete in order to respect foreign key constraints
-        await transactionClient.query('DELETE FROM cards');
-        console.log('  ✓ Cleared cards table');
-        
-        await transactionClient.query('DELETE FROM notes');
-        console.log('  ✓ Cleared notes table');
-        
-        // Reset auto-increment sequences if you're using them
-        await transactionClient.query('ALTER SEQUENCE IF EXISTS notes_note_id_seq RESTART WITH 1');
-        await transactionClient.query('ALTER SEQUENCE IF EXISTS cards_card_id_seq RESTART WITH 1');
-        console.log('  ✓ Reset ID sequences');
-        
-        console.log('🧹 Database wipe complete!');
+        if (wipe_database) {
+            console.log('🧹 WIPING DATABASE FOR DEBUG...');
+            
+            // Delete in order to respect foreign key constraints
+            await transactionClient.query('DELETE FROM cards');
+            console.log('  ✓ Cleared cards table');
+            
+            await transactionClient.query('DELETE FROM notes');
+            console.log('  ✓ Cleared notes table');
+            
+            // Reset auto-increment sequences if you're using them
+            await transactionClient.query('ALTER SEQUENCE IF EXISTS notes_note_id_seq RESTART WITH 1');
+            await transactionClient.query('ALTER SEQUENCE IF EXISTS cards_card_id_seq RESTART WITH 1');
+            console.log('  ✓ Reset ID sequences');
+            
+            console.log('🧹 Database wipe complete!');
+        }
         // ===== END DEBUG SUBROUTINE =====
         
         // Calculate due date and interval
@@ -706,10 +709,10 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         
         console.log('Inserting note...');
         const noteResult = await transactionClient.query(
-            `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
-             VALUES ($1, $2, $3, $4, NOW()) 
+            `INSERT INTO notes (deck, note_type, field_names, field_values, created_at, due_date, interval_days) 
+             VALUES ($1, $2, $3, $4, NOW(), $5, $6) 
              RETURNING note_id`,
-            [deck, note_type, fieldNamesArray, fieldValuesArray]
+            [deck, note_type, fieldNamesArray, fieldValuesArray, dueDate, intervalDays]
         );
         
         console.log('Note insert result:', noteResult.rows);
@@ -747,7 +750,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                 const cardIntervalDays = Math.ceil(cardIntervalMs / (1000 * 60 * 60 * 24));
                 
                 const cardResult = await transactionClient.query(
-                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, time_due, interval) 
+                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, due_date, interval_days) 
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
                      RETURNING card_id`,
                     [
@@ -799,6 +802,47 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         });
     } finally {
         // Always release the connection back to the pool
+        transactionClient.release();
+    }
+}));
+
+// Add a separate endpoint for wiping the database during debugging
+app.post('/wipe_synapdeck_database', express.json(), wrapAsync(async (req, res) => {
+    console.log('🧹 WIPING SYNAPDECK DATABASE FOR DEBUG...');
+    
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        
+        // Delete in order to respect foreign key constraints
+        await transactionClient.query('DELETE FROM cards');
+        console.log('  ✓ Cleared cards table');
+        
+        await transactionClient.query('DELETE FROM notes');
+        console.log('  ✓ Cleared notes table');
+        
+        // Reset auto-increment sequences if you're using them
+        await transactionClient.query('ALTER SEQUENCE IF EXISTS notes_note_id_seq RESTART WITH 1');
+        await transactionClient.query('ALTER SEQUENCE IF EXISTS cards_card_id_seq RESTART WITH 1');
+        console.log('  ✓ Reset ID sequences');
+        
+        await transactionClient.query('COMMIT');
+        console.log('🧹 Database wipe complete!');
+        
+        res.json({ 
+            status: 'success', 
+            message: 'Database wiped successfully' 
+        });
+        
+    } catch (err) {
+        await transactionClient.query('ROLLBACK');
+        console.error('Database wipe failed:', err);
+        res.status(500).json({ 
+            status: 'error', 
+            error: err.message 
+        });
+    } finally {
         transactionClient.release();
     }
 }));
