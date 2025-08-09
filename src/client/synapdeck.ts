@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    setupReviewAheadUI();
 });
 
 
