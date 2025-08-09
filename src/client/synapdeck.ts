@@ -339,7 +339,7 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
 }
 
 // Function to group cards by due date with configurable precision
-function groupCardsByDueDate(cards, groupByDateOnly = false) {
+function groupCardsByDueDate(cards: CardDue[], groupByDateOnly = false) {
     const groupedCards = new Map();
     
     cards.forEach(card => {
@@ -355,7 +355,7 @@ function groupCardsByDueDate(cards, groupByDateOnly = false) {
     });
     
     // Convert Map to array of arrays and sort by due date
-    const sortedGroups = Array.from(groupedCards.entries())
+    const sortedGroups: CardDue[][] = Array.from(groupedCards.entries())
         .sort(([dateA], [dateB]) => {
             return new Date(dateA).getTime() - new Date(dateB).getTime();
         })
@@ -366,9 +366,9 @@ function groupCardsByDueDate(cards, groupByDateOnly = false) {
 
 
 function produceReviewSheet(cards: CardDue[], numCards: number) {
-    let sortedCards: CardDue[] = groupCardsByDueDate(cards);
+    let sortedCards: CardDue[][] = groupCardsByDueDate(cards);
 
-    console.log(sortedCards)
+    console.log(sortedCards);
     
 }
 
