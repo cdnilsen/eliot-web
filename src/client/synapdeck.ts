@@ -338,6 +338,9 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
     }
 }
 
+function produceReviewSheet(cards: CardDue[], numCards: number) {
+    console.log(cards.slice(0, numCards - 1));
+}
 
 // Enhanced display function that shows review ahead info
 function displayAvailableCardsWithStatus(cards: CardDue[], reviewAhead: boolean = false, hoursAhead: number = 0): void {
@@ -655,8 +658,9 @@ if (reviewSubmitButton) {
             const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
             const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
 
-            console.log(reviewAheadNumCards.value + " cards picked")
-            console.log(typeof reviewAheadNumCards.value)
+            
+            let numCards = parseInt(reviewAheadNumCards.value)
+            
             const currentReviewAhead = reviewAheadCheckbox?.checked || false;
             const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
             
@@ -675,11 +679,15 @@ if (reviewSubmitButton) {
 
             // Display the results
             if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
-                displayAvailableCardsWithStatus(
+                
+                produceReviewSheet(cachedCardResults.cards, numCards);
+
+
+                /*displayAvailableCardsWithStatus(
                     cachedCardResults.cards, 
                     currentReviewAhead, 
                     currentHoursAhead
-                );
+                );*/
                 
                 // Update submit button text to show count
                 updateSubmitButtonText(cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
