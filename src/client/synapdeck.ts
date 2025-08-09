@@ -418,21 +418,28 @@ function produceReviewSheet(cards: CardDue[], numCards: number) {
         let card = cards[i];
         cardDict[card.card_id.toString()] = card;
     }
-    console.log("רשׁימת הרשׁימות :")
+    
     let sortedCards: CardDue[][] = groupCardsByDueDate(cards);
-
+    console.log("רשׁימת הרשׁימות :");
     console.log(sortedCards);
+
     let finalCardList: CardDue[] = [];
     for (let i=0; i < sortedCards.length; i++) {
         let cardSubArray = sortedCards[i];
-        finalCardList = sortDueDateArray(cardSubArray, finalCardList, numCards, cardDict);
+        let thisSubArrayList = sortDueDateArray(cardSubArray, finalCardList, numCards, cardDict);
+        console.log("Array #" + (i + 1).toString() + ":")
+        console.log(thisSubArrayList);
+        for (let j=0; j < thisSubArrayList.length; j++) {
+            let shuffledCard = thisSubArrayList[j];
+            finalCardList.push(shuffledCard);
+        }
         if (finalCardList.length >= numCards) {
             break;
         }
     }
     console.log("Should be showing " + numCards.toString() + " cards")
     console.log(finalCardList);
-    return finalCardList;
+    return shuffleCardArray(finalCardList);
 }
 
 // Enhanced display function that shows review ahead info
