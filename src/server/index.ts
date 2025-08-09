@@ -849,8 +849,9 @@ app.post('/wipe_synapdeck_database', express.json(), wrapAsync(async (req, res) 
 }));
 
 
+// Enhanced backend endpoint that handles review ahead
 app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) => {
-    const { deck, current_time } = req.body;
+    const { deck, current_time, review_ahead, hours_ahead } = req.body;
     
     if (!deck) {
         return res.status(400).json({ 
@@ -862,7 +863,8 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
     // Use provided time or current time
     const checkTime = current_time ? new Date(current_time) : new Date();
     
-    console.log(`Checking cards due for deck: ${deck} at time: ${checkTime.toISOString()}`);
+    const modeText = review_ahead ? `review ahead (${hours_ahead || 24}h)` : 'due now';
+    console.log(`Checking cards for deck: ${deck} - Mode: ${modeText} - Time: ${checkTime.toISOString()}`);
     
     try {
         const query = await client.query(
@@ -877,22 +879,39 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
                 time_due,
                 interval,
                 retrievability,
-                peers
+                peers,
+                CASE 
+                    WHEN time_due <= NOW() THEN 'due_now'
+                    WHEN time_due <= $2 THEN 'due_ahead'
+                    ELSE 'not_due'
+                END as due_status
             FROM cards 
             WHERE deck = $1 
             AND time_due <= $2
-            ORDER BY time_due ASC`,
+            ORDER BY 
+                CASE 
+                    WHEN time_due <= NOW() THEN 0  -- Due now cards first
+                    ELSE 1                         -- Then ahead cards
+                END,
+                time_due ASC`,
             [deck, checkTime]
         );
         
-        console.log(`Found ${query.rows.length} cards due for deck ${deck}`);
+        const dueNow = query.rows.filter(card => card.due_status === 'due_now');
+        const dueAhead = query.rows.filter(card => card.due_status === 'due_ahead');
+        
+        console.log(`Found ${query.rows.length} cards total (${dueNow.length} due now, ${dueAhead.length} due ahead)`);
         
         res.json({
             status: 'success',
             cards: query.rows,
             total_due: query.rows.length,
+            due_now_count: dueNow.length,
+            due_ahead_count: dueAhead.length,
             deck: deck,
-            checked_at: checkTime.toISOString()
+            checked_at: checkTime.toISOString(),
+            review_ahead: review_ahead || false,
+            hours_ahead: hours_ahead || 0
         });
         
     } catch (err) {
@@ -904,7 +923,6 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
         });
     }
 }));
-
 // Additional endpoint to get deck statistics
 app.get('/deck_stats/:deckName', wrapAsync(async (req, res) => {
     const { deckName } = req.params;

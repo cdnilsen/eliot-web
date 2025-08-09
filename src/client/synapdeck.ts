@@ -283,6 +283,182 @@ uploadSubmitButton.addEventListener('click', async () => {
 });
 
 
+async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCardsResponse> {
+    const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
+    const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
+    
+    let checkTime: Date;
+    
+    if (reviewAheadCheckbox && reviewAheadCheckbox.checked) {
+        // Review ahead - check cards due within the selected timeframe
+        const hoursAhead = parseInt(reviewAheadHours?.value || '24');
+        checkTime = new Date();
+        checkTime.setHours(checkTime.getHours() + hoursAhead);
+        console.log(`📚 Checking cards due within ${hoursAhead} hours`);
+    } else {
+        // Normal mode - only cards due now
+        checkTime = new Date();
+        console.log('📚 Checking cards due now');
+    }
+    
+    try {
+        const response = await fetch('/check_cards_available', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                deck: deckName,
+                current_time: checkTime.toISOString(),
+                review_ahead: reviewAheadCheckbox?.checked || false,
+                hours_ahead: reviewAheadCheckbox?.checked ? parseInt(reviewAheadHours?.value || '24') : 0
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: CheckCardsResponse = await response.json();
+        console.log('Available cards response:', result);
+        
+        return result;
+    } catch (error) {
+        console.error('Error checking available cards:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error checking available cards' 
+        };
+    }
+}
+
+// Function to toggle the review ahead options visibility
+function setupReviewAheadUI(): void {
+    const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
+    const reviewAheadOptions = document.getElementById('reviewAheadOptions') as HTMLDivElement;
+    
+    if (reviewAheadCheckbox && reviewAheadOptions) {
+        reviewAheadCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                reviewAheadOptions.style.display = 'block';
+            } else {
+                reviewAheadOptions.style.display = 'none';
+            }
+        });
+    }
+}
+
+// Enhanced display function that shows review ahead info
+function displayAvailableCardsWithStatus(cards: CardDue[], reviewAhead: boolean = false, hoursAhead: number = 0): void {
+    const outputDiv = document.getElementById("check_output") as HTMLDivElement;
+    if (!outputDiv) return;
+
+    if (cards.length === 0) {
+        const message = reviewAhead 
+            ? `No cards are due within the next ${hoursAhead} hours.`
+            : 'No cards are currently due for review.';
+        outputDiv.innerHTML = `<p>${message}</p>`;
+        return;
+    }
+
+    const now = new Date();
+    const dueNow = cards.filter(card => new Date(card.time_due) <= now);
+    const dueAhead = cards.filter(card => new Date(card.time_due) > now);
+    
+    let html = `<h3>Cards for Review (${cards.length})</h3>`;
+    
+    if (reviewAhead && hoursAhead > 0) {
+        html += `<p class="review-ahead-info">📚 Showing cards due within ${hoursAhead} hours</p>`;
+        if (dueNow.length > 0) {
+            html += `<p>🔴 ${dueNow.length} cards due now | ⏰ ${dueAhead.length} cards due ahead</p>`;
+        }
+    }
+    
+    html += '<div class="cards-list">';
+    
+    cards.forEach((card, index) => {
+        const dueDate = new Date(card.time_due);
+        const isOverdue = dueDate < now;
+        const isDueSoon = dueDate <= new Date(now.getTime() + 2 * 60 * 60 * 1000); // due within 2 hours
+        
+        let statusClass = 'due-ahead';
+        let statusText = 'Due ahead';
+        
+        if (isOverdue) {
+            statusClass = 'overdue';
+            statusText = 'Overdue';
+        } else if (isDueSoon) {
+            statusClass = 'due-soon';
+            statusText = 'Due soon';
+        }
+        
+        html += `
+            <div class="card-item ${statusClass}" data-card-id="${card.card_id}">
+                <div class="card-header">
+                    <span class="card-id">Card #${card.card_id}</span>
+                    <span class="card-format">${card.card_format || 'Standard'}</span>
+                    <span class="due-time" title="${dueDate.toLocaleString()}">
+                        ${statusText}: ${dueDate.toLocaleDateString()} ${dueDate.toLocaleTimeString()}
+                    </span>
+                </div>
+                <div class="card-content">
+                    ${card.field_values.map((value, i) => 
+                        `<div class="field"><strong>${card.field_names[i] || `Field ${i+1}`}:</strong> ${value}</div>`
+                    ).join('')}
+                </div>
+                <div class="card-stats">
+                    <span>Interval: ${card.interval} days</span>
+                    <span>Retrievability: ${(card.retrievability * 100).toFixed(1)}%</span>
+                    ${!isOverdue ? `<span class="time-until">Due in: ${getTimeUntilDue(dueDate)}</span>` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    outputDiv.innerHTML = html;
+}
+
+// Helper function to format time until due
+function getTimeUntilDue(dueDate: Date): string {
+    const now = new Date();
+    const diffMs = dueDate.getTime() - now.getTime();
+    
+    if (diffMs <= 0) return 'Now';
+    
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (diffHours > 24) {
+        const diffDays = Math.floor(diffHours / 24);
+        return `${diffDays}d ${diffHours % 24}h`;
+    } else if (diffHours > 0) {
+        return `${diffHours}h ${diffMinutes}m`;
+    } else {
+        return `${diffMinutes}m`;
+    }
+}
+
+// Updated main function that uses the new options
+async function checkAndDisplayCards(deckName: string): Promise<void> {
+    const result = await checkAvailableCardsWithOptions(deckName);
+    
+    if (result.status === 'success' && result.cards) {
+        const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
+        const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
+        
+        const isReviewAhead = reviewAheadCheckbox?.checked || false;
+        const hoursAhead = isReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
+        
+        displayAvailableCardsWithStatus(result.cards, isReviewAhead, hoursAhead);
+    } else {
+        const outputDiv = document.getElementById("check_output") as HTMLDivElement;
+        if (outputDiv) {
+            outputDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+        }
+    }
+}
+
 async function checkAvailableCards(deckName: string): Promise<CheckCardsResponse> {
     try {
         const response = await fetch('/check_cards_available', {
@@ -312,13 +488,18 @@ async function checkAvailableCards(deckName: string): Promise<CheckCardsResponse
         };
     }
 }
-let reviewDeckDropdown = document.getElementById("review_dropdownMenu");
-let selectedReviewDeck: string = ""
+let reviewDeckDropdown = document.getElementById("review_dropdownMenu") as HTMLSelectElement;
+let selectedReviewDeck: string = "";
 
 if (reviewDeckDropdown) {
-    reviewDeckDropdown.addEventListener('change', (event) => {
+    reviewDeckDropdown.addEventListener('change', async (event) => {
         const selectedValue = (event.target as HTMLSelectElement).value;
         selectedReviewDeck = selectedValue;
-        checkAvailableCards(selectedReviewDeck)
+        
+        if (selectedReviewDeck) {
+            console.log(`Checking cards for deck: ${selectedReviewDeck}`);
+            // Use the enhanced function that handles review ahead options
+            await checkAndDisplayCards(selectedReviewDeck);
+        }
     });
 }
