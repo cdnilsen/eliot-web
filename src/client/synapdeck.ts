@@ -160,7 +160,8 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         field_names: field_names,
         field_values: field_values,
         field_processing: field_processing,
-        card_configs: card_configs
+        card_configs: card_configs,
+        time: Date.now()
     };
     
     console.log('Sending payload:', JSON.stringify(payload, null, 2));
@@ -195,15 +196,15 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
 uploadSubmitButton.addEventListener('click', async () => {
     console.log('Submit button clicked');
     
-    // First, wipe the database
-    /*
-    console.log('Wiping database before processing...');
-    const wipeSuccess = await wipeSynapdeckDatabase();
-    if (!wipeSuccess) {
-        console.error('Failed to wipe database, aborting');
-        return;
+    let wipeDatabaseCheckmark = document.getElementById("wipeDatabaseCheckbox");
+    if (wipeDatabaseCheckmark && (wipeDatabaseCheckmark as HTMLInputElement).checked) {
+        console.log('Wiping database before processing...');
+        const wipeSuccess = await wipeSynapdeckDatabase();
+        if (!wipeSuccess) {
+            console.error('Failed to wipe database, aborting');
+            return;
+        }
     }
-    */
     
     let currentNoteType = "";
     let currentProcessList: string[] = [];
@@ -542,10 +543,11 @@ if (reviewDeckDropdown) {
             
             try {
                 // Pre-load the card data silently
+                //Man this is repetitive
                 const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
 
             
-            let numCards = parseInt(reviewAheadNumCards.value)
+                let numCards = parseInt(reviewAheadNumCards.value)
                 cachedCardResults = await checkAvailableCardsWithOptions(selectedReviewDeck);
                 lastCheckedDeck = selectedReviewDeck;
                 

@@ -663,6 +663,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         field_values, 
         field_processing, 
         card_configs,
+        time,
         initial_interval_ms = 86400000, // Default to 24 hours (1 day) if not provided
         wipe_database = false // Add flag to control database wiping
     } = req.body;
@@ -710,9 +711,9 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         console.log('Inserting note...');
         const noteResult = await transactionClient.query(
             `INSERT INTO notes (deck, note_type, field_names, field_values, created_at) 
-             VALUES ($1, $2, $3, $4, NOW()) 
+             VALUES ($1, $2, $3, $4, $5) 
              RETURNING note_id`,
-            [deck, note_type, fieldNamesArray, fieldValuesArray]
+            [deck, note_type, fieldNamesArray, fieldValuesArray, time]
         );
         
         console.log('Note insert result:', noteResult.rows);
@@ -750,8 +751,8 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                 const cardIntervalDays = Math.ceil(cardIntervalMs / (1000 * 60 * 60 * 24));
                 console.log("Card interval: " + cardIntervalDays.toString())
                 const cardResult = await transactionClient.query(
-                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, time_due, interval, retrievability) 
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, time_due, interval, retrievability, created) 
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
                      RETURNING card_id`,
                     [
                         noteId,
@@ -762,7 +763,8 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                         config.field_processing || null,
                         cardDueDate,
                         cardIntervalDays,
-                        1
+                        1,
+                        time
                     ]
                 );
                 cardIds.push(cardResult.rows[0].card_id);
