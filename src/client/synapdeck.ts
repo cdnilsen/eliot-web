@@ -39,7 +39,12 @@ interface CheckCardsResponse {
     status: 'success' | 'error';
     cards?: CardDue[];
     total_due?: number;
+    due_now_count?: number;
+    due_ahead_count?: number;
     deck?: string;
+    checked_at?: string;
+    review_ahead?: boolean;
+    hours_ahead?: number;
     error?: string;
     details?: string;
 }
@@ -332,21 +337,6 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
     }
 }
 
-// Function to toggle the review ahead options visibility
-function setupReviewAheadUI(): void {
-    const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
-    const reviewAheadOptions = document.getElementById('reviewAheadOptions') as HTMLDivElement;
-    
-    if (reviewAheadCheckbox && reviewAheadOptions) {
-        reviewAheadCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                reviewAheadOptions.style.display = 'block';
-            } else {
-                reviewAheadOptions.style.display = 'none';
-            }
-        });
-    }
-}
 
 // Enhanced display function that shows review ahead info
 function displayAvailableCardsWithStatus(cards: CardDue[], reviewAhead: boolean = false, hoursAhead: number = 0): void {
@@ -491,15 +481,215 @@ async function checkAvailableCards(deckName: string): Promise<CheckCardsResponse
 let reviewDeckDropdown = document.getElementById("review_dropdownMenu") as HTMLSelectElement;
 let selectedReviewDeck: string = "";
 
+
+// Updated dropdown event listener that caches but doesn't display
 if (reviewDeckDropdown) {
     reviewDeckDropdown.addEventListener('change', async (event) => {
         const selectedValue = (event.target as HTMLSelectElement).value;
         selectedReviewDeck = selectedValue;
         
+        // Clear the output div when deck changes
+        const outputDiv = document.getElementById("check_output") as HTMLDivElement;
+        if (outputDiv) {
+            outputDiv.innerHTML = '';
+        }
+        
         if (selectedReviewDeck) {
-            console.log(`Checking cards for deck: ${selectedReviewDeck}`);
-            // Use the enhanced function that handles review ahead options
-            await checkAndDisplayCards(selectedReviewDeck);
+            console.log(`Deck selected: ${selectedReviewDeck}, pre-loading card data...`);
+            
+            // Show brief loading indicator on submit button
+            const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
+            if (submitButton) {
+                submitButton.textContent = 'Checking cards...';
+                submitButton.disabled = true;
+            }
+            
+            try {
+                // Pre-load the card data silently
+                cachedCardResults = await checkAvailableCardsWithOptions(selectedReviewDeck);
+                lastCheckedDeck = selectedReviewDeck;
+                
+                // Update submit button text based on results
+                const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
+                const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
+                const currentReviewAhead = reviewAheadCheckbox?.checked || false;
+                const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
+                
+                if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
+                    updateSubmitButtonText(cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
+                } else {
+                    updateSubmitButtonText(0, currentReviewAhead, currentHoursAhead);
+                }
+                
+                console.log(`Pre-loaded ${cachedCardResults.cards?.length || 0} cards for ${selectedReviewDeck}`);
+            } catch (error) {
+                console.error('Error pre-loading cards:', error);
+                if (submitButton) {
+                    submitButton.textContent = 'Error Loading Cards';
+                    submitButton.disabled = true;
+                }
+            }
+        } else {
+            // Reset if no deck selected
+            const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
+            if (submitButton) {
+                submitButton.textContent = 'Select Deck';
+                submitButton.disabled = true;
+            }
+            cachedCardResults = null;
+            lastCheckedDeck = "";
+        }
+    });
+}
+
+
+// Helper function to refresh the card cache
+async function refreshCardCache(): Promise<void> {
+    if (!selectedReviewDeck) return;
+    
+    console.log('Refreshing card cache due to setting change...');
+    
+    const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
+    if (submitButton) {
+        submitButton.textContent = 'Updating...';
+        submitButton.disabled = true;
+    }
+    
+    try {
+        cachedCardResults = await checkAvailableCardsWithOptions(selectedReviewDeck);
+        lastCheckedDeck = selectedReviewDeck;
+        
+        const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
+        const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
+        const currentReviewAhead = reviewAheadCheckbox?.checked || false;
+        const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
+        
+        if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
+            updateSubmitButtonText(cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
+        } else {
+            updateSubmitButtonText(0, currentReviewAhead, currentHoursAhead);
+        }
+    } catch (error) {
+        console.error('Error refreshing card cache:', error);
+        if (submitButton) {
+            submitButton.textContent = 'Error';
+            submitButton.disabled = true;
+        }
+    }
+}
+
+function setupReviewAheadUI(): void {
+    const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
+    const reviewAheadOptions = document.getElementById('reviewAheadOptions') as HTMLDivElement;
+    
+    if (reviewAheadCheckbox && reviewAheadOptions) {
+        reviewAheadCheckbox.addEventListener('change', async function() {
+            if (this.checked) {
+                reviewAheadOptions.style.display = 'block';
+            } else {
+                reviewAheadOptions.style.display = 'none';
+            }
+            
+            // Refresh cache and button text when review ahead setting changes
+            if (selectedReviewDeck) {
+                await refreshCardCache();
+            }
+        });
+    }
+    
+    const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
+    if (reviewAheadHours) {
+        reviewAheadHours.addEventListener('change', async function() {
+            const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
+            if (selectedReviewDeck && reviewAheadCheckbox?.checked) {
+                await refreshCardCache();
+            }
+        });
+    }
+}
+
+
+
+// Add a variable to store the cached card results
+let cachedCardResults: CheckCardsResponse | null = null;
+let lastCheckedDeck: string = "";
+let reviewSubmitButton = document.getElementById("review_submitBtn");
+
+function updateSubmitButtonText(cardCount: number, reviewAhead: boolean, hoursAhead: number): void {
+    const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
+    if (submitButton) {
+        if (cardCount === 0) {
+            const timeText = reviewAhead ? ` (${hoursAhead}h ahead)` : '';
+            submitButton.textContent = `No Cards Available${timeText}`;
+            submitButton.disabled = true;
+        } else {
+            const timeText = reviewAhead ? ` (${hoursAhead}h ahead)` : '';
+            submitButton.textContent = `Review ${cardCount} Card${cardCount !== 1 ? 's' : ''}${timeText}`;
+            submitButton.disabled = false;
+        }
+    }
+}
+
+if (reviewSubmitButton) {
+    reviewSubmitButton.addEventListener('click', async () => {
+        if (!selectedReviewDeck) {
+            const outputDiv = document.getElementById("check_output") as HTMLDivElement;
+            if (outputDiv) {
+                outputDiv.innerHTML = `<p class="error">Please select a deck first.</p>`;
+            }
+            return;
+        }
+
+        console.log(`Review submit clicked for deck: ${selectedReviewDeck}`);
+        
+        // Show loading state
+        const outputDiv = document.getElementById("check_output") as HTMLDivElement;
+        if (outputDiv) {
+            outputDiv.innerHTML = `<p>Loading cards for ${selectedReviewDeck}...</p>`;
+        }
+
+        try {
+            // Check if we need to refresh the cache (deck changed or review options changed)
+            const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
+            const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
+            
+            const currentReviewAhead = reviewAheadCheckbox?.checked || false;
+            const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
+            
+            // Generate a cache key to check if settings changed
+            const cacheKey = `${selectedReviewDeck}-${currentReviewAhead}-${currentHoursAhead}`;
+            const lastCacheKey = `${lastCheckedDeck}-${cachedCardResults?.review_ahead || false}-${cachedCardResults?.hours_ahead || 0}`;
+            
+            // Fetch fresh data if cache is invalid
+            if (!cachedCardResults || cacheKey !== lastCacheKey) {
+                console.log('Cache miss or settings changed, fetching fresh data...');
+                cachedCardResults = await checkAvailableCardsWithOptions(selectedReviewDeck);
+                lastCheckedDeck = selectedReviewDeck;
+            } else {
+                console.log('Using cached card data');
+            }
+
+            // Display the results
+            if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
+                displayAvailableCardsWithStatus(
+                    cachedCardResults.cards, 
+                    currentReviewAhead, 
+                    currentHoursAhead
+                );
+                
+                // Update submit button text to show count
+                updateSubmitButtonText(cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
+            } else {
+                if (outputDiv) {
+                    outputDiv.innerHTML = `<p class="error">Error: ${cachedCardResults.error}</p>`;
+                }
+                updateSubmitButtonText(0, currentReviewAhead, currentHoursAhead);
+            }
+        } catch (error) {
+            console.error('Error in review submit:', error);
+            if (outputDiv) {
+                outputDiv.innerHTML = `<p class="error">Network error occurred</p>`;
+            }
         }
     });
 }
