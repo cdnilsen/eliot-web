@@ -847,3 +847,108 @@ app.post('/wipe_synapdeck_database', express.json(), wrapAsync(async (req, res) 
         transactionClient.release();
     }
 }));
+
+
+app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) => {
+    const { deck, current_time } = req.body;
+    
+    if (!deck) {
+        return res.status(400).json({ 
+            status: 'error', 
+            error: 'Deck name is required' 
+        });
+    }
+    
+    // Use provided time or current time
+    const checkTime = current_time ? new Date(current_time) : new Date();
+    
+    console.log(`Checking cards due for deck: ${deck} at time: ${checkTime.toISOString()}`);
+    
+    try {
+        const query = await client.query(
+            `SELECT 
+                card_id,
+                note_id,
+                deck,
+                card_format,
+                field_names,
+                field_values,
+                field_processing,
+                time_due,
+                interval,
+                retrievability,
+                peers
+            FROM cards 
+            WHERE deck = $1 
+            AND time_due <= $2
+            ORDER BY time_due ASC`,
+            [deck, checkTime]
+        );
+        
+        console.log(`Found ${query.rows.length} cards due for deck ${deck}`);
+        
+        res.json({
+            status: 'success',
+            cards: query.rows,
+            total_due: query.rows.length,
+            deck: deck,
+            checked_at: checkTime.toISOString()
+        });
+        
+    } catch (err) {
+        console.error('Error checking available cards:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error checking available cards',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));
+
+// Additional endpoint to get deck statistics
+app.get('/deck_stats/:deckName', wrapAsync(async (req, res) => {
+    const { deckName } = req.params;
+    const now = new Date();
+    
+    try {
+        // Get various statistics about the deck
+        const totalCards = await client.query(
+            'SELECT COUNT(*) as count FROM cards WHERE deck = $1',
+            [deckName]
+        );
+        
+        const dueNow = await client.query(
+            'SELECT COUNT(*) as count FROM cards WHERE deck = $1 AND time_due <= $2',
+            [deckName, now]
+        );
+        
+        const dueToday = await client.query(
+            'SELECT COUNT(*) as count FROM cards WHERE deck = $1 AND time_due <= $2',
+            [deckName, new Date(now.getTime() + 24 * 60 * 60 * 1000)]
+        );
+        
+        const averageInterval = await client.query(
+            'SELECT AVG(interval) as avg_interval FROM cards WHERE deck = $1',
+            [deckName]
+        );
+        
+        res.json({
+            status: 'success',
+            deck: deckName,
+            stats: {
+                total_cards: parseInt(totalCards.rows[0].count),
+                due_now: parseInt(dueNow.rows[0].count),
+                due_today: parseInt(dueToday.rows[0].count),
+                average_interval: parseFloat(averageInterval.rows[0].avg_interval || '0')
+            }
+        });
+        
+    } catch (err) {
+        console.error('Error getting deck stats:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error getting deck statistics',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));

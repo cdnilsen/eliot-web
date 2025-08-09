@@ -20,6 +20,30 @@ interface NoteToProcess {
     processList: string[];
 }
 
+// Interface for card data returned from backend
+interface CardDue {
+    card_id: number;
+    note_id: number;
+    deck: string;
+    card_format: string;
+    field_names: string[];
+    field_values: string[];
+    field_processing: string[];
+    time_due: string;
+    interval: number;
+    retrievability: number;
+    peers: number[];
+}
+
+interface CheckCardsResponse {
+    status: 'success' | 'error';
+    cards?: CardDue[];
+    total_due?: number;
+    deck?: string;
+    error?: string;
+    details?: string;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const buttons = document.querySelectorAll('.button-row button');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -48,25 +72,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
 let currentFileContent: string = "";
 let currentDeck: string = "";
-let deckDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+let uploadDeckDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
 
-if (deckDropdown) {
-    deckDropdown.addEventListener('change', (event) => {
+if (uploadDeckDropdown) {
+    uploadDeckDropdown.addEventListener('change', (event) => {
         const selectedValue = (event.target as HTMLSelectElement).value;
         currentDeck = selectedValue;
     });
 }
 
 let fileInput = document.getElementById("uploadTextFile") as HTMLInputElement;
-let submitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
-let cancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
+let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
+let uploadCancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
 fileInput.addEventListener('change', (event) => {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file && file.type === 'text/plain') { // Check file type for safety
         const reader = new FileReader();
         reader.onload = (e) => {
-            submitButton.style.visibility = "visible";
-            cancelButton.style.visibility = "visible";
+            uploadSubmitButton.style.visibility = "visible";
+            uploadCancelButton.style.visibility = "visible";
             const fileContent = e.target?.result as string;
             // Process the fileContent here
             currentFileContent = fileContent;
@@ -162,7 +186,7 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
 
 
 // Modified submit button event listener
-submitButton.addEventListener('click', async () => {
+uploadSubmitButton.addEventListener('click', async () => {
     console.log('Submit button clicked');
     
     // First, wipe the database
@@ -255,6 +279,46 @@ submitButton.addEventListener('click', async () => {
             console.error(`✗ Note ${i + 1} error:`, error);
         }
     }
-    
     console.log('All notes processed!');
 });
+
+
+async function checkAvailableCards(deckName: string): Promise<CheckCardsResponse> {
+    try {
+        const response = await fetch('/check_cards_available', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                deck: deckName,
+                current_time: new Date().toISOString() // Send current time for due date comparison
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: CheckCardsResponse = await response.json();
+        console.log('Available cards response:', result);
+        
+        return result;
+    } catch (error) {
+        console.error('Error checking available cards:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error checking available cards' 
+        };
+    }
+}
+let reviewDeckDropdown = document.getElementById("review_dropdownMenu");
+let selectedReviewDeck: string = ""
+
+if (reviewDeckDropdown) {
+    reviewDeckDropdown.addEventListener('change', (event) => {
+        const selectedValue = (event.target as HTMLSelectElement).value;
+        selectedReviewDeck = selectedValue;
+        checkAvailableCards(selectedReviewDeck)
+    });
+}

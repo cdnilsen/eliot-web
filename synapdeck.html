@@ -49,8 +49,18 @@
         </div>
 
         <div id="review_mainDiv" class="tab-content">
-            <h2>Do Reviews</h2>
-            <p>Review content will go here...</p>
+            <label for="review_dropdownMenu">Choose a deck to review:</label>
+            <select id="review_dropdownMenu" name="review_dropdownMenu">
+                <option value="" disabled selected>Select a deck</option>
+                <option value="Ge'ez">Ge'ez</option>
+            </select>
+
+            <div class="review_input-group">
+                <label for="review_numCards">Number of new cards to review:</label>
+                <input type="number" id="review_numCards" name="review_numCards" min="1" max="100" value="10">
+            </div>
+
+
         </div>
 
         <div id="check_mainDiv" class="tab-content">
