@@ -672,6 +672,9 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
     
     // Get a dedicated client for this transaction
     const transactionClient = await client.connect();
+
+    const baseTime = new Date(timeCreated);
+    const dueDate = new Date(baseTime.getTime() + initial_interval_ms);
     
     try {
         await transactionClient.query('BEGIN');
@@ -747,7 +750,6 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                 
                 // Each card can have its own interval, or inherit from the note
                 const cardIntervalMs = config.initial_interval_ms || initial_interval_ms;
-                const cardDueDate = new Date(now.getTime() + cardIntervalMs);
                 const cardIntervalDays = Math.ceil(cardIntervalMs / (1000 * 60 * 60 * 24));
                 console.log("Card interval: " + cardIntervalDays.toString())
                 const cardResult = await transactionClient.query(
@@ -761,14 +763,14 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                         config.field_names || null,
                         config.field_values || null,
                         config.field_processing || null,
-                        cardDueDate,
+                        dueDate,
                         cardIntervalDays,
                         1,
                         timeCreated
                     ]
                 );
                 cardIds.push(cardResult.rows[0].card_id);
-                console.log(`Inserted card ${cardResult.rows[0].card_id} with due date: ${cardDueDate.toISOString()}`);
+                console.log(`Inserted card ${cardResult.rows[0].card_id} with due date: ${dueDate.toISOString()}`);
             }
             
             // Update peers using the same connection
