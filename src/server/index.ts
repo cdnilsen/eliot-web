@@ -867,6 +867,17 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
     const checkTime = current_time ? new Date(current_time) : new Date();
     const actualCurrentTime = actual_current_time ? new Date(actual_current_time) : new Date();
 
+    console.log('Testing simple query...');
+    const testQuery = await client.query(
+        'SELECT COUNT(*) as count FROM cards WHERE deck = $1',
+        [deck]
+    );
+    console.log('Simple query result:', testQuery.rows);
+
+    // If that works, try the full query with explicit logging
+    console.log('Parameters being passed:', [deck, checkTime, actualCurrentTime]);
+    console.log('Parameter types:', [typeof deck, typeof checkTime, typeof actualCurrentTime]);
+
     console.log('Request body:', req.body);
     console.log('Deck:', deck);
     console.log('Current time:', current_time);
