@@ -196,12 +196,14 @@ uploadSubmitButton.addEventListener('click', async () => {
     console.log('Submit button clicked');
     
     // First, wipe the database
+    /*
     console.log('Wiping database before processing...');
     const wipeSuccess = await wipeSynapdeckDatabase();
     if (!wipeSuccess) {
         console.error('Failed to wipe database, aborting');
         return;
     }
+    */
     
     let currentNoteType = "";
     let currentProcessList: string[] = [];
