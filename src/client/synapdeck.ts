@@ -418,8 +418,10 @@ function produceReviewSheet(cards: CardDue[], numCards: number) {
         let card = cards[i];
         cardDict[card.card_id.toString()] = card;
     }
-
+    console.log("רשׁימת הרשׁימות :")
     let sortedCards: CardDue[][] = groupCardsByDueDate(cards);
+
+    console.log(sortedCards);
     let finalCardList: CardDue[] = [];
     for (let i=0; i < sortedCards.length; i++) {
         let cardSubArray = sortedCards[i];
