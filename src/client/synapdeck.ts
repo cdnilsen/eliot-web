@@ -777,7 +777,7 @@ if (reviewSubmitButton) {
 
             // Display the results
             if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
-                
+                console.log("Should be showing review sheet...")
                 produceReviewSheet(cachedCardResults.cards, numCards);
 
 
