@@ -748,10 +748,10 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                 const cardIntervalMs = config.initial_interval_ms || initial_interval_ms;
                 const cardDueDate = new Date(now.getTime() + cardIntervalMs);
                 const cardIntervalDays = Math.ceil(cardIntervalMs / (1000 * 60 * 60 * 24));
-                
+                console.log("Card interval: " + cardIntervalDays.toString())
                 const cardResult = await transactionClient.query(
-                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, time_due, interval) 
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, time_due, interval, retrievability) 
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
                      RETURNING card_id`,
                     [
                         noteId,
@@ -761,7 +761,8 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                         config.field_values || null,
                         config.field_processing || null,
                         cardDueDate,
-                        cardIntervalDays
+                        cardIntervalDays,
+                        1
                     ]
                 );
                 cardIds.push(cardResult.rows[0].card_id);
