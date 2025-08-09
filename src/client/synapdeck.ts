@@ -142,7 +142,7 @@ function delay(ms: number) {
 }
 
 // The program creates a 'pretracker' which gets handed off to the backend.
-async function sendNoteToBackend(deck: string, note_type: string, field_values: string[], field_processing: string[]) {
+async function sendNoteToBackend(deck: string, note_type: string, field_values: string[], field_processing: string[], time: number) {
     // Generate card configurations based on note type
     let card_configs: any[] = [];
     
@@ -161,7 +161,7 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         field_values: field_values,
         field_processing: field_processing,
         card_configs: card_configs,
-        time: Date.now()
+        time: time
     };
     
     console.log('Sending payload:', JSON.stringify(payload, null, 2));
@@ -195,6 +195,8 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
 // Modified submit button event listener
 uploadSubmitButton.addEventListener('click', async () => {
     console.log('Submit button clicked');
+
+    let time = Date.now()
     
     let wipeDatabaseCheckmark = document.getElementById("wipeDatabaseCheckbox");
     if (wipeDatabaseCheckmark && (wipeDatabaseCheckmark as HTMLInputElement).checked) {
@@ -270,7 +272,8 @@ uploadSubmitButton.addEventListener('click', async () => {
                 note.deck, 
                 note.noteType, 
                 note.dataList, 
-                note.processList
+                note.processList,
+                time
             );
             
             if (result.status === 'success') {
