@@ -78,3 +78,28 @@ export function arrayBufferToBase64(buffer: ArrayBuffer): string {
     
     return btoa(binary);
 }
+
+// Add this helper function to properly handle Ge'ez text in jsPDF
+export function prepareTextForPDF(text: string): string {
+    // Method 1: Ensure proper Unicode normalization
+    let normalizedText = text.normalize('NFC');
+    
+    // Method 2: Replace any problematic HTML entities or tags
+    normalizedText = normalizedText
+        .replace(/<[^>]*>/g, '') // Remove any HTML tags
+        .replace(/&[^;]+;/g, ''); // Remove HTML entities
+    
+    return normalizedText;
+}
+
+// Add this function to test if characters will render properly
+export function testCharacterRendering(doc: any, text: string): boolean {
+    try {
+        // Try to measure the text - if it fails, the characters aren't supported
+        const dimensions = doc.getTextDimensions(text);
+        return dimensions.w > 0; // If width is 0, characters aren't rendering
+    } catch (error) {
+        console.warn('Character rendering test failed:', error);
+        return false;
+    }
+}

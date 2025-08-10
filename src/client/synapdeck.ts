@@ -1,5 +1,5 @@
 import {transliterateGeez} from './transcribe_geez.js';
-import {OneWayCard, TwoWayCard, arrayBufferToBase64} from './synapdeck_lib.js'
+import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 declare global {
     interface Window {
@@ -612,7 +612,8 @@ async function produceCardReviewSheet(cards: CardDue[]) {
         console.log('Front side line:', frontSideLine);
         console.log('Character codes:', [...frontSideLine].map(c => c.charCodeAt(0)));
         
-        let displayText = frontSideLine;
+        let displayText = prepareTextForPDF(frontSideLine);
+        console.log('Processed for PDF:', displayText);
         
         // Card number and front side - use Gentium font for Ge'ez text
         doc.setFontSize(12);
@@ -624,6 +625,12 @@ async function produceCardReviewSheet(cards: CardDue[]) {
             try {
                 doc.setFont('Gentium', 'normal');
                 console.log('Using Gentium font for card', index + 1);
+
+                const canRenderThis = testCharacterRendering(doc, displayText);
+                if (!canRenderThis) {
+                    console.warn('This text may not render properly:', displayText);
+                    // Optionally fall back to transliteration or alternative font
+                }
             } catch (e) {
                 console.warn('Failed to set Gentium font for card', index + 1, ':', e);
                 doc.setFont('helvetica', 'normal');
