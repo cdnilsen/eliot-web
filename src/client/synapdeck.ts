@@ -195,21 +195,18 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
 }
 
 
+const timestampCreated = new Date(Date.now()).toISOString();
+let wipeDatabaseButton = document.getElementById("wipeDatabaseButton");
+if (wipeDatabaseButton) {
+    const wipeSuccess = await wipeSynapdeckDatabase();
+    if (!wipeSuccess) {
+        console.error('Failed to wipe database, aborting');
+    }
+}
+
 // Modified submit button event listener
 uploadSubmitButton.addEventListener('click', async () => {
     console.log('Submit button clicked');
-
-    const timestampCreated = new Date(Date.now()).toISOString();
-    
-    let wipeDatabaseCheckmark = document.getElementById("wipeDatabaseCheckbox");
-    if (wipeDatabaseCheckmark && (wipeDatabaseCheckmark as HTMLInputElement).checked) {
-        console.log('Wiping database before processing...');
-        const wipeSuccess = await wipeSynapdeckDatabase();
-        if (!wipeSuccess) {
-            console.error('Failed to wipe database, aborting');
-            return;
-        }
-    }
     
     let currentNoteType = "";
     let currentProcessList: string[] = [];
