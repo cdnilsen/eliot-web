@@ -486,7 +486,270 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
     return shuffledFinalList;
 }
 
+function generateReviewSheetHTML(cards: CardDue[]): string {
+    const today = new Date().toLocaleDateString();
+    
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Card Review Sheet - ${today}</title>
+            <style>
+                @font-face {
+                    font-family: 'GentiumPlus';
+                    src: url('/Gentium/GentiumPlus-Regular.ttf') format('truetype');
+                    font-weight: normal;
+                    font-style: normal;
+                    font-display: swap;
+                }
+                
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                
+                body {
+                    font-family: 'GentiumPlus', 'Gentium Plus', serif;
+                    font-size: 14px;
+                    line-height: 1.4;
+                    color: #000;
+                    background: white;
+                    max-width: 8.5in;
+                    margin: 0 auto;
+                    padding: 0.5in;
+                }
+                
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 20px;
+                }
+                
+                .title {
+                    font-size: 24px;
+                    font-weight: bold;
+                    margin-bottom: 8px;
+                }
+                
+                .date {
+                    font-size: 12px;
+                    color: #666;
+                    margin-bottom: 15px;
+                }
+                
+                .summary {
+                    font-size: 14px;
+                    font-weight: bold;
+                }
+                
+                .section-title {
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin: 20px 0 15px 0;
+                    color: #333;
+                }
+                
+                .card-item {
+                    margin-bottom: 35px;
+                    page-break-inside: avoid;
+                    break-inside: avoid;
+                }
+                
+                .card-question {
+                    font-size: 14px;
+                    margin-bottom: 15px;
+                    font-weight: normal;
+                    line-height: 1.5;
+                }
+                
+                .card-question strong {
+                    font-weight: bold;
+                }
+                
+                .answer-lines {
+                    margin-left: 20px;
+                }
+                
+                .answer-line {
+                    border-bottom: 1px solid #999;
+                    height: 25px;
+                    margin-bottom: 10px;
+                    width: calc(100% - 20px);
+                }
+                
+                .controls {
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(255, 255, 255, 0.95);
+                    padding: 10px;
+                    border-radius: 5px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    border: 1px solid #ddd;
+                }
+                
+                .btn {
+                    background: #007cba;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    margin: 0 5px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                }
+                
+                .btn:hover {
+                    background: #005a87;
+                }
+                
+                @media print {
+                    .controls {
+                        display: none !important;
+                    }
+                    
+                    body {
+                        font-size: 12pt;
+                        max-width: none;
+                        margin: 0;
+                        padding: 0.5in;
+                    }
+                    
+                    .card-item {
+                        page-break-inside: avoid;
+                        break-inside: avoid;
+                    }
+                    
+                    .answer-line {
+                        border-bottom: 1px solid #333;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="controls">
+                <button class="btn" onclick="window.print()">📄 Save as PDF</button>
+                <button class="btn" onclick="window.close()">✕ Close</button>
+            </div>
+            
+            <div class="header">
+                <div class="title">Card Review Sheet</div>
+                <div class="date">Generated: ${today}</div>
+                <div class="summary">Total Cards: ${cards.length}</div>
+            </div>
+            
+            <div class="section-title">Cards Due for Review:</div>
+            
+            <div class="cards-container">
+                ${cards.map((card, index) => generateCardHTML(card, index + 1)).join('')}
+            </div>
+            
+            <script>
+                // Ensure fonts are loaded before any operations
+                document.fonts.ready.then(() => {
+                    console.log('✅ All fonts loaded');
+                });
+                
+                // Optional: Auto-focus for keyboard shortcuts
+                window.addEventListener('load', () => {
+                    window.focus();
+                });
+                
+                // Keyboard shortcut for print
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                        e.preventDefault();
+                        window.print();
+                    }
+                });
+            </script>
+        </body>
+        </html>`;
+}
+
+function generateCardHTML(card: CardDue, cardNumber: number): string {
+    const frontSideLine = generateCardFrontLine(card);
+    
+    // Convert your custom HTML tags
+    let processedText = frontSideLine
+        .replace(/<ብ>/g, '<strong>')
+        .replace(/<\/ብ>/g, '</strong>')
+        // Add other conversions as needed
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/&lt;strong&gt;/g, '<strong>')
+        .replace(/&lt;\/strong&gt;/g, '</strong>');
+    
+    return `
+        <div class="card-item">
+            <div class="card-question">
+                ${cardNumber}. ${processedText}
+            </div>
+            <div class="answer-lines">
+                <div class="answer-line"></div>
+                <div class="answer-line"></div>
+            </div>
+        </div>
+    `;
+}
+
+
+// Most elegant: Direct PDF viewer integration
+async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
+    try {
+        // Generate the HTML
+        const htmlContent = generateReviewSheetHTML(cards);
+        
+        // Create blob and URL
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+        
+        // Open in new tab with specific dimensions for PDF-like viewing
+        const pdfTab = window.open(
+            blobUrl, 
+            '_blank',
+            'width=850,height=1100,scrollbars=yes,resizable=yes,menubar=yes,toolbar=yes'
+        );
+        
+        if (pdfTab) {
+            // Add event listener to handle PDF generation when ready
+            pdfTab.addEventListener('load', () => {
+                // Wait for fonts and then focus
+                setTimeout(() => {
+                    pdfTab.focus();
+                    
+                    // Optional: Automatically open print dialog
+                    // pdfTab.print();
+                }, 1500);
+            });
+            
+            // Update the tab title
+            pdfTab.addEventListener('load', () => {
+                if (pdfTab.document) {
+                    pdfTab.document.title = 'Card Review Sheet - ' + new Date().toLocaleDateString();
+                }
+            });
+        }
+        
+        // Clean up blob URL after a delay
+        setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+        }, 10000);
+        
+        console.log('✅ PDF view opened in new tab');
+        
+    } catch (error) {
+        console.error('Error opening PDF view:', error);
+        alert('Failed to open PDF view');
+    }
+}
 // Updated PDF generation function
+/*
 async function produceCardReviewSheet(cards: CardDue[]) {
     if (typeof window.jsPDF === 'undefined') {
         console.error('jsPDF is not loaded yet.');
@@ -611,6 +874,7 @@ async function produceCardReviewSheet(cards: CardDue[]) {
     console.log('✅ PDF generated with canvas-rendered Ge\'ez text');
     return doc;
 }
+*/
 
 function generateCardFrontLine(card: CardDue): string {
     let outputString = ""
@@ -985,7 +1249,7 @@ if (reviewSubmitButton) {
                 console.log("Should be showing review sheet...")
                 let cardsToReview: CardDue[] = produceFinalCardList(cachedCardResults.cards, numCards);
 
-                let doc = produceCardReviewSheet(cardsToReview);
+                let doc = produceCardReviewSheetPDFViewer(cardsToReview);
 
                 
                 

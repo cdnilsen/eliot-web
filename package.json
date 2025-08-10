@@ -26,6 +26,8 @@
     "express-session": "^1.18.1",
     "jspdf": "^3.0.1",
     "pg": "^8.11.3",
+    "puppeteer": "^24.16.0",
+    "puppeteer-core": "^24.16.0",
     "requests": "^0.3.0",
     "ts-node": "^10.9.2"
   },

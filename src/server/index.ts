@@ -3,7 +3,6 @@ import path from "path"
 import fs from 'fs'
 import session from 'express-session'
 import bcrypt from "bcrypt"
-
 import client from './db'
 import { wrapAsync } from './utils'
 import { Request, Response, NextFunction } from 'express';
