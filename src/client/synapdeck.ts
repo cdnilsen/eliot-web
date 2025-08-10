@@ -508,44 +508,37 @@ async function produceCardReviewSheet(cards: CardDue[]) {
     
     // Try to load and add Gentium font
     try {
-    // Load font (your existing code)
         const fontResponse = await fetch('/Gentium/GentiumPlus-Regular.ttf');
         console.log('Font response status:', fontResponse.status);
-        console.log('Font response headers:', fontResponse.headers);
         
         if (fontResponse.ok) {
             const fontArrayBuffer = await fontResponse.arrayBuffer();
             const fontBase64 = btoa(String.fromCharCode(...new Uint8Array(fontArrayBuffer)));
             
-            doc.addFileToVFS('GentiumPlus-Regular.ttf', fontBase64);
-            doc.addFont('GentiumPlus-Regular.ttf', 'Gentium', 'normal');
+            // The key fix: Use the exact same name in both places
+            const fontName = 'Gentium';
+            const fontStyle = 'normal';
             
-            console.log('Gentium font loaded successfully');
+            // Add the font to VFS first
+            doc.addFileToVFS('Gentium.ttf', fontBase64);
             
-            // DEBUG: Check what fonts are actually available
+            // Then register it with jsPDF - this is the critical step
+            doc.addFont('Gentium.ttf', fontName, fontStyle);
+            
+            console.log('Gentium font loaded and registered successfully');
+            
+            // Verify it's in the font list
             console.log('Available fonts after loading:', doc.getFontList());
             
-            // Try to set the font and verify it worked
-            try {
-                doc.setFont('Gentium', 'normal');
-                console.log('Font set to Gentium successfully');
-                
-                // DEBUG: Check current font
-                console.log('Current font info:', {
-                    fontName: doc.getFont().fontName,
-                    fontStyle: doc.getFont().fontStyle
-                });
-            } catch (fontSetError) {
-                console.error('Error setting Gentium font:', fontSetError);
-                doc.setFont('helvetica', 'normal');
-            }
-    } else {
-        console.warn('Could not load Gentium font, falling back to default');
-        doc.setFont('helvetica', 'normal');
-    }
+            // Test setting the font
+            doc.setFont(fontName, fontStyle);
+            console.log('Successfully set font to:', fontName);
+            
+        } else {
+            console.warn('Could not load Gentium font, falling back to default');
+        }
     } catch (error) {
         console.warn('Error loading Gentium font:', error);
-        doc.setFont('helvetica', 'normal');
     }
     
     // Page dimensions and margins
