@@ -492,7 +492,6 @@ type S2BDict = {
 
 
 async function produceCardReviewSheet(cards: CardDue[]) {
-    
     if (typeof window.jsPDF === 'undefined') {
         console.error('jsPDF is not loaded yet.');
         return;
@@ -501,12 +500,16 @@ async function produceCardReviewSheet(cards: CardDue[]) {
     const doc = new window.jsPDF({
         orientation: 'portrait',
         unit: 'in',
-        format: [8.5, 11]
+        format: [8.5, 11],
+        putOnlyUsedFonts: true,
+        compress: true,
+        userUnit: 1.0
     });
-
+    
+    // Try to load and add Gentium font
     try {
         // Adjust the path to where your Gentium font file is located
-        const fontResponse = await fetch('./Gentium/GentiumPlus-Regular.ttf'); // or whatever your path is
+        const fontResponse = await fetch('./fonts/GentiumPlus-Regular.ttf'); // or whatever your path is
         if (fontResponse.ok) {
             const fontArrayBuffer = await fontResponse.arrayBuffer();
             const fontBase64 = btoa(String.fromCharCode(...new Uint8Array(fontArrayBuffer)));
@@ -558,7 +561,8 @@ async function produceCardReviewSheet(cards: CardDue[]) {
     doc.setLineWidth(0.01);
     doc.line(margin, currentY, pageWidth - margin, currentY);
     currentY += 0.2;
-
+    
+    // Card entries
     cards.forEach((card, index) => {
         // Check if we need a new page
         if (currentY > pageHeight - 1) {
@@ -568,13 +572,14 @@ async function produceCardReviewSheet(cards: CardDue[]) {
         
         // Generate the front side line using your existing function
         const frontSideLine = generateCardFrontLine(card);
-        // Try to handle Unicode properly
+        
+        // Debug the text to see what we're working with
         console.log('Front side line:', frontSideLine);
         console.log('Character codes:', [...frontSideLine].map(c => c.charCodeAt(0)));
         
         let displayText = frontSideLine;
         
-        // Card number and front side
+        // Card number and front side - use Gentium font for Ge'ez text
         doc.setFontSize(12);
         try {
             doc.setFont('Gentium', 'normal');
@@ -622,9 +627,7 @@ async function produceCardReviewSheet(cards: CardDue[]) {
     doc.save('card-review-sheet.pdf');
     
     return doc;
-
 }
-
 function generateCardFrontLine(card: CardDue): string {
     let outputString = ""
 
