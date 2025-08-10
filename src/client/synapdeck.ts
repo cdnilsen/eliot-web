@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const targetDiv = document.getElementById(targetId);
             if (targetDiv) {
                 targetDiv.classList.add('active');
+                console.log("Loaded " + button.id);
             }
         });
     });
