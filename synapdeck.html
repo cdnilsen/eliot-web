@@ -97,11 +97,12 @@
         </div>
     </div>
 </body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
-    <script src="synapdeck.js" type="module"></script>
-    <script>
-        window.addEventListener('load', function() {
-            console.log('jsPDF loaded:', typeof jsPDF !== 'undefined');
-        });
+    <script type="module">
+        import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.es.min.js')
+            .then(module => {
+                window.jsPDF = module.jsPDF;
+                // Now load your script
+                import('./synapdeck.js');
+            });
     </script>
 </html>
