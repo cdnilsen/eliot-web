@@ -1242,6 +1242,7 @@ if (reviewSubmitButton) {
             if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
                 console.log("Should be showing review sheet...")
                 let cardsToReview: CardDue[] = produceFinalCardList(cachedCardResults.cards, numCards);
+                console.log(cardsToReview[0]);
 
                 let doc = produceCardReviewSheetPDFViewer(cardsToReview);
 
