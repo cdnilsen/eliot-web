@@ -499,7 +499,12 @@ function produceCardReviewSheet(cards: CardDue[]) {
         format: [8.5, 11]
     });
 
-    console.log(typeof doc);
+    for (let i=0; i < cards.length; i++) {
+        let card = cards[i];
+        console.log(card);
+    }
+
+    console.log("Type of `doc`: " + typeof doc);
 
     return doc;
 
