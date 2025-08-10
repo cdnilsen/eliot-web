@@ -1459,10 +1459,10 @@ function displayAnswerKey(cards: CardDue[], deckName: string): void {
     `;
     
     // Add event listener to the submit button
-    const submitButton = document.getElementById('submitReviewResults');
-    if (submitButton) {
+    const completeReviewButton = document.getElementById('submitReviewResults');
+    if (completeReviewButton) {
         console.log('Adding event listener to submit button');
-        submitButton.addEventListener('click', () => {
+        completeReviewButton.addEventListener('click', () => {
             const results = getReviewResults();
             console.log('Review results:', results);
             
