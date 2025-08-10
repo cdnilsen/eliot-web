@@ -1,7 +1,7 @@
 import {transliterateGeez} from './transcribe_geez.js';
 import {OneWayCard, TwoWayCard} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
-import { jsPDF } from 'jspdf';
+declare const jsPDF: any;
 
 /*
 let inputBox = document.getElementById('userInput') as HTMLInputElement;
