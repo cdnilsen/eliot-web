@@ -564,7 +564,7 @@ function produceCardReviewSheet(cards: CardDue[]) {
         const maxWidth = contentWidth - 0.3;
         const textLines = doc.splitTextToSize(`${index + 1}. ${displayText}`, maxWidth);
         
-        textLines.forEach((line, lineIndex) => {
+        textLines.forEach((line: string, lineIndex: number) => {
             if (currentY > pageHeight - 1) {
                 doc.addPage();
                 currentY = margin;
