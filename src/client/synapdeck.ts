@@ -805,6 +805,22 @@ function generateCardHTML(card: CardDue, cardNumber: number): string {
 
 // Most elegant: Direct PDF viewer integration
 async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
+     // Mark cards as under review in database
+    const cardIds = cards.map(card => card.card_id);
+    await markCardsUnderReview(cardIds);
+    
+    // Store the order locally
+    const reviewOrder = cards.map((card, index) => ({
+        cardId: card.card_id,
+        questionNumber: index + 1,
+        questionText: generateCardFrontLine(card)
+    }));
+    
+    localStorage.setItem(`reviewOrder_${selectedReviewDeck}`, JSON.stringify({
+        order: reviewOrder,
+        timestamp: new Date().toISOString()
+    }));
+
     try {
         // Generate the HTML
         const htmlContent = generateReviewSheetHTML(cards);
@@ -1327,6 +1343,7 @@ interface CardsUnderReviewResponse {
     error?: string;
 }
 
+
 // Function to fetch cards under review for a deck
 async function getCardsUnderReview(deckName: string): Promise<CardsUnderReviewResponse> {
     try {
@@ -1354,6 +1371,34 @@ async function getCardsUnderReview(deckName: string): Promise<CardsUnderReviewRe
     }
 }
 
+
+// In check your work - get cards in the exact review order
+async function getCardsUnderReviewInOrder(deckName: string): Promise<CardDue[]> {
+    // Get the saved order
+    const orderData = localStorage.getItem(`reviewOrder_${deckName}`);
+    if (!orderData) {
+        // Fallback: just get cards under review (no guaranteed order)
+        const result = await getCardsUnderReview(deckName);
+        return result.status === 'success' ? result.cards?.map(convertToCardDue) || [] : [];
+    }
+    
+    const { order } = JSON.parse(orderData);
+    
+    // Get all cards under review from database
+    const result = await getCardsUnderReview(deckName);
+    if (result.status !== 'success' || !result.cards) {
+        return [];
+    }
+    
+    const dbCards = result.cards.map(convertToCardDue);
+    
+    // Return cards in the exact order they were drawn
+    return order.map((orderItem: any) => 
+        dbCards.find(card => card.card_id === orderItem.cardId)
+    ).filter(Boolean) as CardDue[];
+}
+
+
 // Function to convert raw DB data to CardDue interface
 function convertToCardDue(rawCard: any): CardDue {
     return {
@@ -1369,6 +1414,21 @@ function convertToCardDue(rawCard: any): CardDue {
         retrievability: rawCard.retrievability,
         peers: rawCard.peers || []
     };
+}
+
+function displayAnswerKey(cards: CardDue[], deckName: string): void {
+    const outputDiv = document.getElementById("check_output") as HTMLDivElement;
+    if (!outputDiv) return;
+
+    const answerKeyHTML = generateAnswerKey(cards);
+    
+    outputDiv.innerHTML = `
+        <div class="check-work-header">
+            <h2>Answer Key for "${deckName}"</h2>
+            <p class="deck-info">Showing answers for ${cards.length} cards currently under review</p>
+        </div>
+        ${answerKeyHTML}
+    `;
 }
 
 // Function to generate answer key HTML
@@ -1492,16 +1552,17 @@ function setupCheckYourWorkTab(): void {
             const outputDiv = document.getElementById("check_output") as HTMLDivElement;
             if (outputDiv) {
                 outputDiv.innerHTML = `<p>Loading answer key for ${selectedDeck}...</p>`;
-
             }
 
             try {
-                const result = await getCardsUnderReview(selectedDeck);
-                if (result.status === 'success' && result.cards) {
-                    outputDiv.innerHTML = generateAnswerKey(result.cards);
+                // Get cards in the correct order
+                const cards = await getCardsUnderReviewInOrder(selectedDeck);
+                
+                if (cards.length > 0) {
+                    displayAnswerKey(cards, selectedDeck);
                 } else {
                     if (outputDiv) {
-                        outputDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+                        outputDiv.innerHTML = `<p class="no-cards">No cards are currently under review for "${selectedDeck}". Complete a review session first.</p>`;
                     }
                 }
             } catch (error) {
@@ -1513,4 +1574,3 @@ function setupCheckYourWorkTab(): void {
         });
     }
 }
-
