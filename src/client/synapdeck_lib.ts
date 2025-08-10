@@ -31,7 +31,7 @@ export type NoteTracker = {
     trackers: CardTracker[]
 }
 
-export function TwoWayCard(deck: string, values: string[], processing: string[]): any[] {
+export function TwoWayCard(values: string[], processing: string[]): any[] {
     while (values.length < 4) {
         values.push("");
         processing.push("");
@@ -39,13 +39,13 @@ export function TwoWayCard(deck: string, values: string[], processing: string[])
     
     return [
         {
-            card_format: "Two-Way-Front",
+            card_format: "Target to Native",
             field_names: ["Target", "Native", "Target_Back", "Native_Back"],
             field_values: values,
             field_processing: processing
         },
         {
-            card_format: "Two-Way-Back", 
+            card_format: "Native to Target", 
             field_names: ["Native", "Target", "Native_Back", "Target_Back"],
             field_values: [values[1], values[0], values[3], values[2]], // Swapped
             field_processing: processing
@@ -53,10 +53,10 @@ export function TwoWayCard(deck: string, values: string[], processing: string[])
     ];
 }
 
-export function OneWayCard(deck: string, values: string[], processing: string[]): any[] {
+export function OneWayCard(values: string[], processing: string[]): any[] {
     return [
         {
-            card_format: "One-Way",
+            card_format: "One Way",
             field_names: ["Front", "Back"],
             field_values: [values[0], values[1]],
             field_processing: processing

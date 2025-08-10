@@ -160,9 +160,9 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
     let card_configs: any[] = [];
     
     if (note_type === "Two-Way") {
-        card_configs = TwoWayCard(deck, field_values, field_processing);
+        card_configs = TwoWayCard(field_values, field_processing);
     } else if (note_type === "One-Way") {
-        card_configs = OneWayCard(deck, field_values, field_processing);
+        card_configs = OneWayCard(field_values, field_processing);
     }
     
     const field_names = field_processing.map((_, index) => `field_${index + 1}`);
@@ -490,40 +490,125 @@ type S2BDict = {
     [key: string]: boolean
 }
 
+
 function produceCardReviewSheet(cards: CardDue[]) {
+    
     if (typeof window.jsPDF === 'undefined') {
         console.error('jsPDF is not loaded yet.');
         return;
     }
-
+    
     const doc = new window.jsPDF({
         orientation: 'portrait',
         unit: 'in',
         format: [8.5, 11]
     });
+    
+    // Page dimensions and margins
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 0.5;
+    const contentWidth = pageWidth - (margin * 2);
+    
+    let currentY = margin;
+    
+    // Title
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Card Review Sheet', pageWidth / 2, currentY, { align: 'center' });
+    currentY += 0.3;
+    
+    // Date
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const today = new Date().toLocaleDateString();
+    doc.text(`Generated: ${today}`, pageWidth / 2, currentY, { align: 'center' });
+    currentY += 0.4;
+    
+    // Summary
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Total Cards: ${cards.length}`, margin, currentY);
+    currentY += 0.3;
+    
+    // Cards section
+    doc.setFontSize(14);
+    doc.text('Cards Due for Review:', margin, currentY);
+    currentY += 0.2;
+    
+    // Draw a line under the header
+    doc.setLineWidth(0.01);
+    doc.line(margin, currentY, pageWidth - margin, currentY);
+    currentY += 0.2;
 
-    let allCardFormats: string[] = []
-    let cardFormatToBoolDict: S2BDict = {}
+    cards.forEach((card, index) => {
+        // Check if we need a new page
+        if (currentY > pageHeight - 1) {
+            doc.addPage();
+            currentY = margin;
+        }
+        
+        // Generate the front side line using your existing function
+        const frontSideLine = generateCardFrontLine(card);
+        
+        // Card number and front side
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${index + 1}. ${frontSideLine}`, margin, currentY);
+        currentY += 0.3;
+        
+        // Add space for answer (blank line)
+        doc.setFont('helvetica', 'normal');
+        doc.text('_'.repeat(80), margin + 0.2, currentY);
+        currentY += 0.25;
+        
+        // Add another blank line for longer answers
+        doc.text('_'.repeat(80), margin + 0.2, currentY);
+        currentY += 0.4;
+    });
+    
 
-    for (let i=0; i < cards.length; i++) {
-        let card = cards[i];
-        let cardFormat = card["card_format"];
-        if (!(cardFormat in cardFormatToBoolDict)) {
-            cardFormatToBoolDict[cardFormat] = true
-            allCardFormats.push(cardFormat)
-        }        
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(128, 128, 128);
+        doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 0.2, { align: 'center' });
+        doc.setTextColor(0, 0, 0);
     }
     
-    for (let i=0; i < allCardFormats.length; i++) {
-        console.log(allCardFormats[i]);
-    }
-
-    console.log(cards[0]);
-
-    console.log("Type of `doc`: " + typeof doc);
-
+    // Save the PDF
+    doc.save('card-review-sheet.pdf');
+    
+    return doc;
     return doc;
 
+}
+
+function generateCardFrontLine(card: CardDue): string {
+    let outputString = ""
+
+    let allFields = card.field_values;
+    let allProcessing = card.field_processing;
+
+    if (allFields.length != allProcessing.length) {
+        console.log("Field/processing array mismatch");
+        console.log(card);
+        return "ERROR";
+    }
+
+    let targetIndex = 0;
+    if (card.card_format == "Native To Target") {
+        targetIndex = 1; 
+    }
+    
+    let targetField = card.field_values[targetIndex];
+    let targetProcessing = card.field_processing[targetIndex];
+
+    let processedField = cleanFieldDatum(targetField, targetProcessing);
+
+    outputString = processedField + " :"
+    return outputString;
 }
 
 // Enhanced display function that shows review ahead info
