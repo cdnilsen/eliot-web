@@ -1440,11 +1440,14 @@ function getReviewResults(): { cardId: number, result: string }[] {
     return results;
 }
 
-// Updated displayAnswerKey function
+
+// Updated displayAnswerKey function with better debugging
 function displayAnswerKey(cards: CardDue[], deckName: string): void {
     const outputDiv = document.getElementById("check_output") as HTMLDivElement;
     if (!outputDiv) return;
 
+    console.log(`Displaying answer key for ${cards.length} cards`);
+    
     const answerKeyHTML = generateAnswerKey(cards);
     
     outputDiv.innerHTML = `
@@ -1458,9 +1461,13 @@ function displayAnswerKey(cards: CardDue[], deckName: string): void {
     // Add event listener to the submit button
     const submitButton = document.getElementById('submitReviewResults');
     if (submitButton) {
+        console.log('Adding event listener to submit button');
         submitButton.addEventListener('click', () => {
             const results = getReviewResults();
             console.log('Review results:', results);
+            
+            // After getting results, NOW reset the cards' review status
+            resetDeckCardsUnderReview(deckName);
             
             // Call your rescheduling function here
             // rescheduleCards(results, deckName);
@@ -1468,6 +1475,8 @@ function displayAnswerKey(cards: CardDue[], deckName: string): void {
             // For now, just log the results
             alert(`Got results for ${results.length} cards. Check console for details.`);
         });
+    } else {
+        console.error('Submit button not found after adding to DOM');
     }
 }
 
@@ -1605,9 +1614,12 @@ function setupCheckYourWorkTab(): void {
                 // Get cards in the correct order
                 const cards = await getCardsUnderReviewInOrder(selectedDeck);
                 
+                console.log(`Found ${cards.length} cards under review for ${selectedDeck}`);
+                
                 if (cards.length > 0) {
+                    // DON'T reset cards here - we want to show them!
+                    // resetDeckCardsUnderReview(selectedDeck); // REMOVED THIS LINE
                     displayAnswerKey(cards, selectedDeck);
-                    resetDeckCardsUnderReview(selectedDeck);
                 } else {
                     if (outputDiv) {
                         outputDiv.innerHTML = `<p class="no-cards">No cards are currently under review for "${selectedDeck}". Complete a review session first.</p>`;
