@@ -101,6 +101,14 @@
     <script type="module">
         // Make jsPDF available to your module
         window.jsPDF = window.jspdf.jsPDF;
-        import('./synapdeck.js');
+        console.log('jsPDF available:', typeof window.jsPDF);
+        
+        import('./synapdeck.js')
+            .then(() => {
+                console.log('synapdeck.js loaded successfully');
+            })
+            .catch(error => {
+                console.error('Failed to load synapdeck.js:', error);
+            });
     </script>
 </html>
