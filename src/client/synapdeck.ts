@@ -7,16 +7,6 @@ declare global {
     }
 }
 
-/*
-let inputBox = document.getElementById('userInput') as HTMLInputElement;
-if (inputBox) {
-    inputBox.addEventListener('input', function() {
-        let target = inputBox.value;
-        outputDiv.innerHTML = transliterateGeez(target);
-    });
-}
-*/
-
 // Add type definitions at the top of your file
 interface NoteToProcess {
     deck: string;
@@ -764,133 +754,6 @@ async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
         alert('Failed to open PDF view');
     }
 }
-// Updated PDF generation function
-/*
-async function produceCardReviewSheet(cards: CardDue[]) {
-    if (typeof window.jsPDF === 'undefined') {
-        console.error('jsPDF is not loaded yet.');
-        return;
-    }
-    
-    // Load font for canvas rendering
-    const fontLoaded = await loadGentiumForCanvas();
-    console.log('Canvas font ready:', fontLoaded);
-    
-    // Create PDF
-    const doc = new window.jsPDF('portrait', 'in', [8.5, 11]);
-    
-    // Page setup
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 0.5;
-    let currentY = margin;
-    
-    // Title
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Card Review Sheet', pageWidth / 2, currentY, { align: 'center' });
-    currentY += 0.3;
-    
-    // Date
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    const today = new Date().toLocaleDateString();
-    doc.text(`Generated: ${today}`, pageWidth / 2, currentY, { align: 'center' });
-    currentY += 0.4;
-    
-    // Summary
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Total Cards: ${cards.length}`, margin, currentY);
-    currentY += 0.3;
-    
-    // Cards section
-    doc.setFontSize(14);
-    doc.text('Cards Due for Review:', margin, currentY);
-    currentY += 0.2;
-    
-    // Line under header
-    doc.setLineWidth(0.01);
-    doc.line(margin, currentY, pageWidth - margin, currentY);
-    currentY += 0.2;
-    
-    // Process each card
-    for (let index = 0; index < cards.length; index++) {
-        const card = cards[index];
-        
-        // Check if we need a new page
-        if (currentY > pageHeight - 1.2) {
-            doc.addPage();
-            currentY = margin;
-        }
-        
-        const frontSideLine = generateCardFrontLine(card);
-        const cardText = `${index + 1}. ${frontSideLine}`;
-        
-        console.log(`Rendering card ${index + 1}:`, cardText);
-        
-        // Check if text contains Ge'ez characters
-        const containsGeez = /[\u1200-\u137F\u1380-\u139F\u2D80-\u2DDF]/.test(cardText);
-        
-        if (containsGeez && fontLoaded) {
-            // Render as image for Ge'ez text
-            console.log(`Using canvas for card ${index + 1} (contains Ge'ez)`);
-            
-            const imageData = await renderTextToCanvas(cardText, 14);
-            if (imageData) {
-                try {
-                    doc.addImage(imageData.dataUrl, 'PNG', margin, currentY, imageData.width, imageData.height);
-                    currentY += imageData.height + 0.1;
-                    console.log(`✅ Canvas-rendered card ${index + 1}`);
-                } catch (imgError) {
-                    console.error(`❌ Image rendering failed for card ${index + 1}:`, imgError);
-                    // Fallback to text
-                    doc.setFontSize(12);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text(`${index + 1}. [Rendering Error]`, margin, currentY);
-                    currentY += 0.3;
-                }
-            } else {
-                // Canvas failed, use text fallback
-                console.warn(`Canvas failed for card ${index + 1}, using text fallback`);
-                doc.setFontSize(12);
-                doc.setFont('helvetica', 'normal');
-                doc.text(cardText, margin, currentY);
-                currentY += 0.3;
-            }
-        } else {
-            // Regular text rendering for non-Ge'ez
-            console.log(`Using text for card ${index + 1} (no Ge'ez)`);
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'normal');
-            doc.text(cardText, margin, currentY);
-            currentY += 0.3;
-        }
-        
-        // Answer lines
-        doc.setFont('helvetica', 'normal');
-        doc.text('_'.repeat(80), margin + 0.2, currentY);
-        currentY += 0.25;
-        doc.text('_'.repeat(80), margin + 0.2, currentY);
-        currentY += 0.4;
-    }
-    
-    // Page numbers
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(128, 128, 128);
-        doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 0.2, { align: 'center' });
-        doc.setTextColor(0, 0, 0);
-    }
-    
-    // Save
-    doc.save('card-review-sheet.pdf');
-    console.log('✅ PDF generated with canvas-rendered Ge\'ez text');
-    return doc;
-}
-*/
 
 function generateCardFrontLine(card: CardDue): string {
     let outputString = ""
@@ -911,6 +774,8 @@ function generateCardFrontLine(card: CardDue): string {
     
     let targetField = card.field_values[targetIndex];
     let targetProcessing = card.field_processing[targetIndex];
+
+    console.log(targetField + " is processed as " + targetProcessing);
 
     let processedField = cleanFieldDatum(targetField, targetProcessing);
 
