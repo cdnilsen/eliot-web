@@ -678,11 +678,7 @@ function generateCardHTML(card: CardDue, cardNumber: number): string {
     return `
         <div class="card-item">
             <div class="card-question">
-                ${cardNumber}. ${processedText}
-            </div>
-            <div class="answer-lines">
-                <div class="answer-line"></div>
-                <div class="answer-line"></div>
+                ${cardNumber}. ${processedText} :
             </div>
         </div>
     `;
