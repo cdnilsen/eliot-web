@@ -710,11 +710,27 @@ async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
         const blobUrl = URL.createObjectURL(blob);
         
         // Open in new tab with specific dimensions for PDF-like viewing
-        const pdfTab = window.open(
-            blobUrl, 
-            '_blank',
-            'width=850,height=1100,scrollbars=yes,resizable=yes,menubar=yes,toolbar=yes'
-        );
+        const pdfTab = window.open(blobUrl, '_blank');
+        
+        if (pdfTab) {
+            // Add event listener to handle PDF generation when ready
+            pdfTab.addEventListener('load', () => {
+                // Wait for fonts and then focus
+                setTimeout(() => {
+                    pdfTab.focus();
+                    
+                    // Optional: Automatically open print dialog
+                    // pdfTab.print();
+                }, 1500);
+            });
+            
+            // Update the tab title
+            pdfTab.addEventListener('load', () => {
+                if (pdfTab.document) {
+                    pdfTab.document.title = 'Card Review Sheet - ' + new Date().toLocaleDateString();
+                }
+            });
+        }
         
         if (pdfTab) {
             // Add event listener to handle PDF generation when ready
