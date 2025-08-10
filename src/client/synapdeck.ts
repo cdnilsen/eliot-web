@@ -508,8 +508,11 @@ async function produceCardReviewSheet(cards: CardDue[]) {
     
     // Try to load and add Gentium font
     try {
-        // Adjust the path to where your Gentium font file is located
-        const fontResponse = await fetch('./Gentium/GentiumPlus-Regular.ttf'); // or whatever your path is
+    // Load font (your existing code)
+        const fontResponse = await fetch('/Gentium/GentiumPlus-Regular.ttf');
+        console.log('Font response status:', fontResponse.status);
+        console.log('Font response headers:', fontResponse.headers);
+        
         if (fontResponse.ok) {
             const fontArrayBuffer = await fontResponse.arrayBuffer();
             const fontBase64 = btoa(String.fromCharCode(...new Uint8Array(fontArrayBuffer)));
@@ -518,11 +521,31 @@ async function produceCardReviewSheet(cards: CardDue[]) {
             doc.addFont('GentiumPlus-Regular.ttf', 'Gentium', 'normal');
             
             console.log('Gentium font loaded successfully');
-        } else {
-            console.warn('Could not load Gentium font, falling back to default');
-        }
+            
+            // DEBUG: Check what fonts are actually available
+            console.log('Available fonts after loading:', doc.getFontList());
+            
+            // Try to set the font and verify it worked
+            try {
+                doc.setFont('Gentium', 'normal');
+                console.log('Font set to Gentium successfully');
+                
+                // DEBUG: Check current font
+                console.log('Current font info:', {
+                    fontName: doc.getFont().fontName,
+                    fontStyle: doc.getFont().fontStyle
+                });
+            } catch (fontSetError) {
+                console.error('Error setting Gentium font:', fontSetError);
+                doc.setFont('helvetica', 'normal');
+            }
+    } else {
+        console.warn('Could not load Gentium font, falling back to default');
+        doc.setFont('helvetica', 'normal');
+    }
     } catch (error) {
         console.warn('Error loading Gentium font:', error);
+        doc.setFont('helvetica', 'normal');
     }
     
     // Page dimensions and margins
