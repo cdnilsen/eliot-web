@@ -544,7 +544,7 @@ function generateReviewSheetHTML(cards: CardDue[]): string {
                 }
                 
                 .card-item {
-                    margin-bottom: 35px;
+                    margin-bottom: 5px;
                     page-break-inside: avoid;
                     break-inside: avoid;
                 }
@@ -813,6 +813,7 @@ function generateCardFrontLine(card: CardDue): string {
     console.log(targetField + " (" + card.card_format + ") is processed as " + targetProcessing);
 
     let processedField = cleanFieldDatum(targetField, targetProcessing);
+    console.log(processedField);
     return processedField;
 }
 
