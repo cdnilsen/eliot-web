@@ -1,5 +1,5 @@
 import {transliterateGeez} from './transcribe_geez.js';
-import {OneWayCard, TwoWayCard} from './synapdeck_lib.js'
+import {OneWayCard, TwoWayCard, arrayBufferToBase64} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 declare global {
     interface Window {
@@ -486,6 +486,9 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
     return shuffledFinalList;
 }
 
+
+
+
 type S2BDict = {
     [key: string]: boolean
 }
@@ -505,6 +508,8 @@ async function produceCardReviewSheet(cards: CardDue[]) {
         compress: true,
         userUnit: 1.0
     });
+
+    let gentiumFontLoaded = false;
     
     // Try to load and add Gentium font
     try {
@@ -513,30 +518,44 @@ async function produceCardReviewSheet(cards: CardDue[]) {
         
         if (fontResponse.ok) {
             const fontArrayBuffer = await fontResponse.arrayBuffer();
-            const fontBase64 = btoa(String.fromCharCode(...new Uint8Array(fontArrayBuffer)));
+            console.log('Font file size:', fontArrayBuffer.byteLength);
             
-            // The key fix: Use the exact same name in both places
+            // Use the safe base64 conversion
+            const fontBase64 = arrayBufferToBase64(fontArrayBuffer);
+            console.log('Base64 conversion completed, length:', fontBase64.length);
+            
+            // Register the font with jsPDF
             const fontName = 'Gentium';
             const fontStyle = 'normal';
+            const fontFilename = 'Gentium.ttf';
             
-            // Add the font to VFS first
-            doc.addFileToVFS('Gentium.ttf', fontBase64);
+            // Add to VFS
+            doc.addFileToVFS(fontFilename, fontBase64);
+            console.log('Font added to VFS');
             
-            // Then register it with jsPDF - this is the critical step
-            doc.addFont('Gentium.ttf', fontName, fontStyle);
-            
-            console.log('Gentium font loaded and registered successfully');
+            // Register with jsPDF
+            doc.addFont(fontFilename, fontName, fontStyle);
+            console.log('Font registered with jsPDF');
             
             // Verify it's in the font list
-            console.log('Available fonts after loading:', doc.getFontList());
+            const fontList = doc.getFontList();
+            console.log('Available fonts after loading:', fontList);
             
-            // Test setting the font
-            doc.setFont(fontName, fontStyle);
-            console.log('Successfully set font to:', fontName);
+            // Check if our font is actually there
+            if (fontList[fontName] || fontList[fontName.toLowerCase()]) {
+                console.log('✅ Gentium font successfully registered!');
+                gentiumFontLoaded = true;
+                
+                // Test setting the font
+                doc.setFont(fontName, fontStyle);
+                console.log('Successfully set font to:', fontName);
+            } else {
+                console.warn('❌ Gentium font not found in font list after registration');
+            }
             
         } else {
-            console.warn('Could not load Gentium font, falling back to default');
-        }
+            console.warn('Could not load Gentium font file, status:', fontResponse.status);
+            }
     } catch (error) {
         console.warn('Error loading Gentium font:', error);
     }
@@ -601,20 +620,17 @@ async function produceCardReviewSheet(cards: CardDue[]) {
         // Debug: Check what fonts are available
         console.log('Available fonts:', doc.getFontList());
         
-        try {
-            // Try using the exact font name as registered
-            doc.setFont('GentiumPlus-Regular', 'normal');
-            console.log('Successfully set GentiumPlus-Regular font');
-        } catch (e) {
-            console.warn('GentiumPlus-Regular font not available, trying alternatives...');
+        if (gentiumFontLoaded) {
             try {
-                // Try with the alias name
-                doc.setFont('Gentium');
-                console.log('Successfully set Gentium font');
-            } catch (e2) {
-                console.warn('Gentium font not available either, using default');
+                doc.setFont('Gentium', 'normal');
+                console.log('Using Gentium font for card', index + 1);
+            } catch (e) {
+                console.warn('Failed to set Gentium font for card', index + 1, ':', e);
                 doc.setFont('helvetica', 'normal');
             }
+        } else {
+            console.log('Gentium not available, using helvetica for card', index + 1);
+            doc.setFont('helvetica', 'normal');
         }
         
         // Split long text if needed

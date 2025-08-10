@@ -63,3 +63,18 @@ export function OneWayCard(values: string[], processing: string[]): any[] {
         }
     ];
 }
+
+
+// Helper function to convert ArrayBuffer to base64 without stack overflow
+export function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 32768; // Process in 32KB chunks to avoid stack overflow
+    let binary = '';
+    
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.slice(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    
+    return btoa(binary);
+}
