@@ -765,7 +765,7 @@ function generateCardFrontLine(card: CardDue): string {
 
     let targetIndex = 0;
     //Change the name of this
-    if (card.card_format == "Two-Way-Back") {
+    if (card.card_format == "Native to Target") {
         targetIndex = 1; 
     }
     console.log(card.card_format);
