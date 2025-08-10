@@ -491,7 +491,7 @@ type S2BDict = {
 }
 
 
-function produceCardReviewSheet(cards: CardDue[]) {
+async function produceCardReviewSheet(cards: CardDue[]) {
     
     if (typeof window.jsPDF === 'undefined') {
         console.error('jsPDF is not loaded yet.');
@@ -503,6 +503,24 @@ function produceCardReviewSheet(cards: CardDue[]) {
         unit: 'in',
         format: [8.5, 11]
     });
+
+    try {
+        // Adjust the path to where your Gentium font file is located
+        const fontResponse = await fetch('../../public/Gentium/GentiumPlus-Regular.ttf'); // or whatever your path is
+        if (fontResponse.ok) {
+            const fontArrayBuffer = await fontResponse.arrayBuffer();
+            const fontBase64 = btoa(String.fromCharCode(...new Uint8Array(fontArrayBuffer)));
+            
+            doc.addFileToVFS('GentiumPlus-Regular.ttf', fontBase64);
+            doc.addFont('GentiumPlus-Regular.ttf', 'Gentium', 'normal');
+            
+            console.log('Gentium font loaded successfully');
+        } else {
+            console.warn('Could not load Gentium font, falling back to default');
+        }
+    } catch (error) {
+        console.warn('Error loading Gentium font:', error);
+    }
     
     // Page dimensions and margins
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -558,7 +576,12 @@ function produceCardReviewSheet(cards: CardDue[]) {
         
         // Card number and front side
         doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
+        try {
+            doc.setFont('Gentium', 'normal');
+        } catch (e) {
+            console.warn('Gentium font not available, using default');
+            doc.setFont('helvetica', 'bold');
+        }
         
         // Split long text if needed
         const maxWidth = contentWidth - 0.3;
