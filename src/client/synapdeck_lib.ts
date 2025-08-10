@@ -42,7 +42,7 @@ export function TwoWayCard(values: string[], processing: string[]): any[] {
     console.log("Values and processing *after* the Two Way Card function"); 
     console.log(values);
     console.log(processing);
-    
+
     return [
         {
             card_format: "Target to Native",
@@ -53,7 +53,7 @@ export function TwoWayCard(values: string[], processing: string[]): any[] {
         {
             card_format: "Native to Target", 
             field_names: ["Native", "Target", "Native_Back", "Target_Back"],
-            field_values: [values[1], values[0], values[3], values[2]], // Swapped
+            field_values: values,
             field_processing: processing
         }
     ];
