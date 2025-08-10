@@ -1417,6 +1417,7 @@ function convertToCardDue(rawCard: any): CardDue {
 }
 
 // Function to get review results from the form
+// Function to get review results from the form
 function getReviewResults(): { cardId: number, result: string }[] {
     const form = document.getElementById('reviewResultsForm') as HTMLFormElement;
     if (!form) return [];
@@ -1479,7 +1480,13 @@ function generateAnswerKey(cards: CardDue[]): string {
         <div class="answer-key">
             <h3>Answer Key (${cards.length} cards)</h3>
             <form id="reviewResultsForm">
-                <div class="answer-list">
+                <div class="answer-table">
+                    <div class="header-row">
+                        <div class="qa-header">Question → Answer</div>
+                        <div class="pass-header">Pass</div>
+                        <div class="hard-header">Hard</div>
+                        <div class="fail-header">Fail</div>
+                    </div>
     `;
 
     cards.forEach((card, index) => {
@@ -1500,25 +1507,16 @@ function generateAnswerKey(cards: CardDue[]): string {
         const processedAnswer = processHTMLContent(answerText);
 
         html += `
-            <div class="answer-item" data-card-id="${card.card_id}">
-                <div class="qa-pair">
-                    <span class="question">${processedQuestion}</span>
-                    <span class="arrow">→</span>
-                    <span class="answer">${processedAnswer}</span>
+            <div class="answer-row" data-card-id="${card.card_id}">
+                <div class="qa-cell">${processedQuestion} → ${processedAnswer}</div>
+                <div class="radio-cell">
+                    <input type="radio" name="card_${card.card_id}" value="pass" checked>
                 </div>
-                <div class="radio-group">
-                    <label>
-                        <input type="radio" name="card_${card.card_id}" value="pass" checked>
-                        Pass
-                    </label>
-                    <label>
-                        <input type="radio" name="card_${card.card_id}" value="hard">
-                        Hard
-                    </label>
-                    <label>
-                        <input type="radio" name="card_${card.card_id}" value="fail">
-                        Fail
-                    </label>
+                <div class="radio-cell">
+                    <input type="radio" name="card_${card.card_id}" value="hard">
+                </div>
+                <div class="radio-cell">
+                    <input type="radio" name="card_${card.card_id}" value="fail">
                 </div>
             </div>
         `;
