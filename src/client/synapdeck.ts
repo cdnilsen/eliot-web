@@ -486,6 +486,9 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
     return shuffledFinalList;
 }
 
+type S2BDict = {
+    [key: string]: boolean
+}
 
 function produceCardReviewSheet(cards: CardDue[]) {
     if (typeof window.jsPDF === 'undefined') {
@@ -498,6 +501,22 @@ function produceCardReviewSheet(cards: CardDue[]) {
         unit: 'in',
         format: [8.5, 11]
     });
+
+    let allCardFormats: string[] = []
+    let cardFormatToBoolDict: S2BDict = {}
+
+    for (let i=0; i < cards.length; i++) {
+        let card = cards[i];
+        let cardFormat = card["card_format"];
+        if (!(cardFormat in cardFormatToBoolDict)) {
+            cardFormatToBoolDict[cardFormat] = true
+            allCardFormats.push(cardFormat)
+        }        
+    }
+    
+    for (let i=0; i < allCardFormats.length; i++) {
+        console.log(allCardFormats[i]);
+    }
 
     console.log(cards[0]);
 
