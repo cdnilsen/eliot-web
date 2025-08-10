@@ -1,5 +1,5 @@
 import {transliterateGeez} from './transcribe_geez.js';
-import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering} from './synapdeck_lib.js'
+import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 declare global {
     interface Window {
@@ -486,55 +486,19 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
     return shuffledFinalList;
 }
 
-
-
-
-type S2BDict = {
-    [key: string]: boolean
-}
-
-
+// Updated PDF generation function
 async function produceCardReviewSheet(cards: CardDue[]) {
     if (typeof window.jsPDF === 'undefined') {
         console.error('jsPDF is not loaded yet.');
         return;
     }
     
-    // For jsPDF 3.0.1, use simpler initialization
-    const doc = new window.jsPDF('portrait', 'in', [8.5, 11]);
-
-    let gentiumFontLoaded = false;
+    // Load font for canvas rendering
+    const fontLoaded = await loadGentiumForCanvas();
+    console.log('Canvas font ready:', fontLoaded);
     
-    // Try to load Gentium font
-    try {
-        const fontResponse = await fetch('/Gentium/GentiumPlus-Regular.ttf');
-        console.log('Font response status:', fontResponse.status);
-        
-        if (fontResponse.ok) {
-            const fontArrayBuffer = await fontResponse.arrayBuffer();
-            console.log('Font file size:', fontArrayBuffer.byteLength);
-            
-            const fontBase64 = arrayBufferToBase64(fontArrayBuffer);
-            console.log('Base64 conversion completed, length:', fontBase64.length);
-            
-            // For jsPDF 3.0.1, try simpler font registration
-            try {
-                doc.addFileToVFS('GentiumPlus.ttf', fontBase64);
-                doc.addFont('GentiumPlus.ttf', 'GentiumPlus', 'normal');
-                
-                // Test if the font works
-                doc.setFont('GentiumPlus', 'normal');
-                console.log('✅ Gentium font loaded successfully');
-                gentiumFontLoaded = true;
-                
-            } catch (fontError) {
-                console.warn('Font registration failed:', fontError);
-                console.log('Will use system font fallback');
-            }
-        }
-    } catch (error) {
-        console.warn('Error loading Gentium font:', error);
-    }
+    // Create PDF
+    const doc = new window.jsPDF('portrait', 'in', [8.5, 11]);
     
     // Page setup
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -571,57 +535,58 @@ async function produceCardReviewSheet(cards: CardDue[]) {
     doc.line(margin, currentY, pageWidth - margin, currentY);
     currentY += 0.2;
     
-    // Render each card
-    cards.forEach((card, index) => {
+    // Process each card
+    for (let index = 0; index < cards.length; index++) {
+        const card = cards[index];
+        
         // Check if we need a new page
-        if (currentY > pageHeight - 1) {
+        if (currentY > pageHeight - 1.2) {
             doc.addPage();
             currentY = margin;
         }
         
         const frontSideLine = generateCardFrontLine(card);
-        console.log(`Card ${index + 1} original:`, frontSideLine);
+        const cardText = `${index + 1}. ${frontSideLine}`;
         
-        // For jsPDF 3.0.1, let's try a different text processing approach
-        let displayText = frontSideLine;
+        console.log(`Rendering card ${index + 1}:`, cardText);
         
-        // Clean up any problematic characters
-        displayText = displayText
-            .replace(/<[^>]*>/g, '') // Remove HTML tags
-            .replace(/&[^;]+;/g, ''); // Remove HTML entities
+        // Check if text contains Ge'ez characters
+        const containsGeez = /[\u1200-\u137F\u1380-\u139F\u2D80-\u2DDF]/.test(cardText);
         
-        console.log(`Card ${index + 1} processed:`, displayText);
-        
-        // Set font
-        doc.setFontSize(12);
-        try {
-            if (gentiumFontLoaded) {
-                doc.setFont('GentiumPlus', 'normal');
-                console.log(`Using GentiumPlus for card ${index + 1}`);
+        if (containsGeez && fontLoaded) {
+            // Render as image for Ge'ez text
+            console.log(`Using canvas for card ${index + 1} (contains Ge'ez)`);
+            
+            const imageData = await renderTextToCanvas(cardText, 14);
+            if (imageData) {
+                try {
+                    doc.addImage(imageData.dataUrl, 'PNG', margin, currentY, imageData.width, imageData.height);
+                    currentY += imageData.height + 0.1;
+                    console.log(`✅ Canvas-rendered card ${index + 1}`);
+                } catch (imgError) {
+                    console.error(`❌ Image rendering failed for card ${index + 1}:`, imgError);
+                    // Fallback to text
+                    doc.setFontSize(12);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`${index + 1}. [Rendering Error]`, margin, currentY);
+                    currentY += 0.3;
+                }
             } else {
+                // Canvas failed, use text fallback
+                console.warn(`Canvas failed for card ${index + 1}, using text fallback`);
+                doc.setFontSize(12);
                 doc.setFont('helvetica', 'normal');
-                console.log(`Using helvetica for card ${index + 1}`);
+                doc.text(cardText, margin, currentY);
+                currentY += 0.3;
             }
-        } catch (fontSetError) {
-            console.warn('Font setting failed, using default:', fontSetError);
+        } else {
+            // Regular text rendering for non-Ge'ez
+            console.log(`Using text for card ${index + 1} (no Ge'ez)`);
+            doc.setFontSize(12);
             doc.setFont('helvetica', 'normal');
-        }
-        
-        // Render the text
-        const cardText = `${index + 1}. ${displayText}`;
-        
-        try {
-            // For jsPDF 3.0.1, try direct text rendering
             doc.text(cardText, margin, currentY);
-            console.log(`✓ Rendered card ${index + 1}`);
-        } catch (textError) {
-            console.error(`✗ Failed to render card ${index + 1}:`, textError);
-            // Fallback: render with helvetica
-            doc.setFont('helvetica', 'normal');
-            doc.text(`${index + 1}. [Text rendering error]`, margin, currentY);
+            currentY += 0.3;
         }
-        
-        currentY += 0.3;
         
         // Answer lines
         doc.setFont('helvetica', 'normal');
@@ -629,7 +594,7 @@ async function produceCardReviewSheet(cards: CardDue[]) {
         currentY += 0.25;
         doc.text('_'.repeat(80), margin + 0.2, currentY);
         currentY += 0.4;
-    });
+    }
     
     // Page numbers
     const pageCount = doc.getNumberOfPages();
@@ -643,6 +608,7 @@ async function produceCardReviewSheet(cards: CardDue[]) {
     
     // Save
     doc.save('card-review-sheet.pdf');
+    console.log('✅ PDF generated with canvas-rendered Ge\'ez text');
     return doc;
 }
 
