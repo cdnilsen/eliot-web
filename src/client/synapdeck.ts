@@ -506,7 +506,7 @@ async function produceCardReviewSheet(cards: CardDue[]) {
 
     try {
         // Adjust the path to where your Gentium font file is located
-        const fontResponse = await fetch('../../public/Gentium/GentiumPlus-Regular.ttf'); // or whatever your path is
+        const fontResponse = await fetch('../../public/Gentium/GentiumPlus-Regular.ttf"'); // or whatever your path is
         if (fontResponse.ok) {
             const fontArrayBuffer = await fontResponse.arrayBuffer();
             const fontBase64 = btoa(String.fromCharCode(...new Uint8Array(fontArrayBuffer)));
