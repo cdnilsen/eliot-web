@@ -550,14 +550,32 @@ function produceCardReviewSheet(cards: CardDue[]) {
         
         // Generate the front side line using your existing function
         const frontSideLine = generateCardFrontLine(card);
+        // Try to handle Unicode properly
+        console.log('Front side line:', frontSideLine);
+        console.log('Character codes:', [...frontSideLine].map(c => c.charCodeAt(0)));
+        
+        let displayText = frontSideLine;
         
         // Card number and front side
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text(`${index + 1}. ${frontSideLine}`, margin, currentY);
-        currentY += 0.3;
         
-        // Add space for answer (blank line)
+        // Split long text if needed
+        const maxWidth = contentWidth - 0.3;
+        const textLines = doc.splitTextToSize(`${index + 1}. ${displayText}`, maxWidth);
+        
+        textLines.forEach((line, lineIndex) => {
+            if (currentY > pageHeight - 1) {
+                doc.addPage();
+                currentY = margin;
+            }
+            doc.text(line, margin, currentY);
+            currentY += 0.2;
+        });
+        
+        currentY += 0.1;
+        
+        // Add space for answer (blank lines)
         doc.setFont('helvetica', 'normal');
         doc.text('_'.repeat(80), margin + 0.2, currentY);
         currentY += 0.25;
@@ -567,7 +585,7 @@ function produceCardReviewSheet(cards: CardDue[]) {
         currentY += 0.4;
     });
     
-
+    // Footer with page numbers
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -580,7 +598,6 @@ function produceCardReviewSheet(cards: CardDue[]) {
     // Save the PDF
     doc.save('card-review-sheet.pdf');
     
-    return doc;
     return doc;
 
 }
