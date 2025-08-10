@@ -32,10 +32,16 @@ export type NoteTracker = {
 }
 
 export function TwoWayCard(values: string[], processing: string[]): any[] {
+    console.log("Values and processing before the Two Way Card function"); 
+    console.log(values);
+    console.log(processing);
     while (values.length < 4) {
         values.push("");
         processing.push("");
     }
+    console.log("Values and processing *after* the Two Way Card function"); 
+    console.log(values);
+    console.log(processing);
     
     return [
         {
