@@ -1606,8 +1606,8 @@ function setupCheckYourWorkTab(): void {
                 const cards = await getCardsUnderReviewInOrder(selectedDeck);
                 
                 if (cards.length > 0) {
-                    resetDeckCardsUnderReview(selectedDeck);
                     displayAnswerKey(cards, selectedDeck);
+                    resetDeckCardsUnderReview(selectedDeck);
                 } else {
                     if (outputDiv) {
                         outputDiv.innerHTML = `<p class="no-cards">No cards are currently under review for "${selectedDeck}". Complete a review session first.</p>`;
