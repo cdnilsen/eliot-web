@@ -476,8 +476,9 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
     return shuffledFinalList;
 }
 
-function generateReviewSheetHTML(cards: CardDue[]): string {
+function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40%"): string {
     const today = new Date().toLocaleDateString();
+    const rightColumnWidth = `calc(100% - ${leftColumnWidth})`;
     
     return `
         <!DOCTYPE html>
@@ -543,32 +544,48 @@ function generateReviewSheetHTML(cards: CardDue[]): string {
                     color: #333;
                 }
                 
+                .two-column-container {
+                    display: flex;
+                    min-height: calc(100vh - 200px);
+                    gap: 20px;
+                }
+                
+                .left-column {
+                    width: ${leftColumnWidth};
+                    padding-right: 10px;
+                    border-right: 1px solid #ddd;
+                }
+                
+                .right-column {
+                    width: ${rightColumnWidth};
+                    padding-left: 10px;
+                }
+                
                 .card-item {
-                    margin-bottom: 5px;
+                    margin-bottom: 15px;
                     page-break-inside: avoid;
                     break-inside: avoid;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: flex-end;
+                    text-align: right;
                 }
                 
                 .card-question {
                     font-size: 14px;
-                    margin-bottom: 5px;
                     font-weight: normal;
-                    line-height: 1;
+                    line-height: 1.4;
+                    max-width: 100%;
                 }
                 
                 .card-question strong {
                     font-weight: bold;
                 }
                 
-                .answer-lines {
-                    margin-left: 20px;
-                }
-                
-                .answer-line {
-                    border-bottom: 1px solid #999;
-                    height: 25px;
-                    margin-bottom: 10px;
-                    width: calc(100% - 20px);
+                .answer-space {
+                    min-height: 40px;
+                    border-bottom: 1px solid #ccc;
+                    margin-bottom: 15px;
                 }
                 
                 .controls {
@@ -580,6 +597,7 @@ function generateReviewSheetHTML(cards: CardDue[]): string {
                     border-radius: 5px;
                     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
                     border: 1px solid #ddd;
+                    z-index: 1000;
                 }
                 
                 .btn {
@@ -597,8 +615,32 @@ function generateReviewSheetHTML(cards: CardDue[]): string {
                     background: #005a87;
                 }
                 
+                .width-controls {
+                    position: fixed;
+                    top: 60px;
+                    right: 10px;
+                    background: rgba(255, 255, 255, 0.95);
+                    padding: 10px;
+                    border-radius: 5px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    border: 1px solid #ddd;
+                    z-index: 1000;
+                    font-size: 12px;
+                }
+                
+                .width-controls label {
+                    display: block;
+                    margin-bottom: 5px;
+                }
+                
+                .width-controls input {
+                    width: 60px;
+                    padding: 2px 4px;
+                    margin-left: 5px;
+                }
+                
                 @media print {
-                    .controls {
+                    .controls, .width-controls {
                         display: none !important;
                     }
                     
@@ -614,8 +656,26 @@ function generateReviewSheetHTML(cards: CardDue[]): string {
                         break-inside: avoid;
                     }
                     
-                    .answer-line {
-                        border-bottom: 1px solid #333;
+                    .two-column-container {
+                        min-height: auto;
+                    }
+                }
+                
+                /* Responsive design for smaller screens */
+                @media (max-width: 768px) {
+                    .two-column-container {
+                        flex-direction: column;
+                    }
+                    
+                    .left-column, .right-column {
+                        width: 100% !important;
+                        border-right: none;
+                        padding: 0;
+                    }
+                    
+                    .card-item {
+                        justify-content: flex-start;
+                        text-align: left;
                     }
                 }
             </style>
@@ -626,6 +686,13 @@ function generateReviewSheetHTML(cards: CardDue[]): string {
                 <button class="btn" onclick="window.close()">✕ Close</button>
             </div>
             
+            <div class="width-controls">
+                <label>Left Column Width:
+                    <input type="text" id="leftWidthInput" value="${leftColumnWidth}" onchange="updateColumnWidths()">
+                </label>
+                <small>e.g., 40%, 300px, 3in</small>
+            </div>
+            
             <div class="header">
                 <div class="title">Card Review Sheet</div>
                 <div class="date">Generated: ${today}</div>
@@ -634,8 +701,13 @@ function generateReviewSheetHTML(cards: CardDue[]): string {
             
             <div class="section-title">Cards Due for Review:</div>
             
-            <div class="cards-container">
-                ${cards.map((card, index) => generateCardHTML(card, index + 1)).join('')}
+            <div class="two-column-container">
+                <div class="left-column">
+                    ${cards.map((card, index) => generateCardHTML(card, index + 1)).join('')}
+                </div>
+                <div class="right-column">
+                    ${cards.map((_, index) => `<div class="answer-space"></div>`).join('')}
+                </div>
             </div>
             
             <script>
@@ -643,6 +715,21 @@ function generateReviewSheetHTML(cards: CardDue[]): string {
                 document.fonts.ready.then(() => {
                     console.log('✅ All fonts loaded');
                 });
+                
+                // Function to update column widths dynamically
+                function updateColumnWidths() {
+                    const leftWidthInput = document.getElementById('leftWidthInput');
+                    const newLeftWidth = leftWidthInput.value;
+                    const newRightWidth = \`calc(100% - \${newLeftWidth})\`;
+                    
+                    const leftColumn = document.querySelector('.left-column');
+                    const rightColumn = document.querySelector('.right-column');
+                    
+                    if (leftColumn && rightColumn) {
+                        leftColumn.style.width = newLeftWidth;
+                        rightColumn.style.width = newRightWidth;
+                    }
+                }
                 
                 // Optional: Auto-focus for keyboard shortcuts
                 window.addEventListener('load', () => {
@@ -661,6 +748,7 @@ function generateReviewSheetHTML(cards: CardDue[]): string {
         </html>`;
 }
 
+// Updated generateCardHTML function to work with the two-column layout
 function generateCardHTML(card: CardDue, cardNumber: number): string {
     const frontSideLine = generateCardFrontLine(card);
     
@@ -673,9 +761,6 @@ function generateCardHTML(card: CardDue, cardNumber: number): string {
         
         // Define allowed HTML tags
         const allowedTags = ['b', 'strong', 'i', 'em', 'u', 'span', 'br'];
-        
-        // Create a more sophisticated approach that only escapes dangerous content
-        // while preserving allowed HTML tags
         
         // Split text into parts: HTML tags vs regular text
         const parts = processed.split(/(<\/?[^>]+>)/);
@@ -699,9 +784,9 @@ function generateCardHTML(card: CardDue, cardNumber: number): string {
             } else {
                 // This is regular text - only escape dangerous characters, not HTML entities
                 return part
-                    .replace(/&(?!(?:amp|lt|gt|quot|apos);)/g, '&amp;') // Only escape & if not already an entity
-                    .replace(/</g, '&lt;')  // Escape standalone < 
-                    .replace(/>/g, '&gt;'); // Escape standalone >
+                    .replace(/&(?!(?:amp|lt|gt|quot|apos);)/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
             }
         });
         
@@ -713,7 +798,7 @@ function generateCardHTML(card: CardDue, cardNumber: number): string {
     return `
         <div class="card-item">
             <div class="card-question">
-                ${cardNumber}. ${processedText} :
+                ${cardNumber}. ${processedText}
             </div>
         </div>
     `;
