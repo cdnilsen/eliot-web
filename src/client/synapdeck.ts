@@ -553,7 +553,6 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                 .left-column {
                     width: ${leftColumnWidth};
                     padding-right: 10px;
-                    border-right: 1px solid #ddd;
                 }
                 
                 .right-column {
@@ -582,11 +581,7 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                     font-weight: bold;
                 }
                 
-                .answer-space {
-                    min-height: 40px;
-                    border-bottom: 1px solid #ccc;
-                    margin-bottom: 15px;
-                }
+                /* Removed answer-space styles */
                 
                 .controls {
                     position: fixed;
@@ -669,7 +664,6 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                     
                     .left-column, .right-column {
                         width: 100% !important;
-                        border-right: none;
                         padding: 0;
                     }
                     
@@ -706,7 +700,7 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                     ${cards.map((card, index) => generateCardHTML(card, index + 1)).join('')}
                 </div>
                 <div class="right-column">
-                    ${cards.map((_, index) => `<div class="answer-space"></div>`).join('')}
+                    <!-- Empty space for answers -->
                 </div>
             </div>
             
