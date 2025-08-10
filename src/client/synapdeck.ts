@@ -196,12 +196,20 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
 
 
 const timestampCreated = new Date(Date.now()).toISOString();
+// Add event listener for the wipe database button
 let wipeDatabaseButton = document.getElementById("wipeDatabaseButton");
 if (wipeDatabaseButton) {
-    const wipeSuccess = await wipeSynapdeckDatabase();
-    if (!wipeSuccess) {
-        console.error('Failed to wipe database, aborting');
-    }
+    wipeDatabaseButton.addEventListener('click', async () => {
+        console.log('Wipe database button clicked');
+        const wipeSuccess = await wipeSynapdeckDatabase();
+        if (wipeSuccess) {
+            console.log('✅ Database wiped successfully');
+            alert('Database wiped successfully!');
+        } else {
+            console.error('❌ Failed to wipe database');
+            alert('Failed to wipe database');
+        }
+    });
 }
 
 // Modified submit button event listener
