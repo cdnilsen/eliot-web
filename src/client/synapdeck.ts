@@ -778,7 +778,7 @@ function generateCardFrontLine(card: CardDue): string {
     let targetField = card.field_values[targetIndex];
     let targetProcessing = card.field_processing[targetIndex];
 
-    console.log(targetField + " is processed as " + targetProcessing);
+    console.log(targetField + "(" + card.card_format + ") is processed as " + targetProcessing);
 
     let processedField = cleanFieldDatum(targetField, targetProcessing);
 
