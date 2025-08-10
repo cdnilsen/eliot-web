@@ -581,11 +581,24 @@ async function produceCardReviewSheet(cards: CardDue[]) {
         
         // Card number and front side - use Gentium font for Ge'ez text
         doc.setFontSize(12);
+        
+        // Debug: Check what fonts are available
+        console.log('Available fonts:', doc.getFontList());
+        
         try {
-            doc.setFont('Gentium', 'normal');
+            // Try using the exact font name as registered
+            doc.setFont('GentiumPlus-Regular', 'normal');
+            console.log('Successfully set GentiumPlus-Regular font');
         } catch (e) {
-            console.warn('Gentium font not available, using default');
-            doc.setFont('helvetica', 'bold');
+            console.warn('GentiumPlus-Regular font not available, trying alternatives...');
+            try {
+                // Try with the alias name
+                doc.setFont('Gentium');
+                console.log('Successfully set Gentium font');
+            } catch (e2) {
+                console.warn('Gentium font not available either, using default');
+                doc.setFont('helvetica', 'normal');
+            }
         }
         
         // Split long text if needed
@@ -628,6 +641,7 @@ async function produceCardReviewSheet(cards: CardDue[]) {
     
     return doc;
 }
+
 function generateCardFrontLine(card: CardDue): string {
     let outputString = ""
 
