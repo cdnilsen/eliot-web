@@ -99,7 +99,21 @@
 
         <div id="check_mainDiv" class="tab-content">
             <h2>Check Your Work</h2>
-            <p>Check work content will go here...</p>
+            <p>View answer keys for cards currently under review.</p>
+            
+            <label for="check_dropdownMenu">Choose a deck to check:</label>
+            <select id="check_dropdownMenu" name="check_dropdownMenu">
+                <option value="" disabled selected>Select a deck</option>
+                <option value="Ge'ez">Ge'ez</option>
+                <option value="Ancient Greek">Ancient Greek</option>
+                <option value="Russian">Russian</option>
+            </select>
+
+            <div class="check_input-group">
+                <button id="check_submitBtn">Show Answer Key</button>
+            </div>
+
+            <div id="check_output">Select a deck and click "Show Answer Key" to see answers for cards currently under review.</div>
         </div>
     </div>
 </body>

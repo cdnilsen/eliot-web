@@ -75,7 +75,9 @@ function initializeTabSwitching() {
             }
         });
     });
+    
     setupReviewAheadUI();
+    setupCheckYourWorkTab(); // Add this line
 }
 
 
@@ -1315,3 +1317,216 @@ if (resetCardReviews) {
 // Usage examples:
 // resetDeckCardsUnderReview("My Deck Name");  // Reset specific deck
 // resetAllCardsUnderReview();                 // Reset all cards everywhere
+
+// Add this interface near your other type definitions
+interface CardsUnderReviewResponse {
+    status: 'success' | 'error';
+    cards?: any[]; // Use any[] since we're just passing raw DB data
+    total_count?: number;
+    deck?: string;
+    error?: string;
+}
+
+// Function to fetch cards under review for a deck
+async function getCardsUnderReview(deckName: string): Promise<CardsUnderReviewResponse> {
+    try {
+        const response = await fetch(`/cards_under_review/${encodeURIComponent(deckName)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: CardsUnderReviewResponse = await response.json();
+        console.log('Cards under review response:', result);
+        
+        return result;
+    } catch (error) {
+        console.error('Error getting cards under review:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error getting cards under review' 
+        };
+    }
+}
+
+// Function to convert raw DB data to CardDue interface
+function convertToCardDue(rawCard: any): CardDue {
+    return {
+        card_id: rawCard.card_id,
+        note_id: rawCard.note_id,
+        deck: rawCard.deck,
+        card_format: rawCard.card_format,
+        field_names: rawCard.field_names || [],
+        field_values: rawCard.field_values || [],
+        field_processing: rawCard.field_processing || [],
+        time_due: rawCard.time_due,
+        interval: rawCard.interval,
+        retrievability: rawCard.retrievability,
+        peers: rawCard.peers || []
+    };
+}
+
+// Function to generate answer key HTML
+function generateAnswerKey(cards: CardDue[]): string {
+    if (cards.length === 0) {
+        return '<p class="no-cards">No cards are currently under review for this deck.</p>';
+    }
+
+    let html = `
+        <div class="answer-key">
+            <h3>Answer Key (${cards.length} cards under review)</h3>
+            <div class="answer-grid">
+    `;
+
+    cards.forEach((card, index) => {
+        const questionText = generateCardFrontLine(card);
+        
+        // Generate answer based on card format
+        let answerText = '';
+        if (card.card_format === "Native to Target") {
+            // If question shows native (index 1), answer is target (index 0)
+            answerText = cleanFieldDatum(card.field_values[0] || '', card.field_processing[0] || '');
+        } else {
+            // If question shows target (index 0), answer is native (index 1)  
+            answerText = cleanFieldDatum(card.field_values[1] || '', card.field_processing[1] || '');
+        }
+
+        // Process HTML in both question and answer
+        const processedQuestion = processHTMLContent(questionText);
+        const processedAnswer = processHTMLContent(answerText);
+
+        html += `
+            <div class="answer-item" data-card-id="${card.card_id}">
+                <div class="answer-number">${index + 1}.</div>
+                <div class="answer-content">
+                    <div class="question-text">
+                        <strong>Q:</strong> ${processedQuestion}
+                    </div>
+                    <div class="answer-text">
+                        <strong>A:</strong> ${processedAnswer}
+                    </div>
+                    <div class="card-meta">
+                        <span class="card-id">Card #${card.card_id}</span>
+                        <span class="card-format">${card.card_format || 'Standard'}</span>
+                        <span class="interval">Interval: ${card.interval} days</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    return html;
+}
+
+// Helper function to process HTML content (reuse from generateCardHTML)
+function processHTMLContent(text: string): string {
+    // First, handle your custom tags
+    let processed = text
+        .replace(/<ብ>/g, '<strong>')
+        .replace(/<\/ብ>/g, '</strong>');
+    
+    // Define allowed HTML tags
+    const allowedTags = ['b', 'strong', 'i', 'em', 'u', 'span', 'br'];
+    
+    // Split text into parts: HTML tags vs regular text
+    const parts = processed.split(/(<\/?[^>]+>)/);
+    
+    const processedParts = parts.map(part => {
+        if (part.match(/^<\/?[^>]+>$/)) {
+            // This is an HTML tag
+            const tagMatch = part.match(/^<\/?(\w+)(?:\s|>)/);
+            const tagName = tagMatch ? tagMatch[1].toLowerCase() : '';
+            
+            if (allowedTags.includes(tagName)) {
+                // Keep allowed tags as-is
+                return part;
+            } else {
+                // Escape disallowed tags
+                return part
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+            }
+        } else {
+            // This is regular text - only escape dangerous characters, not HTML entities
+            return part
+                .replace(/&(?!(?:amp|lt|gt|quot|apos);)/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+    });
+    
+    return processedParts.join('');
+}
+
+// Function to display the answer key
+function displayAnswerKey(cards: CardDue[], deckName: string): void {
+    const outputDiv = document.getElementById("check_output") as HTMLDivElement;
+    if (!outputDiv) return;
+
+    const answerKeyHTML = generateAnswerKey(cards);
+    
+    outputDiv.innerHTML = `
+        <div class="check-work-header">
+            <h2>Answer Key for "${deckName}"</h2>
+            <p class="deck-info">Showing answers for ${cards.length} cards currently under review</p>
+        </div>
+        ${answerKeyHTML}
+    `;
+}
+
+// Set up the Check Your Work tab functionality
+function setupCheckYourWorkTab(): void {
+    const checkDeckDropdown = document.getElementById("check_dropdownMenu") as HTMLSelectElement;
+    const checkSubmitButton = document.getElementById("check_submitBtn") as HTMLButtonElement;
+    
+    if (checkSubmitButton && checkDeckDropdown) {
+        checkSubmitButton.addEventListener('click', async () => {
+            const selectedDeck = checkDeckDropdown.value;
+            
+            if (!selectedDeck) {
+                const outputDiv = document.getElementById("check_output") as HTMLDivElement;
+                if (outputDiv) {
+                    outputDiv.innerHTML = `<p class="error">Please select a deck first.</p>`;
+                }
+                return;
+            }
+
+            console.log(`Check your work for deck: ${selectedDeck}`);
+            
+            // Show loading state
+            const outputDiv = document.getElementById("check_output") as HTMLDivElement;
+            if (outputDiv) {
+                outputDiv.innerHTML = `<p>Loading answer key for ${selectedDeck}...</p>`;
+            }
+
+            try {
+                const result = await getCardsUnderReview(selectedDeck);
+                
+                if (result.status === 'success' && result.cards) {
+                    displayAnswerKey(result.cards, selectedDeck);
+                } else {
+                    if (outputDiv) {
+                        outputDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error in check your work:', error);
+                if (outputDiv) {
+                    outputDiv.innerHTML = `<p class="error">Network error occurred</p>`;
+                }
+            }
+        });
+    }
+}
+

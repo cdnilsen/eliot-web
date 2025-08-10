@@ -1171,3 +1171,66 @@ app.post('/reset_cards_under_review', express.json(), wrapAsync(async (req, res)
         transactionClient.release();
     }
 }));
+
+
+// Add this interface near your other type definitions
+interface CardsUnderReviewResponse {
+    status: 'success' | 'error';
+    cards?: any[]; // Use any[] since we're just passing raw DB data
+    total_count?: number;
+    deck?: string;
+    error?: string;
+}
+
+// Add this endpoint to get cards under review for a specific deck
+app.get('/cards_under_review/:deckName', wrapAsync(async (req, res) => {
+    const { deckName } = req.params;
+    
+    if (!deckName) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Deck name is required'
+        } as CardsUnderReviewResponse);
+    }
+    
+    console.log(`🔍 Getting cards under review for deck: ${deckName}`);
+    
+    try {
+        const query = await client.query(
+            `SELECT 
+                card_id,
+                note_id,
+                deck,
+                card_format,
+                field_names,
+                field_values,
+                field_processing,
+                time_due,
+                interval,
+                retrievability,
+                peers,
+                created
+            FROM cards 
+            WHERE deck = $1 AND under_review = true
+            ORDER BY card_id ASC`,
+            [deckName]
+        );
+        
+        console.log(`Found ${query.rows.length} cards under review in deck "${deckName}"`);
+        
+        res.json({
+            status: 'success',
+            cards: query.rows,
+            total_count: query.rows.length,
+            deck: deckName
+        } as CardsUnderReviewResponse);
+        
+    } catch (err) {
+        console.error('Error getting cards under review:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error getting cards under review',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        } as CardsUnderReviewResponse);
+    }
+}));
