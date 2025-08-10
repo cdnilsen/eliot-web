@@ -769,7 +769,8 @@ function generateCardFrontLine(card: CardDue): string {
         targetIndex = 1; 
     }
     console.log(card.card_format);
-    console.log("The field processing:");
+    console.log("Target index: " + targetIndex.toString());
+    console.log(card.field_values);
     console.log(card.field_processing);
     let targetField = card.field_values[targetIndex];
     let targetProcessing = card.field_processing[targetIndex];
