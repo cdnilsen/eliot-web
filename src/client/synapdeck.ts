@@ -1416,30 +1416,48 @@ function convertToCardDue(rawCard: any): CardDue {
     };
 }
 
-// Function to get review results from the form
-// Function to get review results from the form
+// Debug version of getReviewResults
 function getReviewResults(): { cardId: number, result: string }[] {
+    console.log('getReviewResults called');
+    
     const form = document.getElementById('reviewResultsForm') as HTMLFormElement;
-    if (!form) return [];
+    console.log('Found form:', form);
+    
+    if (!form) {
+        console.error('Form not found!');
+        return [];
+    }
     
     const results: { cardId: number, result: string }[] = [];
-    const answerItems = form.querySelectorAll('.answer-item');
+    const answerItems = form.querySelectorAll('.answer-row');
+    console.log(`Found ${answerItems.length} answer items`);
     
-    answerItems.forEach(item => {
-        const cardId = parseInt(item.getAttribute('data-card-id') || '0');
+    answerItems.forEach((item, index) => {
+        const cardIdAttr = item.getAttribute('data-card-id');
+        const cardId = parseInt(cardIdAttr || '0');
+        console.log(`Item ${index}: data-card-id="${cardIdAttr}", parsed cardId=${cardId}`);
+        
         const selectedRadio = item.querySelector('input[type="radio"]:checked') as HTMLInputElement;
+        console.log(`Item ${index}: selected radio:`, selectedRadio);
+        
+        if (selectedRadio) {
+            console.log(`Item ${index}: radio value="${selectedRadio.value}"`);
+        }
         
         if (cardId && selectedRadio) {
             results.push({
                 cardId: cardId,
                 result: selectedRadio.value
             });
+            console.log(`Added result for card ${cardId}: ${selectedRadio.value}`);
+        } else {
+            console.warn(`Item ${index}: Missing cardId (${cardId}) or selectedRadio (${selectedRadio})`);
         }
     });
     
+    console.log('Final results:', results);
     return results;
 }
-
 
 // Updated displayAnswerKey function with better debugging
 function displayAnswerKey(cards: CardDue[], deckName: string): void {
@@ -1481,6 +1499,8 @@ function displayAnswerKey(cards: CardDue[], deckName: string): void {
 }
 
 function generateAnswerKey(cards: CardDue[]): string {
+    console.log(`generateAnswerKey called with ${cards.length} cards`);
+    
     if (cards.length === 0) {
         return '<p class="no-cards">No cards are currently under review for this deck.</p>';
     }
@@ -1499,6 +1519,8 @@ function generateAnswerKey(cards: CardDue[]): string {
     `;
 
     cards.forEach((card, index) => {
+        console.log(`Processing card ${index + 1}: ID ${card.card_id}`);
+        
         const questionText = generateCardFrontLine(card);
         
         // Generate answer based on card format
@@ -1514,6 +1536,8 @@ function generateAnswerKey(cards: CardDue[]): string {
         // Process HTML in both question and answer
         const processedQuestion = processHTMLContent(questionText);
         const processedAnswer = processHTMLContent(answerText);
+
+        console.log(`Card ${card.card_id}: Q="${processedQuestion}" A="${processedAnswer}"`);
 
         html += `
             <div class="answer-row" data-card-id="${card.card_id}">
@@ -1542,6 +1566,7 @@ function generateAnswerKey(cards: CardDue[]): string {
         </div>
     `;
 
+    console.log('Generated HTML:', html.substring(0, 500) + '...');
     return html;
 }
 
