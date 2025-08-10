@@ -500,18 +500,12 @@ async function produceCardReviewSheet(cards: CardDue[]) {
         return;
     }
     
-    const doc = new window.jsPDF({
-        orientation: 'portrait',
-        unit: 'in',
-        format: [8.5, 11],
-        putOnlyUsedFonts: true,
-        compress: true,
-        userUnit: 1.0
-    });
+    // For jsPDF 3.0.1, use simpler initialization
+    const doc = new window.jsPDF('portrait', 'in', [8.5, 11]);
 
     let gentiumFontLoaded = false;
     
-    // Try to load and add Gentium font
+    // Try to load Gentium font
     try {
         const fontResponse = await fetch('/Gentium/GentiumPlus-Regular.ttf');
         console.log('Font response status:', fontResponse.status);
@@ -520,52 +514,32 @@ async function produceCardReviewSheet(cards: CardDue[]) {
             const fontArrayBuffer = await fontResponse.arrayBuffer();
             console.log('Font file size:', fontArrayBuffer.byteLength);
             
-            // Use the safe base64 conversion
             const fontBase64 = arrayBufferToBase64(fontArrayBuffer);
             console.log('Base64 conversion completed, length:', fontBase64.length);
             
-            // Register the font with jsPDF
-            const fontName = 'Gentium';
-            const fontStyle = 'normal';
-            const fontFilename = 'Gentium.ttf';
-            
-            // Add to VFS
-            doc.addFileToVFS(fontFilename, fontBase64);
-            console.log('Font added to VFS');
-            
-            // Register with jsPDF
-            doc.addFont(fontFilename, fontName, fontStyle, 'Identity-H');
-            console.log('Font registered with jsPDF');
-            
-            // Verify it's in the font list
-            const fontList = doc.getFontList();
-            console.log('Available fonts after loading:', fontList);
-            
-            // Check if our font is actually there
-            if (fontList[fontName] || fontList[fontName.toLowerCase()]) {
-                console.log('✅ Gentium font successfully registered!');
+            // For jsPDF 3.0.1, try simpler font registration
+            try {
+                doc.addFileToVFS('GentiumPlus.ttf', fontBase64);
+                doc.addFont('GentiumPlus.ttf', 'GentiumPlus', 'normal');
+                
+                // Test if the font works
+                doc.setFont('GentiumPlus', 'normal');
+                console.log('✅ Gentium font loaded successfully');
                 gentiumFontLoaded = true;
                 
-                // Test setting the font
-                doc.setFont(fontName, fontStyle);
-                console.log('Successfully set font to:', fontName);
-            } else {
-                console.warn('❌ Gentium font not found in font list after registration');
+            } catch (fontError) {
+                console.warn('Font registration failed:', fontError);
+                console.log('Will use system font fallback');
             }
-            
-        } else {
-            console.warn('Could not load Gentium font file, status:', fontResponse.status);
-            }
+        }
     } catch (error) {
         console.warn('Error loading Gentium font:', error);
     }
     
-    // Page dimensions and margins
+    // Page setup
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 0.5;
-    const contentWidth = pageWidth - (margin * 2);
-    
     let currentY = margin;
     
     // Title
@@ -592,12 +566,12 @@ async function produceCardReviewSheet(cards: CardDue[]) {
     doc.text('Cards Due for Review:', margin, currentY);
     currentY += 0.2;
     
-    // Draw a line under the header
+    // Line under header
     doc.setLineWidth(0.01);
     doc.line(margin, currentY, pageWidth - margin, currentY);
     currentY += 0.2;
     
-    // Card entries
+    // Render each card
     cards.forEach((card, index) => {
         // Check if we need a new page
         if (currentY > pageHeight - 1) {
@@ -605,67 +579,59 @@ async function produceCardReviewSheet(cards: CardDue[]) {
             currentY = margin;
         }
         
-        // Generate the front side line using your existing function
         const frontSideLine = generateCardFrontLine(card);
+        console.log(`Card ${index + 1} original:`, frontSideLine);
         
-        // Debug the text to see what we're working with
-        console.log('Front side line:', frontSideLine);
-        console.log('Character codes:', [...frontSideLine].map(c => c.charCodeAt(0)));
+        // For jsPDF 3.0.1, let's try a different text processing approach
+        let displayText = frontSideLine;
         
-        let displayText = prepareTextForPDF(frontSideLine);
-        console.log('Processed for PDF:', displayText);
+        // Clean up any problematic characters
+        displayText = displayText
+            .replace(/<[^>]*>/g, '') // Remove HTML tags
+            .replace(/&[^;]+;/g, ''); // Remove HTML entities
         
-        // Card number and front side - use Gentium font for Ge'ez text
+        console.log(`Card ${index + 1} processed:`, displayText);
+        
+        // Set font
         doc.setFontSize(12);
-        
-        // Debug: Check what fonts are available
-        console.log('Available fonts:', doc.getFontList());
-        
-        if (gentiumFontLoaded) {
-            try {
-                doc.setFont('Gentium', 'normal');
-                console.log('Using Gentium font for card', index + 1);
-
-                const canRenderThis = testCharacterRendering(doc, displayText);
-                if (!canRenderThis) {
-                    console.warn('This text may not render properly:', displayText);
-                    // Optionally fall back to transliteration or alternative font
-                }
-            } catch (e) {
-                console.warn('Failed to set Gentium font for card', index + 1, ':', e);
+        try {
+            if (gentiumFontLoaded) {
+                doc.setFont('GentiumPlus', 'normal');
+                console.log(`Using GentiumPlus for card ${index + 1}`);
+            } else {
                 doc.setFont('helvetica', 'normal');
+                console.log(`Using helvetica for card ${index + 1}`);
             }
-        } else {
-            console.log('Gentium not available, using helvetica for card', index + 1);
+        } catch (fontSetError) {
+            console.warn('Font setting failed, using default:', fontSetError);
             doc.setFont('helvetica', 'normal');
         }
         
-        // Split long text if needed
-        const maxWidth = contentWidth - 0.3;
-        const textLines = doc.splitTextToSize(`${index + 1}. ${displayText}`, maxWidth);
+        // Render the text
+        const cardText = `${index + 1}. ${displayText}`;
         
-        textLines.forEach((line: string, lineIndex: number) => {
-            if (currentY > pageHeight - 1) {
-                doc.addPage();
-                currentY = margin;
-            }
-            doc.text(line, margin, currentY);
-            currentY += 0.2;
-        });
+        try {
+            // For jsPDF 3.0.1, try direct text rendering
+            doc.text(cardText, margin, currentY);
+            console.log(`✓ Rendered card ${index + 1}`);
+        } catch (textError) {
+            console.error(`✗ Failed to render card ${index + 1}:`, textError);
+            // Fallback: render with helvetica
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${index + 1}. [Text rendering error]`, margin, currentY);
+        }
         
-        currentY += 0.1;
+        currentY += 0.3;
         
-        // Add space for answer (blank lines)
+        // Answer lines
         doc.setFont('helvetica', 'normal');
         doc.text('_'.repeat(80), margin + 0.2, currentY);
         currentY += 0.25;
-        
-        // Add another blank line for longer answers
         doc.text('_'.repeat(80), margin + 0.2, currentY);
         currentY += 0.4;
     });
     
-    // Footer with page numbers
+    // Page numbers
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -675,9 +641,8 @@ async function produceCardReviewSheet(cards: CardDue[]) {
         doc.setTextColor(0, 0, 0);
     }
     
-    // Save the PDF
+    // Save
     doc.save('card-review-sheet.pdf');
-    
     return doc;
 }
 
