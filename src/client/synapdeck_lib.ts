@@ -52,7 +52,7 @@ export function TwoWayCard(values: string[], processing: string[]): any[] {
         },
         {
             card_format: "Native to Target", 
-            field_names: ["Native", "Target", "Native_Back", "Target_Back"],
+            field_names: ["Target", "Native", "Target_Back", "Native_Back"],
             field_values: values,
             field_processing: processing
         }
