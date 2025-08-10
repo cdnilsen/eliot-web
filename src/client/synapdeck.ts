@@ -294,7 +294,6 @@ uploadSubmitButton.addEventListener('click', async () => {
     console.log('All notes processed!');
 });
 
-
 async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCardsResponse> {
     const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
     const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
@@ -370,7 +369,6 @@ function groupCardsByDueDate(cards: CardDue[], groupByDateOnly = false) {
     
     return sortedGroups;
 }
-
 
 function shuffleCardArray(cards: CardDue[]): CardDue[] {
     const shuffled = [...cards]; // Create a copy to avoid mutating original
@@ -795,7 +793,6 @@ function generateCardHTML(card: CardDue, cardNumber: number): string {
     `;
 }
 
-
 // Most elegant: Direct PDF viewer integration
 async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
     try {
@@ -984,55 +981,6 @@ function getTimeUntilDue(dueDate: Date): string {
     }
 }
 
-// Updated main function that uses the new options
-async function checkAndDisplayCards(deckName: string): Promise<void> {
-    const result = await checkAvailableCardsWithOptions(deckName);
-    
-    if (result.status === 'success' && result.cards) {
-        const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
-        const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
-        
-        const isReviewAhead = reviewAheadCheckbox?.checked || false;
-        const hoursAhead = isReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
-        
-        displayAvailableCardsWithStatus(result.cards, isReviewAhead, hoursAhead);
-    } else {
-        const outputDiv = document.getElementById("check_output") as HTMLDivElement;
-        if (outputDiv) {
-            outputDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
-        }
-    }
-}
-
-async function checkAvailableCards(deckName: string): Promise<CheckCardsResponse> {
-    try {
-        const response = await fetch('/check_cards_available', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                deck: deckName,
-                current_time: new Date().toISOString() // Send current time for due date comparison
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result: CheckCardsResponse = await response.json();
-        console.log('Available cards response:', result);
-        
-        return result;
-    } catch (error) {
-        console.error('Error checking available cards:', error);
-        return { 
-            status: 'error', 
-            error: 'Network error checking available cards' 
-        };
-    }
-}
 let reviewDeckDropdown = document.getElementById("review_dropdownMenu") as HTMLSelectElement;
 let selectedReviewDeck: string = "";
 
@@ -1102,7 +1050,6 @@ if (reviewDeckDropdown) {
     });
 }
 
-
 // Helper function to refresh the card cache
 async function refreshCardCache(): Promise<void> {
     if (!selectedReviewDeck) return;
@@ -1170,8 +1117,6 @@ function setupReviewAheadUI(): void {
     }
 }
 
-
-
 // Add a variable to store the cached card results
 let cachedCardResults: CheckCardsResponse | null = null;
 let lastCheckedDeck: string = "";
@@ -1189,6 +1134,39 @@ function updateSubmitButtonText(numCards: number, totalCardCount: number, review
             submitButton.textContent = `Review ${numCards} of ${totalCardCount} Card${totalCardCount !== 1 ? 's' : ''}${timeText}`;
             submitButton.disabled = false;
         }
+    }
+}
+
+// Frontend function to mark cards as under review
+async function markCardsUnderReview(cardIds: number[]): Promise<boolean> {
+    try {
+        const response = await fetch('/mark_cards_under_review', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                card_ids: cardIds 
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Mark cards under review response:', result);
+        
+        if (result.status === 'success') {
+            console.log(`✅ Successfully marked ${result.updated_count} cards as under review`);
+            return true;
+        } else {
+            console.error('❌ Error marking cards under review:', result.error);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Network error marking cards under review:', error);
+        return false;
     }
 }
 
@@ -1216,7 +1194,6 @@ if (reviewSubmitButton) {
             const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
             const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
 
-            
             let numCards = parseInt(reviewAheadNumCards.value)
             
             const currentReviewAhead = reviewAheadCheckbox?.checked || false;
@@ -1242,9 +1219,14 @@ if (reviewSubmitButton) {
                 console.log(cardsToReview[0]);
 
                 let doc = produceCardReviewSheetPDFViewer(cardsToReview);
+                
+                let idsUnderReview: number[] = []
+                for (let i=0; i < cardsToReview.length; i++) {
+                    let thisCardID = cardsToReview[i].card_id;
+                    idsUnderReview.push(thisCardID);
+                }
+                markCardsUnderReview(idsUnderReview)
 
-                
-                
                 // Update submit button text to show count
                 updateSubmitButtonText(numCards, cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
             } else {
@@ -1261,3 +1243,67 @@ if (reviewSubmitButton) {
         }
     });
 }
+
+// Frontend helper functions
+async function resetDeckCardsUnderReview(deckName: string): Promise<boolean> {
+    try {
+        const response = await fetch('/reset_cards_under_review', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                deck: deckName 
+            })
+        });
+
+        const result = await response.json();
+        if (result.status === 'success') {
+            console.log(`✅ Reset ${result.updated_count} cards in deck "${result.deck}"`);
+            return true;
+        } else {
+            console.error('❌ Error resetting deck cards:', result.error);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Network error:', error);
+        return false;
+    }
+}
+
+async function resetAllCardsUnderReview(): Promise<boolean> {
+    try {
+        const response = await fetch('/reset_cards_under_review', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                all: true 
+            })
+        });
+
+        const result = await response.json();
+        if (result.status === 'success') {
+            console.log(`✅ Reset ${result.updated_count} cards across all decks`);
+            return true;
+        } else {
+            console.error('❌ Error resetting all cards:', result.error);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Network error:', error);
+        return false;
+    }
+}
+
+
+let resetCardReviews = document.getElementById("resetCardReview") as HTMLButtonElement;
+if (resetCardReviews) {
+    resetCardReviews.addEventListener('click', async () => {
+        resetAllCardsUnderReview()
+    });
+}
+// Usage examples:
+// resetDeckCardsUnderReview("My Deck Name");  // Reset specific deck
+// resetAllCardsUnderReview();                 // Reset all cards everywhere
