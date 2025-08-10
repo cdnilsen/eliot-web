@@ -534,7 +534,7 @@ async function produceCardReviewSheet(cards: CardDue[]) {
             console.log('Font added to VFS');
             
             // Register with jsPDF
-            doc.addFont(fontFilename, fontName, fontStyle);
+            doc.addFont(fontFilename, fontName, fontStyle, 'Identity-H');
             console.log('Font registered with jsPDF');
             
             // Verify it's in the font list
