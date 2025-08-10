@@ -1416,6 +1416,30 @@ function convertToCardDue(rawCard: any): CardDue {
     };
 }
 
+// Function to get review results from the form
+function getReviewResults(): { cardId: number, result: string }[] {
+    const form = document.getElementById('reviewResultsForm') as HTMLFormElement;
+    if (!form) return [];
+    
+    const results: { cardId: number, result: string }[] = [];
+    const answerItems = form.querySelectorAll('.answer-item');
+    
+    answerItems.forEach(item => {
+        const cardId = parseInt(item.getAttribute('data-card-id') || '0');
+        const selectedRadio = item.querySelector('input[type="radio"]:checked') as HTMLInputElement;
+        
+        if (cardId && selectedRadio) {
+            results.push({
+                cardId: cardId,
+                result: selectedRadio.value
+            });
+        }
+    });
+    
+    return results;
+}
+
+// Updated displayAnswerKey function
 function displayAnswerKey(cards: CardDue[], deckName: string): void {
     const outputDiv = document.getElementById("check_output") as HTMLDivElement;
     if (!outputDiv) return;
@@ -1425,13 +1449,27 @@ function displayAnswerKey(cards: CardDue[], deckName: string): void {
     outputDiv.innerHTML = `
         <div class="check-work-header">
             <h2>Answer Key for "${deckName}"</h2>
-            <p class="deck-info">Showing answers for ${cards.length} cards currently under review</p>
+            <p class="deck-info">Review your answers and select pass/hard/fail for each card</p>
         </div>
         ${answerKeyHTML}
     `;
+    
+    // Add event listener to the submit button
+    const submitButton = document.getElementById('submitReviewResults');
+    if (submitButton) {
+        submitButton.addEventListener('click', () => {
+            const results = getReviewResults();
+            console.log('Review results:', results);
+            
+            // Call your rescheduling function here
+            // rescheduleCards(results, deckName);
+            
+            // For now, just log the results
+            alert(`Got results for ${results.length} cards. Check console for details.`);
+        });
+    }
 }
 
-// Function to generate answer key HTML
 function generateAnswerKey(cards: CardDue[]): string {
     if (cards.length === 0) {
         return '<p class="no-cards">No cards are currently under review for this deck.</p>';
@@ -1439,8 +1477,9 @@ function generateAnswerKey(cards: CardDue[]): string {
 
     let html = `
         <div class="answer-key">
-            <h3>Answer Key (${cards.length} cards under review)</h3>
-            <div class="answer-grid">
+            <h3>Answer Key (${cards.length} cards)</h3>
+            <form id="reviewResultsForm">
+                <div class="answer-list">
     `;
 
     cards.forEach((card, index) => {
@@ -1462,26 +1501,37 @@ function generateAnswerKey(cards: CardDue[]): string {
 
         html += `
             <div class="answer-item" data-card-id="${card.card_id}">
-                <div class="answer-number">${index + 1}.</div>
-                <div class="answer-content">
-                    <div class="question-text">
-                        <strong>Q:</strong> ${processedQuestion}
-                    </div>
-                    <div class="answer-text">
-                        <strong>A:</strong> ${processedAnswer}
-                    </div>
-                    <div class="card-meta">
-                        <span class="card-id">Card #${card.card_id}</span>
-                        <span class="card-format">${card.card_format || 'Standard'}</span>
-                        <span class="interval">Interval: ${card.interval} days</span>
-                    </div>
+                <div class="qa-pair">
+                    <span class="question">${processedQuestion}</span>
+                    <span class="arrow">→</span>
+                    <span class="answer">${processedAnswer}</span>
+                </div>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="card_${card.card_id}" value="pass" checked>
+                        Pass
+                    </label>
+                    <label>
+                        <input type="radio" name="card_${card.card_id}" value="hard">
+                        Hard
+                    </label>
+                    <label>
+                        <input type="radio" name="card_${card.card_id}" value="fail">
+                        Fail
+                    </label>
                 </div>
             </div>
         `;
     });
 
     html += `
-            </div>
+                </div>
+                <div class="submit-section">
+                    <button type="button" id="submitReviewResults" class="submit-btn">
+                        Submit Review Results
+                    </button>
+                </div>
+            </form>
         </div>
     `;
 
@@ -1537,7 +1587,6 @@ function setupCheckYourWorkTab(): void {
     if (checkSubmitButton && checkDeckDropdown) {
         checkSubmitButton.addEventListener('click', async () => {
             const selectedDeck = checkDeckDropdown.value;
-            
             if (!selectedDeck) {
                 const outputDiv = document.getElementById("check_output") as HTMLDivElement;
                 if (outputDiv) {
@@ -1559,6 +1608,7 @@ function setupCheckYourWorkTab(): void {
                 const cards = await getCardsUnderReviewInOrder(selectedDeck);
                 
                 if (cards.length > 0) {
+                    resetDeckCardsUnderReview(selectedDeck);
                     displayAnswerKey(cards, selectedDeck);
                 } else {
                     if (outputDiv) {
