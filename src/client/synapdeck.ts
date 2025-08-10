@@ -1469,22 +1469,6 @@ function processHTMLContent(text: string): string {
     return processedParts.join('');
 }
 
-// Function to display the answer key
-function displayAnswerKey(cards: CardDue[], deckName: string): void {
-    const outputDiv = document.getElementById("check_output") as HTMLDivElement;
-    if (!outputDiv) return;
-
-    const answerKeyHTML = generateAnswerKey(cards);
-    
-    outputDiv.innerHTML = `
-        <div class="check-work-header">
-            <h2>Answer Key for "${deckName}"</h2>
-            <p class="deck-info">Showing answers for ${cards.length} cards currently under review</p>
-        </div>
-        ${answerKeyHTML}
-    `;
-}
-
 // Set up the Check Your Work tab functionality
 function setupCheckYourWorkTab(): void {
     const checkDeckDropdown = document.getElementById("check_dropdownMenu") as HTMLSelectElement;
@@ -1508,13 +1492,13 @@ function setupCheckYourWorkTab(): void {
             const outputDiv = document.getElementById("check_output") as HTMLDivElement;
             if (outputDiv) {
                 outputDiv.innerHTML = `<p>Loading answer key for ${selectedDeck}...</p>`;
+
             }
 
             try {
                 const result = await getCardsUnderReview(selectedDeck);
-                
                 if (result.status === 'success' && result.cards) {
-                    displayAnswerKey(result.cards, selectedDeck);
+                    outputDiv.innerHTML = generateAnswerKey(result.cards);
                 } else {
                     if (outputDiv) {
                         outputDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
