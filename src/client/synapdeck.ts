@@ -422,7 +422,7 @@ function selectCardsFromGroup(
         }
         
         // Check if any peers of this card are already selected
-        const hasPeerConflict = card.peers.some(peerId => alreadySelected.has(peerId));
+        const hasPeerConflict = card.peers && card.peers.some(peerId => alreadySelected.has(peerId));
         
         if (!hasPeerConflict) {
             // This card is safe to add
@@ -430,7 +430,7 @@ function selectCardsFromGroup(
             alreadySelected.add(card.card_id);
             console.log(`✓ Added card ${card.card_id} (no peer conflicts)`);
         } else {
-            console.log(`⚠ Skipped card ${card.card_id} (peer conflict with: ${card.peers.filter(id => alreadySelected.has(id))})`);
+            console.log(`⚠ Skipped card ${card.card_id} (peer conflict with: ${card.peers?.filter(id => alreadySelected.has(id)) || []})`);
         }
     }    
     return selectedFromGroup;
