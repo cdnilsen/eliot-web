@@ -1,6 +1,7 @@
 import {transliterateGeez} from './transcribe_geez.js';
 import {OneWayCard, TwoWayCard} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
+import { jsPDF } from "jspdf";
 
 /*
 let inputBox = document.getElementById('userInput') as HTMLInputElement;
@@ -419,35 +420,11 @@ function selectCardsFromGroup(
         } else {
             console.log(`⚠ Skipped card ${card.card_id} (peer conflict with: ${card.peers.filter(id => alreadySelected.has(id))})`);
         }
-    }
-    
+    }    
     return selectedFromGroup;
 }
 
-function sortDueDateArray(rawCards: CardDue[], existingList: CardDue[], numCards: number, cardDict: idToCardDict): CardDue[] {
-    let existingListCopy = existingList;
-    let shuffledCards = shuffleCardArray(rawCards);
-    let cardsDrawn = existingList.length;
-    for (let i=0; i < shuffledCards.length; i++) {
-        let card = rawCards[i];
-        for (let j=0; j < card.peers.length; j++) {
-            let thisPeerID = card.peers[j].toString();
-            if (existingListCopy.includes(cardDict[thisPeerID])) {
-                continue;
-            } else if (cardsDrawn >= numCards) {
-                return existingListCopy;
-            } else {
-                existingListCopy.push(card);
-                cardsDrawn += 1;
-            }
-        }
-        return existingListCopy;
-    }
-    return existingListCopy;
-}
-
-
-function produceReviewSheet(cards: CardDue[], numCards: number): CardDue[] {
+function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
     console.log(`🎯 Producing review sheet: ${numCards} cards from ${cards.length} available`);
 
     // Create lookup dictionary for cards
@@ -495,6 +472,20 @@ function produceReviewSheet(cards: CardDue[], numCards: number): CardDue[] {
     console.log('🔀 Final shuffled order:', shuffledFinalList.map(c => c.card_id));
     
     return shuffledFinalList;
+}
+
+
+function produceCardReviewSheet(cards: CardDue[]) {
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'in',
+        format: [8.5, 11]
+    });
+
+    console.log(typeof doc);
+
+    return doc;
+
 }
 
 // Enhanced display function that shows review ahead info
@@ -842,14 +833,11 @@ if (reviewSubmitButton) {
             // Display the results
             if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
                 console.log("Should be showing review sheet...")
-                produceReviewSheet(cachedCardResults.cards, numCards);
+                let cardsToReview: CardDue[] = produceFinalCardList(cachedCardResults.cards, numCards);
 
+                let doc = produceCardReviewSheet(cardsToReview);
 
-                /*displayAvailableCardsWithStatus(
-                    cachedCardResults.cards, 
-                    currentReviewAhead, 
-                    currentHoursAhead
-                );*/
+                
                 
                 // Update submit button text to show count
                 updateSubmitButtonText(numCards, cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
