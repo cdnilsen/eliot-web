@@ -1,7 +1,7 @@
 import {transliterateGeez} from './transcribe_geez.js';
 import {OneWayCard, TwoWayCard} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
-import { jsPDF } from "jspdf";
+import * as jsPDF from 'jspdf';
 
 /*
 let inputBox = document.getElementById('userInput') as HTMLInputElement;
@@ -476,7 +476,7 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
 
 
 function produceCardReviewSheet(cards: CardDue[]) {
-    const doc = new jsPDF({
+    const doc = new jsPDF.jsPDF({
         orientation: 'portrait',
         unit: 'in',
         format: [8.5, 11]
