@@ -771,6 +771,7 @@ function generateCardFrontLine(card: CardDue): string {
     if (card.card_format == "Native To Target") {
         targetIndex = 1; 
     }
+    console.log(card.card_format);
     console.log("The field processing:");
     console.log(card.field_processing);
     let targetField = card.field_values[targetIndex];
