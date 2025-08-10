@@ -664,16 +664,51 @@ function generateReviewSheetHTML(cards: CardDue[]): string {
 function generateCardHTML(card: CardDue, cardNumber: number): string {
     const frontSideLine = generateCardFrontLine(card);
     
-    // Convert your custom HTML tags
-    let processedText = frontSideLine
-        .replace(/<ብ>/g, '<strong>')
-        .replace(/<\/ብ>/g, '</strong>')
-        // Add other conversions as needed
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/&lt;strong&gt;/g, '<strong>')
-        .replace(/&lt;\/strong&gt;/g, '</strong>');
+    // Function to safely process HTML while allowing specific tags
+    function processHTMLContent(text: string): string {
+        // First, handle your custom tags
+        let processed = text
+            .replace(/<ብ>/g, '<strong>')
+            .replace(/<\/ብ>/g, '</strong>');
+        
+        // Define allowed HTML tags
+        const allowedTags = ['b', 'strong', 'i', 'em', 'u', 'span', 'br'];
+        
+        // Create a more sophisticated approach that only escapes dangerous content
+        // while preserving allowed HTML tags
+        
+        // Split text into parts: HTML tags vs regular text
+        const parts = processed.split(/(<\/?[^>]+>)/);
+        
+        const processedParts = parts.map(part => {
+            if (part.match(/^<\/?[^>]+>$/)) {
+                // This is an HTML tag
+                const tagMatch = part.match(/^<\/?(\w+)(?:\s|>)/);
+                const tagName = tagMatch ? tagMatch[1].toLowerCase() : '';
+                
+                if (allowedTags.includes(tagName)) {
+                    // Keep allowed tags as-is
+                    return part;
+                } else {
+                    // Escape disallowed tags
+                    return part
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+                }
+            } else {
+                // This is regular text - only escape dangerous characters, not HTML entities
+                return part
+                    .replace(/&(?!(?:amp|lt|gt|quot|apos);)/g, '&amp;') // Only escape & if not already an entity
+                    .replace(/</g, '&lt;')  // Escape standalone < 
+                    .replace(/>/g, '&gt;'); // Escape standalone >
+            }
+        });
+        
+        return processedParts.join('');
+    }
+    
+    const processedText = processHTMLContent(frontSideLine);
     
     return `
         <div class="card-item">
@@ -778,9 +813,7 @@ function generateCardFrontLine(card: CardDue): string {
     console.log(targetField + " (" + card.card_format + ") is processed as " + targetProcessing);
 
     let processedField = cleanFieldDatum(targetField, targetProcessing);
-
-    outputString = processedField + " :"
-    return outputString;
+    return processedField;
 }
 
 // Enhanced display function that shows review ahead info
