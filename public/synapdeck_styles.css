@@ -244,3 +244,120 @@ input[type="file"]:hover {
         gap: 5px;
     }
 }
+
+
+.answer-key {
+    margin-top: 20px;
+}
+
+.answer-key h3 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.answer-table {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.header-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 80px 80px;
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: bold;
+    padding: 12px;
+    text-align: center;
+}
+
+.qa-header {
+    text-align: left;
+    padding-left: 8px;
+}
+
+.pass-header, .hard-header, .fail-header {
+    font-size: 14px;
+}
+
+.answer-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 80px 80px;
+    padding: 12px;
+    border-bottom: 1px solid #dee2e6;
+    align-items: center;
+}
+
+.answer-row:last-child {
+    border-bottom: none;
+}
+
+.answer-row:nth-child(even) {
+    background: #f8f9fa;
+}
+
+.qa-cell {
+    padding-left: 8px;
+    font-size: 14px;
+}
+
+.radio-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.radio-cell input[type="radio"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.submit-section {
+    text-align: center;
+    padding-top: 20px;
+}
+
+.submit-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.submit-btn:hover {
+    background: #218838;
+}
+
+.check-work-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #007cba;
+}
+
+.check-work-header h2 {
+    color: #007cba;
+    margin-bottom: 5px;
+}
+
+.deck-info {
+    color: #666;
+    font-style: italic;
+}
+
+.no-cards {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 40px 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
