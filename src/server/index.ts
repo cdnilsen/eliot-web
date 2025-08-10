@@ -1067,128 +1067,12 @@ app.post('/mark_cards_under_review', express.json(), wrapAsync(async (req, res) 
     }
 }));
 
-
-// Optional: Add endpoint to reset cards (mark them as not under review)
-app.post('/reset_cards_under_review', express.json(), wrapAsync(async (req, res) => {
-    const { card_ids }: MarkCardsRequest = req.body;
-    
-    if (!card_ids || !Array.isArray(card_ids) || card_ids.length === 0) {
-        return res.json({
-            status: 'error',
-            error: 'No card IDs provided'
-        } as MarkCardsResponse);
-    }
-    
-    console.log(`🔄 Resetting ${card_ids.length} cards from under review:`, card_ids);
-    
-    const transactionClient = await client.connect();
-    
-    try {
-        await transactionClient.query('BEGIN');
-        
-        const placeholders = card_ids.map((_, index) => `$${index + 1}`).join(',');
-        const query = `UPDATE cards SET under_review = false WHERE card_id IN (${placeholders})`;
-        
-        const result = await transactionClient.query(query, card_ids);
-        const updatedCount = result.rowCount || 0;
-        
-        await transactionClient.query('COMMIT');
-        
-        console.log(`🔄 Reset ${updatedCount} cards from under review`);
-        
-        res.json({
-            status: 'success',
-            updated_count: updatedCount,
-            card_ids: card_ids
-        } as MarkCardsResponse);
-        
-    } catch (error) {
-        await transactionClient.query('ROLLBACK');
-        console.error('❌ Error resetting cards under review:', error);
-        res.json({
-            status: 'error',
-            error: error instanceof Error ? error.message : 'Unknown error occurred'
-        } as MarkCardsResponse);
-    } finally {
-        transactionClient.release();
-    }
-}));
-
-
-// Add interface for deck-based reset
-interface ResetDeckCardsRequest {
-    deck: string;
-}
-
-// Add this interface near your other type definitions at the top
-interface MarkCardsRequest {
-    card_ids: number[];
-}
-
 interface MarkCardsResponse {
     status: 'success' | 'error';
     updated_count?: number;
     card_ids?: number[];
     error?: string;
 }
-
-// Add this endpoint after your existing endpoints but before the app.listen call
-app.post('/mark_cards_under_review', express.json(), wrapAsync(async (req, res) => {
-    const { card_ids }: MarkCardsRequest = req.body;
-    
-    if (!card_ids || !Array.isArray(card_ids) || card_ids.length === 0) {
-        return res.json({
-            status: 'error',
-            error: 'No card IDs provided or invalid format'
-        } as MarkCardsResponse);
-    }
-    
-    // Validate that all card_ids are numbers
-    const validCardIds = card_ids.filter(id => typeof id === 'number' && !isNaN(id));
-    if (validCardIds.length !== card_ids.length) {
-        return res.json({
-            status: 'error',
-            error: 'Invalid card IDs provided - must be numbers'
-        } as MarkCardsResponse);
-    }
-    
-    console.log(`📝 Marking ${validCardIds.length} cards as under review:`, validCardIds);
-    
-    const transactionClient = await client.connect();
-    
-    try {
-        await transactionClient.query('BEGIN');
-        
-        // Create placeholders for the SQL query
-        const placeholders = validCardIds.map((_, index) => `$${index + 1}`).join(',');
-        const query = `UPDATE cards SET under_review = true WHERE card_id IN (${placeholders})`;
-        
-        // Execute the update query
-        const result = await transactionClient.query(query, validCardIds);
-        
-        const updatedCount = result.rowCount || 0;
-        
-        await transactionClient.query('COMMIT');
-        
-        console.log(`✅ Successfully marked ${updatedCount} cards as under review`);
-        
-        res.json({
-            status: 'success',
-            updated_count: updatedCount,
-            card_ids: validCardIds
-        } as MarkCardsResponse);
-        
-    } catch (error) {
-        await transactionClient.query('ROLLBACK');
-        console.error('❌ Error marking cards under review:', error);
-        res.json({
-            status: 'error',
-            error: error instanceof Error ? error.message : 'Unknown error occurred'
-        } as MarkCardsResponse);
-    } finally {
-        transactionClient.release();
-    }
-}));
 
 // Add interface for flexible reset options
 interface ResetCardsRequest {
