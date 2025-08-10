@@ -551,9 +551,9 @@ function generateReviewSheetHTML(cards: CardDue[]): string {
                 
                 .card-question {
                     font-size: 14px;
-                    margin-bottom: 15px;
+                    margin-bottom: 5px;
                     font-weight: normal;
-                    line-height: 1.5;
+                    line-height: 1;
                 }
                 
                 .card-question strong {
