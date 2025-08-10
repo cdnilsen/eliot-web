@@ -54,7 +54,14 @@ interface CheckCardsResponse {
     details?: string;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeTabSwitching);
+} else {
+    // DOM is already loaded, initialize immediately
+    initializeTabSwitching();
+}
+
+function initializeTabSwitching() {
     const buttons = document.querySelectorAll('.button-row button');
     const tabContents = document.querySelectorAll('.tab-content');
     
@@ -79,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     setupReviewAheadUI();
-});
+}
 
 
 let currentFileContent: string = "";
