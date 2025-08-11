@@ -1505,6 +1505,10 @@ app.post('/create_review_session', express.json(), wrapAsync(async (req, res) =>
 
 // REPLACE your existing /submit_review_results endpoint with this. Implement scheduler!
 app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) => {
+    console.log('🚀 NEW ENDPOINT CALLED - submit_review_results');
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request body:', req.body);
+    
     const { results, deck, session_id, reviewedAt }: SubmitReviewResultsRequest = req.body;
     
     console.log(`📝 Received ${results?.length || 0} review results for deck "${deck}" (session: ${session_id || 'none'})`);
