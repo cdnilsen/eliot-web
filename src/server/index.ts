@@ -1545,8 +1545,10 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
         console.log('✅ Transaction started');
         
         // Just mark cards as no longer under review and record the review timestamp
-        const cardIds = validResults.map(r => r.cardId);
-        const placeholders = cardIds.map((_, index) => `$${index + 2}`).join(',');
+        const cardIds = validResults.map(r => Number(r.cardId)); // Ensure integers
+        console.log('🔍 Card IDs to update:', cardIds);
+
+        const placeholders = cardIds.map((_, index) => `${index + 3}`).join(',');
         
         // Update cards to mark them as reviewed (remove under_review flag)
         const updateResult = await transactionClient.query(
