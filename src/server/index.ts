@@ -1234,3 +1234,163 @@ app.get('/cards_under_review/:deckName', wrapAsync(async (req, res) => {
         } as CardsUnderReviewResponse);
     }
 }));
+
+
+// Get all review sessions for a deck
+app.get('/review_sessions/:deckName', wrapAsync(async (req, res) => {
+    const { deckName } = req.params;
+    const { limit = 50, offset = 0 } = req.query;
+    
+    try {
+        const sessions = await client.query(
+            `SELECT 
+                session_id,
+                deck,
+                started_at,
+                completed_at,
+                max_cards_requested,
+                cards_presented,
+                cards_completed,
+                pass_count,
+                hard_count,
+                fail_count,
+                session_status,
+                review_ahead_hours,
+                notes
+             FROM review_sessions 
+             WHERE deck = $1
+             ORDER BY started_at DESC
+             LIMIT $2 OFFSET $3`,
+            [deckName, limit, offset]
+        );
+        
+        res.json({
+            status: 'success',
+            sessions: sessions.rows,
+            deck: deckName
+        });
+        
+    } catch (err) {
+        console.error('Error fetching review sessions:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error fetching review sessions',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));
+
+// Get detailed information about a specific session
+app.get('/review_session/:sessionId', wrapAsync(async (req, res) => {
+    const { sessionId } = req.params;
+    
+    try {
+        // Get session info
+        const sessionQuery = await client.query(
+            `SELECT * FROM review_sessions WHERE session_id = $1`,
+            [sessionId]
+        );
+        
+        if (sessionQuery.rows.length === 0) {
+            return res.status(404).json({
+                status: 'error',
+                error: 'Session not found'
+            });
+        }
+        
+        // Get card reviews for this session
+        const cardReviewsQuery = await client.query(
+            `SELECT 
+                scr.*,
+                c.deck,
+                c.card_format,
+                c.field_values
+             FROM session_card_reviews scr
+             JOIN cards c ON scr.card_id = c.card_id
+             WHERE scr.session_id = $1
+             ORDER BY scr.presented_at`,
+            [sessionId]
+        );
+        
+        res.json({
+            status: 'success',
+            session: sessionQuery.rows[0],
+            card_reviews: cardReviewsQuery.rows
+        });
+        
+    } catch (err) {
+        console.error('Error fetching session details:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error fetching session details',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));
+
+// Get session statistics for a deck
+app.get('/deck_session_stats/:deckName', wrapAsync(async (req, res) => {
+    const { deckName } = req.params;
+    const { days = 30 } = req.query; // Default to last 30 days
+    
+    try {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - parseInt(days as string));
+        
+        // Get session statistics
+        const statsQuery = await client.query(
+            `SELECT 
+                COUNT(*) as total_sessions,
+                COUNT(CASE WHEN session_status = 'completed' THEN 1 END) as completed_sessions,
+                SUM(cards_completed) as total_cards_reviewed,
+                SUM(pass_count) as total_pass,
+                SUM(hard_count) as total_hard,
+                SUM(fail_count) as total_fail,
+                AVG(cards_completed) as avg_cards_per_session,
+                MIN(started_at) as first_session,
+                MAX(started_at) as last_session
+             FROM review_sessions 
+             WHERE deck = $1 AND started_at >= $2`,
+            [deckName, cutoffDate]
+        );
+        
+        // Get daily session counts
+        const dailyStatsQuery = await client.query(
+            `SELECT 
+                DATE(started_at) as session_date,
+                COUNT(*) as sessions_count,
+                SUM(cards_completed) as cards_reviewed
+             FROM review_sessions 
+             WHERE deck = $1 AND started_at >= $2
+             GROUP BY DATE(started_at)
+             ORDER BY session_date DESC`,
+            [deckName, cutoffDate]
+        );
+        
+        const stats = statsQuery.rows[0];
+        
+        // Calculate pass rate
+        const totalGraded = parseInt(stats.total_pass || 0) + parseInt(stats.total_hard || 0) + parseInt(stats.total_fail || 0);
+        const passRate = totalGraded > 0 ? (parseInt(stats.total_pass || 0) / totalGraded * 100) : 0;
+        
+        res.json({
+            status: 'success',
+            deck: deckName,
+            period_days: parseInt(days as string),
+            stats: {
+                ...stats,
+                pass_rate_percent: Math.round(passRate * 100) / 100,
+                total_graded: totalGraded
+            },
+            daily_breakdown: dailyStatsQuery.rows
+        });
+        
+    } catch (err) {
+        console.error('Error fetching deck session stats:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error fetching deck session statistics',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));

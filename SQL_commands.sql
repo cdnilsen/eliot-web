@@ -26,3 +26,7 @@ CREATE TABLE cards (
     bury_tomorrow BOOLEAN DEFAULT FALSE,
     is_suspended BOOLEAN DEFAULT FALSE
 )
+
+CREATE TABLE review_sessions (
+    
+)

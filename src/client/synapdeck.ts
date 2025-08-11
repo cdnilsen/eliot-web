@@ -7,6 +7,30 @@ declare global {
     }
 }
 
+
+interface CreateSessionResponse {
+    status: 'success' | 'error';
+    session_id?: number;
+    deck?: string;
+    cards_count?: number;
+    error?: string;
+    details?: string; // Add details property
+}
+
+interface SubmitReviewResultsResponse {
+    status: 'success' | 'error';
+    processed_count?: number;
+    updated_cards?: number[];
+    review_timestamp?: string;
+    session_id?: number;
+    error?: string;
+    details?: string;
+}
+
+// Add this variable to track the current session
+let currentSessionId: number | null = null;
+
+
 // Add type definitions at the top of your file
 interface NoteToProcess {
     deck: string;
@@ -354,6 +378,43 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
     }
 }
 
+async function createReviewSession(deckName: string, cardIds: number[], maxCards: number, reviewAheadHours: number = 0): Promise<CreateSessionResponse> {
+    console.log(`📝 Creating review session for deck "${deckName}" with ${cardIds.length} cards`);
+    
+    try {
+        const response = await fetch('/create_review_session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                deck: deckName,
+                max_cards_requested: maxCards,
+                review_ahead_hours: reviewAheadHours,
+                card_ids: cardIds
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: CreateSessionResponse = await response.json();
+        console.log('Create session response:', result);
+        
+        return result;
+    } catch (error) {
+        console.error('Network error creating review session:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error creating review session',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+
+
 // Function to group cards by due date with configurable precision
 function groupCardsByDueDate(cards: CardDue[], groupByDateOnly = false) {
     const groupedCards = new Map();
@@ -394,7 +455,6 @@ function shuffleCardArray(cards: CardDue[]): CardDue[] {
 type idToCardDict = {
     [key: string]: CardDue
 }
-
 
 function selectCardsFromGroup(
         candidateCards: CardDue[], 
@@ -803,13 +863,34 @@ function generateCardHTML(card: CardDue, cardNumber: number): string {
     `;
 }
 
-// Most elegant: Direct PDF viewer integration
+
+// Update your produceCardReviewSheetPDFViewer function to create a session
 async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
-     // Mark cards as under review in database
+    // Mark cards as under review in database
     const cardIds = cards.map(card => card.card_id);
     await markCardsUnderReview(cardIds);
     
-    // Store the order locally
+    // Create a review session
+    const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
+    const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
+    const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
+    
+    const maxCards = parseInt(reviewAheadNumCards.value);
+    const hoursAhead = reviewAheadCheckbox?.checked ? parseInt(reviewAheadHours?.value || '24') : 0;
+    
+    console.log('🎯 Creating review session...');
+    const sessionResult = await createReviewSession(selectedReviewDeck, cardIds, maxCards, hoursAhead);
+    
+    if (sessionResult.status === 'success' && sessionResult.session_id) {
+        currentSessionId = sessionResult.session_id;
+        console.log(`✅ Created session ${currentSessionId} for ${cardIds.length} cards`);
+    } else {
+        console.error('❌ Failed to create session:', sessionResult.error);
+        // Continue anyway, but without session tracking
+        currentSessionId = null;
+    }
+    
+    // Store the order locally (with session info)
     const reviewOrder = cards.map((card, index) => ({
         cardId: card.card_id,
         questionNumber: index + 1,
@@ -818,56 +899,33 @@ async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
     
     localStorage.setItem(`reviewOrder_${selectedReviewDeck}`, JSON.stringify({
         order: reviewOrder,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        sessionId: currentSessionId // Store session ID
     }));
 
     try {
-        // Generate the HTML
+        // Generate the HTML (rest of your existing code)
         const htmlContent = generateReviewSheetHTML(cards);
         
         // Create blob and URL
         const blob = new Blob([htmlContent], { type: 'text/html' });
         const blobUrl = URL.createObjectURL(blob);
         
-        // Open in new tab with specific dimensions for PDF-like viewing
+        // Open in new tab
         const pdfTab = window.open(blobUrl, '_blank');
         
         if (pdfTab) {
             // Add event listener to handle PDF generation when ready
             pdfTab.addEventListener('load', () => {
-                // Wait for fonts and then focus
                 setTimeout(() => {
                     pdfTab.focus();
-                    
-                    // Optional: Automatically open print dialog
-                    // pdfTab.print();
                 }, 1500);
             });
             
             // Update the tab title
             pdfTab.addEventListener('load', () => {
                 if (pdfTab.document) {
-                    pdfTab.document.title = 'Card Review Sheet - ' + new Date().toLocaleDateString();
-                }
-            });
-        }
-        
-        if (pdfTab) {
-            // Add event listener to handle PDF generation when ready
-            pdfTab.addEventListener('load', () => {
-                // Wait for fonts and then focus
-                setTimeout(() => {
-                    pdfTab.focus();
-                    
-                    // Optional: Automatically open print dialog
-                    // pdfTab.print();
-                }, 1500);
-            });
-            
-            // Update the tab title
-            pdfTab.addEventListener('load', () => {
-                if (pdfTab.document) {
-                    pdfTab.document.title = 'Card Review Sheet - ' + new Date().toLocaleDateString();
+                    pdfTab.document.title = `Card Review Sheet - ${new Date().toLocaleDateString()} (Session ${currentSessionId || 'N/A'})`;
                 }
             });
         }
@@ -1459,12 +1517,26 @@ function getReviewResults(): { cardId: number, result: string }[] {
     return results;
 }
 
-// Updated displayAnswerKey function with better debugging
+
+// Update your displayAnswerKey function to use the session ID
 function displayAnswerKey(cards: CardDue[], deckName: string): void {
     const outputDiv = document.getElementById("check_output") as HTMLDivElement;
     if (!outputDiv) return;
 
     console.log(`Displaying answer key for ${cards.length} cards`);
+    
+    // Get session ID from localStorage if available
+    const orderData = localStorage.getItem(`reviewOrder_${deckName}`);
+    let sessionId: number | null = null;
+    
+    if (orderData) {
+        try {
+            const parsed = JSON.parse(orderData);
+            sessionId = parsed.sessionId || null;
+        } catch (e) {
+            console.warn('Could not parse review order data');
+        }
+    }
     
     const answerKeyHTML = generateAnswerKey(cards);
     
@@ -1472,6 +1544,7 @@ function displayAnswerKey(cards: CardDue[], deckName: string): void {
         <div class="check-work-header">
             <h2>Answer Key for "${deckName}"</h2>
             <p class="deck-info">Review your answers and select pass/hard/fail for each card</p>
+            ${sessionId ? `<p class="session-info">Session ID: ${sessionId}</p>` : ''}
         </div>
         ${answerKeyHTML}
     `;
@@ -1480,21 +1553,97 @@ function displayAnswerKey(cards: CardDue[], deckName: string): void {
     const completeReviewButton = document.getElementById('submitReviewResults');
     if (completeReviewButton) {
         console.log('Adding event listener to submit button');
-        completeReviewButton.addEventListener('click', () => {
+        completeReviewButton.addEventListener('click', async () => {
             const results = getReviewResults();
             console.log('Review results:', results);
             
-            // After getting results, NOW reset the cards' review status
-            resetDeckCardsUnderReview(deckName);
+            if (results.length === 0) {
+                alert('No review results to submit. Please grade at least one card.');
+                return;
+            }
             
-            // Call your rescheduling function here
-            // rescheduleCards(results, deckName);
+            // Show loading state
+            completeReviewButton.textContent = 'Submitting...';
+            (completeReviewButton as HTMLButtonElement).disabled = true;
             
-            // For now, just log the results
-            alert(`Got results for ${results.length} cards. Check console for details.`);
+            try {
+                // Submit the results to the backend WITH session ID
+                const submitResult = await submitReviewResults(results, deckName, sessionId || undefined);
+                
+                if (submitResult.status === 'success') {
+                    console.log(`✅ Successfully submitted ${submitResult.processed_count} review results`);
+                    alert(`Review complete! Updated ${submitResult.processed_count} cards.`);
+                    
+                    // Clear the localStorage after successful submission
+                    localStorage.removeItem(`reviewOrder_${deckName}`);
+                    currentSessionId = null;
+                    
+                    // Clear the output after successful submission
+                    outputDiv.innerHTML = `
+                        <div class="success-message">
+                            <h3>✅ Review Submitted Successfully!</h3>
+                            <p>Updated ${submitResult.processed_count} cards in deck "${deckName}"</p>
+                            <p>Session: ${sessionId || 'N/A'}</p>
+                            <p>Review completed at: ${new Date(submitResult.review_timestamp || '').toLocaleString()}</p>
+                        </div>
+                    `;
+                } else {
+                    console.error('❌ Failed to submit review results:', submitResult.error);
+                    alert(`Failed to submit review: ${submitResult.error}`);
+                    
+                    // Re-enable button on error
+                    completeReviewButton.textContent = 'Submit Review Results';
+                    (completeReviewButton as HTMLButtonElement).disabled = false;
+                }
+            } catch (error) {
+                console.error('❌ Error submitting review results:', error);
+                alert('Network error occurred while submitting review');
+                
+                // Re-enable button on error
+                completeReviewButton.textContent = 'Submit Review Results';
+                (completeReviewButton as HTMLButtonElement).disabled = false;
+            }
         });
     } else {
         console.error('Submit button not found after adding to DOM');
+    }
+}
+
+async function submitReviewResults(results: { cardId: number, result: string }[], deckName: string, sessionId?: number): Promise<SubmitReviewResultsResponse> {
+    const reviewTimestamp = new Date().toISOString();
+    
+    console.log(`📤 Submitting ${results.length} review results for deck "${deckName}" (session: ${sessionId || 'none'})`);
+    console.log('Results being submitted:', results);
+    
+    try {
+        const response = await fetch('/submit_review_results', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                results: results,
+                deck: deckName,
+                session_id: sessionId, // Include session ID
+                reviewedAt: reviewTimestamp
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: SubmitReviewResultsResponse = await response.json();
+        console.log('Submit review results response:', result);
+        
+        return result;
+    } catch (error) {
+        console.error('Network error submitting review results:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error submitting review results',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        };
     }
 }
 
