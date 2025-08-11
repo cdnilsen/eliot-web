@@ -1556,15 +1556,24 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
         const placeholders = cardIds.map((_, index) => `${index + 3}`).join(',');
         
         // Update cards to mark them as reviewed (remove under_review flag)
-        const updateResult = await transactionClient.query(
-            `UPDATE cards 
-             SET under_review = false,
-                 last_reviewed = $1
-             WHERE deck = $2 AND card_id IN (${placeholders})`,
-            [reviewTimestamp, deck, ...cardIds]
-        );
+        let updatedCount = 0;
+        for (const cardId of cardIds) {
+            try {
+                const result = await transactionClient.query(
+                    `UPDATE cards 
+                    SET under_review = false,
+                        last_reviewed = $1
+                    WHERE deck = $2 AND card_id = $3`,
+                    [reviewTimestamp, deck, cardId]
+                );
+                if (result.rowCount && result.rowCount > 0) {
+                    updatedCount++;
+                }
+            } catch (cardError) {
+                console.error(`❌ Failed to update card ${cardId}:`, cardError.message);
+            }
+        }
         
-        const updatedCount = updateResult.rowCount || 0;
         console.log(`✅ Marked ${updatedCount} cards as reviewed`);
         
         // Update session tracking if session_id provided
