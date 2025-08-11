@@ -1394,3 +1394,93 @@ app.get('/deck_session_stats/:deckName', wrapAsync(async (req, res) => {
         });
     }
 }));
+
+// Add these interfaces near your other type definitions in index.ts
+interface CreateSessionRequest {
+    deck: string;
+    max_cards_requested: number;
+    review_ahead_hours?: number;
+    card_ids: number[]; // The cards that will be presented
+}
+
+interface CreateSessionResponse {
+    status: 'success' | 'error';
+    session_id?: number;
+    deck?: string;
+    cards_count?: number;
+    error?: string;
+    details?: string;
+}
+
+
+
+// Add this endpoint to your index.ts file (before the app.listen call)
+app.post('/create_review_session', express.json(), wrapAsync(async (req, res) => {
+    const { deck, max_cards_requested, review_ahead_hours = 0, card_ids }: CreateSessionRequest = req.body;
+    
+    if (!deck || !max_cards_requested || !card_ids || !Array.isArray(card_ids)) {
+        return res.json({
+            status: 'error',
+            error: 'Missing required fields: deck, max_cards_requested, and card_ids array'
+        } as CreateSessionResponse);
+    }
+    
+    console.log(`📝 Creating review session for deck "${deck}" with ${card_ids.length} cards`);
+    
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        
+        // Create the review session
+        const sessionResult = await transactionClient.query(
+            `INSERT INTO review_sessions (deck, max_cards_requested, review_ahead_hours, cards_presented, session_status)
+             VALUES ($1, $2, $3, $4, 'in_progress')
+             RETURNING session_id`,
+            [deck, max_cards_requested, review_ahead_hours, card_ids.length]
+        );
+        
+        const sessionId = sessionResult.rows[0].session_id;
+        console.log(`Created session ${sessionId}`);
+        
+        // Get current card data and insert session_card_reviews records
+        if (card_ids.length > 0) {
+            const placeholders = card_ids.map((_, index) => `$${index + 1}`).join(',');
+            const cardsData = await transactionClient.query(
+                `SELECT card_id, interval, retrievability FROM cards WHERE card_id IN (${placeholders})`,
+                card_ids
+            );
+            
+            // Insert a record for each card presented
+            for (const cardData of cardsData.rows) {
+                await transactionClient.query(
+                    `INSERT INTO session_card_reviews (session_id, card_id, interval_before, retrievability_before)
+                     VALUES ($1, $2, $3, $4)`,
+                    [sessionId, cardData.card_id, cardData.interval, cardData.retrievability]
+                );
+            }
+            
+            console.log(`Added ${cardsData.rows.length} cards to session ${sessionId}`);
+        }
+        
+        await transactionClient.query('COMMIT');
+        
+        res.json({
+            status: 'success',
+            session_id: sessionId,
+            deck: deck,
+            cards_count: card_ids.length
+        } as CreateSessionResponse);
+        
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('❌ Error creating review session:', error);
+        res.json({
+            status: 'error',
+            error: 'Error creating review session',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        } as CreateSessionResponse);
+    } finally {
+        transactionClient.release();
+    }
+}));
