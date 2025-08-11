@@ -1067,12 +1067,7 @@ app.post('/mark_cards_under_review', express.json(), wrapAsync(async (req, res) 
     }
 }));
 
-interface MarkCardsResponse {
-    status: 'success' | 'error';
-    updated_count?: number;
-    card_ids?: number[];
-    error?: string;
-}
+
 
 // Add interface for flexible reset options
 interface ResetCardsRequest {
@@ -1508,9 +1503,11 @@ app.post('/create_review_session', express.json(), wrapAsync(async (req, res) =>
 }));
 
 
-// REPLACE your existing /submit_review_results endpoint with this:
+// REPLACE your existing /submit_review_results endpoint with this. Implement scheduler!
 app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) => {
     const { results, deck, session_id, reviewedAt }: SubmitReviewResultsRequest = req.body;
+    
+    console.log(`📝 Received ${results?.length || 0} review results for deck "${deck}" (session: ${session_id || 'none'})`);
     
     // Validation
     if (!results || !Array.isArray(results) || results.length === 0) {
@@ -1541,97 +1538,33 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
     }
     
     const reviewTimestamp = reviewedAt ? new Date(reviewedAt) : new Date();
-    
-    console.log(`📝 Processing ${validResults.length} review results for deck "${deck}" (session: ${session_id || 'new'})`);
-    
     const transactionClient = await client.connect();
     
     try {
         await transactionClient.query('BEGIN');
+        console.log('✅ Transaction started');
         
-        // Get current card data for the scheduler
+        // Just mark cards as no longer under review and record the review timestamp
         const cardIds = validResults.map(r => r.cardId);
         const placeholders = cardIds.map((_, index) => `$${index + 2}`).join(',');
         
-        const currentCardsQuery = await transactionClient.query(
-            `SELECT card_id, time_due, interval, retrievability, deck 
-             FROM cards 
-             WHERE deck = $1 AND card_id IN (${placeholders})`,
-            [deck, ...cardIds]
+        // Update cards to mark them as reviewed (remove under_review flag)
+        const updateResult = await transactionClient.query(
+            `UPDATE cards 
+             SET under_review = false,
+                 last_reviewed = $1
+             WHERE deck = $2 AND card_id IN (${placeholders})`,
+            [reviewTimestamp, deck, ...cardIds]
         );
         
-        if (currentCardsQuery.rows.length !== validResults.length) {
-            throw new Error(`Expected ${validResults.length} cards, but found ${currentCardsQuery.rows.length} in database`);
-        }
+        const updatedCount = updateResult.rowCount || 0;
+        console.log(`✅ Marked ${updatedCount} cards as reviewed`);
         
-        // Create data structure for scheduler
-        const cardsForScheduler = currentCardsQuery.rows.map(dbCard => {
-            const reviewResult = validResults.find(r => r.cardId === dbCard.card_id);
-            return {
-                card_id: dbCard.card_id,
-                deck: dbCard.deck,
-                current_time_due: dbCard.time_due,
-                current_interval: dbCard.interval,
-                current_retrievability: dbCard.retrievability,
-                grade: reviewResult?.result,
-                reviewed_at: reviewTimestamp
-            };
-        });
-        
-        // Call the scheduler (you'll need to import your scheduler)
-        console.log('🔄 Calling scheduler...');
-        // For now, simple placeholder scheduling - replace with your actual scheduler
-        const scheduledCards = cardsForScheduler.map(card => {
-            let multiplier = 1;
-            switch (card.grade) {
-                case 'pass': multiplier = 2.5; break;
-                case 'hard': multiplier = 1.2; break;
-                case 'fail': multiplier = 0.5; break;
-            }
-            const newInterval = Math.max(1, Math.ceil(card.current_interval * multiplier));
-            const newDueTime = new Date(reviewTimestamp.getTime() + newInterval * 24 * 60 * 60 * 1000);
-            
-            return {
-                card_id: card.card_id,
-                new_time_due: newDueTime,
-                new_interval: newInterval,
-                new_retrievability: Math.max(0.1, card.current_retrievability * 0.9),
-                grade: card.grade
-            };
-        });
-        
-        // Update cards with new scheduling data
-        const updatedCardIds: number[] = [];
-        
-        for (const scheduledCard of scheduledCards) {
-            const updateResult = await transactionClient.query(
-                `UPDATE cards 
-                 SET time_due = $1, 
-                     interval = $2, 
-                     retrievability = $3,
-                     under_review = false,
-                     last_reviewed = $4
-                 WHERE card_id = $5`,
-                [
-                    scheduledCard.new_time_due,
-                    scheduledCard.new_interval,
-                    scheduledCard.new_retrievability,
-                    reviewTimestamp,
-                    scheduledCard.card_id
-                ]
-            );
-            
-            if (updateResult.rowCount && updateResult.rowCount > 0) {
-                updatedCardIds.push(scheduledCard.card_id);
-            }
-        }
-        
-        // Update session tracking
+        // Update session tracking if session_id provided
         let finalSessionId = session_id;
         
         if (session_id) {
-            // Update existing session
-            console.log(`📊 Updating session ${session_id} with review results`);
+            console.log(`📊 Updating session ${session_id}`);
             
             // Count grades
             const gradeCounts = validResults.reduce((acc, result) => {
@@ -1647,8 +1580,7 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
                      pass_count = $3,
                      hard_count = $4,
                      fail_count = $5,
-                     session_status = 'completed',
-                     updated_at = $1
+                     session_status = 'completed'
                  WHERE session_id = $6`,
                 [
                     reviewTimestamp,
@@ -1660,31 +1592,21 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
                 ]
             );
             
-            // Update session_card_reviews with results
+            // Update session_card_reviews with grades only
             for (const result of validResults) {
-                const scheduledCard = scheduledCards.find(sc => sc.card_id === result.cardId);
-                if (scheduledCard) {
-                    await transactionClient.query(
-                        `UPDATE session_card_reviews 
-                         SET reviewed_at = $1,
-                             grade = $2,
-                             interval_after = $3,
-                             retrievability_after = $4
-                         WHERE session_id = $5 AND card_id = $6`,
-                        [
-                            reviewTimestamp,
-                            result.result,
-                            scheduledCard.new_interval,
-                            scheduledCard.new_retrievability,
-                            session_id,
-                            result.cardId
-                        ]
-                    );
-                }
+                await transactionClient.query(
+                    `UPDATE session_card_reviews 
+                     SET reviewed_at = $1,
+                         grade = $2
+                     WHERE session_id = $3 AND card_id = $4`,
+                    [reviewTimestamp, result.result, session_id, result.cardId]
+                );
             }
+            
+            console.log(`✅ Updated session ${session_id} with grade counts`);
         } else {
-            // Create a new session for these results (fallback case)
-            console.log(`📊 Creating new session for review results`);
+            // Create a minimal session record for these results (fallback)
+            console.log(`📊 Creating minimal session record`);
             const newSessionResult = await transactionClient.query(
                 `INSERT INTO review_sessions (deck, started_at, completed_at, max_cards_requested, cards_presented, cards_completed, session_status)
                  VALUES ($1, $2, $2, $3, $3, $3, 'completed')
@@ -1692,20 +1614,21 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
                 [deck, reviewTimestamp, validResults.length]
             );
             finalSessionId = newSessionResult.rows[0].session_id;
+            console.log(`✅ Created fallback session ${finalSessionId}`);
         }
         
         await transactionClient.query('COMMIT');
-        
-        console.log(`🎉 Successfully processed review session ${finalSessionId} with ${updatedCardIds.length} cards`);
+        console.log('✅ Transaction committed successfully');
         
         res.json({
             status: 'success',
-            processed_count: updatedCardIds.length,
-            updated_cards: updatedCardIds,
+            processed_count: updatedCount,
+            updated_cards: cardIds,
             review_timestamp: reviewTimestamp.toISOString(),
             session_id: finalSessionId,
-            deck: deck
-        } as SubmitReviewResultsResponse);
+            deck: deck,
+            message: `Recorded ${validResults.length} review results. Cards ready for your custom scheduling.`
+        } as SubmitReviewResultsResponse & { message: string });
         
     } catch (error) {
         await transactionClient.query('ROLLBACK');
@@ -1717,5 +1640,6 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
         } as SubmitReviewResultsResponse);
     } finally {
         transactionClient.release();
+        console.log('🔄 Transaction client released');
     }
 }));
