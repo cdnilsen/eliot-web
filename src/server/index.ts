@@ -6,6 +6,7 @@ import bcrypt from "bcrypt"
 import client from './db'
 import { wrapAsync } from './utils'
 import { Request, Response, NextFunction } from 'express';
+import { rescheduleCards, getSchedulingStats } from './scheduler';
 
 
 declare module 'express-session' {
@@ -1502,12 +1503,9 @@ app.post('/create_review_session', express.json(), wrapAsync(async (req, res) =>
     }
 }));
 
-
-// REPLACE your existing /submit_review_results endpoint with this. Implement scheduler!
+// Replace your current submit_review_results endpoint with this updated version:
 app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) => {
-    console.log('🚀 NEW ENDPOINT CALLED - submit_review_results');
-    console.log('Request body keys:', Object.keys(req.body));
-    console.log('Request body:', req.body);
+    console.log('🚀 NEW ENDPOINT CALLED - submit_review_results with FSRS');
     
     const { results, deck, session_id, reviewedAt }: SubmitReviewResultsRequest = req.body;
     
@@ -1548,33 +1546,85 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
         await transactionClient.query('BEGIN');
         console.log('✅ Transaction started');
         
-        // Just mark cards as no longer under review and record the review timestamp
-        const cardIds = validResults.map(r => Number(r.cardId)); // Ensure integers
-        console.log('🔍 Card IDs to update:', cardIds);
+        // Get current card data for FSRS scheduling
+        const cardIds = validResults.map(r => Number(r.cardId));
+        console.log('🔍 Fetching card data for FSRS scheduling:', cardIds);
         
-        // Build placeholders starting from $3 (since $1=timestamp, $2=deck)
-        const placeholders = cardIds.map((_, index) => `${index + 3}`).join(',');
+        const currentCardsQuery = await transactionClient.query(
+            `SELECT card_id, time_due, interval, retrievability, stability, difficulty, deck
+             FROM cards 
+             WHERE deck = $1 AND card_id = ANY($2::int[])`,
+            [deck, cardIds]
+        );
         
-        // Update cards to mark them as reviewed (remove under_review flag)
-        let updatedCount = 0;
-        for (const cardId of cardIds) {
-            try {
-                const result = await transactionClient.query(
-                    `UPDATE cards 
-                    SET under_review = false,
-                        last_reviewed = $1
-                    WHERE deck = $2 AND card_id = $3`,
-                    [reviewTimestamp, deck, cardId]
-                );
-                if (result.rowCount && result.rowCount > 0) {
-                    updatedCount++;
-                }
-            } catch (cardError) {
-                console.error(`❌ Failed to update card ${cardId}:`, cardError.message);
-            }
+        console.log(`📦 Found ${currentCardsQuery.rows.length} cards for FSRS scheduling`);
+        
+        if (currentCardsQuery.rows.length !== validResults.length) {
+            throw new Error(`Expected ${validResults.length} cards, but found ${currentCardsQuery.rows.length} in database`);
         }
         
-        console.log(`✅ Marked ${updatedCount} cards as reviewed`);
+        // Prepare data for FSRS scheduler
+        const cardsForScheduler = currentCardsQuery.rows.map(dbCard => {
+            const reviewResult = validResults.find(r => r.cardId === dbCard.card_id);
+            
+            // Ensure we have a valid grade - this should never be undefined due to our validation above
+            if (!reviewResult || !['pass', 'hard', 'fail'].includes(reviewResult.result)) {
+                throw new Error(`Invalid or missing grade for card ${dbCard.card_id}`);
+            }
+            
+            return {
+                card_id: dbCard.card_id,
+                deck: dbCard.deck,
+                current_time_due: dbCard.time_due,
+                current_interval: dbCard.interval,
+                current_retrievability: dbCard.retrievability,
+                current_stability: dbCard.stability,
+                current_difficulty: dbCard.difficulty,
+                grade: reviewResult.result as 'pass' | 'hard' | 'fail', // Type assertion since we validated above
+                reviewed_at: reviewTimestamp
+            };
+        });
+        
+        // Call FSRS scheduler
+        console.log('🔄 Calling FSRS scheduler...');
+        const scheduledCards = await rescheduleCards(cardsForScheduler, reviewTimestamp);
+        
+        // Log scheduling statistics
+        const stats = getSchedulingStats(scheduledCards);
+        console.log('📊 FSRS Scheduling statistics:', stats);
+        
+        // Update cards with FSRS scheduling results
+        const updatedCardIds: number[] = [];
+        
+        for (const scheduledCard of scheduledCards) {
+            const updateResult = await transactionClient.query(
+                `UPDATE cards 
+                 SET time_due = $1, 
+                     interval = $2, 
+                     retrievability = $3,
+                     stability = $4,
+                     difficulty = $5,
+                     under_review = false,
+                     last_reviewed = $6
+                 WHERE card_id = $7`,
+                [
+                    scheduledCard.new_time_due,
+                    scheduledCard.new_interval,
+                    scheduledCard.new_retrievability,
+                    scheduledCard.new_stability,
+                    scheduledCard.new_difficulty,
+                    reviewTimestamp,
+                    scheduledCard.card_id
+                ]
+            );
+            
+            if (updateResult.rowCount && updateResult.rowCount > 0) {
+                updatedCardIds.push(scheduledCard.card_id);
+                console.log(`✅ Updated card ${scheduledCard.card_id} with FSRS scheduling`);
+            } else {
+                console.log(`⚠️ Failed to update card ${scheduledCard.card_id}`);
+            }
+        }
         
         // Update session tracking if session_id provided
         let finalSessionId = session_id;
@@ -1608,18 +1658,30 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
                 ]
             );
             
-            // Update session_card_reviews with grades only
+            // Update session_card_reviews with FSRS results
             for (const result of validResults) {
-                await transactionClient.query(
-                    `UPDATE session_card_reviews 
-                     SET reviewed_at = $1,
-                         grade = $2
-                     WHERE session_id = $3 AND card_id = $4`,
-                    [reviewTimestamp, result.result, session_id, result.cardId]
-                );
+                const scheduledCard = scheduledCards.find(sc => sc.card_id === result.cardId);
+                if (scheduledCard) {
+                    await transactionClient.query(
+                        `UPDATE session_card_reviews 
+                         SET reviewed_at = $1,
+                             grade = $2,
+                             interval_after = $3,
+                             retrievability_after = $4
+                         WHERE session_id = $5 AND card_id = $6`,
+                        [
+                            reviewTimestamp,
+                            result.result,
+                            scheduledCard.new_interval,
+                            scheduledCard.new_retrievability,
+                            session_id,
+                            result.cardId
+                        ]
+                    );
+                }
             }
             
-            console.log(`✅ Updated session ${session_id} with grade counts`);
+            console.log(`✅ Updated session ${session_id} with FSRS results`);
         } else {
             // Create a minimal session record for these results (fallback)
             console.log(`📊 Creating minimal session record`);
@@ -1634,21 +1696,22 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
         }
         
         await transactionClient.query('COMMIT');
-        console.log('✅ Transaction committed successfully');
+        console.log('✅ Transaction committed successfully with FSRS scheduling');
         
         res.json({
             status: 'success',
-            processed_count: updatedCount,
-            updated_cards: cardIds,
+            processed_count: updatedCardIds.length,
+            updated_cards: updatedCardIds,
             review_timestamp: reviewTimestamp.toISOString(),
             session_id: finalSessionId,
             deck: deck,
-            message: `Recorded ${validResults.length} review results. Cards ready for your custom scheduling.`
-        } as SubmitReviewResultsResponse & { message: string });
+            scheduling_stats: stats,
+            message: `Successfully applied FSRS scheduling to ${updatedCardIds.length} cards`
+        } as SubmitReviewResultsResponse & { scheduling_stats: any[]; message: string });
         
     } catch (error) {
         await transactionClient.query('ROLLBACK');
-        console.error('❌ Error processing review results:', error);
+        console.error('❌ Error processing review results with FSRS:', error);
         res.json({
             status: 'error',
             error: 'Error processing review results',
