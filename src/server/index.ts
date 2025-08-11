@@ -1412,6 +1412,28 @@ interface CreateSessionResponse {
     details?: string;
 }
 
+// First, add these interfaces to your index.ts if you haven't already
+interface ReviewResult {
+    cardId: number;
+    result: 'pass' | 'hard' | 'fail';
+}
+
+interface SubmitReviewResultsRequest {
+    results: ReviewResult[];
+    deck: string;
+    session_id?: number; // Optional - will create a new session if not provided
+    reviewedAt?: string;
+}
+
+interface SubmitReviewResultsResponse {
+    status: 'success' | 'error';
+    processed_count?: number;
+    updated_cards?: number[];
+    review_timestamp?: string;
+    session_id?: number;
+    error?: string;
+    details?: string;
+}
 
 
 // Add this endpoint to your index.ts file (before the app.listen call)
@@ -1480,6 +1502,219 @@ app.post('/create_review_session', express.json(), wrapAsync(async (req, res) =>
             error: 'Error creating review session',
             details: error instanceof Error ? error.message : 'Unknown error'
         } as CreateSessionResponse);
+    } finally {
+        transactionClient.release();
+    }
+}));
+
+
+// REPLACE your existing /submit_review_results endpoint with this:
+app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) => {
+    const { results, deck, session_id, reviewedAt }: SubmitReviewResultsRequest = req.body;
+    
+    // Validation
+    if (!results || !Array.isArray(results) || results.length === 0) {
+        return res.json({
+            status: 'error',
+            error: 'No review results provided or invalid format'
+        } as SubmitReviewResultsResponse);
+    }
+    
+    if (!deck) {
+        return res.json({
+            status: 'error',
+            error: 'Deck name is required'
+        } as SubmitReviewResultsResponse);
+    }
+    
+    const validResults = results.filter(result => 
+        result.cardId && 
+        typeof result.cardId === 'number' && 
+        ['pass', 'hard', 'fail'].includes(result.result)
+    );
+    
+    if (validResults.length !== results.length) {
+        return res.json({
+            status: 'error',
+            error: 'Invalid review results format'
+        } as SubmitReviewResultsResponse);
+    }
+    
+    const reviewTimestamp = reviewedAt ? new Date(reviewedAt) : new Date();
+    
+    console.log(`📝 Processing ${validResults.length} review results for deck "${deck}" (session: ${session_id || 'new'})`);
+    
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        
+        // Get current card data for the scheduler
+        const cardIds = validResults.map(r => r.cardId);
+        const placeholders = cardIds.map((_, index) => `$${index + 2}`).join(',');
+        
+        const currentCardsQuery = await transactionClient.query(
+            `SELECT card_id, time_due, interval, retrievability, deck 
+             FROM cards 
+             WHERE deck = $1 AND card_id IN (${placeholders})`,
+            [deck, ...cardIds]
+        );
+        
+        if (currentCardsQuery.rows.length !== validResults.length) {
+            throw new Error(`Expected ${validResults.length} cards, but found ${currentCardsQuery.rows.length} in database`);
+        }
+        
+        // Create data structure for scheduler
+        const cardsForScheduler = currentCardsQuery.rows.map(dbCard => {
+            const reviewResult = validResults.find(r => r.cardId === dbCard.card_id);
+            return {
+                card_id: dbCard.card_id,
+                deck: dbCard.deck,
+                current_time_due: dbCard.time_due,
+                current_interval: dbCard.interval,
+                current_retrievability: dbCard.retrievability,
+                grade: reviewResult?.result,
+                reviewed_at: reviewTimestamp
+            };
+        });
+        
+        // Call the scheduler (you'll need to import your scheduler)
+        console.log('🔄 Calling scheduler...');
+        // For now, simple placeholder scheduling - replace with your actual scheduler
+        const scheduledCards = cardsForScheduler.map(card => {
+            let multiplier = 1;
+            switch (card.grade) {
+                case 'pass': multiplier = 2.5; break;
+                case 'hard': multiplier = 1.2; break;
+                case 'fail': multiplier = 0.5; break;
+            }
+            const newInterval = Math.max(1, Math.ceil(card.current_interval * multiplier));
+            const newDueTime = new Date(reviewTimestamp.getTime() + newInterval * 24 * 60 * 60 * 1000);
+            
+            return {
+                card_id: card.card_id,
+                new_time_due: newDueTime,
+                new_interval: newInterval,
+                new_retrievability: Math.max(0.1, card.current_retrievability * 0.9),
+                grade: card.grade
+            };
+        });
+        
+        // Update cards with new scheduling data
+        const updatedCardIds: number[] = [];
+        
+        for (const scheduledCard of scheduledCards) {
+            const updateResult = await transactionClient.query(
+                `UPDATE cards 
+                 SET time_due = $1, 
+                     interval = $2, 
+                     retrievability = $3,
+                     under_review = false,
+                     last_reviewed = $4
+                 WHERE card_id = $5`,
+                [
+                    scheduledCard.new_time_due,
+                    scheduledCard.new_interval,
+                    scheduledCard.new_retrievability,
+                    reviewTimestamp,
+                    scheduledCard.card_id
+                ]
+            );
+            
+            if (updateResult.rowCount && updateResult.rowCount > 0) {
+                updatedCardIds.push(scheduledCard.card_id);
+            }
+        }
+        
+        // Update session tracking
+        let finalSessionId = session_id;
+        
+        if (session_id) {
+            // Update existing session
+            console.log(`📊 Updating session ${session_id} with review results`);
+            
+            // Count grades
+            const gradeCounts = validResults.reduce((acc, result) => {
+                acc[result.result] = (acc[result.result] || 0) + 1;
+                return acc;
+            }, {} as { [key: string]: number });
+            
+            // Update the session
+            await transactionClient.query(
+                `UPDATE review_sessions 
+                 SET completed_at = $1,
+                     cards_completed = $2,
+                     pass_count = $3,
+                     hard_count = $4,
+                     fail_count = $5,
+                     session_status = 'completed',
+                     updated_at = $1
+                 WHERE session_id = $6`,
+                [
+                    reviewTimestamp,
+                    validResults.length,
+                    gradeCounts.pass || 0,
+                    gradeCounts.hard || 0,
+                    gradeCounts.fail || 0,
+                    session_id
+                ]
+            );
+            
+            // Update session_card_reviews with results
+            for (const result of validResults) {
+                const scheduledCard = scheduledCards.find(sc => sc.card_id === result.cardId);
+                if (scheduledCard) {
+                    await transactionClient.query(
+                        `UPDATE session_card_reviews 
+                         SET reviewed_at = $1,
+                             grade = $2,
+                             interval_after = $3,
+                             retrievability_after = $4
+                         WHERE session_id = $5 AND card_id = $6`,
+                        [
+                            reviewTimestamp,
+                            result.result,
+                            scheduledCard.new_interval,
+                            scheduledCard.new_retrievability,
+                            session_id,
+                            result.cardId
+                        ]
+                    );
+                }
+            }
+        } else {
+            // Create a new session for these results (fallback case)
+            console.log(`📊 Creating new session for review results`);
+            const newSessionResult = await transactionClient.query(
+                `INSERT INTO review_sessions (deck, started_at, completed_at, max_cards_requested, cards_presented, cards_completed, session_status)
+                 VALUES ($1, $2, $2, $3, $3, $3, 'completed')
+                 RETURNING session_id`,
+                [deck, reviewTimestamp, validResults.length]
+            );
+            finalSessionId = newSessionResult.rows[0].session_id;
+        }
+        
+        await transactionClient.query('COMMIT');
+        
+        console.log(`🎉 Successfully processed review session ${finalSessionId} with ${updatedCardIds.length} cards`);
+        
+        res.json({
+            status: 'success',
+            processed_count: updatedCardIds.length,
+            updated_cards: updatedCardIds,
+            review_timestamp: reviewTimestamp.toISOString(),
+            session_id: finalSessionId,
+            deck: deck
+        } as SubmitReviewResultsResponse);
+        
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('❌ Error processing review results:', error);
+        res.json({
+            status: 'error',
+            error: 'Error processing review results',
+            details: error instanceof Error ? error.message : 'Unknown error occurred'
+        } as SubmitReviewResultsResponse);
     } finally {
         transactionClient.release();
     }
