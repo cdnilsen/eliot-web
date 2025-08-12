@@ -7,7 +7,6 @@ declare global {
     }
 }
 
-
 interface CreateSessionResponse {
     status: 'success' | 'error';
     session_id?: number;
@@ -130,11 +129,13 @@ fileInput.addEventListener('change', (event) => {
     if (file && file.type === 'text/plain') { // Check file type for safety
         const reader = new FileReader();
         reader.onload = (e) => {
-            uploadSubmitButton.disabled = false;
-            uploadCancelButton.disabled = false;
-            const fileContent = e.target?.result as string;
-            // Process the fileContent here
-            currentFileContent = fileContent;
+            if (currentDeck != "") {
+                uploadSubmitButton.disabled = false;
+                uploadCancelButton.disabled = false;
+                const fileContent = e.target?.result as string;
+                // Process the fileContent here
+                currentFileContent = fileContent;
+            }
         };
         reader.readAsText(file); // Read the file as text
     } else {
