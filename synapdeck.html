@@ -32,6 +32,20 @@
                 $PROCESSING: / Ge'ez<br>
                 <b>he</b> sat / näbärä<br>
             </i>
+
+            <!-- Radio button selection for input method -->
+            <div class="input-method-selection">
+                <h3>Choose input method:</h3>
+                <label>
+                    <input type="radio" name="inputMethod" value="file" id="fileInputRadio" checked>
+                    Upload from file
+                </label>
+                <label>
+                    <input type="radio" name="inputMethod" value="text" id="textInputRadio">
+                    Type cards directly
+                </label>
+            </div>
+
             <label for="upload_dropdownMenu">Choose a deck:</label>
             <select id="upload_dropdownMenu" name="upload_dropdownMenu">
                 <option value="" disabled selected>Select your option</option>
@@ -40,9 +54,16 @@
                 <option value="Russian">Russian</option>
             </select>
             
-            <div class="upload_input-group">
+            <!-- File upload section -->
+            <div class="upload_input-group" id="fileUploadSection">
                 <label for="uploadTextFile">Upload Text File:</label>
                 <input type="file" id="uploadTextFile" accept=".txt">
+            </div>
+
+            <!-- Text input section -->
+            <div class="text_input-group" id="textInputSection" style="display: none;">
+                <label for="cardTextInput">Type your cards (follow the format examples above):</label>
+                <textarea id="cardTextInput" rows="10" cols="50" placeholder="Enter your cards here following the format:&#10;$FORMAT: Two-Way&#10;$PROCESSING: Ge'ez / / Ge'ez&#10;näbärä / to sit / näbärä&#10;hägär / city / hägär"></textarea>
             </div>
             
             <div class="button-group">
@@ -126,12 +147,44 @@
             <div id="check_output">Select a deck and click "Show Answer Key" to see answers for cards currently under review.</div>
         </div>
     </div>
-</body>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
-    <script type="module">
+    <script>
         // Make jsPDF available to your module
         window.jsPDF = window.jspdf.jsPDF;
         console.log('jsPDF available:', typeof window.jsPDF);
+
+        // Handle radio button changes to show/hide appropriate input sections
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileRadio = document.getElementById('fileInputRadio');
+            const textRadio = document.getElementById('textInputRadio');
+            const fileSection = document.getElementById('fileUploadSection');
+            const textSection = document.getElementById('textInputSection');
+            const submitBtn = document.getElementById('upload_submitBtn');
+            const cancelBtn = document.getElementById('upload_cancel');
+
+            function toggleInputSections() {
+                if (fileRadio.checked) {
+                    fileSection.style.display = 'block';
+                    textSection.style.display = 'none';
+                } else if (textRadio.checked) {
+                    fileSection.style.display = 'none';
+                    textSection.style.display = 'block';
+                }
+                
+                // Show submit and cancel buttons when either input method is selected
+                if (fileRadio.checked || textRadio.checked) {
+                    submitBtn.classList.remove('hidden');
+                    cancelBtn.classList.remove('hidden');
+                }
+            }
+
+            fileRadio.addEventListener('change', toggleInputSections);
+            textRadio.addEventListener('change', toggleInputSections);
+
+            // Initialize the display
+            toggleInputSections();
+        });
         
         import('./synapdeck.js')
             .then(() => {
@@ -141,4 +194,5 @@
                 console.error('Failed to load synapdeck.js:', error);
             });
     </script>
+</body>
 </html>
