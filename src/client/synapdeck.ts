@@ -117,7 +117,7 @@ if (uploadDeckDropdown) {
 }
 
 let fileInput = document.getElementById("uploadTextFile") as HTMLInputElement;
-let textInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+let textInputBox = document.getElementById("cardTextInput") as HTMLTextAreaElement;
 let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
 let uploadCancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
 
@@ -143,7 +143,7 @@ fileInput.addEventListener('change', (event) => {
 });
 
 // Handle direct text input
-textInput.addEventListener('input', (event) => {
+textInputBox.addEventListener('input', (event) => {
     const textContent = (event.target as HTMLTextAreaElement).value;
     if (textContent.trim().length > 0) {
         uploadSubmitButton.disabled = false;
@@ -166,7 +166,7 @@ if (fileRadio && textRadio) {
     fileRadio.addEventListener('change', () => {
         if (fileRadio.checked) {
             // Clear text input and reset content
-            textInput.value = "";
+            textInputBox.value = "";
             currentFileContent = "";
             uploadSubmitButton.disabled = true;
             uploadCancelButton.disabled = true;
@@ -377,6 +377,9 @@ uploadSubmitButton.addEventListener('click', async () => {
         } catch (error) {
             console.error(`✗ Note ${i + 1} error:`, error);
         }
+    }
+    if (textInputBox) {
+        textInputBox.value = "";
     }
     console.log('All notes processed!');
 });
@@ -920,7 +923,6 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
 // Updated generateCardHTML function to work with the two-column layout
 function generateCardHTML(card: CardDue, cardNumber: number): string {
     const frontSideLine = generateCardFrontLine(card);
-    
     // Function to safely process HTML while allowing specific tags
     function processHTMLContent(text: string): string {
         // First, handle your custom tags
