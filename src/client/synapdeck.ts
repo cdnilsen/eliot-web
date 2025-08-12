@@ -162,8 +162,9 @@ textInputBox.addEventListener('input', (event) => {
 // Optional: Also handle when radio buttons change to reset the content
 const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
 const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+const cardFormatDropdown = document.getElementById("card_type_dropdown") as HTMLSelectElement;
 
-if (fileRadio && textRadio) {
+if (fileRadio && textRadio && cardFormatDropdown) {
     fileRadio.addEventListener('change', () => {
         if (fileRadio.checked) {
             // Clear text input and reset content
@@ -171,6 +172,8 @@ if (fileRadio && textRadio) {
             currentFileContent = "";
             uploadSubmitButton.disabled = true;
             uploadCancelButton.disabled = true;
+            // Hide dropdown when using file upload
+            cardFormatDropdown.style.display = "none";
         }
     });
 
@@ -181,8 +184,17 @@ if (fileRadio && textRadio) {
             currentFileContent = "";
             uploadSubmitButton.disabled = true;
             uploadCancelButton.disabled = true;
+            // Show dropdown when typing directly
+            cardFormatDropdown.style.display = "block";
         }
     });
+    
+    // Initialize the dropdown visibility based on current selection
+    if (fileRadio.checked) {
+        cardFormatDropdown.style.display = "none";
+    } else if (textRadio.checked) {
+        cardFormatDropdown.style.display = "block";
+    }
 }
 
 // This will probably be later on...
