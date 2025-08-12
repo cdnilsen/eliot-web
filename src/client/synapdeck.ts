@@ -162,7 +162,7 @@ textInputBox.addEventListener('input', (event) => {
 // Optional: Also handle when radio buttons change to reset the content
 const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
 const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
-const cardFormatDropdown = document.getElementById("card_type_dropdown") as HTMLSelectElement;
+const cardFormatDropdown = document.getElementById("card_format_dropdown") as HTMLSelectElement;
 
 if (fileRadio.checked) {
     cardFormatDropdown.style.display = "none";
