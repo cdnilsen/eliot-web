@@ -758,19 +758,74 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                     }
                     
                     body {
-                        font-size: 12pt;
+                        font-size: 11pt !important; /* Smaller font for more content */
+                        line-height: 1.2 !important; /* Tighter line spacing */
                         max-width: none;
                         margin: 0;
-                        padding: 0.5in;
+                        padding: 0.3in !important; /* Smaller margins */
                     }
                     
+                    /* Compact header */
+                    .header {
+                        margin-bottom: 15px !important; /* Reduced from 30px */
+                        padding-bottom: 10px !important; /* Reduced from 20px */
+                    }
+                    
+                    .title {
+                        font-size: 18px !important; /* Smaller title */
+                        margin-bottom: 4px !important;
+                    }
+                    
+                    .date {
+                        font-size: 10px !important;
+                        margin-bottom: 8px !important;
+                    }
+                    
+                    .summary {
+                        font-size: 12px !important;
+                    }
+                    
+                    .section-title {
+                        font-size: 14px !important;
+                        margin: 10px 0 8px 0 !important; /* Much tighter spacing */
+                    }
+                    
+                    /* Optimize card spacing */
                     .card-item {
+                        margin-bottom: 8px !important; /* Reduced from 15px */
                         page-break-inside: avoid;
                         break-inside: avoid;
                     }
                     
+                    .card-question {
+                        font-size: 11pt !important; /* Consistent with body */
+                        line-height: 1.2 !important;
+                    }
+                    
                     .two-column-container {
                         min-height: auto;
+                        gap: 15px !important; /* Smaller gap between columns */
+                    }
+                    
+                    .left-column {
+                        padding-right: 5px !important;
+                    }
+                    
+                    .right-column {
+                        padding-left: 5px !important;
+                    }
+                    
+                    /* Force content to fill page height better */
+                    .two-column-container {
+                        display: flex;
+                        flex-direction: row;
+                        justify-content: space-between;
+                    }
+                    
+                    /* Prevent orphaned content */
+                    .left-column, .right-column {
+                        orphans: 2;
+                        widows: 2;
                     }
                 }
                 
@@ -859,6 +914,8 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
         </body>
         </html>`;
 }
+
+
 
 // Updated generateCardHTML function to work with the two-column layout
 function generateCardHTML(card: CardDue, cardNumber: number): string {
