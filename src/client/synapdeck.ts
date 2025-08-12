@@ -167,6 +167,7 @@ const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
 const cardFormatDropdownDiv = document.getElementById("cardFormatSection") as HTMLDivElement;
 const cardFormatDropdown = document.getElementById("card_format_dropdown") as HTMLSelectElement;
 
+// Initialize visibility on page load
 if (fileRadio.checked) {
     cardFormatDropdownDiv.style.display = "none";
 }
@@ -198,9 +199,9 @@ if (fileRadio && textRadio && cardFormatDropdownDiv) {
     
     // Initialize the dropdown visibility based on current selection
     if (fileRadio.checked) {
-        cardFormatDropdown.style.display = "none";
+        cardFormatDropdownDiv.style.display = "none";  // Changed this line
     } else if (textRadio.checked) {
-        cardFormatDropdown.style.display = "block";
+        cardFormatDropdownDiv.style.display = "block";  // Changed this line
     }
 }
 
