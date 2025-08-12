@@ -112,6 +112,8 @@ if (uploadDeckDropdown) {
     uploadDeckDropdown.addEventListener('change', (event) => {
         const selectedValue = (event.target as HTMLSelectElement).value;
         currentDeck = selectedValue;
+
+        console.log("Current deck is: <" + currentDeck + ">")
     });
 }
 
@@ -162,13 +164,14 @@ textInputBox.addEventListener('input', (event) => {
 // Optional: Also handle when radio buttons change to reset the content
 const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
 const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
-const cardFormatDropdown = document.getElementById("cardFormatSection") as HTMLSelectElement;
+const cardFormatDropdownDiv = document.getElementById("cardFormatSection") as HTMLDivElement;
+const cardFormatDropdown = document.getElementById("card_format_dropdown") as HTMLSelectElement;
 
 if (fileRadio.checked) {
-    cardFormatDropdown.style.display = "none";
+    cardFormatDropdownDiv.style.display = "none";
 }
 
-if (fileRadio && textRadio && cardFormatDropdown) {
+if (fileRadio && textRadio && cardFormatDropdownDiv) {
     fileRadio.addEventListener('change', () => {
         if (fileRadio.checked) {
             // Clear text input and reset content
@@ -177,7 +180,7 @@ if (fileRadio && textRadio && cardFormatDropdown) {
             uploadSubmitButton.disabled = true;
             uploadCancelButton.disabled = true;
             // Hide dropdown when using file upload
-            cardFormatDropdown.style.display = "none";
+            cardFormatDropdownDiv.style.display = "none";
         }
     });
 
@@ -189,7 +192,7 @@ if (fileRadio && textRadio && cardFormatDropdown) {
             uploadSubmitButton.disabled = true;
             uploadCancelButton.disabled = true;
             // Show dropdown when typing directly
-            cardFormatDropdown.style.display = "block";
+            cardFormatDropdownDiv.style.display = "block";
         }
     });
     
@@ -310,6 +313,16 @@ uploadSubmitButton.addEventListener('click', async () => {
     let currentNoteType = "";
     let currentProcessList: string[] = [];
     const lines = currentFileContent.split('\n');
+
+    let thisNoteProcessList: string[] = [];
+    if (cardFormatDropdown) {
+        console.log(cardFormatDropdown.value);
+        if (cardFormatDropdown.value == "two-way") {
+            currentNoteType = "Two-Way";
+        } else if (cardFormatDropdown.value == "one-way") {
+            currentNoteType = "One-Way";
+        }
+    }
     
     // Collect all notes first
     const notesToProcess: NoteToProcess[] = [];
