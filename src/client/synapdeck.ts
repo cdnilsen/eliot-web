@@ -1,4 +1,4 @@
-import {transliterateGeez} from './transcribe_geez.js';
+import {transliterateGeez, GeezDiacriticify} from './transcribe_geez.js';
 import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 declare global {
@@ -120,6 +120,9 @@ let fileInput = document.getElementById("uploadTextFile") as HTMLInputElement;
 let textInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
 let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
 let uploadCancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
+
+let inputDiacriticsRadio = document.getElementById("romanization_diacritics") as HTMLInputElement;
+let inputASCIIRadio = document.getElementById("romanization_ascii") as HTMLInputElement;
 
 // Handle file input
 fileInput.addEventListener('change', (event) => {
@@ -316,9 +319,14 @@ uploadSubmitButton.addEventListener('click', async () => {
             
             for (let j = 0; j < thisNoteFieldData.length; j++) {
                 let thisDatum = thisNoteFieldData[j].trim();
+
+                if (inputASCIIRadio && inputASCIIRadio.checked) {
+                    if (thisNoteProcessList[j] == "Ge'ez") {
+                        thisDatum = GeezDiacriticify(thisDatum, true);
+                    }
+                }
                 thisNoteDataList.push(thisDatum);
             }
-            
             if (thisNoteProcessList.length != thisNoteDataList.length) {
                 const maxLength = Math.max(thisNoteProcessList.length, thisNoteDataList.length);
                 while (thisNoteProcessList.length < maxLength) {

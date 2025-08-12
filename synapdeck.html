@@ -18,18 +18,48 @@
         </div>
 
         <div id="upload_mainDiv" class="tab-content active">
-            <h2>Upload Cards</h2>
+            <h2>Upload Cards from a Text File</h2>
+            <p><i>Other options for adding cards coming soon! For now, try:</i></p>
+            <i>$FORMAT: Two-Way<br>
+                $PROCESSING: Ge'ez / / Ge'ez<br>
+                näbärä / to sit / näbärä<br>
+                hägär / city / hägär<br>
+                <br>
+                </i>Or just:
+                <br>
+                <i>
+                $FORMAT: One-Way<br>
+                $PROCESSING: / Ge'ez<br>
+                <b>he</b> sat / näbärä<br>
+            </i>
+
             <!-- Radio button selection for input method -->
             <div class="input-method-selection">
                 <h3>Choose input method:</h3>
-                <label>
-                    <input type="radio" name="inputMethod" value="file" id="fileInputRadio" checked>
-                    Upload from file
-                </label>
-                <label>
-                    <input type="radio" name="inputMethod" value="text" id="textInputRadio">
-                    Type cards directly
-                </label>
+                <div class="radio-buttons-row">
+                    <label>
+                        <input type="radio" name="inputMethod" value="file" id="fileInputRadio" checked>
+                        Upload from file
+                    </label>
+                    <label>
+                        <input type="radio" name="inputMethod" value="text" id="textInputRadio">
+                        Type cards directly
+                    </label>
+                </div>
+            </div>
+
+            <div class="input-method-selection">
+                <h3>Choose Transcription System:</h3>
+                <div class="radio-buttons-row">
+                    <label>
+                        <input type="radio" name="romanization_selection" value="diacritics" id="romanization_diacritics" checked>
+                        With diacritics (e.g. <i>mäšäggər</i>, <i>gädām</i>, <i>bäṣḥä</i>)
+                    </label>
+                    <label>
+                        <input type="radio" name="romanization_selection" value="ascii" id="romanization_ascii">
+                        ASCII (e.g. <i>macaggEr</i>, <i>gadAm</i>, <i>baSHa</i>)
+                    </label>
+                </div>
             </div>
 
             <label for="upload_dropdownMenu">Choose a deck:</label>

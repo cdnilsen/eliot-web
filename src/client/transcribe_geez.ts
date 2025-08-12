@@ -389,6 +389,13 @@ function preprocessLatin(str: string): string {
     for (let i=0; i < allKeys.length; i++) {
         str = str.replaceAll(allKeys[i], alts[allKeys[i]]);
     }
+
+    // Ge'ez writing doesn't do geminates
+    let allConsonants = ["h", "l", "ḥ", "m", "ś", "r", "s", "q", "t", "ḫ", "n", "ʾ", "k", "w", "ʿ", "z", "y", "d", "g", "ṭ", "ṗ", "ṣ", "ḍ", "f", "p"];
+    for (let i=0; i < allConsonants.length; i++) {
+        let C = allConsonants[i];
+        str = str.replaceAll((C + C), C);
+    }
     return str
 }
 
@@ -396,4 +403,31 @@ export function transliterateGeez(str: string): string {
     str = preprocessLatin(str);
     const tokens = maximumMunchTokenizeGeez(str, geezTrie);
     return tokens.map(renderGeez).join("");
+}
+
+export function GeezDiacriticify(str: string, isASCII: boolean): string {
+    if (isASCII) {
+        let ASCII2DiacriticDict: S2SDict = {
+            "A": "ā",
+            "a": "ä",
+            "E": "ə",
+            "1": "ə",
+            "H": "ḥ",
+            "c": "š",
+            "3": "ʿ",
+            "'": "ʾ", 
+            "T": "ṭ",
+            "P": "ṗ",
+            "S": "ṣ",
+            "D": "ḍ"
+        }
+
+        let allASCII = ["A", "a", "E", "1", "H", "c", "3", "'", "T", "P", "S", "D"];
+
+        for (let i=0; i < allASCII.length; i++) {
+            let c = allASCII[i];
+            str = str.replaceAll(c, ASCII2DiacriticDict[c]);
+        }
+    }
+    return str;
 }
