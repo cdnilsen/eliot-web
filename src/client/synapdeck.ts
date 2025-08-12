@@ -311,17 +311,25 @@ uploadSubmitButton.addEventListener('click', async () => {
     console.log('Submit button clicked');
     
     let currentNoteType = "";
-    let currentProcessList: string[] = [];
     const lines = currentFileContent.split('\n');
 
     let thisNoteProcessList: string[] = [];
-    if (cardFormatDropdown) {
+    if (cardFormatDropdown && (currentDeck != "")) {
         console.log(cardFormatDropdown.value);
         if (cardFormatDropdown.value == "two-way") {
             currentNoteType = "Two-Way";
-        } else if (cardFormatDropdown.value == "one-way") {
+            thisNoteProcessList = [currentDeck, "", currentDeck, ""];
+        } else if (cardFormatDropdown.value == "one-way-T2N") {
             currentNoteType = "One-Way";
+            thisNoteProcessList = [currentDeck, ""];
+        } else if (cardFormatDropdown.value == "one-way-N2T") {
+            currentNoteType = "One-Way";
+            thisNoteProcessList = ["", currentDeck];
         }
+    }
+
+    if (currentDeck != "") {
+        
     }
     
     // Collect all notes first
@@ -329,30 +337,15 @@ uploadSubmitButton.addEventListener('click', async () => {
     
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i].trim();
-        if (line.startsWith("$FORMAT:")) {
-            line = line.replaceAll("$FORMAT:", "").trim();
-            currentNoteType = line;
-            console.log('Note type: "' + currentNoteType + '"');
-        } else if (line.startsWith("$PROCESSING:")) {
-            currentProcessList = [];
-            line = line.replaceAll("$PROCESSING:", "").trim();
-            let thisProcessList = line.split("/");
-            for (let j = 0; j < thisProcessList.length; j++) {
-                let thisProcess = thisProcessList[j].trim();
-                currentProcessList.push(thisProcess.trim());
-            }
-        } else if (line.length > 0 && line.includes(" / ")) {
+        if (line.length > 0 && line.includes(" / ")) {
             line = line.replaceAll(" / ", " // "); // Necessary to deal with HTML tags in the fields
             let thisNoteFieldData = line.split("//");
             let thisNoteDataList: string[] = [];
-            let thisNoteProcessList = [...currentProcessList]; // Create a copy
-            
             for (let j = 0; j < thisNoteFieldData.length; j++) {
                 let thisDatum = thisNoteFieldData[j].trim();
-
                 if (inputASCIIRadio && inputASCIIRadio.checked) {
                     if (thisNoteProcessList[j] == "Ge'ez") {
-                        thisDatum = GeezDiacriticify(thisDatum, true);
+                        thisDatum = GeezDiacriticify(thisDatum, true); // Make a general function to send the thing out...
                     }
                 }
                 thisNoteDataList.push(thisDatum);
