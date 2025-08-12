@@ -117,8 +117,11 @@ if (uploadDeckDropdown) {
 }
 
 let fileInput = document.getElementById("uploadTextFile") as HTMLInputElement;
+let textInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
 let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
 let uploadCancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
+
+// Handle file input
 fileInput.addEventListener('change', (event) => {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file && file.type === 'text/plain') { // Check file type for safety
@@ -135,6 +138,48 @@ fileInput.addEventListener('change', (event) => {
         console.warn('Please select a valid text file.');
     }
 });
+
+// Handle direct text input
+textInput.addEventListener('input', (event) => {
+    const textContent = (event.target as HTMLTextAreaElement).value;
+    if (textContent.trim().length > 0) {
+        uploadSubmitButton.style.visibility = "visible";
+        uploadCancelButton.style.visibility = "visible";
+        // Store the text content in the same variable for processing
+        currentFileContent = textContent;
+    } else {
+        // Hide buttons if text area is empty
+        uploadSubmitButton.style.visibility = "hidden";
+        uploadCancelButton.style.visibility = "hidden";
+        currentFileContent = "";
+    }
+});
+
+// Optional: Also handle when radio buttons change to reset the content
+const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
+const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+
+if (fileRadio && textRadio) {
+    fileRadio.addEventListener('change', () => {
+        if (fileRadio.checked) {
+            // Clear text input and reset content
+            textInput.value = "";
+            currentFileContent = "";
+            uploadSubmitButton.style.visibility = "hidden";
+            uploadCancelButton.style.visibility = "hidden";
+        }
+    });
+
+    textRadio.addEventListener('change', () => {
+        if (textRadio.checked) {
+            // Clear file input and reset content
+            fileInput.value = "";
+            currentFileContent = "";
+            uploadSubmitButton.style.visibility = "hidden";
+            uploadCancelButton.style.visibility = "hidden";
+        }
+    });
+}
 
 // This will probably be later on...
 function cleanFieldDatum(datum: string, process: string) {
