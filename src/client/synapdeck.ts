@@ -127,8 +127,8 @@ fileInput.addEventListener('change', (event) => {
     if (file && file.type === 'text/plain') { // Check file type for safety
         const reader = new FileReader();
         reader.onload = (e) => {
-            uploadSubmitButton.style.visibility = "visible";
-            uploadCancelButton.style.visibility = "visible";
+            uploadSubmitButton.disabled = false;
+            uploadCancelButton.disabled = false;
             const fileContent = e.target?.result as string;
             // Process the fileContent here
             currentFileContent = fileContent;
@@ -143,14 +143,14 @@ fileInput.addEventListener('change', (event) => {
 textInput.addEventListener('input', (event) => {
     const textContent = (event.target as HTMLTextAreaElement).value;
     if (textContent.trim().length > 0) {
-        uploadSubmitButton.style.visibility = "visible";
-        uploadCancelButton.style.visibility = "visible";
+        uploadSubmitButton.disabled = false;
+        uploadCancelButton.disabled = false;
         // Store the text content in the same variable for processing
         currentFileContent = textContent;
     } else {
-        // Hide buttons if text area is empty
-        uploadSubmitButton.style.visibility = "hidden";
-        uploadCancelButton.style.visibility = "hidden";
+        // Disable buttons if text area is empty
+        uploadSubmitButton.disabled = true;
+        uploadCancelButton.disabled = true;
         currentFileContent = "";
     }
 });
@@ -165,8 +165,8 @@ if (fileRadio && textRadio) {
             // Clear text input and reset content
             textInput.value = "";
             currentFileContent = "";
-            uploadSubmitButton.style.visibility = "hidden";
-            uploadCancelButton.style.visibility = "hidden";
+            uploadSubmitButton.disabled = true;
+            uploadCancelButton.disabled = true;
         }
     });
 
@@ -175,8 +175,8 @@ if (fileRadio && textRadio) {
             // Clear file input and reset content
             fileInput.value = "";
             currentFileContent = "";
-            uploadSubmitButton.style.visibility = "hidden";
-            uploadCancelButton.style.visibility = "hidden";
+            uploadSubmitButton.disabled = true;
+            uploadCancelButton.disabled = true;
         }
     });
 }
