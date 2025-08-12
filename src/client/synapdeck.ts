@@ -164,10 +164,11 @@ const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
 const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
 const cardFormatDropdown = document.getElementById("card_type_dropdown") as HTMLSelectElement;
 
+if (fileRadio.checked) {
+    cardFormatDropdown.style.display = "none";
+}
+
 if (fileRadio && textRadio && cardFormatDropdown) {
-    if (fileRadio.checked) {
-        cardFormatDropdown.style.display = "none";
-    }
     fileRadio.addEventListener('change', () => {
         if (fileRadio.checked) {
             // Clear text input and reset content
