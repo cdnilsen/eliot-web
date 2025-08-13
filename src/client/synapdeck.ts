@@ -1,5 +1,5 @@
 import {transliterateGeez, GeezDiacriticify} from './transcribe_geez.js';
-import {SanskritDiacriticify} from './transcribe_sanskrit.ts';
+import {SanskritDiacriticify} from './transcribe_sanskrit.js';
 import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 declare global {
