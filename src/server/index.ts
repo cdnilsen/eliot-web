@@ -16,6 +16,18 @@ declare module 'express-session' {
     }
 }
 
+// Add these interfaces at the top of the file
+interface CardRow {
+    card_id: number;
+    last_reviewed?: Date | string | null;
+    created: Date | string;
+    stability: number | null;
+    old_retrievability: number; // This is required since we select it with alias
+    retrievability?: number; // This is optional for debug queries
+    deck?: string;
+    interval?: number;
+}
+
 const app = express()
 const port = parseInt(process.env.PORT || '3000', 10);
 
@@ -2216,6 +2228,7 @@ function calculateRetrievability(daysSinceLastReview: number, stability: number)
     return Math.max(0, Math.min(1, retrievability));
 }
 
+
 // Function to update all card retrievabilities
 async function updateAllCardRetrievabilities(): Promise<void> {
     console.log('🕛 Starting midnight retrievability update...');
@@ -2234,7 +2247,7 @@ async function updateAllCardRetrievabilities(): Promise<void> {
                 stability,
                 retrievability as old_retrievability
             FROM cards
-            WHERE stability > 0
+            WHERE stability IS NOT NULL AND stability >= 0
             ORDER BY card_id
         `);
         
@@ -2251,9 +2264,23 @@ async function updateAllCardRetrievabilities(): Promise<void> {
             // Calculate days since last review/creation
             const daysSinceReference = Math.max(0, (now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
             
+            // Handle cards with no stability or zero stability
+            let effectiveStability = card.stability;
+            if (!effectiveStability || effectiveStability <= 0) {
+                // For new cards, use a default initial stability
+                // This matches FSRS initial stability for new cards
+                effectiveStability = 1.0; // 1 day initial stability
+                console.log(`⚠️  Card ${card.card_id} has no/zero stability, using default: ${effectiveStability}`);
+            }
+            
             // Calculate new retrievability
-            const newRetrievability = calculateRetrievability(daysSinceReference, card.stability);
+            const newRetrievability = calculateRetrievability(daysSinceReference, effectiveStability);
             const oldRetrievability = card.old_retrievability;
+            
+            // Debug logging for cards that should change
+            if (daysSinceReference > 0 && Math.abs(newRetrievability - oldRetrievability) > 0.01) {
+                console.log(`🔍 Card ${card.card_id}: ${daysSinceReference.toFixed(2)} days, stability=${effectiveStability}, ${(oldRetrievability * 100).toFixed(1)}% → ${(newRetrievability * 100).toFixed(1)}%`);
+            }
             
             // Check if there's a significant change (more than 1% difference)
             const changePercent = Math.abs(newRetrievability - oldRetrievability) * 100;
@@ -2378,6 +2405,7 @@ const testRetrievabilityJob = new CronJob(
     'America/New_York'
 );
 
+
 // API endpoint to manually trigger retrievability update
 app.post('/update_retrievability', express.json(), wrapAsync(async (req, res) => {
     console.log('🔄 Manual retrievability update triggered');
@@ -2405,7 +2433,94 @@ app.post('/update_retrievability', express.json(), wrapAsync(async (req, res) =>
     }
 }));
 
-// API endpoint to get retrievability statistics
+
+
+
+// Debug endpoint to check card states and retrievability calculation
+app.get('/debug_retrievability/:cardId?', wrapAsync(async (req, res) => {
+    const { cardId } = req.params;
+    
+    try {
+        let query;
+        let params: any[] = [];
+        
+        if (cardId) {
+            query = `
+                SELECT 
+                    card_id,
+                    last_reviewed,
+                    created,
+                    stability,
+                    retrievability,
+                    deck,
+                    interval
+                FROM cards 
+                WHERE card_id = $1
+            `;
+            params = [parseInt(cardId)];
+        } else {
+            query = `
+                SELECT 
+                    card_id,
+                    last_reviewed,
+                    created,
+                    stability,
+                    retrievability,
+                    deck,
+                    interval
+                FROM cards 
+                ORDER BY created DESC
+                LIMIT 10
+            `;
+        }
+        
+        const result = await client.query<CardRow>(query, params);
+        const now = new Date();
+        
+        const debugInfo = result.rows.map(card => {
+            const referenceDate = card.last_reviewed ? new Date(card.last_reviewed) : new Date(card.created);
+            const daysSinceReference = Math.max(0, (now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
+            
+            let effectiveStability = card.stability;
+            if (!effectiveStability || effectiveStability <= 0) {
+                effectiveStability = 1.0;
+            }
+            
+            const calculatedRetrievability = calculateRetrievability(daysSinceReference, effectiveStability);
+            const storedRetrievability = card.retrievability || 1.0; // Default to 1.0 if undefined
+            
+            return {
+                card_id: card.card_id,
+                deck: card.deck,
+                created: card.created,
+                last_reviewed: card.last_reviewed,
+                reference_date: referenceDate.toISOString(),
+                days_since_reference: daysSinceReference.toFixed(2),
+                stability: card.stability,
+                effective_stability: effectiveStability,
+                stored_retrievability: storedRetrievability,
+                calculated_retrievability: calculatedRetrievability,
+                retrievability_difference: (calculatedRetrievability - storedRetrievability).toFixed(4),
+                interval: card.interval
+            };
+        });
+        
+        res.json({
+            status: 'success',
+            current_time: now.toISOString(),
+            debug_info: debugInfo
+        });
+        
+    } catch (error) {
+        console.error('❌ Error in debug retrievability:', error);
+        res.status(500).json({
+            status: 'error',
+            error: 'Failed to debug retrievability',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+}));
+
 app.get('/retrievability_stats', wrapAsync(async (req, res) => {
     try {
         // Get deck statistics
@@ -2467,6 +2582,7 @@ app.get('/retrievability_stats', wrapAsync(async (req, res) => {
         });
     }
 }));
+
 
 // Function to start the retrievability update system
 export function startRetrievabilityUpdateSystem(): void {
