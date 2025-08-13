@@ -7,6 +7,7 @@ import client from './db'
 import { wrapAsync } from './utils'
 import { Request, Response, NextFunction } from 'express';
 import { rescheduleCards, getSchedulingStats } from './scheduler';
+import { CronJob } from 'cron';
 
 
 declare module 'express-session' {
@@ -2198,3 +2199,315 @@ app.delete('/card/:cardId', wrapAsync(async (req, res) => {
         transactionClient.release();
     }
 }));
+
+// FSRS Retrievability calculation function
+function calculateRetrievability(daysSinceLastReview: number, stability: number): number {
+    // FSRS formula: R(t, S) = (1 + FACTOR × t/S)^DECAY
+    const FACTOR = 19 / 81; // ≈ 0.2346
+    const DECAY = -0.5;
+    
+    if (stability <= 0) {
+        return 0; // Avoid division by zero
+    }
+    
+    const retrievability = Math.pow(1 + FACTOR * (daysSinceLastReview / stability), DECAY);
+    
+    // Clamp between 0 and 1
+    return Math.max(0, Math.min(1, retrievability));
+}
+
+// Function to update all card retrievabilities
+async function updateAllCardRetrievabilities(): Promise<void> {
+    console.log('🕛 Starting midnight retrievability update...');
+    
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        
+        // Get all cards with their last review dates and stability
+        const cardsQuery = await transactionClient.query(`
+            SELECT 
+                card_id,
+                last_reviewed,
+                created,
+                stability,
+                retrievability as old_retrievability
+            FROM cards
+            WHERE stability > 0
+            ORDER BY card_id
+        `);
+        
+        console.log(`📊 Found ${cardsQuery.rows.length} cards to update`);
+        
+        const now = new Date();
+        let updateCount = 0;
+        let significantChangeCount = 0;
+        
+        for (const card of cardsQuery.rows) {
+            // Determine the reference date (last review or creation date)
+            const referenceDate = card.last_reviewed ? new Date(card.last_reviewed) : new Date(card.created);
+            
+            // Calculate days since last review/creation
+            const daysSinceReference = Math.max(0, (now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
+            
+            // Calculate new retrievability
+            const newRetrievability = calculateRetrievability(daysSinceReference, card.stability);
+            const oldRetrievability = card.old_retrievability;
+            
+            // Check if there's a significant change (more than 1% difference)
+            const changePercent = Math.abs(newRetrievability - oldRetrievability) * 100;
+            if (changePercent > 1) {
+                significantChangeCount++;
+            }
+            
+            // Update the card's retrievability
+            await transactionClient.query(
+                'UPDATE cards SET retrievability = $1 WHERE card_id = $2',
+                [newRetrievability, card.card_id]
+            );
+            
+            updateCount++;
+            
+            // Log progress every 1000 cards
+            if (updateCount % 1000 === 0) {
+                console.log(`  📈 Updated ${updateCount}/${cardsQuery.rows.length} cards`);
+            }
+        }
+        
+        await transactionClient.query('COMMIT');
+        
+        console.log(`✅ Midnight retrievability update completed:`);
+        console.log(`   📊 Total cards updated: ${updateCount}`);
+        console.log(`   📉 Cards with significant change (>1%): ${significantChangeCount}`);
+        console.log(`   ⏰ Completed at: ${now.toISOString()}`);
+        
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('❌ Error during midnight retrievability update:', error);
+        throw error;
+    } finally {
+        transactionClient.release();
+    }
+}
+
+// Function to get statistics about retrievability distribution
+async function getRetrievabilityStats(): Promise<void> {
+    try {
+        const statsQuery = await client.query(`
+            SELECT 
+                deck,
+                COUNT(*) as total_cards,
+                AVG(retrievability) as avg_retrievability,
+                MIN(retrievability) as min_retrievability,
+                MAX(retrievability) as max_retrievability,
+                COUNT(CASE WHEN retrievability < 0.5 THEN 1 END) as cards_below_50_percent,
+                COUNT(CASE WHEN retrievability < 0.8 THEN 1 END) as cards_below_80_percent,
+                COUNT(CASE WHEN retrievability >= 0.9 THEN 1 END) as cards_above_90_percent
+            FROM cards
+            GROUP BY deck
+            ORDER BY deck
+        `);
+        
+        console.log('\n📊 Current Retrievability Statistics by Deck:');
+        console.log('─'.repeat(80));
+        
+        for (const row of statsQuery.rows) {
+            console.log(`\n🃏 Deck: ${row.deck}`);
+            console.log(`   Total Cards: ${row.total_cards}`);
+            console.log(`   Average Retrievability: ${(row.avg_retrievability * 100).toFixed(1)}%`);
+            console.log(`   Range: ${(row.min_retrievability * 100).toFixed(1)}% - ${(row.max_retrievability * 100).toFixed(1)}%`);
+            console.log(`   Cards < 50%: ${row.cards_below_50_percent} (${((row.cards_below_50_percent / row.total_cards) * 100).toFixed(1)}%)`);
+            console.log(`   Cards < 80%: ${row.cards_below_80_percent} (${((row.cards_below_80_percent / row.total_cards) * 100).toFixed(1)}%)`);
+            console.log(`   Cards ≥ 90%: ${row.cards_above_90_percent} (${((row.cards_above_90_percent / row.total_cards) * 100).toFixed(1)}%)`);
+        }
+        
+        // Overall statistics
+        const overallQuery = await client.query(`
+            SELECT 
+                COUNT(*) as total_cards,
+                AVG(retrievability) as avg_retrievability,
+                STDDEV(retrievability) as stddev_retrievability
+            FROM cards
+        `);
+        
+        const overall = overallQuery.rows[0];
+        console.log(`\n🌐 Overall Statistics:`);
+        console.log(`   Total Cards: ${overall.total_cards}`);
+        console.log(`   Average Retrievability: ${(overall.avg_retrievability * 100).toFixed(1)}%`);
+        console.log(`   Standard Deviation: ${(overall.stddev_retrievability * 100).toFixed(1)}%`);
+        console.log('─'.repeat(80));
+        
+    } catch (error) {
+        console.error('❌ Error getting retrievability stats:', error);
+    }
+}
+
+// Create cron job to run every day at midnight
+const midnightRetrievabilityJob = new CronJob(
+    '0 0 * * *', // Run at 00:00 (midnight) every day
+    async () => {
+        try {
+            await updateAllCardRetrievabilities();
+            
+            // Show stats after update (optional - comment out if too verbose)
+            // await getRetrievabilityStats();
+            
+        } catch (error) {
+            console.error('❌ Midnight retrievability job failed:', error);
+        }
+    },
+    null, // onComplete
+    false, // start immediately? (false = don't start yet)
+    'America/New_York' // timezone - adjust to your timezone
+);
+
+// Alternative cron job for testing - runs every 5 minutes (comment out for production)
+const testRetrievabilityJob = new CronJob(
+    '*/5 * * * *', // Run every 5 minutes
+    async () => {
+        console.log('🧪 Running test retrievability update...');
+        try {
+            await updateAllCardRetrievabilities();
+        } catch (error) {
+            console.error('❌ Test retrievability job failed:', error);
+        }
+    },
+    null,
+    false,
+    'America/New_York'
+);
+
+// API endpoint to manually trigger retrievability update
+app.post('/update_retrievability', express.json(), wrapAsync(async (req, res) => {
+    console.log('🔄 Manual retrievability update triggered');
+    
+    try {
+        const startTime = Date.now();
+        await updateAllCardRetrievabilities();
+        const endTime = Date.now();
+        const duration = (endTime - startTime) / 1000;
+        
+        res.json({
+            status: 'success',
+            message: 'Retrievability update completed successfully',
+            duration_seconds: duration,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Manual retrievability update failed:', error);
+        res.status(500).json({
+            status: 'error',
+            error: 'Failed to update retrievability',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+}));
+
+// API endpoint to get retrievability statistics
+app.get('/retrievability_stats', wrapAsync(async (req, res) => {
+    try {
+        // Get deck statistics
+        const deckStatsQuery = await client.query(`
+            SELECT 
+                deck,
+                COUNT(*) as total_cards,
+                AVG(retrievability) as avg_retrievability,
+                MIN(retrievability) as min_retrievability,
+                MAX(retrievability) as max_retrievability,
+                COUNT(CASE WHEN retrievability < 0.5 THEN 1 END) as cards_below_50_percent,
+                COUNT(CASE WHEN retrievability < 0.8 THEN 1 END) as cards_below_80_percent,
+                COUNT(CASE WHEN retrievability >= 0.9 THEN 1 END) as cards_above_90_percent
+            FROM cards
+            GROUP BY deck
+            ORDER BY deck
+        `);
+        
+        // Get overall statistics
+        const overallQuery = await client.query(`
+            SELECT 
+                COUNT(*) as total_cards,
+                AVG(retrievability) as avg_retrievability,
+                STDDEV(retrievability) as stddev_retrievability,
+                MIN(retrievability) as min_retrievability,
+                MAX(retrievability) as max_retrievability
+            FROM cards
+        `);
+        
+        res.json({
+            status: 'success',
+            deck_statistics: deckStatsQuery.rows.map(row => ({
+                ...row,
+                total_cards: parseInt(row.total_cards),
+                avg_retrievability: parseFloat(row.avg_retrievability || '0'),
+                min_retrievability: parseFloat(row.min_retrievability || '0'),
+                max_retrievability: parseFloat(row.max_retrievability || '0'),
+                cards_below_50_percent: parseInt(row.cards_below_50_percent),
+                cards_below_80_percent: parseInt(row.cards_below_80_percent),
+                cards_above_90_percent: parseInt(row.cards_above_90_percent)
+            })),
+            overall_statistics: {
+                ...overallQuery.rows[0],
+                total_cards: parseInt(overallQuery.rows[0].total_cards),
+                avg_retrievability: parseFloat(overallQuery.rows[0].avg_retrievability || '0'),
+                stddev_retrievability: parseFloat(overallQuery.rows[0].stddev_retrievability || '0'),
+                min_retrievability: parseFloat(overallQuery.rows[0].min_retrievability || '0'),
+                max_retrievability: parseFloat(overallQuery.rows[0].max_retrievability || '0')
+            },
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Error getting retrievability stats:', error);
+        res.status(500).json({
+            status: 'error',
+            error: 'Failed to get retrievability statistics',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+}));
+
+// Function to start the retrievability update system
+export function startRetrievabilityUpdateSystem(): void {
+    console.log('🚀 Starting retrievability update system...');
+    
+    // Start the midnight job
+    midnightRetrievabilityJob.start();
+    console.log('✅ Midnight retrievability update job started (runs at 00:00 daily)');
+    
+    // For testing - uncomment the line below to run updates every 5 minutes
+    // testRetrievabilityJob.start();
+    // console.log('🧪 Test retrievability update job started (runs every 5 minutes)');
+    
+    // Run initial stats
+    setTimeout(async () => {
+        console.log('📊 Getting initial retrievability statistics...');
+        await getRetrievabilityStats();
+    }, 2000);
+}
+
+// Function to stop the retrievability update system (useful for graceful shutdown)
+export function stopRetrievabilityUpdateSystem(): void {
+    console.log('🛑 Stopping retrievability update system...');
+    midnightRetrievabilityJob.stop();
+    testRetrievabilityJob.stop();
+    console.log('✅ Retrievability update system stopped');
+}
+
+// Add this near the end of your index.ts file, after the app.listen call
+// Start the retrievability update system when the server starts
+startRetrievabilityUpdateSystem();
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+    console.log('\n🔄 Graceful shutdown initiated...');
+    stopRetrievabilityUpdateSystem();
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('\n🔄 Graceful shutdown initiated...');
+    stopRetrievabilityUpdateSystem();
+    process.exit(0);
+});
