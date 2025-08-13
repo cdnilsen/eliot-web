@@ -1,4 +1,5 @@
 import {transliterateGeez, GeezDiacriticify} from './transcribe_geez.js';
+import {SanskritDiacriticify} from './transcribe_sanskrit.ts';
 import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 declare global {
@@ -328,10 +329,6 @@ uploadSubmitButton.addEventListener('click', async () => {
             thisNoteProcessList = ["", currentDeck];
         }
     }
-
-    if (currentDeck != "") {
-        
-    }
     
     // Collect all notes first
     const notesToProcess: NoteToProcess[] = [];
@@ -347,6 +344,9 @@ uploadSubmitButton.addEventListener('click', async () => {
                 if (inputASCIIRadio && inputASCIIRadio.checked) {
                     if (thisNoteProcessList[j] == "Ge'ez") {
                         thisDatum = GeezDiacriticify(thisDatum, true); // Make a general function to send the thing out...
+                    }
+                    if (thisNoteProcessList[j] == "Sanskrit") {
+                        thisDatum = SanskritDiacriticify(thisDatum, true);
                     }
                 }
                 thisNoteDataList.push(thisDatum);
