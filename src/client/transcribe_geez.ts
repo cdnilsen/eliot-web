@@ -380,7 +380,9 @@ function preprocessLatin(str: string): string {
         "kw": "kʷ",
         "gw": "gʷ",
         "ḳʷ": "qʷ",
+        "qw": "qʷ",
         "ḫw": "ḫʷ",
+        "xw": "ḫʷ",
         "ā": "a",
         "ē": "e"
     }
