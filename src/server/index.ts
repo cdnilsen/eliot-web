@@ -777,7 +777,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                         config.field_processing || null,
                         cardDueDate,
                         cardIntervalDays,
-                        1,
+                        null,
                         timeCreated
                     ]
                 );
