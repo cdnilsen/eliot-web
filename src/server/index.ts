@@ -2238,8 +2238,8 @@ async function updateAllCardRetrievabilities(): Promise<void> {
     try {
         await transactionClient.query('BEGIN');
         
-        // Get all cards with their last review dates and stability
-        const cardsQuery = await transactionClient.query(`
+        // Get ALL cards, including those with NULL stability (new cards)
+        const cardsQuery = await transactionClient.query<CardRow>(`
             SELECT 
                 card_id,
                 last_reviewed,
@@ -2247,7 +2247,6 @@ async function updateAllCardRetrievabilities(): Promise<void> {
                 stability,
                 retrievability as old_retrievability
             FROM cards
-            WHERE stability IS NOT NULL AND stability >= 0
             ORDER BY card_id
         `);
         
@@ -2258,32 +2257,32 @@ async function updateAllCardRetrievabilities(): Promise<void> {
         let significantChangeCount = 0;
         
         for (const card of cardsQuery.rows) {
-            // Determine the reference date (last review or creation date)
-            const referenceDate = card.last_reviewed ? new Date(card.last_reviewed) : new Date(card.created);
+            let newRetrievability: number;
             
-            // Calculate days since last review/creation
-            const daysSinceReference = Math.max(0, (now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
-            
-            // Handle cards with no stability or zero stability
-            let effectiveStability = card.stability;
-            if (!effectiveStability || effectiveStability <= 0) {
-                // For new cards, use a default initial stability
-                // This matches FSRS initial stability for new cards
-                effectiveStability = 1.0; // 1 day initial stability
-                console.log(`⚠️  Card ${card.card_id} has no/zero stability, using default: ${effectiveStability}`);
+            if (card.stability === null || card.stability === undefined) {
+                // New card that has never been reviewed
+                // For new cards, retrievability should decay from 1.0 based on time since creation
+                const daysSinceCreation = Math.max(0, (now.getTime() - new Date(card.created).getTime()) / (1000 * 60 * 60 * 24));
+                
+                // Use a default "learning" stability for new cards (typically 1 day)
+                const learningStability = 1.0;
+                newRetrievability = calculateRetrievability(daysSinceCreation, learningStability);
+                
+                console.log(`📝 New card ${card.card_id}: ${daysSinceCreation.toFixed(2)} days old, retrievability: ${(newRetrievability * 100).toFixed(1)}%`);
+            } else {
+                // Reviewed card with established stability
+                const referenceDate = card.last_reviewed ? new Date(card.last_reviewed) : new Date(card.created);
+                const daysSinceReference = Math.max(0, (now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
+                
+                newRetrievability = calculateRetrievability(daysSinceReference, card.stability);
+                
+                if (daysSinceReference > 0 && Math.abs(newRetrievability - card.old_retrievability) > 0.01) {
+                    console.log(`🔄 Card ${card.card_id}: ${daysSinceReference.toFixed(2)} days, stability=${card.stability}, ${(card.old_retrievability * 100).toFixed(1)}% → ${(newRetrievability * 100).toFixed(1)}%`);
+                }
             }
             
-            // Calculate new retrievability
-            const newRetrievability = calculateRetrievability(daysSinceReference, effectiveStability);
-            const oldRetrievability = card.old_retrievability;
-            
-            // Debug logging for cards that should change
-            if (daysSinceReference > 0 && Math.abs(newRetrievability - oldRetrievability) > 0.01) {
-                console.log(`🔍 Card ${card.card_id}: ${daysSinceReference.toFixed(2)} days, stability=${effectiveStability}, ${(oldRetrievability * 100).toFixed(1)}% → ${(newRetrievability * 100).toFixed(1)}%`);
-            }
-            
-            // Check if there's a significant change (more than 1% difference)
-            const changePercent = Math.abs(newRetrievability - oldRetrievability) * 100;
+            // Check if there's a significant change
+            const changePercent = Math.abs(newRetrievability - card.old_retrievability) * 100;
             if (changePercent > 1) {
                 significantChangeCount++;
             }
@@ -2296,7 +2295,6 @@ async function updateAllCardRetrievabilities(): Promise<void> {
             
             updateCount++;
             
-            // Log progress every 1000 cards
             if (updateCount % 1000 === 0) {
                 console.log(`  📈 Updated ${updateCount}/${cardsQuery.rows.length} cards`);
             }
@@ -2317,7 +2315,6 @@ async function updateAllCardRetrievabilities(): Promise<void> {
         transactionClient.release();
     }
 }
-
 // Function to get statistics about retrievability distribution
 async function getRetrievabilityStats(): Promise<void> {
     try {
