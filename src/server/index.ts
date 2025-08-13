@@ -1722,3 +1722,479 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
         console.log('🔄 Transaction client released');
     }
 }));
+
+// Add these complete endpoints to your index.ts file after your existing endpoints
+
+interface BrowseCardsQuery {
+    deck?: string;
+    search_term?: string;
+    card_format?: string;
+    sort_by?: string;
+    sort_direction?: 'asc' | 'desc';
+    limit?: string;
+    offset?: string;
+}
+
+// Enhanced card browsing endpoint with search, filtering, and pagination
+app.get('/browse_cards', wrapAsync(async (req, res) => {
+    const {
+        deck,
+        search_term,
+        card_format,
+        sort_by = 'card_id',
+        sort_direction = 'asc',
+        limit = '50',
+        offset = '0'
+    }: BrowseCardsQuery = req.query;
+
+    const limitNum = Math.min(parseInt(limit) || 50, 200); // Cap at 200 for performance
+    const offsetNum = parseInt(offset) || 0;
+
+    console.log(`Browsing cards with filters:`, {
+        deck,
+        search_term,
+        card_format,
+        sort_by,
+        sort_direction,
+        limit: limitNum,
+        offset: offsetNum
+    });
+
+    try {
+        // Build WHERE clause conditions
+        const conditions: string[] = [];
+        const queryParams: any[] = [];
+        let paramIndex = 1;
+
+        // Deck filter
+        if (deck && deck.trim()) {
+            conditions.push(`deck = $${paramIndex}`);
+            queryParams.push(deck.trim());
+            paramIndex++;
+        }
+
+        // Card format filter
+        if (card_format && card_format.trim()) {
+            conditions.push(`card_format = $${paramIndex}`);
+            queryParams.push(card_format.trim());
+            paramIndex++;
+        }
+
+        // Search term filter (search in field_values array)
+        if (search_term && search_term.trim()) {
+            // Search across all field values using array operations
+            conditions.push(`EXISTS (
+                SELECT 1 FROM unnest(field_values) AS field_value 
+                WHERE LOWER(field_value) LIKE LOWER($${paramIndex})
+            )`);
+            queryParams.push(`%${search_term.trim()}%`);
+            paramIndex++;
+        }
+
+        // Build WHERE clause
+        const whereClause = conditions.length > 0 
+            ? `WHERE ${conditions.join(' AND ')}`
+            : '';
+
+        // Validate and sanitize sort parameters
+        const validSortColumns = [
+            'card_id', 
+            'time_due', 
+            'interval', 
+            'retrievability', 
+            'created',
+            'deck',
+            'card_format'
+        ];
+        
+        const sortColumn = validSortColumns.includes(sort_by) ? sort_by : 'card_id';
+        const sortDir = sort_direction === 'desc' ? 'DESC' : 'ASC';
+
+        // Main query to get cards
+        const cardsQuery = `
+            SELECT 
+                card_id,
+                note_id,
+                deck,
+                card_format,
+                field_names,
+                field_values,
+                field_processing,
+                time_due,
+                interval,
+                retrievability,
+                stability,
+                difficulty,
+                peers,
+                under_review,
+                last_reviewed,
+                created
+            FROM cards
+            ${whereClause}
+            ORDER BY ${sortColumn} ${sortDir}
+            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+        `;
+
+        // Count query for pagination
+        const countQuery = `
+            SELECT COUNT(*) as total_count
+            FROM cards
+            ${whereClause}
+        `;
+
+        // Add limit and offset to query params
+        queryParams.push(limitNum, offsetNum);
+
+        console.log('Cards query:', cardsQuery);
+        console.log('Query params:', queryParams);
+
+        // Execute both queries
+        const [cardsResult, countResult] = await Promise.all([
+            client.query(cardsQuery, queryParams),
+            client.query(countQuery, queryParams.slice(0, -2)) // Remove limit and offset for count
+        ]);
+
+        const cards = cardsResult.rows;
+        const totalCount = parseInt(countResult.rows[0].total_count) || 0;
+
+        console.log(`Found ${cards.length} cards (${totalCount} total)`);
+
+        // Return response
+        res.json({
+            status: 'success',
+            cards: cards,
+            total_count: totalCount,
+            filters_applied: {
+                deck: deck || undefined,
+                search_term: search_term || undefined,
+                card_format: card_format || undefined,
+                sort_by: sortColumn,
+                sort_direction: sortDir.toLowerCase()
+            },
+            pagination: {
+                limit: limitNum,
+                offset: offsetNum,
+                total_pages: Math.ceil(totalCount / limitNum),
+                current_page: Math.floor(offsetNum / limitNum)
+            }
+        });
+
+    } catch (err) {
+        console.error('Error browsing cards:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error browsing cards',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));
+
+// Get detailed information about a specific card
+app.get('/card/:cardId', wrapAsync(async (req, res) => {
+    const { cardId } = req.params;
+    const cardIdNum = parseInt(cardId);
+
+    if (isNaN(cardIdNum)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid card ID'
+        });
+    }
+
+    try {
+        const query = await client.query(
+            `SELECT 
+                c.*,
+                n.note_type,
+                n.created_at as note_created_at
+             FROM cards c
+             LEFT JOIN notes n ON c.note_id = n.note_id
+             WHERE c.card_id = $1`,
+            [cardIdNum]
+        );
+
+        if (query.rows.length === 0) {
+            return res.status(404).json({
+                status: 'error',
+                error: 'Card not found'
+            });
+        }
+
+        res.json({
+            status: 'success',
+            card: query.rows[0]
+        });
+
+    } catch (err) {
+        console.error('Error fetching card details:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error fetching card details',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));
+
+// Get statistics about all decks
+app.get('/deck_statistics', wrapAsync(async (req, res) => {
+    try {
+        const query = await client.query(`
+            SELECT 
+                deck,
+                COUNT(*) as total_cards,
+                COUNT(CASE WHEN time_due <= NOW() THEN 1 END) as cards_due_now,
+                COUNT(CASE WHEN time_due <= NOW() + INTERVAL '1 day' THEN 1 END) as cards_due_today,
+                COUNT(CASE WHEN under_review = true THEN 1 END) as cards_under_review,
+                AVG(interval) as avg_interval,
+                AVG(retrievability) as avg_retrievability,
+                MIN(created) as first_card_created,
+                MAX(created) as last_card_created
+            FROM cards
+            GROUP BY deck
+            ORDER BY deck
+        `);
+
+        const statistics = query.rows.map(row => ({
+            ...row,
+            total_cards: parseInt(row.total_cards),
+            cards_due_now: parseInt(row.cards_due_now),
+            cards_due_today: parseInt(row.cards_due_today),
+            cards_under_review: parseInt(row.cards_under_review),
+            avg_interval: parseFloat(row.avg_interval || '0').toFixed(1),
+            avg_retrievability: parseFloat(row.avg_retrievability || '0').toFixed(3)
+        }));
+
+        res.json({
+            status: 'success',
+            deck_statistics: statistics
+        });
+
+    } catch (err) {
+        console.error('Error fetching deck statistics:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error fetching deck statistics',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));
+
+// Update card endpoint (for editing functionality)
+app.put('/card/:cardId', express.json(), wrapAsync(async (req, res) => {
+    const { cardId } = req.params;
+    const cardIdNum = parseInt(cardId);
+    
+    if (isNaN(cardIdNum)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid card ID'
+        });
+    }
+
+    const { 
+        field_values, 
+        field_processing, 
+        card_format,
+        time_due,
+        interval,
+        retrievability 
+    } = req.body;
+
+    // Validate required fields
+    if (!field_values || !Array.isArray(field_values)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'field_values is required and must be an array'
+        });
+    }
+
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        
+        // Check if card exists
+        const existingCard = await transactionClient.query(
+            'SELECT card_id, note_id FROM cards WHERE card_id = $1',
+            [cardIdNum]
+        );
+        
+        if (existingCard.rows.length === 0) {
+            await transactionClient.query('ROLLBACK');
+            return res.status(404).json({
+                status: 'error',
+                error: 'Card not found'
+            });
+        }
+
+        // Build update query dynamically based on provided fields
+        const updateFields: string[] = [];
+        const updateValues: any[] = [];
+        let paramIndex = 1;
+
+        if (field_values) {
+            updateFields.push(`field_values = $${paramIndex}`);
+            updateValues.push(field_values);
+            paramIndex++;
+        }
+
+        if (field_processing) {
+            updateFields.push(`field_processing = $${paramIndex}`);
+            updateValues.push(field_processing);
+            paramIndex++;
+        }
+
+        if (card_format) {
+            updateFields.push(`card_format = $${paramIndex}`);
+            updateValues.push(card_format);
+            paramIndex++;
+        }
+
+        if (time_due) {
+            updateFields.push(`time_due = $${paramIndex}`);
+            updateValues.push(new Date(time_due));
+            paramIndex++;
+        }
+
+        if (interval !== undefined) {
+            updateFields.push(`interval = $${paramIndex}`);
+            updateValues.push(interval);
+            paramIndex++;
+        }
+
+        if (retrievability !== undefined) {
+            updateFields.push(`retrievability = $${paramIndex}`);
+            updateValues.push(retrievability);
+            paramIndex++;
+        }
+
+        if (updateFields.length === 0) {
+            await transactionClient.query('ROLLBACK');
+            return res.status(400).json({
+                status: 'error',
+                error: 'No valid fields provided for update'
+            });
+        }
+
+        // Add card_id to the end of updateValues
+        updateValues.push(cardIdNum);
+
+        const updateQuery = `
+            UPDATE cards 
+            SET ${updateFields.join(', ')}
+            WHERE card_id = $${paramIndex}
+            RETURNING *
+        `;
+
+        const result = await transactionClient.query(updateQuery, updateValues);
+        
+        await transactionClient.query('COMMIT');
+        
+        res.json({
+            status: 'success',
+            card: result.rows[0],
+            message: `Card ${cardIdNum} updated successfully`
+        });
+        
+    } catch (err) {
+        await transactionClient.query('ROLLBACK');
+        console.error('Error updating card:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error updating card',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    } finally {
+        transactionClient.release();
+    }
+}));
+
+// Delete card endpoint
+app.delete('/card/:cardId', wrapAsync(async (req, res) => {
+    const { cardId } = req.params;
+    const cardIdNum = parseInt(cardId);
+    
+    if (isNaN(cardIdNum)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid card ID'
+        });
+    }
+
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        
+        // Check if card exists and get its info
+        const existingCard = await transactionClient.query(
+            'SELECT card_id, note_id, deck, peers FROM cards WHERE card_id = $1',
+            [cardIdNum]
+        );
+        
+        if (existingCard.rows.length === 0) {
+            await transactionClient.query('ROLLBACK');
+            return res.status(404).json({
+                status: 'error',
+                error: 'Card not found'
+            });
+        }
+
+        const card = existingCard.rows[0];
+        
+        // Remove this card from peers' peer lists
+        if (card.peers && card.peers.length > 0) {
+            for (const peerId of card.peers) {
+                await transactionClient.query(
+                    `UPDATE cards 
+                     SET peers = array_remove(peers, $1) 
+                     WHERE card_id = $2`,
+                    [cardIdNum, peerId]
+                );
+            }
+        }
+
+        // Delete the card
+        await transactionClient.query(
+            'DELETE FROM cards WHERE card_id = $1',
+            [cardIdNum]
+        );
+        
+        // Check if this was the last card for the note
+        const remainingCards = await transactionClient.query(
+            'SELECT COUNT(*) as count FROM cards WHERE note_id = $1',
+            [card.note_id]
+        );
+        
+        let noteDeleted = false;
+        if (parseInt(remainingCards.rows[0].count) === 0) {
+            // Delete the note if no cards remain
+            await transactionClient.query(
+                'DELETE FROM notes WHERE note_id = $1',
+                [card.note_id]
+            );
+            noteDeleted = true;
+        }
+        
+        await transactionClient.query('COMMIT');
+        
+        res.json({
+            status: 'success',
+            message: `Card ${cardIdNum} deleted successfully`,
+            note_deleted: noteDeleted,
+            card_id: cardIdNum,
+            note_id: card.note_id
+        });
+        
+    } catch (err) {
+        await transactionClient.query('ROLLBACK');
+        console.error('Error deleting card:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error deleting card',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    } finally {
+        transactionClient.release();
+    }
+}));

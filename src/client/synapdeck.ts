@@ -75,6 +75,7 @@ if (document.readyState === 'loading') {
     initializeTabSwitching();
 }
 
+// Update your initializeTabSwitching function to include the browser setup
 function initializeTabSwitching() {
     const buttons = document.querySelectorAll('.button-row button');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -96,14 +97,18 @@ function initializeTabSwitching() {
             if (targetDiv) {
                 targetDiv.classList.add('active');
                 console.log("Loaded " + button.id);
+                
+                // Initialize browse cards tab when it becomes active
+                if (this.id === 'browse_cards') {
+                    setupBrowseCardsTab();
+                }
             }
         });
     });
     
     setupReviewAheadUI();
-    setupCheckYourWorkTab(); // Add this line
+    setupCheckYourWorkTab();
 }
-
 
 let currentFileContent: string = "";
 let currentDeck: string = "";
@@ -1944,3 +1949,503 @@ function setupCheckYourWorkTab(): void {
         });
     }
 }
+
+
+// Interfaces for card browsing (add these near your other interfaces)
+interface BrowseCardsResponse {
+    status: 'success' | 'error';
+    cards?: CardDue[];
+    total_count?: number;
+    deck?: string;
+    error?: string;
+    filters_applied?: FiltersApplied;
+}
+
+interface CardBrowserFilters {
+    deck?: string;
+    searchTerm?: string;
+    cardFormat?: string;
+    sortBy?: string;
+    sortDirection?: 'asc' | 'desc';
+    limit?: number;
+    offset?: number;
+}
+
+// Add these variables for browser state management
+let currentBrowsePage = 0;
+let currentBrowseFilters: CardBrowserFilters = {};
+
+// Browser API function
+async function browseCards(filters: CardBrowserFilters = {}): Promise<BrowseCardsResponse> {
+    try {
+        const queryParams = new URLSearchParams();
+        
+        if (filters.deck) queryParams.append('deck', filters.deck);
+        if (filters.searchTerm) queryParams.append('search_term', filters.searchTerm);
+        if (filters.cardFormat) queryParams.append('card_format', filters.cardFormat);
+        if (filters.sortBy) queryParams.append('sort_by', filters.sortBy);
+        if (filters.sortDirection) queryParams.append('sort_direction', filters.sortDirection);
+        if (filters.limit) queryParams.append('limit', filters.limit.toString());
+        if (filters.offset) queryParams.append('offset', filters.offset.toString());
+
+        const response = await fetch(`/browse_cards?${queryParams.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: BrowseCardsResponse = await response.json();
+        console.log('Browse cards response:', result);
+        
+        return result;
+    } catch (error) {
+        console.error('Error browsing cards:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error browsing cards' 
+        };
+    }
+}
+
+// Setup function for browse cards tab
+function setupBrowseCardsTab(): void {
+    const browseTab = document.getElementById('browse_mainDiv');
+    if (!browseTab) return;
+
+    // Only set up once
+    if (browseTab.querySelector('.browse-controls')) {
+        return;
+    }
+
+    // Create the browse cards UI
+    browseTab.innerHTML = `
+        <h2>Browse Cards</h2>
+        
+        <div class="browse-controls">
+            <div class="browse-filters">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="browse_deck_select">Deck:</label>
+                        <select id="browse_deck_select">
+                            <option value="">All Decks</option>
+                            <option value="Ge'ez">Ge'ez</option>
+                            <option value="Sanskrit">Sanskrit</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="browse_search_input">Search:</label>
+                        <input type="text" id="browse_search_input" placeholder="Search in card content...">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="browse_format_select">Card Format:</label>
+                        <select id="browse_format_select">
+                            <option value="">All Formats</option>
+                            <option value="Target to Native">Target to Native</option>
+                            <option value="Native to Target">Native to Target</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="browse_sort_select">Sort By:</label>
+                        <select id="browse_sort_select">
+                            <option value="card_id">Card ID</option>
+                            <option value="time_due">Due Date</option>
+                            <option value="interval">Interval</option>
+                            <option value="retrievability">Retrievability</option>
+                            <option value="created">Created Date</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="browse_direction_select">Direction:</label>
+                        <select id="browse_direction_select">
+                            <option value="asc">Ascending</option>
+                            <option value="desc">Descending</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="browse_limit_input">Results per page:</label>
+                        <select id="browse_limit_input">
+                            <option value="25">25</option>
+                            <option value="50" selected>50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button id="browse_search_btn" class="btn">Search Cards</button>
+                    <button id="browse_clear_btn" class="btn btn-secondary">Clear Filters</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="browse_results_info" class="results-info"></div>
+        <div id="browse_results" class="browse-results"></div>
+        <div id="browse_pagination" class="pagination"></div>
+    `;
+
+    // Add event listeners
+    const searchButton = document.getElementById('browse_search_btn') as HTMLButtonElement;
+    const clearButton = document.getElementById('browse_clear_btn') as HTMLButtonElement;
+    const searchInput = document.getElementById('browse_search_input') as HTMLInputElement;
+
+    if (searchButton) {
+        searchButton.addEventListener('click', () => performCardSearch());
+    }
+
+    if (clearButton) {
+        clearButton.addEventListener('click', clearFilters);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performCardSearch();
+            }
+        });
+    }
+
+    // Load initial cards
+    performCardSearch();
+}
+
+// Perform card search function
+async function performCardSearch(page: number = 0): Promise<void> {
+    const deckSelect = document.getElementById('browse_deck_select') as HTMLSelectElement;
+    const searchInput = document.getElementById('browse_search_input') as HTMLInputElement;
+    const formatSelect = document.getElementById('browse_format_select') as HTMLSelectElement;
+    const sortSelect = document.getElementById('browse_sort_select') as HTMLSelectElement;
+    const directionSelect = document.getElementById('browse_direction_select') as HTMLSelectElement;
+    const limitSelect = document.getElementById('browse_limit_input') as HTMLSelectElement;
+
+    const limit = parseInt(limitSelect?.value || '50');
+    const offset = page * limit;
+
+    currentBrowseFilters = {
+        deck: deckSelect?.value || undefined,
+        searchTerm: searchInput?.value.trim() || undefined,
+        cardFormat: formatSelect?.value || undefined,
+        sortBy: sortSelect?.value || 'card_id',
+        sortDirection: (directionSelect?.value as 'asc' | 'desc') || 'asc',
+        limit: limit,
+        offset: offset
+    };
+
+    currentBrowsePage = page;
+
+    // Show loading state
+    const resultsDiv = document.getElementById('browse_results') as HTMLDivElement;
+    const infoDiv = document.getElementById('browse_results_info') as HTMLDivElement;
+    
+    if (resultsDiv) resultsDiv.innerHTML = '<p class="loading">Loading cards...</p>';
+    if (infoDiv) infoDiv.innerHTML = '';
+
+    try {
+        const result = await browseCards(currentBrowseFilters);
+        
+        if (result.status === 'success' && result.cards) {
+            displayBrowseResults(result.cards, result.total_count || 0);
+            updatePagination(result.total_count || 0, limit, page);
+            updateResultsInfo(result.total_count || 0, offset, limit, result.filters_applied);
+        } else {
+            if (resultsDiv) {
+                resultsDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+            }
+        }
+    } catch (error) {
+        console.error('Error performing card search:', error);
+        if (resultsDiv) {
+            resultsDiv.innerHTML = '<p class="error">Network error occurred</p>';
+        }
+    }
+}
+
+// Display browse results function
+function displayBrowseResults(cards: CardDue[], totalCount: number): void {
+    const resultsDiv = document.getElementById('browse_results') as HTMLDivElement;
+    if (!resultsDiv) return;
+
+    if (cards.length === 0) {
+        resultsDiv.innerHTML = '<p class="no-results">No cards found matching your search criteria.</p>';
+        return;
+    }
+
+    let html = '<div class="cards-grid">';
+    
+    cards.forEach((card) => {
+        const dueDate = new Date(card.time_due);
+        const isOverdue = dueDate < new Date();
+        const dueDateClass = isOverdue ? 'overdue' : 'upcoming';
+
+        // Generate preview of both sides of the card
+        const frontText = generateCardFrontLine(card);
+        const backText = generateCardBackLine(card);
+
+        html += `
+            <div class="card-browser-item" data-card-id="${card.card_id}">
+                <div class="card-header">
+                    <span class="card-id">ID: ${card.card_id}</span>
+                    <span class="card-deck">${card.deck}</span>
+                    <span class="card-format">${card.card_format}</span>
+                </div>
+                
+                <div class="card-content">
+                    <div class="card-side">
+                        <div class="side-label">Front:</div>
+                        <div class="side-content">${processHTMLContent(frontText)}</div>
+                    </div>
+                    <div class="card-side">
+                        <div class="side-label">Back:</div>
+                        <div class="side-content">${processHTMLContent(backText)}</div>
+                    </div>
+                </div>
+                
+                <div class="card-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Due:</span>
+                        <span class="stat-value ${dueDateClass}" title="${dueDate.toLocaleString()}">
+                            ${dueDate.toLocaleDateString()}
+                        </span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Interval:</span>
+                        <span class="stat-value">${card.interval} days</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Retrievability:</span>
+                        <span class="stat-value">${(card.retrievability * 100).toFixed(1)}%</span>
+                    </div>
+                </div>
+                
+                <div class="card-actions">
+                    <button class="btn btn-small edit-card-btn" data-card-id="${card.card_id}">Edit</button>
+                    <button class="btn btn-small delete-card-btn" data-card-id="${card.card_id}">Delete</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    resultsDiv.innerHTML = html;
+
+    // Add event listeners to action buttons
+    setupCardActionButtons();
+}
+
+// Generate the back side of a card
+function generateCardBackLine(card: CardDue): string {
+    let targetIndex = 0;
+    
+    // Flip the index for back side
+    if (card.card_format === "Native to Target") {
+        targetIndex = 1; 
+    }
+    
+    let targetField = card.field_values[targetIndex];
+    let targetProcessing = card.field_processing[targetIndex];
+    
+    let processedField = cleanFieldDatum(targetField, targetProcessing);
+    return processedField;
+}
+
+// Setup action buttons for each card
+function setupCardActionButtons(): void {
+    const editButtons = document.querySelectorAll('.edit-card-btn');
+    const deleteButtons = document.querySelectorAll('.delete-card-btn');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const cardId = (e.target as HTMLElement).getAttribute('data-card-id');
+            if (cardId) {
+                editCard(parseInt(cardId));
+            }
+        });
+    });
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const cardId = (e.target as HTMLElement).getAttribute('data-card-id');
+            if (cardId) {
+                deleteCard(parseInt(cardId));
+            }
+        });
+    });
+}
+
+// Update pagination controls
+function updatePagination(totalCount: number, limit: number, currentPage: number): void {
+    const paginationDiv = document.getElementById('browse_pagination') as HTMLDivElement;
+    if (!paginationDiv) return;
+
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    if (totalPages <= 1) {
+        paginationDiv.innerHTML = '';
+        return;
+    }
+
+    let html = '<div class="pagination-controls">';
+    
+    // Previous button
+    if (currentPage > 0) {
+        html += `<button class="btn btn-pagination" onclick="performCardSearch(${currentPage - 1})">« Previous</button>`;
+    }
+    
+    // Page numbers
+    const startPage = Math.max(0, currentPage - 2);
+    const endPage = Math.min(totalPages - 1, currentPage + 2);
+    
+    if (startPage > 0) {
+        html += `<button class="btn btn-pagination" onclick="performCardSearch(0)">1</button>`;
+        if (startPage > 1) {
+            html += '<span class="pagination-ellipsis">...</span>';
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === currentPage ? 'active' : '';
+        html += `<button class="btn btn-pagination ${isActive}" onclick="performCardSearch(${i})">${i + 1}</button>`;
+    }
+    
+    if (endPage < totalPages - 1) {
+        if (endPage < totalPages - 2) {
+            html += '<span class="pagination-ellipsis">...</span>';
+        }
+        html += `<button class="btn btn-pagination" onclick="performCardSearch(${totalPages - 1})">${totalPages}</button>`;
+    }
+    
+    // Next button
+    if (currentPage < totalPages - 1) {
+        html += `<button class="btn btn-pagination" onclick="performCardSearch(${currentPage + 1})">Next »</button>`;
+    }
+    
+    html += '</div>';
+    paginationDiv.innerHTML = html;
+}
+
+// Add interface for filters applied
+interface FiltersApplied {
+    deck?: string;
+    search_term?: string;
+    card_format?: string;
+    sort_by?: string;
+    sort_direction?: string;
+}
+
+// Update results info
+function updateResultsInfo(totalCount: number, offset: number, limit: number, filtersApplied?: FiltersApplied): void {
+    const infoDiv = document.getElementById('browse_results_info') as HTMLDivElement;
+    if (!infoDiv) return;
+
+    const startIndex = offset + 1;
+    const endIndex = Math.min(offset + limit, totalCount);
+    
+    let infoText = `Showing ${startIndex}-${endIndex} of ${totalCount} cards`;
+    
+    if (filtersApplied) {
+        const activeFilters: string[] = [];
+        if (filtersApplied.deck) activeFilters.push(`deck: ${filtersApplied.deck}`);
+        if (filtersApplied.search_term) activeFilters.push(`search: "${filtersApplied.search_term}"`);
+        if (filtersApplied.card_format) activeFilters.push(`format: ${filtersApplied.card_format}`);
+        
+        if (activeFilters.length > 0) {
+            infoText += ` (filtered by ${activeFilters.join(', ')})`;
+        }
+    }
+    
+    infoDiv.innerHTML = `<p class="results-info-text">${infoText}</p>`;
+}
+
+// Clear all filters
+function clearFilters(): void {
+    const deckSelect = document.getElementById('browse_deck_select') as HTMLSelectElement;
+    const searchInput = document.getElementById('browse_search_input') as HTMLInputElement;
+    const formatSelect = document.getElementById('browse_format_select') as HTMLSelectElement;
+    const sortSelect = document.getElementById('browse_sort_select') as HTMLSelectElement;
+    const directionSelect = document.getElementById('browse_direction_select') as HTMLSelectElement;
+    const limitSelect = document.getElementById('browse_limit_input') as HTMLSelectElement;
+
+    if (deckSelect) deckSelect.value = '';
+    if (searchInput) searchInput.value = '';
+    if (formatSelect) formatSelect.value = '';
+    if (sortSelect) sortSelect.value = 'card_id';
+    if (directionSelect) directionSelect.value = 'asc';
+    if (limitSelect) limitSelect.value = '50';
+
+    // Perform search with cleared filters
+    performCardSearch(0);
+}
+
+// API functions for card management
+async function deleteCardById(cardId: number): Promise<boolean> {
+    try {
+        const response = await fetch(`/card/${cardId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            console.log(`✅ Successfully deleted card ${cardId}`);
+            return true;
+        } else {
+            console.error('❌ Error deleting card:', result.error);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Network error deleting card:', error);
+        return false;
+    }
+}
+
+// Placeholder functions for card actions (enhanced)
+function editCard(cardId: number): void {
+    // For now, show a simple prompt for editing
+    const newContent = prompt(`Edit card ${cardId} content (feature coming soon!):`);
+    if (newContent !== null) {
+        alert(`Edit card ${cardId} with content: "${newContent}" - Full editing feature coming soon!`);
+        // TODO: Implement full card editing modal/form
+    }
+}
+
+async function deleteCard(cardId: number): Promise<void> {
+    if (confirm(`Are you sure you want to delete card ${cardId}? This action cannot be undone.`)) {
+        const success = await deleteCardById(cardId);
+        
+        if (success) {
+            alert(`Card ${cardId} deleted successfully!`);
+            // Refresh the current view
+            performCardSearch(currentBrowsePage);
+        } else {
+            alert(`Failed to delete card ${cardId}. Please try again.`);
+        }
+    }
+}
+
+// Make performCardSearch available globally for pagination onclick handlers
+declare global {
+    interface Window {
+        performCardSearch: (page: number) => Promise<void>;
+    }
+}
+
+window.performCardSearch = performCardSearch;
