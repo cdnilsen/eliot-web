@@ -1818,13 +1818,29 @@ function generateAnswerKey(cards: CardDue[]): string {
         const questionText = generateCardFrontLine(card);
         
         // Generate answer based on card format
+        let targetBack = card.field_values[2];
+        let targetProcessing = card.field_processing[2];
+        if (targetBack.trim() == "") {
+            targetBack = card.field_values[0];
+            targetProcessing = card.field_processing[0];
+        }
+
         let answerText = '';
+        let nativeBack = card.field_values[3];
+        let nativeProcessing = card.field_processing[3];
+        if (nativeBack.trim() == "") {
+            nativeBack = card.field_values[1];
+            nativeProcessing = card.field_processing[1];
+        }
+
+        
+
         if (card.card_format === "Native to Target") {
             // If question shows native (index 1), answer is target (index 0)
-            answerText = cleanFieldDatum(card.field_values[0] || '', card.field_processing[0] || '');
+            answerText = cleanFieldDatum(targetBack || '', targetProcessing || '');
         } else {
             // If question shows target (index 0), answer is native (index 1)  
-            answerText = cleanFieldDatum(card.field_values[1] || '', card.field_processing[1] || '');
+            answerText = cleanFieldDatum(nativeBack || '', nativeProcessing || '');
         }
 
         // Process HTML in both question and answer
