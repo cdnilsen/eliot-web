@@ -1,5 +1,6 @@
 import {transliterateGeez, GeezDiacriticify} from './transcribe_geez.js';
 import {SanskritDiacriticify} from './transcribe_sanskrit.js';
+import {AkkadianDiacriticify} from './transcribe_akkadian.js';
 import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 declare global {
@@ -352,6 +353,9 @@ uploadSubmitButton.addEventListener('click', async () => {
                     }
                     if (thisNoteProcessList[j] == "Sanskrit") {
                         thisDatum = SanskritDiacriticify(thisDatum, true);
+                    }
+                    if (thisNoteProcessList[j] == "Akkadian") {
+                        thisDatum = AkkadianDiacriticify(thisDatum, true);
                     }
                 }
                 thisNoteDataList.push(thisDatum);
