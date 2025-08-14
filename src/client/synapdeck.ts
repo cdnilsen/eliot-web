@@ -1,4 +1,5 @@
 import {transliterateGeez, GeezDiacriticify} from './transcribe_geez.js';
+import {transliterateGreek} from './transcribe_ancient_greek.js';
 import {SanskritDiacriticify} from './transcribe_sanskrit.js';
 import {AkkadianDiacriticify} from './transcribe_akkadian.js';
 import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
@@ -356,6 +357,9 @@ uploadSubmitButton.addEventListener('click', async () => {
                     }
                     if (thisNoteProcessList[j] == "Akkadian") {
                         thisDatum = AkkadianDiacriticify(thisDatum, true);
+                    }
+                    if (thisNoteProcessList[j] == "Ancient Greek") {
+                        thisDatum = transliterateGreek(thisDatum, true)
                     }
                 }
                 thisNoteDataList.push(thisDatum);
