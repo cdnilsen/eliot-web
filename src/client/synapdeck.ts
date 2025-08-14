@@ -2026,7 +2026,7 @@ function setupBrowseCardsTab(): void {
         return;
     }
 
-    // Create the browse cards UI
+    // Create the browse cards UI with spreadsheet-like layout
     browseTab.innerHTML = `
         <h2>Browse Cards</h2>
         
@@ -2039,6 +2039,7 @@ function setupBrowseCardsTab(): void {
                             <option value="">All Decks</option>
                             <option value="Ge'ez">Ge'ez</option>
                             <option value="Sanskrit">Sanskrit</option>
+                            <option value="Akkadian">Akkadian</option>
                         </select>
                     </div>
                     
@@ -2055,9 +2056,7 @@ function setupBrowseCardsTab(): void {
                             <option value="Native to Target">Native to Target</option>
                         </select>
                     </div>
-                </div>
-                
-                <div class="filter-row">
+                    
                     <div class="filter-group">
                         <label for="browse_sort_select">Sort By:</label>
                         <select id="browse_sort_select">
@@ -2066,6 +2065,8 @@ function setupBrowseCardsTab(): void {
                             <option value="interval">Interval</option>
                             <option value="retrievability">Retrievability</option>
                             <option value="created">Created Date</option>
+                            <option value="deck">Deck</option>
+                            <option value="card_format">Format</option>
                         </select>
                     </div>
                     
@@ -2104,6 +2105,8 @@ function setupBrowseCardsTab(): void {
     const searchButton = document.getElementById('browse_search_btn') as HTMLButtonElement;
     const clearButton = document.getElementById('browse_clear_btn') as HTMLButtonElement;
     const searchInput = document.getElementById('browse_search_input') as HTMLInputElement;
+    const sortSelect = document.getElementById('browse_sort_select') as HTMLSelectElement;
+    const directionSelect = document.getElementById('browse_direction_select') as HTMLSelectElement;
 
     if (searchButton) {
         searchButton.addEventListener('click', () => performCardSearch());
@@ -2121,9 +2124,219 @@ function setupBrowseCardsTab(): void {
         });
     }
 
+    // Add event listeners for sort changes
+    if (sortSelect) {
+        sortSelect.addEventListener('change', () => performCardSearch(0));
+    }
+
+    if (directionSelect) {
+        directionSelect.addEventListener('change', () => performCardSearch(0));
+    }
+
     // Load initial cards
     performCardSearch();
 }
+
+
+
+// Replace the displayBrowseResults function with this spreadsheet-style version
+function displayBrowseResults(cards: CardDue[], totalCount: number): void {
+    const resultsDiv = document.getElementById('browse_results') as HTMLDivElement;
+    if (!resultsDiv) return;
+
+    if (cards.length === 0) {
+        resultsDiv.innerHTML = '<p class="no-results">No cards found matching your search criteria.</p>';
+        return;
+    }
+
+    // Create spreadsheet-like table
+    let html = `
+        <div class="card-spreadsheet">
+            <table class="card-table">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="card_id">
+                            ID 
+                            <span class="sort-indicator">${getSortIndicator('card_id')}</span>
+                        </th>
+                        <th class="sortable" data-sort="deck">
+                            Deck
+                            <span class="sort-indicator">${getSortIndicator('deck')}</span>
+                        </th>
+                        <th class="card-content-col">Front</th>
+                        <th class="card-content-col">Back</th>
+                        <th class="sortable" data-sort="card_format">
+                            Format
+                            <span class="sort-indicator">${getSortIndicator('card_format')}</span>
+                        </th>
+                        <th class="sortable" data-sort="time_due">
+                            Due Date
+                            <span class="sort-indicator">${getSortIndicator('time_due')}</span>
+                        </th>
+                        <th class="sortable" data-sort="interval">
+                            Interval
+                            <span class="sort-indicator">${getSortIndicator('interval')}</span>
+                        </th>
+                        <th class="sortable" data-sort="retrievability">
+                            Retrievability
+                            <span class="sort-indicator">${getSortIndicator('retrievability')}</span>
+                        </th>
+                        <th class="actions-col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    cards.forEach((card) => {
+        const dueDate = new Date(card.time_due);
+        const now = new Date();
+        const isOverdue = dueDate < now;
+        const dueDateClass = isOverdue ? 'overdue' : (dueDate <= new Date(now.getTime() + 24 * 60 * 60 * 1000) ? 'due-soon' : 'upcoming');
+
+        // Generate preview of both sides of the card
+        const frontText = generateCardFrontLine(card);
+        const backText = generateCardBackLine(card);
+
+        // Format due date for display
+        const dueDateDisplay = dueDate.toLocaleDateString() + ' ' + dueDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        // Retrievability as percentage with color coding
+        const retrievabilityPercent = (card.retrievability * 100).toFixed(1);
+        const retrievabilityClass = getRetrievabilityClass(card.retrievability);
+
+        html += `
+            <tr class="card-row ${dueDateClass}" data-card-id="${card.card_id}">
+                <td class="card-id-cell">
+                    <span class="card-id-number">${card.card_id}</span>
+                </td>
+                <td class="deck-cell">
+                    <span class="deck-badge">${card.deck}</span>
+                </td>
+                <td class="content-cell front-cell">
+                    <div class="content-preview" title="${escapeHtml(frontText)}">
+                        ${truncateText(processHTMLContent(frontText), 50)}
+                    </div>
+                </td>
+                <td class="content-cell back-cell">
+                    <div class="content-preview" title="${escapeHtml(backText)}">
+                        ${truncateText(processHTMLContent(backText), 50)}
+                    </div>
+                </td>
+                <td class="format-cell">
+                    <span class="format-badge">${getFormatAbbreviation(card.card_format)}</span>
+                </td>
+                <td class="due-date-cell ${dueDateClass}">
+                    <div class="due-date-display">
+                        <div class="due-date">${dueDate.toLocaleDateString()}</div>
+                        <div class="due-time">${dueDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                        ${isOverdue ? '<span class="overdue-badge">OVERDUE</span>' : ''}
+                    </div>
+                </td>
+                <td class="interval-cell">
+                    <span class="interval-badge">${card.interval}d</span>
+                </td>
+                <td class="retrievability-cell">
+                    <div class="retrievability-display ${retrievabilityClass}">
+                        <div class="retrievability-bar">
+                            <div class="retrievability-fill" style="width: ${retrievabilityPercent}%"></div>
+                        </div>
+                        <span class="retrievability-text">${retrievabilityPercent}%</span>
+                    </div>
+                </td>
+                <td class="actions-cell">
+                    <div class="action-buttons">
+                        <button class="btn btn-small edit-card-btn" data-card-id="${card.card_id}" title="Edit card">
+                            ✏️
+                        </button>
+                        <button class="btn btn-small delete-card-btn" data-card-id="${card.card_id}" title="Delete card">
+                            🗑️
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    resultsDiv.innerHTML = html;
+
+    // Add event listeners to action buttons and sortable headers
+    setupCardActionButtons();
+    setupSortableHeaders();
+}
+
+
+// Helper functions for the spreadsheet display
+function getSortIndicator(column: string): string {
+    const currentSort = currentBrowseFilters.sortBy;
+    const currentDirection = currentBrowseFilters.sortDirection;
+    
+    if (currentSort === column) {
+        return currentDirection === 'asc' ? '↑' : '↓';
+    }
+    return '↕️';
+}
+
+function getRetrievabilityClass(retrievability: number): string {
+    if (retrievability >= 0.9) return 'high';
+    if (retrievability >= 0.7) return 'medium';
+    if (retrievability >= 0.5) return 'low';
+    return 'very-low';
+}
+
+function getFormatAbbreviation(format: string): string {
+    switch (format) {
+        case 'Target to Native': return 'T→N';
+        case 'Native to Target': return 'N→T';
+        default: return format.substring(0, 3);
+    }
+}
+
+function truncateText(text: string, maxLength: number): string {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+}
+
+function escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Setup sortable headers
+function setupSortableHeaders(): void {
+    const sortableHeaders = document.querySelectorAll('.sortable');
+    
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const sortBy = header.getAttribute('data-sort');
+            if (!sortBy) return;
+            
+            // Toggle direction if same column, otherwise default to asc
+            let newDirection: 'asc' | 'desc' = 'asc';
+            if (currentBrowseFilters.sortBy === sortBy && currentBrowseFilters.sortDirection === 'asc') {
+                newDirection = 'desc';
+            }
+            
+            // Update the sort select elements to match
+            const sortSelect = document.getElementById('browse_sort_select') as HTMLSelectElement;
+            const directionSelect = document.getElementById('browse_direction_select') as HTMLSelectElement;
+            
+            if (sortSelect) sortSelect.value = sortBy;
+            if (directionSelect) directionSelect.value = newDirection;
+            
+            // Perform the search with new sorting
+            performCardSearch(0);
+        });
+    });
+}
+
+
 
 // Perform card search function
 async function performCardSearch(page: number = 0): Promise<void> {
@@ -2174,78 +2387,6 @@ async function performCardSearch(page: number = 0): Promise<void> {
             resultsDiv.innerHTML = '<p class="error">Network error occurred</p>';
         }
     }
-}
-
-// Display browse results function
-function displayBrowseResults(cards: CardDue[], totalCount: number): void {
-    const resultsDiv = document.getElementById('browse_results') as HTMLDivElement;
-    if (!resultsDiv) return;
-
-    if (cards.length === 0) {
-        resultsDiv.innerHTML = '<p class="no-results">No cards found matching your search criteria.</p>';
-        return;
-    }
-
-    let html = '<div class="cards-grid">';
-    
-    cards.forEach((card) => {
-        const dueDate = new Date(card.time_due);
-        const isOverdue = dueDate < new Date();
-        const dueDateClass = isOverdue ? 'overdue' : 'upcoming';
-
-        // Generate preview of both sides of the card
-        const frontText = generateCardFrontLine(card);
-        const backText = generateCardBackLine(card);
-
-        html += `
-            <div class="card-browser-item" data-card-id="${card.card_id}">
-                <div class="card-header">
-                    <span class="card-id">ID: ${card.card_id}</span>
-                    <span class="card-deck">${card.deck}</span>
-                    <span class="card-format">${card.card_format}</span>
-                </div>
-                
-                <div class="card-content">
-                    <div class="card-side">
-                        <div class="side-label">Front:</div>
-                        <div class="side-content">${processHTMLContent(frontText)}</div>
-                    </div>
-                    <div class="card-side">
-                        <div class="side-label">Back:</div>
-                        <div class="side-content">${processHTMLContent(backText)}</div>
-                    </div>
-                </div>
-                
-                <div class="card-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Due:</span>
-                        <span class="stat-value ${dueDateClass}" title="${dueDate.toLocaleString()}">
-                            ${dueDate.toLocaleDateString()}
-                        </span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Interval:</span>
-                        <span class="stat-value">${card.interval} days</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Retrievability:</span>
-                        <span class="stat-value">${(card.retrievability * 100).toFixed(1)}%</span>
-                    </div>
-                </div>
-                
-                <div class="card-actions">
-                    <button class="btn btn-small edit-card-btn" data-card-id="${card.card_id}">Edit</button>
-                    <button class="btn btn-small delete-card-btn" data-card-id="${card.card_id}">Delete</button>
-                </div>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    resultsDiv.innerHTML = html;
-
-    // Add event listeners to action buttons
-    setupCardActionButtons();
 }
 
 // Generate the back side of a card
