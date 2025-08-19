@@ -86,12 +86,7 @@ function updateSpecialCharacters(deckName: string): void {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "special-char-btn";
-
-        if (char == "ʿ" || char == "ʾ") {
-            button.style.fontSize = "30px";
-        } else {
-            button.style.fontSize = "16px";
-        }
+        button.style.fontSize = "30px";
         button.textContent = char;
         button.title = `Insert ${char}`;
         
