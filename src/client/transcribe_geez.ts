@@ -407,6 +407,8 @@ export function transliterateGeez(str: string): string {
     return tokens.map(renderGeez).join("");
 }
 
+export let geezSpecialChars: string[] = ["ä", "ā", "ə", "ṭ", "ḍ", "ṣ", "š", "ḥ", "ʾ", "ʿ", "ṗ"]
+
 export function GeezDiacriticify(str: string, isASCII: boolean): string {
     if (isASCII) {
         let ASCII2DiacriticDict: S2SDict = {

@@ -13,6 +13,10 @@ export function AkkadianDiacriticify(str: string, isASCII: boolean): string {
             "I": "ī",
             "uu": "ū",
             "U": "ū",
+            "a^": "â",
+            "e^": "ê",
+            "i^": "î",
+            "u^": "û",
             "c": "š",
             "S": "ṣ",
             "T": "ṭ",
@@ -30,3 +34,7 @@ export function AkkadianDiacriticify(str: string, isASCII: boolean): string {
     }
     return str;
 }
+
+export let akkadianSpecialChars = [
+    "ā", "ē", "ī", "ū", "â", "ê", "î", "û", "š", "ṣ", "ṭ", "ḫ", "ʾ"
+]

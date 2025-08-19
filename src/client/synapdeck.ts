@@ -1,7 +1,7 @@
-import {transliterateGeez, GeezDiacriticify} from './transcribe_geez.js';
+import {transliterateGeez, GeezDiacriticify, geezSpecialChars} from './transcribe_geez.js';
 import {transliterateGreek} from './transcribe_ancient_greek.js';
 import {SanskritDiacriticify} from './transcribe_sanskrit.js';
-import {AkkadianDiacriticify} from './transcribe_akkadian.js';
+import {AkkadianDiacriticify, akkadianSpecialChars} from './transcribe_akkadian.js';
 import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 declare global {
@@ -9,6 +9,120 @@ declare global {
         jsPDF: any;
     }
 }
+
+
+// First, add this interface near your other type definitions
+interface SpecialCharacterSet {
+    [key: string]: string[];
+}
+
+
+// Add this after your imports (you'll need to make sure these are exported from their respective modules)
+const specialCharacterSets: SpecialCharacterSet = {
+    "Ge'ez": geezSpecialChars || [],
+    "Akkadian": akkadianSpecialChars || [],
+    // Add more as needed
+    // "Sanskrit": sanskritSpecialChars || [], // if you have this
+};
+
+
+
+// Add this function to create the special characters panel
+function createSpecialCharactersPanel(): void {
+    const textInputSection = document.getElementById("textInputSection");
+    if (!textInputSection) return;
+
+    // Check if panel already exists
+    let existingPanel = document.getElementById("specialCharsPanel");
+    if (existingPanel) {
+        existingPanel.remove();
+    }
+
+    // Create the panel container
+    const panel = document.createElement("div");
+    panel.id = "specialCharsPanel";
+    panel.className = "special-chars-panel";
+    
+    const panelTitle = document.createElement("h4");
+    panelTitle.textContent = "Special Characters";
+    panelTitle.className = "special-chars-title";
+    
+    const charGrid = document.createElement("div");
+    charGrid.id = "specialCharsGrid";
+    charGrid.className = "special-chars-grid";
+    
+    panel.appendChild(panelTitle);
+    panel.appendChild(charGrid);
+    
+    // Insert the panel after the textarea
+    const textarea = document.getElementById("cardTextInput");
+    if (textarea && textarea.parentNode) {
+        textarea.parentNode.insertBefore(panel, textarea.nextSibling);
+    }
+}
+
+// Add this function to update the special characters based on selected deck
+function updateSpecialCharacters(deckName: string): void {
+    const panel = document.getElementById("specialCharsPanel");
+    const charGrid = document.getElementById("specialCharsGrid");
+    
+    if (!panel || !charGrid) return;
+
+    // Clear existing characters
+    charGrid.innerHTML = "";
+
+    // Get characters for the selected deck
+    const characters = specialCharacterSets[deckName];
+    
+    if (!characters || characters.length === 0) {
+        panel.style.display = "none";
+        return;
+    }
+
+    panel.style.display = "block";
+
+    // Create buttons for each character
+    characters.forEach(char => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "special-char-btn";
+        button.textContent = char;
+        button.title = `Insert ${char}`;
+        
+        // Add click handler to insert character
+        button.addEventListener("click", () => {
+            insertCharacterAtCursor(char);
+        });
+        
+        charGrid.appendChild(button);
+    });
+}
+
+// Add this function to insert character at cursor position in textarea
+function insertCharacterAtCursor(character: string): void {
+    const textarea = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const startPos = textarea.selectionStart;
+    const endPos = textarea.selectionEnd;
+    const textBefore = textarea.value.substring(0, startPos);
+    const textAfter = textarea.value.substring(endPos);
+    
+    // Insert the character
+    textarea.value = textBefore + character + textAfter;
+    
+    // Move cursor to after the inserted character
+    const newCursorPos = startPos + character.length;
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+    
+    // Focus back on textarea
+    textarea.focus();
+    
+    // Trigger input event to update currentFileContent
+    const inputEvent = new Event('input', { bubbles: true });
+    textarea.dispatchEvent(inputEvent);
+}
+
 
 interface CreateSessionResponse {
     status: 'success' | 'error';
@@ -116,12 +230,19 @@ let currentFileContent: string = "";
 let currentDeck: string = "";
 let uploadDeckDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
 
+// Modify your existing deck dropdown event listener
 if (uploadDeckDropdown) {
     uploadDeckDropdown.addEventListener('change', (event) => {
         const selectedValue = (event.target as HTMLSelectElement).value;
         currentDeck = selectedValue;
 
         console.log("Current deck is: <" + currentDeck + ">")
+        
+        // Update special characters panel
+        const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+        if (textRadio && textRadio.checked) {
+            updateSpecialCharacters(currentDeck);
+        }
     });
 }
 
@@ -180,6 +301,8 @@ if (fileRadio.checked) {
     cardFormatDropdownDiv.style.display = "none";
 }
 
+
+// Modify your text radio button event listener to create the panel when text input is selected
 if (fileRadio && textRadio && cardFormatDropdownDiv) {
     fileRadio.addEventListener('change', () => {
         if (fileRadio.checked) {
@@ -190,6 +313,12 @@ if (fileRadio && textRadio && cardFormatDropdownDiv) {
             uploadCancelButton.disabled = true;
             // Hide dropdown when using file upload
             cardFormatDropdownDiv.style.display = "none";
+            
+            // Hide special characters panel
+            const panel = document.getElementById("specialCharsPanel");
+            if (panel) {
+                panel.style.display = "none";
+            }
         }
     });
 
@@ -202,14 +331,24 @@ if (fileRadio && textRadio && cardFormatDropdownDiv) {
             uploadCancelButton.disabled = true;
             // Show dropdown when typing directly
             cardFormatDropdownDiv.style.display = "block";
+            
+            // Create and show special characters panel
+            createSpecialCharactersPanel();
+            if (currentDeck) {
+                updateSpecialCharacters(currentDeck);
+            }
         }
     });
     
-    // Initialize the dropdown visibility based on current selection
+    // Initialize the dropdown visibility and special chars panel based on current selection
     if (fileRadio.checked) {
-        cardFormatDropdownDiv.style.display = "none";  // Changed this line
+        cardFormatDropdownDiv.style.display = "none";
     } else if (textRadio.checked) {
-        cardFormatDropdownDiv.style.display = "block";  // Changed this line
+        cardFormatDropdownDiv.style.display = "block";
+        createSpecialCharactersPanel();
+        if (currentDeck) {
+            updateSpecialCharacters(currentDeck);
+        }
     }
 }
 

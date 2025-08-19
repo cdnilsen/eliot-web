@@ -19,9 +19,11 @@ export function SanskritDiacriticify(str: string, isASCII: boolean): string {
             "M": "ṃ",
             "H": "ḥ",
             "A'": "ā́",
-            "a": "á",
+            "a'": "á",
+            "ā'": "ā́",
             "I'": "ī́",
             "i'": "í",
+            "ī'": "ī́",
             "U'": "ū́",
             "u'": "ú",
             "R'": "ṛ́",
@@ -44,3 +46,7 @@ export function SanskritDiacriticify(str: string, isASCII: boolean): string {
     }
     return str;
 }
+
+export let sanskritChars: string[] = [
+    "á", "í", "ú", "ā", "ā́"
+]
