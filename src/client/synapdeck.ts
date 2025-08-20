@@ -2184,6 +2184,7 @@ function setupBrowseCardsTab(): void {
                         <select id="browse_deck_select">
                             <option value="">All Decks</option>
                             <option value="Ge'ez">Ge'ez</option>
+                            <option value="Ancient Greek">Ancient Greek</option>
                             <option value="Sanskrit">Sanskrit</option>
                             <option value="Akkadian">Akkadian</option>
                         </select>
