@@ -252,9 +252,6 @@ let textInputBox = document.getElementById("cardTextInput") as HTMLTextAreaEleme
 let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
 let uploadCancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
 
-let inputDiacriticsRadio = document.getElementById("romanization_diacritics") as HTMLInputElement;
-let inputASCIIRadio = document.getElementById("romanization_ascii") as HTMLInputElement;
-
 // Handle file input
 fileInput.addEventListener('change', (event) => {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -488,20 +485,6 @@ uploadSubmitButton.addEventListener('click', async () => {
             let thisNoteDataList: string[] = [];
             for (let j = 0; j < thisNoteFieldData.length; j++) {
                 let thisDatum = thisNoteFieldData[j].trim();
-                if (inputASCIIRadio && inputASCIIRadio.checked) {
-                    if (thisNoteProcessList[j] == "Ge'ez") {
-                        thisDatum = GeezDiacriticify(thisDatum, true); // Make a general function to send the thing out...
-                    }
-                    if (thisNoteProcessList[j] == "Sanskrit") {
-                        thisDatum = SanskritDiacriticify(thisDatum, true);
-                    }
-                    if (thisNoteProcessList[j] == "Akkadian") {
-                        thisDatum = AkkadianDiacriticify(thisDatum, true);
-                    }
-                    if (thisNoteProcessList[j] == "Ancient Greek") {
-                        thisDatum = transliterateGreek(thisDatum, true)
-                    }
-                }
                 thisNoteDataList.push(thisDatum);
             }
             if (thisNoteProcessList.length != thisNoteDataList.length) {
