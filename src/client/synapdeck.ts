@@ -2472,7 +2472,7 @@ function generateCardBackLine(card: CardDue): string {
     let targetIndex = 0;
     
     // Flip the index for back side
-    if (card.card_format === "Native to Target") {
+    if (card.card_format === "Target to Native") {
         targetIndex = 1; 
     }
 
