@@ -4,6 +4,17 @@ import {SanskritDiacriticify} from './transcribe_sanskrit.js';
 import {AkkadianDiacriticify, akkadianSpecialChars} from './transcribe_akkadian.js';
 import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
+
+interface CardFieldData {
+    card_id: number;
+    note_id: number;
+    field_names: string[];
+    field_values: string[];
+    field_processing: string[];
+    deck?: string;
+    card_format?: string;
+}
+
 declare global {
     interface Window {
         jsPDF: any;
