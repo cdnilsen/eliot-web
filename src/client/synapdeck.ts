@@ -1246,97 +1246,6 @@ function generateCardFrontLine(card: CardDue): string {
     return processedField;
 }
 
-// Enhanced display function that shows review ahead info
-function displayAvailableCardsWithStatus(cards: CardDue[], reviewAhead: boolean = false, hoursAhead: number = 0): void {
-    const outputDiv = document.getElementById("check_output") as HTMLDivElement;
-    if (!outputDiv) return;
-
-    if (cards.length === 0) {
-        const message = reviewAhead 
-            ? `No cards are due within the next ${hoursAhead} hours.`
-            : 'No cards are currently due for review.';
-        outputDiv.innerHTML = `<p>${message}</p>`;
-        return;
-    }
-
-    const now = new Date();
-    const dueNow = cards.filter(card => new Date(card.time_due) <= now);
-    const dueAhead = cards.filter(card => new Date(card.time_due) > now);
-    
-    let html = `<h3>Cards for Review (${cards.length})</h3>`;
-    
-    if (reviewAhead && hoursAhead > 0) {
-        html += `<p class="review-ahead-info">📚 Showing cards due within ${hoursAhead} hours</p>`;
-        if (dueNow.length > 0) {
-            html += `<p>🔴 ${dueNow.length} cards due now | ⏰ ${dueAhead.length} cards due ahead</p>`;
-        }
-    }
-    
-    html += '<div class="cards-list">';
-    
-    cards.forEach((card, index) => {
-        const dueDate = new Date(card.time_due);
-        const isOverdue = dueDate < now;
-        const isDueSoon = dueDate <= new Date(now.getTime() + 2 * 60 * 60 * 1000); // due within 2 hours
-        
-        let statusClass = 'due-ahead';
-        let statusText = 'Due ahead';
-        
-        if (isOverdue) {
-            statusClass = 'overdue';
-            statusText = 'Overdue';
-        } else if (isDueSoon) {
-            statusClass = 'due-soon';
-            statusText = 'Due soon';
-        }
-        
-        html += `
-            <div class="card-item ${statusClass}" data-card-id="${card.card_id}">
-                <div class="card-header">
-                    <span class="card-id">Card #${card.card_id}</span>
-                    <span class="card-format">${card.card_format || 'Standard'}</span>
-                    <span class="due-time" title="${dueDate.toLocaleString()}">
-                        ${statusText}: ${dueDate.toLocaleDateString()} ${dueDate.toLocaleTimeString()}
-                    </span>
-                </div>
-                <div class="card-content">
-                    ${card.field_values.map((value, i) => 
-                        `<div class="field"><strong>${card.field_names[i] || `Field ${i+1}`}:</strong> ${value}</div>`
-                    ).join('')}
-                </div>
-                <div class="card-stats">
-                    <span>Interval: ${card.interval} days</span>
-                    <span>Retrievability: ${(card.retrievability * 100).toFixed(1)}%</span>
-                    ${!isOverdue ? `<span class="time-until">Due in: ${getTimeUntilDue(dueDate)}</span>` : ''}
-                </div>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    outputDiv.innerHTML = html;
-}
-
-// Helper function to format time until due
-function getTimeUntilDue(dueDate: Date): string {
-    const now = new Date();
-    const diffMs = dueDate.getTime() - now.getTime();
-    
-    if (diffMs <= 0) return 'Now';
-    
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (diffHours > 24) {
-        const diffDays = Math.floor(diffHours / 24);
-        return `${diffDays}d ${diffHours % 24}h`;
-    } else if (diffHours > 0) {
-        return `${diffHours}h ${diffMinutes}m`;
-    } else {
-        return `${diffMinutes}m`;
-    }
-}
-
 let reviewDeckDropdown = document.getElementById("review_dropdownMenu") as HTMLSelectElement;
 let selectedReviewDeck: string = "";
 
@@ -1372,6 +1281,21 @@ if (reviewDeckDropdown) {
                 let numCards = parseInt(reviewAheadNumCards.value)
                 cachedCardResults = await checkAvailableCardsWithOptions(selectedReviewDeck);
                 lastCheckedDeck = selectedReviewDeck;
+
+                if (reviewAheadNumCards) {
+                    reviewAheadNumCards.addEventListener('change', function(e) {
+                        if (cachedCardResults && cachedCardResults.status === 'success' && cachedCardResults.cards) {
+                            const numCards = parseInt(reviewAheadNumCards.value);
+                            const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
+                            const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
+                            const currentReviewAhead = reviewAheadCheckbox?.checked || false;
+                            const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
+                            
+                            updateSubmitButtonText(numCards, cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
+                        }
+                    });
+                }
+
                 
                 // Update submit button text based on results
                 const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
