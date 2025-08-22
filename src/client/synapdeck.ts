@@ -2469,11 +2469,11 @@ async function performCardSearch(page: number = 0): Promise<void> {
 
 // Generate the back side of a card
 function generateCardBackLine(card: CardDue): string {
-    let targetIndex = 1;
+    let targetIndex = 0;
     
     // Flip the index for back side
     if (card.card_format === "Native to Target") {
-        targetIndex = 0; 
+        targetIndex = 1; 
     }
 
     
