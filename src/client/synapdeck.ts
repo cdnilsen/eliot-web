@@ -351,10 +351,10 @@ if (fileRadio && textRadio && cardFormatDropdownDiv) {
 }
 
 // This will probably be later on...
-function cleanFieldDatum(datum: string, process: string) {
+function cleanFieldDatum(datum: string, process: string, isBackOfCard: boolean) {
     switch (process) {
         case "Ge'ez":
-            return transliterateGeez(datum);
+            return transliterateGeez(datum, isBackOfCard);
         default:
             return datum;
     }
@@ -1241,7 +1241,7 @@ function generateCardFrontLine(card: CardDue): string {
 
     console.log(targetField + " (" + card.card_format + ") is processed as " + targetProcessing);
 
-    let processedField = cleanFieldDatum(targetField, targetProcessing);
+    let processedField = cleanFieldDatum(targetField, targetProcessing, false);
     console.log(processedField);
     return processedField;
 }
@@ -1891,10 +1891,10 @@ function generateAnswerKey(cards: CardDue[]): string {
 
         if (card.card_format === "Native to Target") {
             // If question shows native (index 1), answer is target (index 0)
-            answerText = cleanFieldDatum(targetBack || '', targetProcessing || '');
+            answerText = cleanFieldDatum(targetBack || '', targetProcessing || '', true);
         } else {
             // If question shows target (index 0), answer is native (index 1)  
-            answerText = cleanFieldDatum(nativeBack || '', nativeProcessing || '');
+            answerText = cleanFieldDatum(nativeBack || '', nativeProcessing || '', true);
         }
 
         // Process HTML in both question and answer
@@ -2466,7 +2466,7 @@ function generateCardBackLine(card: CardDue): string {
     let targetField = card.field_values[targetIndex];
     let targetProcessing = card.field_processing[targetIndex];
     
-    let processedField = cleanFieldDatum(targetField, targetProcessing);
+    let processedField = cleanFieldDatum(targetField, targetProcessing, true);
     return processedField;
 }
 
@@ -3319,3 +3319,67 @@ if (document.readyState === 'loading') {
     // DOM is already loaded
     addRetrievabilityManagementSection();
 }
+
+
+function debugBrowseButtons() {
+    console.log('=== BROWSE CARDS BUTTON DEBUG ===');
+    
+    // Check if browse results div exists
+    const resultsDiv = document.getElementById('browse_results');
+    console.log('1. Browse results div:', resultsDiv ? '✅ Found' : '❌ Not found');
+    
+    // Check if table exists
+    const table = document.querySelector('.card-table');
+    console.log('2. Card table:', table ? '✅ Found' : '❌ Not found');
+    
+    // Check for action cells
+    const actionCells = document.querySelectorAll('.actions-cell');
+    console.log('3. Action cells:', actionCells.length, actionCells.length > 0 ? '✅' : '❌');
+    
+    // Check for action buttons containers
+    const actionButtons = document.querySelectorAll('.action-buttons');
+    console.log('4. Action button containers:', actionButtons.length, actionButtons.length > 0 ? '✅' : '❌');
+    
+    // Check for edit buttons
+    const editButtons = document.querySelectorAll('.edit-card-btn');
+    console.log('5. Edit buttons:', editButtons.length, editButtons.length > 0 ? '✅' : '❌');
+    
+    // Check for delete buttons
+    const deleteButtons = document.querySelectorAll('.delete-card-btn');
+    console.log('6. Delete buttons:', deleteButtons.length, deleteButtons.length > 0 ? '✅' : '❌');
+    
+    // Check button attributes
+    if (editButtons.length > 0) {
+        console.log('7. First edit button data-card-id:', editButtons[0].getAttribute('data-card-id'));
+        console.log('8. First edit button visible:', window.getComputedStyle(editButtons[0]).display !== 'none' ? '✅' : '❌');
+    }
+    
+    if (deleteButtons.length > 0) {
+        console.log('9. First delete button data-card-id:', deleteButtons[0].getAttribute('data-card-id'));
+        console.log('10. First delete button visible:', window.getComputedStyle(deleteButtons[0]).display !== 'none' ? '✅' : '❌');
+    }
+    
+    // Check for table rows with data
+    const cardRows = document.querySelectorAll('.card-row');
+    console.log('11. Card rows:', cardRows.length, cardRows.length > 0 ? '✅' : '❌');
+    
+    // Log the full structure of the first row if it exists
+    if (cardRows.length > 0) {
+        console.log('12. First row HTML:', cardRows[0].outerHTML.substring(0, 500) + '...');
+    }
+    
+    console.log('=== END DEBUG ===');
+    
+    // Return summary
+    return {
+        resultsDiv: !!resultsDiv,
+        table: !!table,
+        actionCells: actionCells.length,
+        editButtons: editButtons.length,
+        deleteButtons: deleteButtons.length,
+        cardRows: cardRows.length
+    };
+}
+
+// Run the debug function
+debugBrowseButtons();

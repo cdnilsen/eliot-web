@@ -15,6 +15,270 @@ interface ParsedToken {
     value?: string;
 }
 
+const geminateTokens = [
+    // ሀ (ha) series
+    {input: ["hhä"], internal: "hhä", output: "ሀ፟"},
+    {input: ["hhu"], internal: "hhu", output: "ሁ፟"},
+    {input: ["hhi"], internal: "hhi", output: "ሂ፟"},
+    {input: ["hha"], internal: "hha", output: "ሃ፟"},
+    {input: ["hhe"], internal: "hhe", output: "ሄ፟"},
+    {input: ["hh", "hhə"], internal: "hh", output: "ህ፟"},
+    {input: ["hho"], internal: "hho", output: "ሆ፟"},
+
+    // ለ (la) series
+    {input: ["llä"], internal: "llä", output: "ለ፟"},
+    {input: ["llu"], internal: "llu", output: "ሉ፟"},
+    {input: ["lli"], internal: "lli", output: "ሊ፟"},
+    {input: ["lla"], internal: "lla", output: "ላ፟"},
+    {input: ["lle"], internal: "lle", output: "ሌ፟"},
+    {input: ["ll", "llə"], internal: "ll", output: "ል፟"},
+    {input: ["llo"], internal: "llo", output: "ሎ፟"},
+
+    // ሐ (ḥa) series
+    {input: ["ḥḥä"], internal: "ḥḥä", output: "ሐ፟"},
+    {input: ["ḥḥu"], internal: "ḥḥu", output: "ሑ፟"},
+    {input: ["ḥḥi"], internal: "ḥḥi", output: "ሒ፟"},
+    {input: ["ḥḥa"], internal: "ḥḥa", output: "ሓ፟"},
+    {input: ["ḥḥe"], internal: "ḥḥe", output: "ሔ፟"},
+    {input: ["ḥḥ", "ḥḥə"], internal: "ḥḥ", output: "ሕ፟"},
+    {input: ["ḥḥo"], internal: "ḥḥo", output: "ሖ፟"},
+
+    // መ (ma) series
+    {input: ["mmä"], internal: "mmä", output: "መ፟"},
+    {input: ["mmu"], internal: "mmu", output: "ሙ፟"},
+    {input: ["mmi"], internal: "mmi", output: "ሚ፟"},
+    {input: ["mma"], internal: "mma", output: "ማ፟"},
+    {input: ["mme"], internal: "mme", output: "ሜ፟"},
+    {input: ["mm", "mmə"], internal: "mm", output: "ም፟"},
+    {input: ["mmo"], internal: "mmo", output: "ሞ፟"},
+
+    // ሠ (śa) series
+    {input: ["śśä"], internal: "śśä", output: "ሠ፟"},
+    {input: ["śśu"], internal: "śśu", output: "ሡ፟"},
+    {input: ["śśi"], internal: "śśi", output: "ሢ፟"},
+    {input: ["śśa"], internal: "śśa", output: "ሣ፟"},
+    {input: ["śśe"], internal: "śśe", output: "ሤ፟"},
+    {input: ["śś", "śśə"], internal: "śś", output: "ሥ፟"},
+    {input: ["śśo"], internal: "śśo", output: "ሦ፟"},
+
+    // ረ (ra) series
+    {input: ["rrä"], internal: "rrä", output: "ረ፟"},
+    {input: ["rru"], internal: "rru", output: "ሩ፟"},
+    {input: ["rri"], internal: "rri", output: "ሪ፟"},
+    {input: ["rra"], internal: "rra", output: "ራ፟"},
+    {input: ["rre"], internal: "rre", output: "ሬ፟"},
+    {input: ["rr", "rrə"], internal: "rr", output: "ር፟"},
+    {input: ["rro"], internal: "rro", output: "ሮ፟"},
+
+    // ሰ (sa) series
+    {input: ["ssä"], internal: "ssä", output: "ሰ፟"},
+    {input: ["ssu"], internal: "ssu", output: "ሱ፟"},
+    {input: ["ssi"], internal: "ssi", output: "ሲ፟"},
+    {input: ["ssa"], internal: "ssa", output: "ሳ፟"},
+    {input: ["sse"], internal: "sse", output: "ሴ፟"},
+    {input: ["ss", "ssə"], internal: "ss", output: "ስ፟"},
+    {input: ["sso"], internal: "sso", output: "ሶ፟"},
+
+    // ቀ (qa) series
+    {input: ["qqä"], internal: "qqä", output: "ቀ፟"},
+    {input: ["qqu"], internal: "qqu", output: "ቁ፟"},
+    {input: ["qqi"], internal: "qqi", output: "ቂ፟"},
+    {input: ["qqa"], internal: "qqa", output: "ቃ፟"},
+    {input: ["qqe"], internal: "qqe", output: "ቄ፟"},
+    {input: ["qq", "qqə"], internal: "qq", output: "ቅ፟"},
+    {input: ["qqo"], internal: "qqo", output: "ቆ፟"},
+
+    // ቈ (qʷa) series - labialized
+    {input: ["qqʷä"], internal: "qqʷä", output: "ቈ፟"},
+    {input: ["qqʷi"], internal: "qqʷi", output: "ቊ፟"},
+    {input: ["qqʷa"], internal: "qqʷa", output: "ቋ፟"},
+    {input: ["qqʷe"], internal: "qqʷe", output: "ቌ፟"},
+    {input: ["qqʷ"], internal: "qqʷ", output: "ቍ፟"},
+
+    // በ (ba) series
+    {input: ["bbä"], internal: "bbä", output: "በ፟"},
+    {input: ["bbu"], internal: "bbu", output: "ቡ፟"},
+    {input: ["bbi"], internal: "bbi", output: "ቢ፟"},
+    {input: ["bba"], internal: "bba", output: "ባ፟"},
+    {input: ["bbe"], internal: "bbe", output: "ቤ፟"},
+    {input: ["bb", "bbə"], internal: "bb", output: "ብ፟"},
+    {input: ["bbo"], internal: "bbo", output: "ቦ፟"},
+
+    // ተ (ta) series
+    {input: ["ttä"], internal: "ttä", output: "ተ፟"},
+    {input: ["ttu"], internal: "ttu", output: "ቱ፟"},
+    {input: ["tti"], internal: "tti", output: "ቲ፟"},
+    {input: ["tta"], internal: "tta", output: "ታ፟"},
+    {input: ["tte"], internal: "tte", output: "ቴ፟"},
+    {input: ["tt", "ttə"], internal: "tt", output: "ት፟"},
+    {input: ["tto"], internal: "tto", output: "ቶ፟"},
+
+    // ኀ (ḫa) series
+    {input: ["ḫḫä"], internal: "ḫḫä", output: "ኀ፟"},
+    {input: ["ḫḫu"], internal: "ḫḫu", output: "ኁ፟"},
+    {input: ["ḫḫi"], internal: "ḫḫi", output: "ኂ፟"},
+    {input: ["ḫḫa"], internal: "ḫḫa", output: "ኃ፟"},
+    {input: ["ḫḫe"], internal: "ḫḫe", output: "ኄ፟"},
+    {input: ["ḫḫ", "ḫḫə"], internal: "ḫḫ", output: "ኅ፟"},
+    {input: ["ḫḫo"], internal: "ḫḫo", output: "ኆ፟"},
+
+    // ኈ (ḫʷa) series - labialized
+    {input: ["ḫḫʷä"], internal: "ḫḫʷä", output: "ኈ፟"},
+    {input: ["ḫḫʷi"], internal: "ḫḫʷi", output: "ኊ፟"},
+    {input: ["ḫḫʷa"], internal: "ḫḫʷa", output: "ኋ፟"},
+    {input: ["ḫḫʷe"], internal: "ḫḫʷe", output: "ኌ፟"},
+    {input: ["ḫḫʷ"], internal: "ḫḫʷ", output: "ኍ፟"},
+
+    // ነ (na) series
+    {input: ["nnä"], internal: "nnä", output: "ነ፟"},
+    {input: ["nnu"], internal: "nnu", output: "ኑ፟"},
+    {input: ["nni"], internal: "nni", output: "ኒ፟"},
+    {input: ["nna"], internal: "nna", output: "ና፟"},
+    {input: ["nne"], internal: "nne", output: "ኔ፟"},
+    {input: ["nn", "nnə"], internal: "nn", output: "ን፟"},
+    {input: ["nno"], internal: "nno", output: "ኖ፟"},
+
+    // አ (ʾa) series
+    {input: ["ʾʾä"], internal: "ʾʾä", output: "አ፟"},
+    {input: ["ʾʾu"], internal: "ʾʾu", output: "ኡ፟"},
+    {input: ["ʾʾi"], internal: "ʾʾi", output: "ኢ፟"},
+    {input: ["ʾʾa"], internal: "ʾʾa", output: "ኣ፟"},
+    {input: ["ʾʾe"], internal: "ʾʾe", output: "ኤ፟"},
+    {input: ["ʾʾ", "ʾʾə"], internal: "ʾʾ", output: "እ፟"},
+    {input: ["ʾʾo"], internal: "ʾʾo", output: "ኦ፟"},
+
+    // ከ (ka) series
+    {input: ["kkä"], internal: "kkä", output: "ከ፟"},
+    {input: ["kku"], internal: "kku", output: "ኩ፟"},
+    {input: ["kki"], internal: "kki", output: "ኪ፟"},
+    {input: ["kka"], internal: "kka", output: "ካ፟"},
+    {input: ["kke"], internal: "kke", output: "ኬ፟"},
+    {input: ["kk", "kkə"], internal: "kk", output: "ክ፟"},
+    {input: ["kko"], internal: "kko", output: "ኮ፟"},
+
+    // ኰ (kʷa) series - labialized
+    {input: ["kkʷä"], internal: "kkʷä", output: "ኰ፟"},
+    {input: ["kkʷi"], internal: "kkʷi", output: "ኲ፟"},
+    {input: ["kkʷa"], internal: "kkʷa", output: "ኳ፟"},
+    {input: ["kkʷe"], internal: "kkʷe", output: "ኴ፟"},
+    {input: ["kkʷ"], internal: "kkʷ", output: "ኵ፟"},
+
+    // ወ (wa) series
+    {input: ["wwä"], internal: "wwä", output: "ወ፟"},
+    {input: ["wwu"], internal: "wwu", output: "ዉ፟"},
+    {input: ["wwi"], internal: "wwi", output: "ዊ፟"},
+    {input: ["wwa"], internal: "wwa", output: "ዋ፟"},
+    {input: ["wwe"], internal: "wwe", output: "ዌ፟"},
+    {input: ["ww", "wwə"], internal: "ww", output: "ው፟"},
+    {input: ["wwo"], internal: "wwo", output: "ዎ፟"},
+
+    // ዐ (ʿa) series
+    {input: ["ʿʿä"], internal: "ʿʿä", output: "ዐ፟"},
+    {input: ["ʿʿu"], internal: "ʿʿu", output: "ዑ፟"},
+    {input: ["ʿʿi"], internal: "ʿʿi", output: "ዒ፟"},
+    {input: ["ʿʿa"], internal: "ʿʿa", output: "ዓ፟"},
+    {input: ["ʿʿe"], internal: "ʿʿe", output: "ዔ፟"},
+    {input: ["ʿʿ", "ʿʿə"], internal: "ʿʿ", output: "ዕ፟"},
+    {input: ["ʿʿo"], internal: "ʿʿo", output: "ዖ፟"},
+
+    // ዘ (za) series
+    {input: ["zzä"], internal: "zzä", output: "ዘ፟"},
+    {input: ["zzu"], internal: "zzu", output: "ዙ፟"},
+    {input: ["zzi"], internal: "zzi", output: "ዚ፟"},
+    {input: ["zza"], internal: "zza", output: "ዛ፟"},
+    {input: ["zze"], internal: "zze", output: "ዜ፟"},
+    {input: ["zz", "zzə"], internal: "zz", output: "ዝ፟"},
+    {input: ["zzo"], internal: "zzo", output: "ዞ፟"},
+
+    // የ (ya) series
+    {input: ["yyä"], internal: "yyä", output: "የ፟"},
+    {input: ["yyu"], internal: "yyu", output: "ዩ፟"},
+    {input: ["yyi"], internal: "yyi", output: "ዪ፟"},
+    {input: ["yya"], internal: "yya", output: "ያ፟"},
+    {input: ["yye"], internal: "yye", output: "ዬ፟"},
+    {input: ["yy", "yyə"], internal: "yy", output: "ይ፟"},
+    {input: ["yyo"], internal: "yyo", output: "ዮ፟"},
+
+    // ደ (da) series
+    {input: ["ddä"], internal: "ddä", output: "ደ፟"},
+    {input: ["ddu"], internal: "ddu", output: "ዱ፟"},
+    {input: ["ddi"], internal: "ddi", output: "ዲ፟"},
+    {input: ["dda"], internal: "dda", output: "ዳ፟"},
+    {input: ["dde"], internal: "dde", output: "ዴ፟"},
+    {input: ["dd", "ddə"], internal: "dd", output: "ድ፟"},
+    {input: ["ddo"], internal: "ddo", output: "ዶ፟"},
+
+    // ገ (ga) series
+    {input: ["ggä"], internal: "ggä", output: "ገ፟"},
+    {input: ["ggu"], internal: "ggu", output: "ጉ፟"},
+    {input: ["ggi"], internal: "ggi", output: "ጊ፟"},
+    {input: ["gga"], internal: "gga", output: "ጋ፟"},
+    {input: ["gge"], internal: "gge", output: "ጌ፟"},
+    {input: ["gg", "ggə"], internal: "gg", output: "ግ፟"},
+    {input: ["ggo"], internal: "ggo", output: "ጎ፟"},
+
+    // ጐ (gʷa) series - labialized
+    {input: ["ggʷä"], internal: "ggʷä", output: "ጐ፟"},
+    {input: ["ggʷi"], internal: "ggʷi", output: "ጒ፟"},
+    {input: ["ggʷa"], internal: "ggʷa", output: "ጓ፟"},
+    {input: ["ggʷe"], internal: "ggʷe", output: "ጔ፟"},
+    {input: ["ggʷ"], internal: "ggʷ", output: "ጕ፟"},
+
+    // ጠ (ṭa) series
+    {input: ["ṭṭä"], internal: "ṭṭä", output: "ጠ፟"},
+    {input: ["ṭṭu"], internal: "ṭṭu", output: "ጡ፟"},
+    {input: ["ṭṭi"], internal: "ṭṭi", output: "ጢ፟"},
+    {input: ["ṭṭa"], internal: "ṭṭa", output: "ጣ፟"},
+    {input: ["ṭṭe"], internal: "ṭṭe", output: "ጤ፟"},
+    {input: ["ṭṭ", "ṭṭə"], internal: "ṭṭ", output: "ጥ፟"},
+    {input: ["ṭṭo"], internal: "ṭṭo", output: "ጦ፟"},
+
+    // ጰ (ṗa) series
+    {input: ["ṗṗä"], internal: "ṗṗä", output: "ጰ፟"},
+    {input: ["ṗṗu"], internal: "ṗṗu", output: "ጱ፟"},
+    {input: ["ṗṗi"], internal: "ṗṗi", output: "ጲ፟"},
+    {input: ["ṗṗa"], internal: "ṗṗa", output: "ጳ፟"},
+    {input: ["ṗṗe"], internal: "ṗṗe", output: "ጴ፟"},
+    {input: ["ṗṗ"], internal: "ṗṗ", output: "ጵ፟"},
+    {input: ["ṗṗo"], internal: "ṗṗo", output: "ጶ፟"},
+
+    // ጸ (ṣa) series
+    {input: ["ṣṣä"], internal: "ṣṣä", output: "ጸ፟"},
+    {input: ["ṣṣu"], internal: "ṣṣu", output: "ጹ፟"},
+    {input: ["ṣṣi"], internal: "ṣṣi", output: "ጺ፟"},
+    {input: ["ṣṣa"], internal: "ṣṣa", output: "ጻ፟"},
+    {input: ["ṣṣe"], internal: "ṣṣe", output: "ጼ፟"},
+    {input: ["ṣṣ", "ṣṣə"], internal: "ṣṣ", output: "ጽ፟"},
+    {input: ["ṣṣo"], internal: "ṣṣo", output: "ጾ፟"},
+
+    // ፀ (ḍa) series
+    {input: ["ḍḍä"], internal: "ḍḍä", output: "ፀ፟"},
+    {input: ["ḍḍu"], internal: "ḍḍu", output: "ፁ፟"},
+    {input: ["ḍḍi"], internal: "ḍḍi", output: "ፂ፟"},
+    {input: ["ḍḍa"], internal: "ḍḍa", output: "ፃ፟"},
+    {input: ["ḍḍe"], internal: "ḍḍe", output: "ፄ፟"},
+    {input: ["ḍḍ"], internal: "ḍḍ", output: "ፅ፟"},
+    {input: ["ḍḍo"], internal: "ḍḍo", output: "ፆ፟"},
+
+    // ፈ (fa) series
+    {input: ["ffä"], internal: "ffä", output: "ፈ፟"},
+    {input: ["ffu"], internal: "ffu", output: "ፉ፟"},
+    {input: ["ffi"], internal: "ffi", output: "ፊ፟"},
+    {input: ["ffa"], internal: "ffa", output: "ፋ፟"},
+    {input: ["ffe"], internal: "ffe", output: "ፌ፟"},
+    {input: ["ff", "ffə"], internal: "ff", output: "ፍ፟"},
+    {input: ["ffo"], internal: "ffo", output: "ፎ፟"},
+
+    // ፐ (pa) series
+    {input: ["ppä"], internal: "ppä", output: "ፐ፟"},
+    {input: ["ppu"], internal: "ppu", output: "ፑ፟"},
+    {input: ["ppi"], internal: "ppi", output: "ፒ፟"},
+    {input: ["ppa"], internal: "ppa", output: "ፓ፟"},
+    {input: ["ppe"], internal: "ppe", output: "ፔ፟"},
+    {input: ["pp", "ppə"], internal: "pp", output: "ፕ፟"},
+    {input: ["ppo"], internal: "ppo", output: "ፖ፟"}
+];
+
 const tokens = [
     // ሀ (ha) series
     {input: ["hä"], internal: "hä", output: "ሀ"},
@@ -279,7 +543,8 @@ const tokens = [
     {input: ["po"], internal: "po", output: "ፖ"}
 ];
 
-// Build lookup maps
+
+// Build lookup maps for regular tokens only
 const geezInputToInternalToken: { [key: string]: string } = {};
 const internalToOutput: { [key: string]: string } = {};
 
@@ -289,6 +554,24 @@ for (const token of tokens) {
     }
     internalToOutput[token.internal] = token.output;
 }
+
+
+// Build lookup maps for tokens including geminates
+const geezInputToInternalTokenWithGeminates: { [key: string]: string } = {};
+const internalToOutputWithGeminates: { [key: string]: string } = {};
+
+const allTokens = [...geminateTokens, ...tokens];
+for (const token of allTokens) {
+    for (const inputForm of token.input) {
+        geezInputToInternalTokenWithGeminates[inputForm] = token.internal;
+    }
+    internalToOutputWithGeminates[token.internal] = token.output;
+}
+
+// Build tries
+const geezTrie = constructTrie([...Object.keys(geezInputToInternalToken)]);
+const geezTrieWithGeminates = constructTrie([...Object.keys(geezInputToInternalTokenWithGeminates)]);
+
 
 // Trie implementation
 function trieInsert(str: string, stringCursor: number, treeCursor: TrieNode): void {
@@ -312,7 +595,6 @@ function constructTrie(strs: string[]): TrieNode {
     return root;
 }
 
-const geezTrie = constructTrie([...Object.keys(geezInputToInternalToken)]);
 
 function getNextToken(str: string, trie: TrieNode, startingIndex: number): string | null {
     let longestToken: string | null = null;
@@ -333,16 +615,20 @@ function getNextToken(str: string, trie: TrieNode, startingIndex: number): strin
     return longestToken;
 }
 
-function maximumMunchTokenizeGeez(str: string, trie: TrieNode): ParsedToken[] {
+function maximumMunchTokenizeGeez(str: string, markGeminates: boolean): ParsedToken[] {
+    // Select the appropriate trie and lookup map based on markGeminates
+    const selectedTrie = markGeminates ? geezTrieWithGeminates : geezTrie;
+    const selectedInputToInternal = markGeminates ? geezInputToInternalTokenWithGeminates : geezInputToInternalToken;
+    
     let strCursor = 0;
     const out: ParsedToken[] = [];
     while (strCursor < str.length) {
-        const tokenStr = getNextToken(str, trie, strCursor);
+        const tokenStr = getNextToken(str, selectedTrie, strCursor);
         if (tokenStr === null) {
             out.push({ kind: "unparseable", value: str[strCursor] });
             strCursor += 1;
         } else {
-            const token = geezInputToInternalToken[tokenStr];
+            const token = selectedInputToInternal[tokenStr];
             if (token === undefined) {
                 throw new Error(`Logic error: ${tokenStr} is in trie but is not a valid geez token`);
             }
@@ -353,7 +639,7 @@ function maximumMunchTokenizeGeez(str: string, trie: TrieNode): ParsedToken[] {
     return out;
 }
 
-function renderGeez(token: ParsedToken): string {
+function renderGeez(token: ParsedToken, markGeminates: boolean): string {
     if (token.kind === "unparseable") {
         return token.value || "";
     }
@@ -361,7 +647,10 @@ function renderGeez(token: ParsedToken): string {
     const internal = token.token;
     if (!internal) return "";
     
-    return internalToOutput[internal] || "";
+    // Select the appropriate output map based on markGeminates
+    const selectedInternalToOutput = markGeminates ? internalToOutputWithGeminates : internalToOutput;
+    
+    return selectedInternalToOutput[internal] || "";
 }
 
 type S2SDict = {
@@ -401,11 +690,12 @@ function preprocessLatin(str: string): string {
     return str
 }
 
-export function transliterateGeez(str: string): string {
+export function transliterateGeez(str: string, markGeminates: boolean): string {
     str = preprocessLatin(str);
-    const tokens = maximumMunchTokenizeGeez(str, geezTrie);
-    return tokens.map(renderGeez).join("");
+    const tokens = maximumMunchTokenizeGeez(str, markGeminates);
+    return tokens.map(token => renderGeez(token, markGeminates)).join("");
 }
+
 
 export let geezSpecialChars: string[] = ["ä", "ā", "ə", "ṭ", "ḍ", "ṣ", "š", "ḥ", "ʾ", "ʿ", "ṗ"]
 
