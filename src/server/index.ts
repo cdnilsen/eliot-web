@@ -2981,3 +2981,265 @@ process.on('SIGTERM', () => {
     stopRetrievabilityUpdateSystem();
     process.exit(0);
 });
+
+// Add this enhanced bulk update endpoint to your index.ts file
+// Replace your existing /card/:cardId/fields/bulk endpoint with this improved version
+
+app.put('/card/:cardId/fields/bulk', express.json(), wrapAsync(async (req, res) => {
+    const { cardId } = req.params;
+    const { field_updates } = req.body; // {field_index: new_value}
+    
+    const cardIdNum = parseInt(cardId);
+
+    if (isNaN(cardIdNum)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid card ID'
+        });
+    }
+
+    if (!field_updates || typeof field_updates !== 'object') {
+        return res.status(400).json({
+            status: 'error',
+            error: 'No field updates provided'
+        });
+    }
+
+    console.log(`🔄 Bulk updating card ${cardIdNum}:`, field_updates);
+
+    const transactionClient = await client.connect();
+
+    try {
+        await transactionClient.query('BEGIN');
+
+        // Get current card data
+        const cardQuery = await transactionClient.query(
+            `SELECT field_values, note_id, deck, card_format
+             FROM cards 
+             WHERE card_id = $1`,
+            [cardIdNum]
+        );
+
+        if (cardQuery.rows.length === 0) {
+            await transactionClient.query('ROLLBACK');
+            return res.status(404).json({
+                status: 'error',
+                error: `Card ${cardIdNum} not found`
+            });
+        }
+
+        const card = cardQuery.rows[0];
+        const fieldValues = [...(card.field_values || [])];
+        const noteId = card.note_id;
+
+        // Apply updates and track changes
+        const updatedFields: Array<{
+            field_index: number;
+            old_value: string;
+            new_value: string;
+        }> = [];
+
+        let hasValidUpdates = false;
+
+        for (const [fieldIndexStr, newValue] of Object.entries(field_updates)) {
+            const fieldIndex = parseInt(fieldIndexStr);
+
+            // Validate field index
+            if (isNaN(fieldIndex) || fieldIndex < 0 || fieldIndex >= fieldValues.length) {
+                console.warn(`Invalid field index ${fieldIndex} for card ${cardIdNum}`);
+                continue;
+            }
+
+            const oldValue = fieldValues[fieldIndex];
+            
+            // Only update if value actually changed
+            if (oldValue !== newValue) {
+                fieldValues[fieldIndex] = newValue as string;
+                updatedFields.push({
+                    field_index: fieldIndex,
+                    old_value: oldValue,
+                    new_value: newValue as string
+                });
+                hasValidUpdates = true;
+            }
+        }
+
+        if (!hasValidUpdates) {
+            await transactionClient.query('ROLLBACK');
+            return res.json({
+                status: 'success',
+                message: 'No changes to apply',
+                card_id: cardIdNum,
+                updated_fields: [],
+                updated_count: 0
+            });
+        }
+
+        // Update the card in database
+        await transactionClient.query(
+            `UPDATE cards 
+             SET field_values = $1,
+                 last_modified = CURRENT_TIMESTAMP
+             WHERE card_id = $2`,
+            [fieldValues, cardIdNum]
+        );
+
+        // Also update the note if it exists
+        try {
+            await transactionClient.query(
+                `UPDATE notes 
+                 SET field_values = $1,
+                     last_modified = CURRENT_TIMESTAMP
+                 WHERE note_id = $2`,
+                [fieldValues, noteId]
+            );
+            console.log(`✅ Updated note ${noteId} for card ${cardIdNum}`);
+        } catch (noteUpdateError) {
+            console.log(`Note ${noteId} might not exist or failed to update, continuing...`);
+        }
+
+        await transactionClient.query('COMMIT');
+
+        console.log(`✅ Bulk updated card ${cardIdNum}: ${updatedFields.length} fields changed`);
+        updatedFields.forEach(field => {
+            console.log(`  Field ${field.field_index}: '${field.old_value}' → '${field.new_value}'`);
+        });
+
+        res.json({
+            status: 'success',
+            card_id: cardIdNum,
+            updated_fields: updatedFields,
+            updated_count: updatedFields.length,
+            deck: card.deck,
+            card_format: card.card_format,
+            message: `Successfully updated ${updatedFields.length} field(s)`
+        });
+
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('Error bulk updating card fields:', error);
+        res.status(500).json({
+            status: 'error',
+            error: `Database error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            card_id: cardIdNum
+        });
+    } finally {
+        transactionClient.release();
+    }
+}));
+
+// OPTIONAL: Add a card validation endpoint for the edit modal
+app.get('/card/:cardId/validate', wrapAsync(async (req, res) => {
+    const { cardId } = req.params;
+    const cardIdNum = parseInt(cardId);
+
+    if (isNaN(cardIdNum)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid card ID'
+        });
+    }
+
+    try {
+        // Check if card exists and get basic info
+        const query = await client.query(
+            `SELECT 
+                card_id,
+                deck,
+                card_format,
+                array_length(field_values, 1) as field_count,
+                under_review,
+                created,
+                last_modified
+             FROM cards 
+             WHERE card_id = $1`,
+            [cardIdNum]
+        );
+
+        if (query.rows.length === 0) {
+            return res.status(404).json({
+                status: 'error',
+                error: `Card ${cardIdNum} not found`
+            });
+        }
+
+        const card = query.rows[0];
+
+        res.json({
+            status: 'success',
+            card_info: {
+                card_id: card.card_id,
+                deck: card.deck,
+                card_format: card.card_format,
+                field_count: card.field_count || 0,
+                under_review: card.under_review,
+                created: card.created,
+                last_modified: card.last_modified,
+                editable: !card.under_review // Cards under review might need special handling
+            }
+        });
+
+    } catch (error) {
+        console.error('Error validating card:', error);
+        res.status(500).json({
+            status: 'error',
+            error: `Database error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        });
+    }
+}));
+
+// OPTIONAL: Add an endpoint to get edit history for a card
+app.get('/card/:cardId/edit_history', wrapAsync(async (req, res) => {
+    const { cardId } = req.params;
+    const { limit = 10 } = req.query;
+    const cardIdNum = parseInt(cardId);
+
+    if (isNaN(cardIdNum)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid card ID'
+        });
+    }
+
+    try {
+        // This would require an edit_history table if you wanted to track changes
+        // For now, just return basic modification info
+        const query = await client.query(
+            `SELECT 
+                card_id,
+                created,
+                last_modified,
+                last_reviewed
+             FROM cards 
+             WHERE card_id = $1`,
+            [cardIdNum]
+        );
+
+        if (query.rows.length === 0) {
+            return res.status(404).json({
+                status: 'error',
+                error: `Card ${cardIdNum} not found`
+            });
+        }
+
+        const card = query.rows[0];
+
+        res.json({
+            status: 'success',
+            card_id: cardIdNum,
+            history: {
+                created: card.created,
+                last_modified: card.last_modified,
+                last_reviewed: card.last_reviewed,
+                note: "Full edit history would require additional tracking table"
+            }
+        });
+
+    } catch (error) {
+        console.error('Error getting card edit history:', error);
+        res.status(500).json({
+            status: 'error',
+            error: `Database error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        });
+    }
+}));

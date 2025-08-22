@@ -2471,27 +2471,56 @@ function generateCardBackLine(card: CardDue): string {
 }
 
 // Setup action buttons for each card
+
+// 2. Fixed setupCardActionButtons function with proper type assertions
 function setupCardActionButtons(): void {
-    const editButtons = document.querySelectorAll('.edit-card-btn');
-    const deleteButtons = document.querySelectorAll('.delete-card-btn');
+    const resultsDiv = document.getElementById('browse_results');
+    if (!resultsDiv) {
+        console.error('Browse results div not found');
+        return;
+    }
 
-    editButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const cardId = (e.target as HTMLElement).getAttribute('data-card-id');
+    // Use event delegation with proper typing
+    resultsDiv.addEventListener('click', async (event: MouseEvent) => {
+        const target = event.target as HTMLElement;
+        
+        // Handle edit button clicks
+        if (target.classList.contains('edit-card-btn') || target.closest('.edit-card-btn')) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const button = target.classList.contains('edit-card-btn') ? target : target.closest('.edit-card-btn') as HTMLElement;
+            const cardId = button?.getAttribute('data-card-id');
+            
             if (cardId) {
-                editCard(parseInt(cardId));
+                console.log(`Edit button clicked for card ${cardId}`);
+                await editCard(parseInt(cardId));
+            } else {
+                console.error('No card ID found for edit button');
             }
-        });
+        }
+        
+        // Handle delete button clicks
+        else if (target.classList.contains('delete-card-btn') || target.closest('.delete-card-btn')) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const button = target.classList.contains('delete-card-btn') ? target : target.closest('.delete-card-btn') as HTMLElement;
+            const cardId = button?.getAttribute('data-card-id');
+            
+            if (cardId) {
+                console.log(`Delete button clicked for card ${cardId}`);
+                await deleteCard(parseInt(cardId));
+            } else {
+                console.error('No card ID found for delete button');
+            }
+        }
     });
 
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const cardId = (e.target as HTMLElement).getAttribute('data-card-id');
-            if (cardId) {
-                deleteCard(parseInt(cardId));
-            }
-        });
-    });
+    // Log button count for debugging
+    const editButtons = resultsDiv.querySelectorAll('.edit-card-btn');
+    const deleteButtons = resultsDiv.querySelectorAll('.delete-card-btn');
+    console.log(`Set up action handlers for ${editButtons.length} edit buttons and ${deleteButtons.length} delete buttons`);
 }
 
 // Update pagination controls
@@ -2626,30 +2655,611 @@ async function deleteCardById(cardId: number): Promise<boolean> {
         return false;
     }
 }
-// Enhanced edit card function with inline editing modal
+
+
 async function editCard(cardId: number): Promise<void> {
-    console.log(`Opening editor for card ${cardId}`);
-    
-    // Show loading modal
-    showEditModal('Loading card data...', []);
-    
+    console.log(`✏️ Opening enhanced editor for card ${cardId}`);
+
     try {
-        // Get detailed card field data
-        const result = await getCardFields(cardId);
-        
-        if (result.status === 'error' || !result.card) {
-            showEditModal(`Error loading card ${cardId}: ${result.error}`, []);
-            return;
+        // Show loading state first
+        showLoadingModal(`Loading card ${cardId}...`);
+
+        // Get card field details
+        const response = await fetch(`/card/${cardId}/fields`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        const card = result.card;
-        showEditModal('', card.field_values, card.field_names, card.field_processing, cardId);
-        
+
+        const result = await response.json();
+
+        if (result.status === 'success' && result.card) {
+            // Get full card details for deck and format info
+            const fullCardResponse = await fetch(`/card/${cardId}`);
+            const fullCardResult = await fullCardResponse.json();
+            
+            const cardData = {
+                ...result.card,
+                deck: fullCardResult.card?.deck || 'Unknown',
+                card_format: fullCardResult.card?.card_format || 'Unknown'
+            };
+            
+            // Close loading modal and show edit modal
+            closeEditModal();
+            showCardEditModal(cardId, cardData);
+        } else {
+            throw new Error(result.error || 'Failed to load card data');
+        }
+
     } catch (error) {
-        console.error('Error in editCard:', error);
-        showEditModal(`Network error loading card ${cardId}`, []);
+        console.error('Error loading card for editing:', error);
+        closeEditModal();
+        showToast(`Failed to load card ${cardId}: ${error.message}`, 'error');
     }
 }
+// Add this loading modal function to your synapdeck.ts file
+
+function showLoadingModal(message: string): void {
+    // Remove any existing modal first
+    const existingModal = document.getElementById('cardEditModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'cardEditModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    `;
+    content.innerHTML = `
+        <div style="font-size: 18px; color: #333; margin-bottom: 20px;">${message}</div>
+        <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+}
+
+// Add this toast notification function to your synapdeck.ts file
+
+function showToast(message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info'): void {
+    // Remove existing toast
+    const existingToast = document.getElementById('edit-toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.id = 'edit-toast';
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+        z-index: 10001;
+        animation: slideInRight 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        max-width: 400px;
+        word-wrap: break-word;
+    `;
+
+    // Set color based on type
+    const colors = {
+        success: '#28a745',
+        error: '#dc3545',
+        info: '#17a2b8',
+        warning: '#ffc107'
+    };
+    toast.style.background = colors[type] || colors.info;
+
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease-in';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 4000);
+
+    // Add animations if they don't exist
+    if (!document.getElementById('toast-animations')) {
+        const style = document.createElement('style');
+        style.id = 'toast-animations';
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Add this individual field save function to your synapdeck.ts file
+
+async function saveIndividualField(cardId: number, fieldIndex: number, textarea: HTMLTextAreaElement, saveBtn: HTMLButtonElement): Promise<void> {
+    const newValue = textarea.value;
+    const originalValue = textarea.dataset.originalValue || '';
+
+    if (newValue === originalValue) {
+        showToast('No changes to save', 'info');
+        return;
+    }
+
+    // Show loading state
+    saveBtn.disabled = true;
+    saveBtn.textContent = '⏳ Saving...';
+    saveBtn.style.background = '#ffc107';
+
+    try {
+        const response = await fetch(`/card/${cardId}/field/${fieldIndex}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                new_value: newValue
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            // Update the original value
+            textarea.dataset.originalValue = newValue;
+            
+            // Reset button state
+            saveBtn.disabled = true;
+            saveBtn.textContent = '✅ Saved!';
+            saveBtn.style.background = '#28a745';
+            saveBtn.style.opacity = '0.8';
+
+            // Reset after 2 seconds
+            setTimeout(() => {
+                saveBtn.textContent = '💾 Save Field';
+                saveBtn.style.opacity = '0.6';
+                saveBtn.style.background = '#6c757d';
+            }, 2000);
+
+            showToast(`Field ${fieldIndex + 1} saved successfully!`, 'success');
+            
+        } else {
+            throw new Error(result.error || 'Save failed');
+        }
+
+    } catch (error) {
+        console.error('Error saving field:', error);
+        
+        // Reset button state
+        saveBtn.disabled = false;
+        saveBtn.textContent = '❌ Failed';
+        saveBtn.style.background = '#dc3545';
+
+        setTimeout(() => {
+            saveBtn.textContent = '💾 Save Field';
+            saveBtn.style.background = '#28a745';
+        }, 3000);
+
+        showToast(`Failed to save field: ${error.message}`, 'error');
+    }
+}
+
+// Add this main edit modal function to your synapdeck.ts file
+
+// 1. Fixed showCardEditModal function with proper type assertions
+function showCardEditModal(cardId: number, cardData: any): void {
+    // Remove any existing modal
+    const existingModal = document.getElementById('cardEditModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Create modal backdrop
+    const modal = document.createElement('div');
+    modal.id = 'cardEditModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.2s ease-out;
+    `;
+
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 700px;
+        max-height: 80vh;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease-out;
+    `;
+
+    // Modal header
+    const header = document.createElement('div');
+    header.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid #e1e5e9;
+        background: #f8f9fa;
+    `;
+    
+    const title = document.createElement('h2');
+    title.textContent = `Edit Card ${cardId}`;
+    title.style.cssText = `
+        margin: 0;
+        color: #333;
+        font-size: 20px;
+        font-weight: 600;
+    `;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '×';
+    closeBtn.style.cssText = `
+        background: none;
+        border: none;
+        font-size: 28px;
+        cursor: pointer;
+        color: #666;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s;
+    `;
+    
+    // Fixed hover handlers with proper this typing
+    closeBtn.addEventListener('mouseover', function(this: HTMLButtonElement) {
+        this.style.background = '#e9ecef';
+    });
+    closeBtn.addEventListener('mouseout', function(this: HTMLButtonElement) {
+        this.style.background = 'none';
+    });
+    closeBtn.addEventListener('click', closeEditModal);
+
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+
+    // Modal body
+    const body = document.createElement('div');
+    body.style.cssText = `
+        padding: 24px;
+        max-height: 50vh;
+        overflow-y: auto;
+    `;
+
+    // Create field editors
+    const fieldsContainer = document.createElement('div');
+    fieldsContainer.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    `;
+
+    // Add info section
+    const infoSection = document.createElement('div');
+    infoSection.style.cssText = `
+        background: #f0f8ff;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #b8daff;
+        margin-bottom: 20px;
+    `;
+    infoSection.innerHTML = `
+        <div style="font-weight: 600; color: #0c5460; margin-bottom: 8px;">Card Information</div>
+        <div style="font-size: 14px; color: #495057;">
+            <strong>Deck:</strong> ${cardData.deck || 'Unknown'}<br>
+            <strong>Format:</strong> ${cardData.card_format || 'Unknown'}<br>
+            <strong>Card ID:</strong> ${cardId}
+        </div>
+    `;
+    fieldsContainer.appendChild(infoSection);
+
+    // Create editable fields
+    cardData.field_values.forEach((value: string, index: number) => {
+        const fieldContainer = document.createElement('div');
+        fieldContainer.style.cssText = `
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 16px;
+            background: white;
+            transition: border-color 0.2s;
+        `;
+        
+        // Fixed hover handlers
+        fieldContainer.addEventListener('mouseover', function(this: HTMLDivElement) {
+            this.style.borderColor = '#80bdff';
+        });
+        fieldContainer.addEventListener('mouseout', function(this: HTMLDivElement) {
+            this.style.borderColor = '#dee2e6';
+        });
+
+        // Field label
+        const label = document.createElement('div');
+        label.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        `;
+        
+        const fieldName = document.createElement('span');
+        fieldName.textContent = cardData.field_names?.[index] || `Field ${index + 1}`;
+        fieldName.style.cssText = `
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        `;
+        
+        const processing = document.createElement('span');
+        processing.textContent = `(${cardData.field_processing?.[index] || 'None'})`;
+        processing.style.cssText = `
+            font-size: 12px;
+            color: #6c757d;
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 12px;
+        `;
+
+        label.appendChild(fieldName);
+        label.appendChild(processing);
+
+        // Text area
+        const textarea = document.createElement('textarea') as HTMLTextAreaElement;
+        textarea.value = value || '';
+        textarea.style.cssText = `
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-family: 'Gentium Plus', Georgia, serif;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        `;
+        
+        // Fixed focus/blur handlers
+        textarea.addEventListener('focus', function(this: HTMLTextAreaElement) {
+            this.style.borderColor = '#80bdff';
+            this.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.25)';
+        });
+        textarea.addEventListener('blur', function(this: HTMLTextAreaElement) {
+            this.style.borderColor = '#ced4da';
+            this.style.boxShadow = 'none';
+        });
+
+        // Store original value and field index for change detection
+        textarea.dataset.originalValue = value || '';
+        textarea.dataset.fieldIndex = index.toString();
+
+        // Individual save button
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = '💾 Save Field';
+        saveBtn.className = 'save-field-btn';
+        saveBtn.style.cssText = `
+            margin-top: 8px;
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            opacity: 0.6;
+        `;
+        saveBtn.disabled = true;
+
+        // Auto-resize and change detection - Fixed with proper types
+        textarea.addEventListener('input', function(this: HTMLTextAreaElement) {
+            // Auto-resize
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+            
+            // Change detection
+            const hasChanged = this.value !== (this.dataset.originalValue || '');
+            saveBtn.disabled = !hasChanged;
+            saveBtn.style.opacity = hasChanged ? '1' : '0.6';
+            saveBtn.style.background = hasChanged ? '#28a745' : '#6c757d';
+        });
+
+        saveBtn.addEventListener('click', () => saveIndividualField(cardId, index, textarea, saveBtn));
+
+        fieldContainer.appendChild(label);
+        fieldContainer.appendChild(textarea);
+        fieldContainer.appendChild(saveBtn);
+        fieldsContainer.appendChild(fieldContainer);
+
+        // Initial resize
+        setTimeout(() => {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }, 100);
+    });
+
+    body.appendChild(fieldsContainer);
+
+    // Modal footer
+    const footer = document.createElement('div');
+    footer.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-top: 1px solid #e1e5e9;
+        background: #f8f9fa;
+        gap: 12px;
+    `;
+
+    const saveAllBtn = document.createElement('button');
+    saveAllBtn.textContent = '💾 Save All Changes';
+    saveAllBtn.style.cssText = `
+        padding: 12px 24px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.2s;
+        flex: 1;
+    `;
+    
+    // Fixed hover handlers for save button
+    saveAllBtn.addEventListener('mouseover', function(this: HTMLButtonElement) {
+        this.style.background = '#0056b3';
+    });
+    saveAllBtn.addEventListener('mouseout', function(this: HTMLButtonElement) {
+        this.style.background = '#007bff';
+    });
+    saveAllBtn.addEventListener('click', () => saveAllFields(cardId));
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.cssText = `
+        padding: 12px 24px;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        transition: all 0.2s;
+    `;
+    
+    // Fixed hover handlers for cancel button
+    cancelBtn.addEventListener('mouseover', function(this: HTMLButtonElement) {
+        this.style.background = '#545b62';
+    });
+    cancelBtn.addEventListener('mouseout', function(this: HTMLButtonElement) {
+        this.style.background = '#6c757d';
+    });
+    cancelBtn.addEventListener('click', closeEditModal);
+
+    footer.appendChild(cancelBtn);
+    footer.appendChild(saveAllBtn);
+
+    // Assemble modal
+    modalContent.appendChild(header);
+    modalContent.appendChild(body);
+    modalContent.appendChild(footer);
+    modal.appendChild(modalContent);
+
+    // Add to page
+    document.body.appendChild(modal);
+
+    // Close on backdrop click - Fixed with proper type checking
+    modal.addEventListener('click', (e: MouseEvent) => {
+        if (e.target === modal) closeEditModal();
+    });
+
+    // Add animations if they don't exist
+    addModalAnimations();
+
+    console.log(`✅ Edit modal opened for card ${cardId}`);
+}
+
+// Add this close modal function to your synapdeck.ts file
+
+function closeEditModal(): void {
+    const modal = document.getElementById('cardEditModal');
+    if (modal) {
+        modal.style.animation = 'fadeOut 0.2s ease-in';
+        setTimeout(() => {
+            if (modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }, 200);
+    }
+}
+
+// Also add the fadeOut animation to your existing animations
+function addModalAnimations(): void {
+    if (!document.getElementById('modal-animations')) {
+        const style = document.createElement('style');
+        style.id = 'modal-animations';
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideIn {
+                from { transform: translateY(-20px) scale(0.95); opacity: 0; }
+                to { transform: translateY(0) scale(1); opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+
+
+// Call this once when your page loads
+addModalAnimations();
 
 
 // API function to get detailed card field data
@@ -2959,60 +3569,102 @@ function resetField(fieldIndex: number): void {
 }
 
 // Save all changed fields
-async function saveAllFields(cardId: number): Promise<void> {
-    const changedRows = document.querySelectorAll('.field-row.field-changed');
-    
-    if (changedRows.length === 0) {
-        alert('No changes to save');
-        return;
-    }
-    
-    if (!confirm(`Save changes to ${changedRows.length} field(s)?`)) {
-        return;
-    }
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    // Save each changed field
-    for (const row of changedRows) {
-        const fieldIndex = parseInt(row.getAttribute('data-field-index') || '0');
-        const textarea = row.querySelector('textarea') as HTMLTextAreaElement;
-        
-        if (textarea) {
-            try {
-                const result = await updateCardField(cardId, fieldIndex, textarea.value);
-                if (result.status === 'success') {
-                    successCount++;
-                    textarea.setAttribute('data-original-value', textarea.value);
-                    row.classList.remove('field-changed');
-                } else {
-                    errorCount++;
-                }
-            } catch (error) {
-                errorCount++;
-            }
-        }
-    }
-    
-    // Show result
-    if (errorCount === 0) {
-        alert(`✅ Successfully saved ${successCount} field(s)!`);
-        // Refresh the card browser to show updated values
-        if (typeof performCardSearch === 'function') {
-            performCardSearch(currentBrowsePage);
-        }
-        closeEditModal();
-    } else {
-        alert(`Saved ${successCount} field(s), but ${errorCount} failed. Check individual field status messages.`);
-    }
-}
+// Add this save all fields function to your synapdeck.ts file
 
-// Close the edit modal
-function closeEditModal(): void {
-    const modal = document.getElementById('cardEditModal');
-    if (modal) {
-        modal.remove();
+async function saveAllFields(cardId: number): Promise<void> {
+    const textareas = document.querySelectorAll('#cardEditModal textarea') as NodeListOf<HTMLTextAreaElement>;
+    const changedFields: { [key: string]: string } = {};
+
+    // Find changed fields
+    textareas.forEach((textarea, index) => {
+        const currentValue = textarea.value;
+        const originalValue = textarea.dataset.originalValue || '';
+        const fieldIndex = textarea.dataset.fieldIndex;
+        
+        if (currentValue !== originalValue && fieldIndex) {
+            changedFields[fieldIndex] = currentValue;
+        }
+    });
+
+    const changeCount = Object.keys(changedFields).length;
+    
+    if (changeCount === 0) {
+        showToast('No changes to save', 'info');
+        return;
+    }
+
+    if (!confirm(`Save changes to ${changeCount} field(s)?`)) {
+        return;
+    }
+
+    // Show loading state
+    const saveAllBtn = document.querySelector('#cardEditModal footer button:last-child') as HTMLButtonElement;
+    if (!saveAllBtn) return;
+    
+    const originalText = saveAllBtn.textContent || '';
+    saveAllBtn.textContent = '⏳ Saving all changes...';
+    saveAllBtn.disabled = true;
+
+    try {
+        console.log(`🔄 Bulk updating card ${cardId} with changes:`, changedFields);
+        
+        // Use your bulk update endpoint
+        const response = await fetch(`/card/${cardId}/fields/bulk`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                field_updates: changedFields
+            })
+        });
+
+        const result = await response.json();
+        
+        console.log('📊 Bulk update response:', result);
+
+        if (result.status === 'success') {
+            // Update all the original values for changed textareas
+            if (result.updated_fields) {
+                result.updated_fields.forEach((field: any) => {
+                    const textarea = document.querySelector(`#cardEditModal textarea[data-field-index="${field.field_index}"]`) as HTMLTextAreaElement;
+                    if (textarea) {
+                        textarea.dataset.originalValue = field.new_value;
+                        
+                        // Reset the individual save button for this field
+                        const saveBtn = textarea.parentElement?.querySelector('.save-field-btn') as HTMLButtonElement;
+                        if (saveBtn) {
+                            saveBtn.disabled = true;
+                            saveBtn.style.opacity = '0.6';
+                            saveBtn.style.background = '#6c757d';
+                        }
+                    }
+                });
+            }
+
+            showToast(`✅ Successfully saved ${result.updated_count} field(s)!`, 'success');
+            
+            // Close modal and refresh if needed
+            setTimeout(() => {
+                closeEditModal();
+                
+                // Refresh the card browser if the function exists
+                if (typeof performCardSearch === 'function') {
+                    performCardSearch(currentBrowsePage || 0);
+                }
+            }, 1500);
+            
+        } else {
+            throw new Error(result.error || 'Bulk update failed');
+        }
+
+    } catch (error) {
+        console.error('Error bulk saving fields:', error);
+        showToast(`Failed to save fields: ${error.message}`, 'error');
+    } finally {
+        // Reset button
+        saveAllBtn.textContent = originalText;
+        saveAllBtn.disabled = false;
     }
 }
 
@@ -3035,16 +3687,49 @@ window.closeEditModal = closeEditModal;
 window.saveAllFields = saveAllFields;
 
 async function deleteCard(cardId: number): Promise<void> {
-    if (confirm(`Are you sure you want to delete card ${cardId}? This action cannot be undone.`)) {
+    // Enhanced confirmation dialog
+    const confirmed = confirm(
+        `⚠️ DELETE CARD ${cardId}\n\n` +
+        `Are you absolutely sure you want to delete this card?\n\n` +
+        `This action cannot be undone!`
+    );
+    
+    if (!confirmed) {
+        return;
+    }
+
+    try {
         const success = await deleteCardById(cardId);
         
         if (success) {
-            alert(`Card ${cardId} deleted successfully!`);
-            // Refresh the current view
-            performCardSearch(currentBrowsePage);
+            // Remove the row from the table immediately for better UX - Fixed type assertion
+            const cardRow = document.querySelector(`tr[data-card-id="${cardId}"]`) as HTMLTableRowElement;
+            if (cardRow) {
+                cardRow.style.transition = 'opacity 0.3s ease';
+                cardRow.style.opacity = '0';
+                setTimeout(() => {
+                    cardRow.remove();
+                    updateCardCount();
+                }, 300);
+            }
+            
+            showToast(`Card ${cardId} deleted successfully!`, 'success');
         } else {
-            alert(`Failed to delete card ${cardId}. Please try again.`);
+            showToast(`Failed to delete card ${cardId}. Please try again.`, 'error');
         }
+    } catch (error) {
+        console.error('Error in deleteCard:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        showToast(`Error deleting card ${cardId}: ${errorMessage}`, 'error');
+    }
+}
+
+// 4. Fixed helper function
+function updateCardCount(): void {
+    const remainingRows = document.querySelectorAll('.card-row').length;
+    const infoDiv = document.getElementById('browse_results_info');
+    if (infoDiv) {
+        infoDiv.innerHTML = `<p class="results-info-text">Showing ${remainingRows} cards</p>`;
     }
 }
 
@@ -3319,67 +4004,3 @@ if (document.readyState === 'loading') {
     // DOM is already loaded
     addRetrievabilityManagementSection();
 }
-
-
-function debugBrowseButtons() {
-    console.log('=== BROWSE CARDS BUTTON DEBUG ===');
-    
-    // Check if browse results div exists
-    const resultsDiv = document.getElementById('browse_results');
-    console.log('1. Browse results div:', resultsDiv ? '✅ Found' : '❌ Not found');
-    
-    // Check if table exists
-    const table = document.querySelector('.card-table');
-    console.log('2. Card table:', table ? '✅ Found' : '❌ Not found');
-    
-    // Check for action cells
-    const actionCells = document.querySelectorAll('.actions-cell');
-    console.log('3. Action cells:', actionCells.length, actionCells.length > 0 ? '✅' : '❌');
-    
-    // Check for action buttons containers
-    const actionButtons = document.querySelectorAll('.action-buttons');
-    console.log('4. Action button containers:', actionButtons.length, actionButtons.length > 0 ? '✅' : '❌');
-    
-    // Check for edit buttons
-    const editButtons = document.querySelectorAll('.edit-card-btn');
-    console.log('5. Edit buttons:', editButtons.length, editButtons.length > 0 ? '✅' : '❌');
-    
-    // Check for delete buttons
-    const deleteButtons = document.querySelectorAll('.delete-card-btn');
-    console.log('6. Delete buttons:', deleteButtons.length, deleteButtons.length > 0 ? '✅' : '❌');
-    
-    // Check button attributes
-    if (editButtons.length > 0) {
-        console.log('7. First edit button data-card-id:', editButtons[0].getAttribute('data-card-id'));
-        console.log('8. First edit button visible:', window.getComputedStyle(editButtons[0]).display !== 'none' ? '✅' : '❌');
-    }
-    
-    if (deleteButtons.length > 0) {
-        console.log('9. First delete button data-card-id:', deleteButtons[0].getAttribute('data-card-id'));
-        console.log('10. First delete button visible:', window.getComputedStyle(deleteButtons[0]).display !== 'none' ? '✅' : '❌');
-    }
-    
-    // Check for table rows with data
-    const cardRows = document.querySelectorAll('.card-row');
-    console.log('11. Card rows:', cardRows.length, cardRows.length > 0 ? '✅' : '❌');
-    
-    // Log the full structure of the first row if it exists
-    if (cardRows.length > 0) {
-        console.log('12. First row HTML:', cardRows[0].outerHTML.substring(0, 500) + '...');
-    }
-    
-    console.log('=== END DEBUG ===');
-    
-    // Return summary
-    return {
-        resultsDiv: !!resultsDiv,
-        table: !!table,
-        actionCells: actionCells.length,
-        editButtons: editButtons.length,
-        deleteButtons: deleteButtons.length,
-        cardRows: cardRows.length
-    };
-}
-
-// Run the debug function
-debugBrowseButtons();
