@@ -2033,6 +2033,14 @@ function setupCheckYourWorkTab(): void {
             }
         });
     }
+    const resetDeckBtn = document.createElement('button');
+    resetDeckBtn.textContent = 'Reset This Deck';
+    resetDeckBtn.addEventListener('click', async () => {
+        const selectedDeck = checkDeckDropdown.value;
+        if (selectedDeck) {
+            await resetDeckCardsUnderReview(selectedDeck);
+        }
+    })
 }
 
 
@@ -2686,8 +2694,7 @@ async function editCard(cardId: number): Promise<void> {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        const result = await response.json();
+        const result = await getCardFields(cardId);
 
         if (result.status === 'success' && result.card) {
             // Get full card details for deck and format info
@@ -3323,259 +3330,6 @@ async function updateCardField(cardId: number, fieldIndex: number, newValue: str
             status: 'error', 
             error: 'Network error updating card field' 
         };
-    }
-}
-
-
-// Function to show the edit modal
-function showEditModal(
-    errorMessage: string, 
-    fieldValues: string[], 
-    fieldNames: string[] = [], 
-    fieldProcessing: string[] = [], 
-    cardId?: number
-): void {
-    // Remove existing modal if any
-    const existingModal = document.getElementById('cardEditModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Create modal backdrop
-    const modal = document.createElement('div');
-    modal.id = 'cardEditModal';
-    modal.className = 'card-edit-modal';
-    
-    let modalContent = '';
-    
-    if (errorMessage && !cardId) {
-        // Error state
-        modalContent = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Card Editor</h3>
-                    <button class="close-modal" onclick="closeEditModal()">×</button>
-                </div>
-                <div class="modal-body">
-                    <p class="error">${errorMessage}</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="closeEditModal()">Close</button>
-                </div>
-            </div>
-        `;
-    } else if (cardId && fieldValues.length > 0) {
-        // Edit state
-        modalContent = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Edit Card ${cardId}</h3>
-                    <button class="close-modal" onclick="closeEditModal()">×</button>
-                </div>
-                <div class="modal-body">
-                    <form id="cardEditForm">
-                        <div class="field-list">
-        `;
-        
-        fieldValues.forEach((value, index) => {
-            const fieldName = fieldNames[index] || `Field ${index + 1}`;
-            const processing = fieldProcessing[index] || 'None';
-            
-            modalContent += `
-                <div class="field-row" data-field-index="${index}">
-                    <div class="field-info">
-                        <label class="field-label">${fieldName}</label>
-                        <span class="field-processing">(${processing})</span>
-                    </div>
-                    <div class="field-input-container">
-                        <textarea 
-                            class="field-input" 
-                            data-field-index="${index}"
-                            data-original-value="${escapeHtml(value)}"
-                            rows="2"
-                        >${escapeHtml(value)}</textarea>
-                        <div class="field-actions">
-                            <button type="button" class="btn btn-small save-field" data-field-index="${index}">
-                                💾 Save
-                            </button>
-                            <button type="button" class="btn btn-small btn-secondary reset-field" data-field-index="${index}">
-                                ↺ Reset
-                            </button>
-                        </div>
-                    </div>
-                    <div class="field-status" data-field-index="${index}"></div>
-                </div>
-            `;
-        });
-        
-        modalContent += `
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn" onclick="saveAllFields(${cardId})">💾 Save All Changes</button>
-                    <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
-                </div>
-            </div>
-        `;
-    } else {
-        // Loading state
-        modalContent = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Card Editor</h3>
-                    <button class="close-modal" onclick="closeEditModal()">×</button>
-                </div>
-                <div class="modal-body">
-                    <p class="loading">${errorMessage || 'Loading...'}</p>
-                </div>
-            </div>
-        `;
-    }
-    
-    modal.innerHTML = modalContent;
-    document.body.appendChild(modal);
-    
-    // Add event listeners for individual field saves if in edit mode
-    if (cardId && fieldValues.length > 0) {
-        setupFieldEditListeners(cardId);
-    }
-    
-    // Close modal when clicking backdrop
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeEditModal();
-        }
-    });
-}
-
-// Setup event listeners for field editing
-function setupFieldEditListeners(cardId: number): void {
-    const saveButtons = document.querySelectorAll('.save-field');
-    const resetButtons = document.querySelectorAll('.reset-field');
-    const textareas = document.querySelectorAll('.field-input');
-    
-    // Save individual field
-    saveButtons.forEach(button => {
-        button.addEventListener('click', async (e) => {
-            const fieldIndex = parseInt((e.target as HTMLElement).getAttribute('data-field-index') || '0');
-            await saveField(cardId, fieldIndex);
-        });
-    });
-    
-    // Reset individual field
-    resetButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const fieldIndex = parseInt((e.target as HTMLElement).getAttribute('data-field-index') || '0');
-            resetField(fieldIndex);
-        });
-    });
-    
-    // Auto-resize textareas and mark as changed
-    textareas.forEach(textarea => {
-        const element = textarea as HTMLTextAreaElement;
-        
-        // Auto-resize
-        element.addEventListener('input', () => {
-            element.style.height = 'auto';
-            element.style.height = element.scrollHeight + 'px';
-            
-            // Mark as changed
-            const originalValue = element.getAttribute('data-original-value') || '';
-            const currentValue = element.value;
-            const fieldRow = element.closest('.field-row');
-            
-            if (fieldRow) {
-                if (currentValue !== originalValue) {
-                    fieldRow.classList.add('field-changed');
-                } else {
-                    fieldRow.classList.remove('field-changed');
-                }
-            }
-        });
-        
-        // Initial resize
-        element.style.height = 'auto';
-        element.style.height = element.scrollHeight + 'px';
-    });
-}
-
-
-
-// Save individual field
-async function saveField(cardId: number, fieldIndex: number): Promise<void> {
-    const textarea = document.querySelector(`textarea[data-field-index="${fieldIndex}"]`) as HTMLTextAreaElement;
-    const statusDiv = document.querySelector(`div[data-field-index="${fieldIndex}"].field-status`) as HTMLDivElement;
-    const saveButton = document.querySelector(`button[data-field-index="${fieldIndex}"].save-field`) as HTMLButtonElement;
-    
-    if (!textarea || !statusDiv || !saveButton) return;
-    
-    const newValue = textarea.value;
-    const originalValue = textarea.getAttribute('data-original-value') || '';
-    
-    if (newValue === originalValue) {
-        statusDiv.innerHTML = '<span class="status-info">No changes to save</span>';
-        return;
-    }
-    
-    // Show loading state
-    statusDiv.innerHTML = '<span class="status-loading">Saving...</span>';
-    saveButton.disabled = true;
-    saveButton.textContent = '⏳ Saving';
-    
-    try {
-        const result = await updateCardField(cardId, fieldIndex, newValue);
-        
-        if (result.status === 'success') {
-            statusDiv.innerHTML = '<span class="status-success">✅ Saved!</span>';
-            textarea.setAttribute('data-original-value', newValue);
-            const fieldRow = textarea.closest('.field-row');
-            if (fieldRow) {
-                fieldRow.classList.remove('field-changed');
-            }
-            
-            // Clear status after 3 seconds
-            setTimeout(() => {
-                statusDiv.innerHTML = '';
-            }, 3000);
-            
-        } else {
-            statusDiv.innerHTML = `<span class="status-error">❌ Error: ${result.error}</span>`;
-        }
-        
-    } catch (error) {
-        statusDiv.innerHTML = '<span class="status-error">❌ Network error</span>';
-    } finally {
-        saveButton.disabled = false;
-        saveButton.textContent = '💾 Save';
-    }
-}
-
-// Reset individual field to original value
-function resetField(fieldIndex: number): void {
-    const textarea = document.querySelector(`textarea[data-field-index="${fieldIndex}"]`) as HTMLTextAreaElement;
-    const statusDiv = document.querySelector(`div[data-field-index="${fieldIndex}"].field-status`) as HTMLDivElement;
-    
-    if (!textarea) return;
-    
-    const originalValue = textarea.getAttribute('data-original-value') || '';
-    textarea.value = originalValue;
-    
-    // Trigger resize
-    textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
-    
-    // Remove changed indicator
-    const fieldRow = textarea.closest('.field-row');
-    if (fieldRow) {
-        fieldRow.classList.remove('field-changed');
-    }
-    
-    if (statusDiv) {
-        statusDiv.innerHTML = '<span class="status-info">Reset to original value</span>';
-        setTimeout(() => {
-            statusDiv.innerHTML = '';
-        }, 2000);
     }
 }
 
