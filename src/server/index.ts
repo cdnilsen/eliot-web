@@ -2608,6 +2608,363 @@ export function stopRetrievabilityUpdateSystem(): void {
     console.log('✅ Retrievability update system stopped');
 }
 
+
+// Get detailed field data for a specific card (for editing)
+app.get('/card/:cardId/fields', wrapAsync(async (req, res) => {
+    const { cardId } = req.params;
+    const cardIdNum = parseInt(cardId);
+
+    if (isNaN(cardIdNum)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid card ID'
+        });
+    }
+
+    try {
+        const query = await client.query(
+            `SELECT 
+                card_id,
+                note_id,
+                field_names,
+                field_values,
+                field_processing
+             FROM cards 
+             WHERE card_id = $1`,
+            [cardIdNum]
+        );
+
+        if (query.rows.length === 0) {
+            return res.status(404).json({
+                status: 'error',
+                error: `Card ${cardIdNum} not found`
+            });
+        }
+
+        const card = query.rows[0];
+
+        res.json({
+            status: 'success',
+            card: {
+                card_id: card.card_id,
+                note_id: card.note_id,
+                field_names: card.field_names || [],
+                field_values: card.field_values || [],
+                field_processing: card.field_processing || []
+            }
+        });
+
+    } catch (err) {
+        console.error('Error getting card fields:', err);
+        res.status(500).json({
+            status: 'error',
+            error: `Database error: ${err instanceof Error ? err.message : 'Unknown error'}`
+        });
+    }
+}));
+
+// Update a specific field of a card
+app.put('/card/:cardId/field/:fieldIndex', express.json(), wrapAsync(async (req, res) => {
+    const { cardId, fieldIndex } = req.params;
+    const { new_value } = req.body;
+    
+    const cardIdNum = parseInt(cardId);
+    const fieldIndexNum = parseInt(fieldIndex);
+
+    if (isNaN(cardIdNum) || isNaN(fieldIndexNum)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid card ID or field index'
+        });
+    }
+
+    if (new_value === undefined) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'new_value is required'
+        });
+    }
+
+    const transactionClient = await client.connect();
+
+    try {
+        await transactionClient.query('BEGIN');
+
+        // Get the current card data
+        const cardQuery = await transactionClient.query(
+            `SELECT field_values, field_names, field_processing, note_id
+             FROM cards 
+             WHERE card_id = $1`,
+            [cardIdNum]
+        );
+
+        if (cardQuery.rows.length === 0) {
+            await transactionClient.query('ROLLBACK');
+            return res.status(404).json({
+                status: 'error',
+                error: `Card ${cardIdNum} not found`
+            });
+        }
+
+        const card = cardQuery.rows[0];
+        const fieldValues = [...(card.field_values || [])];
+        const fieldNames = card.field_names || [];
+        const fieldProcessing = card.field_processing || [];
+        const noteId = card.note_id;
+
+        // Validate field index
+        if (fieldIndexNum < 0 || fieldIndexNum >= fieldValues.length) {
+            await transactionClient.query('ROLLBACK');
+            return res.status(400).json({
+                status: 'error',
+                error: `Invalid field index ${fieldIndexNum}. Card has ${fieldValues.length} fields.`
+            });
+        }
+
+        // Store old value for response
+        const oldValue = fieldValues[fieldIndexNum];
+
+        // Update the field value
+        fieldValues[fieldIndexNum] = new_value;
+
+        // Update the card in database
+        await transactionClient.query(
+            `UPDATE cards 
+             SET field_values = $1,
+                 last_modified = CURRENT_TIMESTAMP
+             WHERE card_id = $2`,
+            [fieldValues, cardIdNum]
+        );
+
+        // Also update the note if it exists
+        try {
+            await transactionClient.query(
+                `UPDATE notes 
+                 SET field_values = $1,
+                     last_modified = CURRENT_TIMESTAMP
+                 WHERE note_id = $2`,
+                [fieldValues, noteId]
+            );
+        } catch (noteUpdateError) {
+            console.log(`Note ${noteId} might not exist, continuing...`);
+        }
+
+        await transactionClient.query('COMMIT');
+
+        console.log(`✅ Updated card ${cardIdNum}, field ${fieldIndexNum}: '${oldValue}' → '${new_value}'`);
+
+        res.json({
+            status: 'success',
+            card_id: cardIdNum,
+            field_index: fieldIndexNum,
+            old_value: oldValue,
+            new_value: new_value
+        });
+
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('Error updating card field:', error);
+        res.status(500).json({
+            status: 'error',
+            error: `Database error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        });
+    } finally {
+        transactionClient.release();
+    }
+}));
+
+// Bulk update multiple fields of a card at once
+app.put('/card/:cardId/fields/bulk', express.json(), wrapAsync(async (req, res) => {
+    const { cardId } = req.params;
+    const { field_updates } = req.body; // {field_index: new_value}
+    
+    const cardIdNum = parseInt(cardId);
+
+    if (isNaN(cardIdNum)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid card ID'
+        });
+    }
+
+    if (!field_updates || typeof field_updates !== 'object') {
+        return res.status(400).json({
+            status: 'error',
+            error: 'No field updates provided'
+        });
+    }
+
+    const transactionClient = await client.connect();
+
+    try {
+        await transactionClient.query('BEGIN');
+
+        // Get current card data
+        const cardQuery = await transactionClient.query(
+            `SELECT field_values, note_id
+             FROM cards 
+             WHERE card_id = $1`,
+            [cardIdNum]
+        );
+
+        if (cardQuery.rows.length === 0) {
+            await transactionClient.query('ROLLBACK');
+            return res.status(404).json({
+                status: 'error',
+                error: `Card ${cardIdNum} not found`
+            });
+        }
+
+        const card = cardQuery.rows[0];
+        const fieldValues = [...(card.field_values || [])];
+        const noteId = card.note_id;
+
+        // Apply updates
+        const updatedFields: Array<{
+            field_index: number;
+            old_value: string;
+            new_value: string;
+        }> = [];
+
+        for (const [fieldIndexStr, newValue] of Object.entries(field_updates)) {
+            const fieldIndex = parseInt(fieldIndexStr);
+
+            if (fieldIndex >= 0 && fieldIndex < fieldValues.length) {
+                const oldValue = fieldValues[fieldIndex];
+                fieldValues[fieldIndex] = newValue as string;
+                updatedFields.push({
+                    field_index: fieldIndex,
+                    old_value: oldValue,
+                    new_value: newValue as string
+                });
+            }
+        }
+
+        if (updatedFields.length === 0) {
+            await transactionClient.query('ROLLBACK');
+            return res.json({
+                status: 'error',
+                error: 'No valid field updates to apply'
+            });
+        }
+
+        // Update database
+        await transactionClient.query(
+            `UPDATE cards 
+             SET field_values = $1,
+                 last_modified = CURRENT_TIMESTAMP
+             WHERE card_id = $2`,
+            [fieldValues, cardIdNum]
+        );
+
+        // Also update the note
+        try {
+            await transactionClient.query(
+                `UPDATE notes 
+                 SET field_values = $1,
+                     last_modified = CURRENT_TIMESTAMP
+                 WHERE note_id = $2`,
+                [fieldValues, noteId]
+            );
+        } catch (noteUpdateError) {
+            console.log(`Note ${noteId} might not exist, continuing...`);
+        }
+
+        await transactionClient.query('COMMIT');
+
+        console.log(`✅ Bulk updated card ${cardIdNum}: ${updatedFields.length} fields`);
+
+        res.json({
+            status: 'success',
+            card_id: cardIdNum,
+            updated_fields: updatedFields,
+            updated_count: updatedFields.length
+        });
+
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('Error bulk updating card fields:', error);
+        res.status(500).json({
+            status: 'error',
+            error: `Database error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        });
+    } finally {
+        transactionClient.release();
+    }
+}));
+
+// Preview how card will look after field changes (useful for validation)
+app.get('/card/:cardId/preview', wrapAsync(async (req, res) => {
+    const { cardId } = req.params;
+    const cardIdNum = parseInt(cardId);
+
+    if (isNaN(cardIdNum)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid card ID'
+        });
+    }
+
+    try {
+        // Get card data
+        const query = await client.query(
+            `SELECT deck, card_format, field_values, field_processing
+             FROM cards 
+             WHERE card_id = $1`,
+            [cardIdNum]
+        );
+
+        if (query.rows.length === 0) {
+            return res.status(404).json({
+                status: 'error',
+                error: `Card ${cardIdNum} not found`
+            });
+        }
+
+        const [deck, cardFormat, fieldValues, fieldProcessing] = [
+            query.rows[0].deck,
+            query.rows[0].card_format,
+            query.rows[0].field_values || [],
+            query.rows[0].field_processing || []
+        ];
+
+        // Generate front and back text preview
+        // This mirrors your frontend generateCardFrontLine logic
+        const targetIndex = cardFormat === "Native to Target" ? 1 : 0;
+        
+        let frontText = "Error: Invalid field index";
+        if (targetIndex < fieldValues.length) {
+            frontText = fieldValues[targetIndex];
+            // Apply processing if needed (you could implement cleanFieldDatum here)
+        }
+
+        // Generate back text
+        const backIndex = cardFormat === "Native to Target" ? 0 : 1;
+        let backText = "Error: Invalid field index";
+        if (backIndex < fieldValues.length) {
+            backText = fieldValues[backIndex];
+        }
+
+        res.json({
+            status: 'success',
+            card_id: cardIdNum,
+            preview: {
+                front_text: frontText,
+                back_text: backText,
+                card_format: cardFormat,
+                deck: deck
+            }
+        });
+
+    } catch (error) {
+        console.error('Error generating card preview:', error);
+        res.status(500).json({
+            status: 'error',
+            error: `Database error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        });
+    }
+}));
+
 // Add this near the end of your index.ts file, after the app.listen call
 // Start the retrievability update system when the server starts
 startRetrievabilityUpdateSystem();

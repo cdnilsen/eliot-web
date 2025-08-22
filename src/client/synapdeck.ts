@@ -2373,12 +2373,6 @@ function truncateText(text: string, maxLength: number): string {
     return text.substring(0, maxLength) + '...';
 }
 
-function escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
 // Setup sortable headers
 function setupSortableHeaders(): void {
     const sortableHeaders = document.querySelectorAll('.sortable');
@@ -2632,16 +2626,413 @@ async function deleteCardById(cardId: number): Promise<boolean> {
         return false;
     }
 }
-
-// Placeholder functions for card actions (enhanced)
-function editCard(cardId: number): void {
-    // For now, show a simple prompt for editing
-    const newContent = prompt(`Edit card ${cardId} content (feature coming soon!):`);
-    if (newContent !== null) {
-        alert(`Edit card ${cardId} with content: "${newContent}" - Full editing feature coming soon!`);
-        // TODO: Implement full card editing modal/form
+// Enhanced edit card function with inline editing modal
+async function editCard(cardId: number): Promise<void> {
+    console.log(`Opening editor for card ${cardId}`);
+    
+    // Show loading modal
+    showEditModal('Loading card data...', []);
+    
+    try {
+        // Get detailed card field data
+        const result = await getCardFields(cardId);
+        
+        if (result.status === 'error' || !result.card) {
+            showEditModal(`Error loading card ${cardId}: ${result.error}`, []);
+            return;
+        }
+        
+        const card = result.card;
+        showEditModal('', card.field_values, card.field_names, card.field_processing, cardId);
+        
+    } catch (error) {
+        console.error('Error in editCard:', error);
+        showEditModal(`Network error loading card ${cardId}`, []);
     }
 }
+
+
+// API function to get detailed card field data
+async function getCardFields(cardId: number): Promise<any> {
+    try {
+        const response = await fetch(`/card/${cardId}/fields`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error getting card fields:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error getting card fields' 
+        };
+    }
+}
+
+// API function to update a specific field
+async function updateCardField(cardId: number, fieldIndex: number, newValue: string): Promise<any> {
+    try {
+        const response = await fetch(`/card/${cardId}/field/${fieldIndex}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                new_value: newValue
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error updating card field:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error updating card field' 
+        };
+    }
+}
+
+
+// Function to show the edit modal
+function showEditModal(
+    errorMessage: string, 
+    fieldValues: string[], 
+    fieldNames: string[] = [], 
+    fieldProcessing: string[] = [], 
+    cardId?: number
+): void {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('cardEditModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal backdrop
+    const modal = document.createElement('div');
+    modal.id = 'cardEditModal';
+    modal.className = 'card-edit-modal';
+    
+    let modalContent = '';
+    
+    if (errorMessage && !cardId) {
+        // Error state
+        modalContent = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Card Editor</h3>
+                    <button class="close-modal" onclick="closeEditModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p class="error">${errorMessage}</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeEditModal()">Close</button>
+                </div>
+            </div>
+        `;
+    } else if (cardId && fieldValues.length > 0) {
+        // Edit state
+        modalContent = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit Card ${cardId}</h3>
+                    <button class="close-modal" onclick="closeEditModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <form id="cardEditForm">
+                        <div class="field-list">
+        `;
+        
+        fieldValues.forEach((value, index) => {
+            const fieldName = fieldNames[index] || `Field ${index + 1}`;
+            const processing = fieldProcessing[index] || 'None';
+            
+            modalContent += `
+                <div class="field-row" data-field-index="${index}">
+                    <div class="field-info">
+                        <label class="field-label">${fieldName}</label>
+                        <span class="field-processing">(${processing})</span>
+                    </div>
+                    <div class="field-input-container">
+                        <textarea 
+                            class="field-input" 
+                            data-field-index="${index}"
+                            data-original-value="${escapeHtml(value)}"
+                            rows="2"
+                        >${escapeHtml(value)}</textarea>
+                        <div class="field-actions">
+                            <button type="button" class="btn btn-small save-field" data-field-index="${index}">
+                                💾 Save
+                            </button>
+                            <button type="button" class="btn btn-small btn-secondary reset-field" data-field-index="${index}">
+                                ↺ Reset
+                            </button>
+                        </div>
+                    </div>
+                    <div class="field-status" data-field-index="${index}"></div>
+                </div>
+            `;
+        });
+        
+        modalContent += `
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" onclick="saveAllFields(${cardId})">💾 Save All Changes</button>
+                    <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </div>
+        `;
+    } else {
+        // Loading state
+        modalContent = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Card Editor</h3>
+                    <button class="close-modal" onclick="closeEditModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p class="loading">${errorMessage || 'Loading...'}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    modal.innerHTML = modalContent;
+    document.body.appendChild(modal);
+    
+    // Add event listeners for individual field saves if in edit mode
+    if (cardId && fieldValues.length > 0) {
+        setupFieldEditListeners(cardId);
+    }
+    
+    // Close modal when clicking backdrop
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeEditModal();
+        }
+    });
+}
+
+// Setup event listeners for field editing
+function setupFieldEditListeners(cardId: number): void {
+    const saveButtons = document.querySelectorAll('.save-field');
+    const resetButtons = document.querySelectorAll('.reset-field');
+    const textareas = document.querySelectorAll('.field-input');
+    
+    // Save individual field
+    saveButtons.forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const fieldIndex = parseInt((e.target as HTMLElement).getAttribute('data-field-index') || '0');
+            await saveField(cardId, fieldIndex);
+        });
+    });
+    
+    // Reset individual field
+    resetButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const fieldIndex = parseInt((e.target as HTMLElement).getAttribute('data-field-index') || '0');
+            resetField(fieldIndex);
+        });
+    });
+    
+    // Auto-resize textareas and mark as changed
+    textareas.forEach(textarea => {
+        const element = textarea as HTMLTextAreaElement;
+        
+        // Auto-resize
+        element.addEventListener('input', () => {
+            element.style.height = 'auto';
+            element.style.height = element.scrollHeight + 'px';
+            
+            // Mark as changed
+            const originalValue = element.getAttribute('data-original-value') || '';
+            const currentValue = element.value;
+            const fieldRow = element.closest('.field-row');
+            
+            if (fieldRow) {
+                if (currentValue !== originalValue) {
+                    fieldRow.classList.add('field-changed');
+                } else {
+                    fieldRow.classList.remove('field-changed');
+                }
+            }
+        });
+        
+        // Initial resize
+        element.style.height = 'auto';
+        element.style.height = element.scrollHeight + 'px';
+    });
+}
+
+
+
+// Save individual field
+async function saveField(cardId: number, fieldIndex: number): Promise<void> {
+    const textarea = document.querySelector(`textarea[data-field-index="${fieldIndex}"]`) as HTMLTextAreaElement;
+    const statusDiv = document.querySelector(`div[data-field-index="${fieldIndex}"].field-status`) as HTMLDivElement;
+    const saveButton = document.querySelector(`button[data-field-index="${fieldIndex}"].save-field`) as HTMLButtonElement;
+    
+    if (!textarea || !statusDiv || !saveButton) return;
+    
+    const newValue = textarea.value;
+    const originalValue = textarea.getAttribute('data-original-value') || '';
+    
+    if (newValue === originalValue) {
+        statusDiv.innerHTML = '<span class="status-info">No changes to save</span>';
+        return;
+    }
+    
+    // Show loading state
+    statusDiv.innerHTML = '<span class="status-loading">Saving...</span>';
+    saveButton.disabled = true;
+    saveButton.textContent = '⏳ Saving';
+    
+    try {
+        const result = await updateCardField(cardId, fieldIndex, newValue);
+        
+        if (result.status === 'success') {
+            statusDiv.innerHTML = '<span class="status-success">✅ Saved!</span>';
+            textarea.setAttribute('data-original-value', newValue);
+            const fieldRow = textarea.closest('.field-row');
+            if (fieldRow) {
+                fieldRow.classList.remove('field-changed');
+            }
+            
+            // Clear status after 3 seconds
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 3000);
+            
+        } else {
+            statusDiv.innerHTML = `<span class="status-error">❌ Error: ${result.error}</span>`;
+        }
+        
+    } catch (error) {
+        statusDiv.innerHTML = '<span class="status-error">❌ Network error</span>';
+    } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = '💾 Save';
+    }
+}
+
+// Reset individual field to original value
+function resetField(fieldIndex: number): void {
+    const textarea = document.querySelector(`textarea[data-field-index="${fieldIndex}"]`) as HTMLTextAreaElement;
+    const statusDiv = document.querySelector(`div[data-field-index="${fieldIndex}"].field-status`) as HTMLDivElement;
+    
+    if (!textarea) return;
+    
+    const originalValue = textarea.getAttribute('data-original-value') || '';
+    textarea.value = originalValue;
+    
+    // Trigger resize
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+    
+    // Remove changed indicator
+    const fieldRow = textarea.closest('.field-row');
+    if (fieldRow) {
+        fieldRow.classList.remove('field-changed');
+    }
+    
+    if (statusDiv) {
+        statusDiv.innerHTML = '<span class="status-info">Reset to original value</span>';
+        setTimeout(() => {
+            statusDiv.innerHTML = '';
+        }, 2000);
+    }
+}
+
+// Save all changed fields
+async function saveAllFields(cardId: number): Promise<void> {
+    const changedRows = document.querySelectorAll('.field-row.field-changed');
+    
+    if (changedRows.length === 0) {
+        alert('No changes to save');
+        return;
+    }
+    
+    if (!confirm(`Save changes to ${changedRows.length} field(s)?`)) {
+        return;
+    }
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    // Save each changed field
+    for (const row of changedRows) {
+        const fieldIndex = parseInt(row.getAttribute('data-field-index') || '0');
+        const textarea = row.querySelector('textarea') as HTMLTextAreaElement;
+        
+        if (textarea) {
+            try {
+                const result = await updateCardField(cardId, fieldIndex, textarea.value);
+                if (result.status === 'success') {
+                    successCount++;
+                    textarea.setAttribute('data-original-value', textarea.value);
+                    row.classList.remove('field-changed');
+                } else {
+                    errorCount++;
+                }
+            } catch (error) {
+                errorCount++;
+            }
+        }
+    }
+    
+    // Show result
+    if (errorCount === 0) {
+        alert(`✅ Successfully saved ${successCount} field(s)!`);
+        // Refresh the card browser to show updated values
+        if (typeof performCardSearch === 'function') {
+            performCardSearch(currentBrowsePage);
+        }
+        closeEditModal();
+    } else {
+        alert(`Saved ${successCount} field(s), but ${errorCount} failed. Check individual field status messages.`);
+    }
+}
+
+// Close the edit modal
+function closeEditModal(): void {
+    const modal = document.getElementById('cardEditModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Helper function for HTML escaping
+function escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Make functions globally available
+declare global {
+    interface Window {
+        closeEditModal: () => void;
+        saveAllFields: (cardId: number) => Promise<void>;
+    }
+}
+
+window.closeEditModal = closeEditModal;
+window.saveAllFields = saveAllFields;
 
 async function deleteCard(cardId: number): Promise<void> {
     if (confirm(`Are you sure you want to delete card ${cardId}? This action cannot be undone.`)) {
