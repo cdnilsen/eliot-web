@@ -1243,17 +1243,10 @@ function generateCardFrontLine(card: CardDue): string {
     if (card.card_format == "Native to Target") {
         targetIndex = 1; 
     }
-    console.log(card.card_format);
-    console.log("Target index: " + targetIndex.toString());
-    console.log(card.field_values);
-    console.log(card.field_processing);
+
     let targetField = card.field_values[targetIndex];
     let targetProcessing = card.field_processing[targetIndex];
-
-    console.log(targetField + " (" + card.card_format + ") is processed as " + targetProcessing);
-
     let processedField = cleanFieldDatum(targetField, targetProcessing, false);
-    console.log(processedField);
     return processedField;
 }
 
