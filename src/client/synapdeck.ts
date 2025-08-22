@@ -2269,7 +2269,25 @@ function displayBrowseResults(cards: CardDue[], totalCount: number): void {
                 </thead>
                 <tbody>
     `;
-    
+    cards.forEach((card, index) => {
+        html += `
+            <tr class="card-row" data-card-id="${card.card_id}">
+                <td>${card.card_id}</td>
+                <td>${card.deck}</td>
+                <td>Front</td>
+                <td>Back</td>
+                <td>Format</td>
+                <td>Due</td>
+                <td>Interval</td>
+                <td>Retriev</td>
+                <td class="actions-cell">
+                    <button class="edit-card-btn" data-card-id="${card.card_id}">EDIT</button>
+                    <button class="delete-card-btn" data-card-id="${card.card_id}">DELETE</button>
+                </td>
+            </tr>
+        `;
+    });
+    /* 
     cards.forEach((card) => {
         const dueDate = new Date(card.time_due);
         const now = new Date();
@@ -2339,7 +2357,7 @@ function displayBrowseResults(cards: CardDue[], totalCount: number): void {
             </tr>
         `;
     });
-    
+    */
     html += `
                 </tbody>
             </table>
