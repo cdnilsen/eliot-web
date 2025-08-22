@@ -2470,14 +2470,14 @@ async function performCardSearch(page: number = 0): Promise<void> {
 // Generate the back side of a card
 function generateCardBackLine(card: CardDue): string {
     let targetIndex = 0;
-    if (card.field_values[2].trim() != "") {
+    if (card.field_values.length >= 3 && card.field_values[2].trim() != "") {
             targetIndex = 2;
         }
     
     // Flip the index for back side
     if (card.card_format === "Target to Native") {
         targetIndex = 1; 
-        if (card.field_values[3].trim() != "") {
+        if (card.field_values.length >= 4 && card.field_values[3].trim() != "") {
             targetIndex = 3;
         }
     }
