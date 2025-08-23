@@ -3243,3 +3243,171 @@ app.get('/card/:cardId/edit_history', wrapAsync(async (req, res) => {
         });
     }
 }));
+
+// Add these interfaces near your other type definitions in index.ts
+interface BulkIntervalUpdateRequest {
+    interval_multiplier: number;
+}
+
+interface BulkIntervalUpdateResponse {
+    status: 'success' | 'error';
+    updated_count?: number;
+    total_cards?: number;
+    average_old_interval?: number;
+    average_new_interval?: number;
+    multiplier_used?: number;
+    operation_time?: string;
+    error?: string;
+    details?: string;
+}
+
+// Add this endpoint to your index.ts file
+app.post('/bulk_reduce_intervals', express.json(), wrapAsync(async (req, res) => {
+    const { interval_multiplier }: BulkIntervalUpdateRequest = req.body;
+    
+    console.log('🔥 BULK INTERVAL REDUCTION REQUESTED');
+    console.log(`🔥 Multiplier: ${interval_multiplier}`);
+    
+    // Validation
+    if (interval_multiplier === undefined || interval_multiplier === null) {
+        return res.json({
+            status: 'error',
+            error: 'interval_multiplier is required'
+        } as BulkIntervalUpdateResponse);
+    }
+    
+    if (typeof interval_multiplier !== 'number' || isNaN(interval_multiplier)) {
+        return res.json({
+            status: 'error',
+            error: 'interval_multiplier must be a valid number'
+        } as BulkIntervalUpdateResponse);
+    }
+    
+    if (interval_multiplier <= 0 || interval_multiplier > 1) {
+        return res.json({
+            status: 'error',
+            error: 'interval_multiplier must be between 0.01 and 1.0'
+        } as BulkIntervalUpdateResponse);
+    }
+    
+    const startTime = Date.now();
+    const operationTime = new Date().toISOString();
+    
+    console.log(`🔥 Starting bulk interval reduction: ${(interval_multiplier * 100).toFixed(1)}% at ${operationTime}`);
+    
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        console.log('🔥 Transaction started for bulk interval reduction');
+        
+        // Get all cards with their current intervals
+        const allCardsQuery = await transactionClient.query(`
+            SELECT 
+                card_id,
+                time_due,
+                interval,
+                deck,
+                created
+            FROM cards
+            ORDER BY card_id
+        `);
+        
+        const allCards = allCardsQuery.rows;
+        const totalCards = allCards.length;
+        
+        console.log(`🔥 Found ${totalCards} cards to update`);
+        
+        if (totalCards === 0) {
+            await transactionClient.query('ROLLBACK');
+            return res.json({
+                status: 'success',
+                updated_count: 0,
+                total_cards: 0,
+                average_old_interval: 0,
+                average_new_interval: 0,
+                multiplier_used: interval_multiplier,
+                operation_time: operationTime
+            } as BulkIntervalUpdateResponse);
+        }
+        
+        // Calculate statistics before update
+        const oldIntervals = allCards.map(card => card.interval);
+        const averageOldInterval = oldIntervals.reduce((sum, interval) => sum + interval, 0) / totalCards;
+        const averageNewInterval = averageOldInterval * interval_multiplier;
+        
+        console.log(`🔥 Average interval: ${averageOldInterval.toFixed(1)} days → ${averageNewInterval.toFixed(1)} days`);
+        
+        let updatedCount = 0;
+        
+        // Update each card
+        for (let i = 0; i < allCards.length; i++) {
+            const card = allCards[i];
+            const oldInterval = card.interval;
+            const newInterval = Math.max(1, Math.round(oldInterval * interval_multiplier)); // Minimum 1 day
+            
+            // Calculate new due date based on the new interval
+            // Use the current time as the base, not the old due date
+            const now = new Date();
+            const newDueDate = new Date(now.getTime() + (newInterval * 24 * 60 * 60 * 1000));
+            
+            // Update the card
+            await transactionClient.query(`
+                UPDATE cards 
+                SET interval = $1,
+                    time_due = $2,
+                    last_modified = CURRENT_TIMESTAMP
+                WHERE card_id = $3
+            `, [newInterval, newDueDate, card.card_id]);
+            
+            updatedCount++;
+            
+            // Log every 1000 cards
+            if (updatedCount % 1000 === 0) {
+                console.log(`🔥 Updated ${updatedCount}/${totalCards} cards (${((updatedCount/totalCards)*100).toFixed(1)}%)`);
+            }
+            
+            // Log some examples for the first few cards
+            if (i < 5) {
+                console.log(`🔥 Card ${card.card_id}: ${oldInterval}d → ${newInterval}d, due: ${newDueDate.toISOString()}`);
+            }
+        }
+        
+        await transactionClient.query('COMMIT');
+        
+        const endTime = Date.now();
+        const durationSeconds = (endTime - startTime) / 1000;
+        
+        console.log(`🔥 BULK INTERVAL REDUCTION COMPLETED SUCCESSFULLY`);
+        console.log(`🔥 Updated: ${updatedCount}/${totalCards} cards`);
+        console.log(`🔥 Duration: ${durationSeconds.toFixed(2)} seconds`);
+        console.log(`🔥 Average interval: ${averageOldInterval.toFixed(1)}d → ${averageNewInterval.toFixed(1)}d`);
+        console.log(`🔥 Multiplier used: ${(interval_multiplier * 100).toFixed(1)}%`);
+        
+        res.json({
+            status: 'success',
+            updated_count: updatedCount,
+            total_cards: totalCards,
+            average_old_interval: parseFloat(averageOldInterval.toFixed(1)),
+            average_new_interval: parseFloat(averageNewInterval.toFixed(1)),
+            multiplier_used: interval_multiplier,
+            operation_time: operationTime,
+            duration_seconds: parseFloat(durationSeconds.toFixed(2))
+        } as BulkIntervalUpdateResponse & { duration_seconds: number });
+        
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('🔥 ERROR in bulk interval reduction:', error);
+        
+        res.json({
+            status: 'error',
+            error: 'Failed to reduce intervals',
+            details: error instanceof Error ? error.message : 'Unknown error occurred',
+            operation_time: operationTime
+        } as BulkIntervalUpdateResponse);
+        
+    } finally {
+        transactionClient.release();
+        console.log('🔥 Transaction client released');
+    }
+}));
