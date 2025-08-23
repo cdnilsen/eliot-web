@@ -3770,7 +3770,6 @@ if (document.readyState === 'loading') {
     // DOM is already loaded
     addRetrievabilityManagementSection();
 }
-
 // Add this interface near your other interfaces in synapdeck.ts
 interface BulkIntervalUpdateResponse {
     status: 'success' | 'error';
@@ -3898,7 +3897,7 @@ function addBulkIntervalReductionSection(): void {
                         let totalCards = 0;
                         let totalCurrentInterval = 0;
                         
-                        statsResult.deck_statistics.forEach(deck => {
+                        statsResult.deck_statistics.forEach((deck: any) => {
                             totalCards += deck.total_cards;
                             totalCurrentInterval += parseFloat(deck.avg_interval) * deck.total_cards;
                         });
