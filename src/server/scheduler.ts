@@ -77,7 +77,8 @@ function getDPrime(D: number, G: CardRating): number {
 }
 
 function getReviewDifficulty(D: number, G: CardRating): number {
-    return clamp_d((W[7] * getInitialDifficulty(4)) + ((1 - W[7]) * getDPrime(D, G)));
+    return clamp_d((W[7] * getInitialDifficulty(G)) + ((1 - W[7]) * getDPrime(D, G)));
+    //                                      ^ Use actual grade
 }
 
 function getStabilityOnSuccess(S: number, D: number, R: number, G: CardRating): number {
