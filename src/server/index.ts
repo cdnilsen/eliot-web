@@ -3356,7 +3356,6 @@ app.post('/bulk_reduce_intervals', express.json(), wrapAsync(async (req, res) =>
                 UPDATE cards 
                 SET interval = $1,
                     time_due = $2,
-                    last_modified = CURRENT_TIMESTAMP
                 WHERE card_id = $3
             `, [newInterval, newDueDate, card.card_id]);
             
