@@ -77,14 +77,13 @@ function getDPrime(D: number, G: CardRating): number {
 }
 
 function getReviewDifficulty(D: number, G: CardRating): number {
-    return clamp_d((W[7] * getInitialDifficulty(G)) + ((1 - W[7]) * getDPrime(D, G)));
-    //                                      ^ Use actual grade
+    return clamp_d((W[7] * getInitialDifficulty(4)) + ((1 - W[7]) * getDPrime(D, G)));
 }
 
 function getStabilityOnSuccess(S: number, D: number, R: number, G: CardRating): number {
     let t_d = 11 - D; // difficulty penalty
     let t_s = (S ** (0 - W[9]));
-    let t_r = (Math.E ** (W[10] ** (1 - R)) - 1);
+    let t_r = (Math.E ** (W[10] * (1 - R)) - 1);
     
     let H = 1; // Hard penalty
     if (G == 2) { 
