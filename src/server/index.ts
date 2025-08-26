@@ -1057,6 +1057,8 @@ app.post('/mark_cards_under_review', express.json(), wrapAsync(async (req, res) 
         // Execute the update query
         const result = await transactionClient.query(query, validCardIds);
         
+        await buryPeerCards(validCardIds, transactionClient);
+
         const updatedCount = result.rowCount || 0;
         
         await transactionClient.query('COMMIT');
@@ -3410,3 +3412,56 @@ app.post('/bulk_reduce_intervals', express.json(), wrapAsync(async (req, res) =>
         console.log('🔥 Transaction client released');
     }
 }));
+// Add this function to your index.ts file
+async function buryPeerCards(cardIds: number[], transactionClient: any): Promise<void> {
+    console.log(`🔄 Burying peers for ${cardIds.length} cards under review`);
+    
+    try {
+        // Get all peer relationships for the cards under review
+        const peerQuery = await transactionClient.query(
+            `SELECT card_id, peers 
+             FROM cards 
+             WHERE card_id = ANY($1::int[]) 
+             AND peers IS NOT NULL 
+             AND array_length(peers, 1) > 0`,
+            [cardIds]
+        );
+        
+        // Collect all unique peer IDs that need to be buried
+        const peerIdsToUpdate = new Set<number>();
+        
+        peerQuery.rows.forEach(row => {
+            if (row.peers && Array.isArray(row.peers)) {
+                row.peers.forEach((peerId: number) => {
+                    // Only bury peers that aren't themselves under review
+                    if (!cardIds.includes(peerId)) {
+                        peerIdsToUpdate.add(peerId);
+                    }
+                });
+            }
+        });
+        
+        const uniquePeerIds = Array.from(peerIdsToUpdate);
+        
+        if (uniquePeerIds.length > 0) {
+            console.log(`📦 Burying ${uniquePeerIds.length} peer cards:`, uniquePeerIds);
+            
+            // Update all peer cards to be buried for today only
+            await transactionClient.query(
+                `UPDATE cards 
+                 SET is_buried = true, 
+                     is_only_buried_today = true
+                 WHERE card_id = ANY($1::int[])`,
+                [uniquePeerIds]
+            );
+            
+            console.log(`✅ Successfully buried ${uniquePeerIds.length} peer cards`);
+        } else {
+            console.log(`ℹ️ No peer cards found to bury`);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error burying peer cards:', error);
+        throw error;
+    }
+}
