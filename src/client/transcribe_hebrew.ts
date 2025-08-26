@@ -391,16 +391,3 @@ export function hebrewDiacriticify(str: string, isASCII: boolean): string {
     }
     return str;
 }
-
-// Example usage and test function
-export function testHebrewTransliteration(): void {
-    console.log("Testing Hebrew transliteration:");
-    
-    const testCases = [
-    ];
-    
-    testCases.forEach(test => {
-        console.log(`${test} -> ${transliterateHebrew(test)} (no niqqud)`);
-        console.log(`${test} -> ${transliterateHebrew(test, true)} (with niqqud)`);
-    });
-}
