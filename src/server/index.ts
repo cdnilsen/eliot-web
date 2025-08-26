@@ -3412,6 +3412,7 @@ app.post('/bulk_reduce_intervals', express.json(), wrapAsync(async (req, res) =>
         console.log('🔥 Transaction client released');
     }
 }));
+
 // Add this function to your index.ts file
 async function buryPeerCards(cardIds: number[], transactionClient: any): Promise<void> {
     console.log(`🔄 Burying peers for ${cardIds.length} cards under review`);
@@ -3430,7 +3431,7 @@ async function buryPeerCards(cardIds: number[], transactionClient: any): Promise
         // Collect all unique peer IDs that need to be buried
         const peerIdsToUpdate = new Set<number>();
         
-        peerQuery.rows.forEach(row => {
+        peerQuery.rows.forEach((row: { card_id: number; peers: number[] | null }) => {
             if (row.peers && Array.isArray(row.peers)) {
                 row.peers.forEach((peerId: number) => {
                     // Only bury peers that aren't themselves under review
