@@ -2375,6 +2375,7 @@ const midnightRetrievabilityJob = new CronJob(
     async () => {
         try {
             await updateAllCardRetrievabilities();
+            await unburyDailyBuriedCards();
             
             // Show stats after update (optional - comment out if too verbose)
             // await getRetrievabilityStats();
@@ -3464,5 +3465,57 @@ async function buryPeerCards(cardIds: number[], transactionClient: any): Promise
     } catch (error) {
         console.error('❌ Error burying peer cards:', error);
         throw error;
+    }
+}
+
+// Add this function to handle midnight unburying
+async function unburyDailyBuriedCards(): Promise<void> {
+    console.log('🌅 Starting midnight unbury process...');
+    
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        
+        // Get count of cards to unbury for logging
+        const countQuery = await transactionClient.query(`
+            SELECT COUNT(*) as count 
+            FROM cards 
+            WHERE is_only_buried_today = true
+        `);
+        
+        const cardsToUnbury = parseInt(countQuery.rows[0].count) || 0;
+        console.log(`📦 Found ${cardsToUnbury} cards to unbury`);
+        
+        if (cardsToUnbury > 0) {
+            // Update cards that were buried only for today
+            const unburyResult = await transactionClient.query(`
+                UPDATE cards 
+                SET is_buried = false, 
+                    is_only_buried_today = false
+                WHERE is_only_buried_today = true
+                RETURNING card_id
+            `);
+            
+            const unburiedCount = unburyResult.rowCount || 0;
+            const unburiedIds = unburyResult.rows.map(row => row.card_id);
+            
+            console.log(`✅ Successfully unburied ${unburiedCount} cards`);
+            if (unburiedIds.length <= 10) {
+                console.log(`   Card IDs: ${unburiedIds.join(', ')}`);
+            } else {
+                console.log(`   Card IDs: ${unburiedIds.slice(0, 10).join(', ')}... (and ${unburiedIds.length - 10} more)`);
+            }
+        }
+        
+        await transactionClient.query('COMMIT');
+        console.log('🌅 Midnight unbury process completed successfully');
+        
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('❌ Error during midnight unbury process:', error);
+        throw error;
+    } finally {
+        transactionClient.release();
     }
 }
