@@ -1454,6 +1454,8 @@ async function markCardsUnderReview(cardIds: number[]): Promise<boolean> {
     }
 }
 
+
+let reviewSubmitButtonClicked: boolean = false;
 if (reviewSubmitButton) {
     reviewSubmitButton.addEventListener('click', async () => {
         if (!selectedReviewDeck) {
@@ -1461,6 +1463,10 @@ if (reviewSubmitButton) {
             if (outputDiv) {
                 outputDiv.innerHTML = `<p class="error">Please select a deck first.</p>`;
             }
+            return;
+        }
+
+        if (reviewSubmitButtonClicked) {
             return;
         }
 
@@ -1473,6 +1479,7 @@ if (reviewSubmitButton) {
         }
 
         try {
+
             // Check if we need to refresh the cache (deck changed or review options changed)
             const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
             const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
@@ -1519,6 +1526,7 @@ if (reviewSubmitButton) {
                 }
                 updateSubmitButtonText(numCards, 0, currentReviewAhead, currentHoursAhead);
             }
+            reviewSubmitButtonClicked = true;
         } catch (error) {
             console.error('Error in review submit:', error);
             if (outputDiv) {
