@@ -3,6 +3,7 @@ import {transliterateGreek} from './transcribe_ancient_greek.js';
 import {SanskritDiacriticify} from './transcribe_sanskrit.js';
 import {AkkadianDiacriticify, akkadianSpecialChars} from './transcribe_akkadian.js';
 import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
+import {hebrewSpecialChars, transliterateHebrew} from './transcribe_hebrew.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 
 interface CardFieldData {
@@ -32,6 +33,7 @@ interface SpecialCharacterSet {
 const specialCharacterSets: SpecialCharacterSet = {
     "Ge'ez": geezSpecialChars || [],
     "Akkadian": akkadianSpecialChars || [],
+    "Hebrew": hebrewSpecialChars || []
     // Add more as needed
     // "Sanskrit": sanskritSpecialChars || [], // if you have this
 };
@@ -2131,6 +2133,7 @@ function setupBrowseCardsTab(): void {
                             <option value="Ancient Greek">Ancient Greek</option>
                             <option value="Sanskrit">Sanskrit</option>
                             <option value="Akkadian">Akkadian</option>
+                            <option value="Hebrew">Hebrew</option>
                         </select>
                     </div>
                     

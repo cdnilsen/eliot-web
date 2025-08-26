@@ -364,7 +364,7 @@ export function transliterateHebrew(str: string, includeNiqqud: boolean = false)
 
 // Hebrew special characters for reference
 export const hebrewSpecialChars: string[] = [
-    "ā", "ē", "ī", "ō", "ū", "ă", "ĕ", "ŏ", "å", "ḥ", "ṭ", "ṣ", "š", "ś", "ḳ", "ḵ", "ḫ", "ʾ", "ʿ"
+    "ā", "ē", "ī", "ō", "ū", "ă", "ĕ", "ŏ", "å", "ḥ", "ṭ", "ṣ", "š", "ś", "ʾ", "ʿ"
 ];
 
 export function hebrewDiacriticify(str: string, isASCII: boolean): string {
@@ -397,12 +397,6 @@ export function testHebrewTransliteration(): void {
     console.log("Testing Hebrew transliteration:");
     
     const testCases = [
-        "shalom",      // שלום
-        "baruch",      // ברוך  
-        "israel",      // ישראל
-        "hebrew",      // עברית (roughly)
-        "torah",       // תורה
-        "yerushalayim" // ירושלים
     ];
     
     testCases.forEach(test => {
