@@ -75,10 +75,11 @@ const hebrewConsonants: HebrewToken[] = [
     {input: ["p", "f"], internal: "p", output: "פ"},
     {input: ["p", "f"], internal: "p", output: "ף", isFinal: true},
     
-    // ץ (final tsadi)
-    {input: ["ts", "tz", "ṣ", "S"], internal: "ṣ", output: "ץ", isFinal: true},
     // צ (tsadi)
     {input: ["ts", "tz", "ṣ", "S"], internal: "ṣ", output: "צ"},
+    
+    // ץ (final tsadi)
+    {input: ["ts", "tz", "ṣ", "S"], internal: "ṣ", output: "ץ", isFinal: true},
     
     // ק (qof)
     {input: ["q"], internal: "q", output: "ק"},
