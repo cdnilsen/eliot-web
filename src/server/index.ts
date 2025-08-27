@@ -2733,8 +2733,7 @@ app.put('/card/:cardId/field/:fieldIndex', express.json(), wrapAsync(async (req,
         // Update the card in database
         await transactionClient.query(
             `UPDATE cards 
-             SET field_values = $1,
-                 last_modified = CURRENT_TIMESTAMP
+             SET field_values = $1
              WHERE card_id = $2`,
             [fieldValues, cardIdNum]
         );
@@ -2743,8 +2742,7 @@ app.put('/card/:cardId/field/:fieldIndex', express.json(), wrapAsync(async (req,
         try {
             await transactionClient.query(
                 `UPDATE notes 
-                 SET field_values = $1,
-                     last_modified = CURRENT_TIMESTAMP
+                 SET field_values = $1
                  WHERE note_id = $2`,
                 [fieldValues, noteId]
             );
@@ -2854,8 +2852,7 @@ app.put('/card/:cardId/fields/bulk', express.json(), wrapAsync(async (req, res) 
         // Update database
         await transactionClient.query(
             `UPDATE cards 
-             SET field_values = $1,
-                 last_modified = CURRENT_TIMESTAMP
+             SET field_values = $1
              WHERE card_id = $2`,
             [fieldValues, cardIdNum]
         );
@@ -2864,8 +2861,7 @@ app.put('/card/:cardId/fields/bulk', express.json(), wrapAsync(async (req, res) 
         try {
             await transactionClient.query(
                 `UPDATE notes 
-                 SET field_values = $1,
-                     last_modified = CURRENT_TIMESTAMP
+                 SET field_values = $1
                  WHERE note_id = $2`,
                 [fieldValues, noteId]
             );
@@ -3081,8 +3077,7 @@ app.put('/card/:cardId/fields/bulk', express.json(), wrapAsync(async (req, res) 
         // Update the card in database
         await transactionClient.query(
             `UPDATE cards 
-             SET field_values = $1,
-                 last_modified = CURRENT_TIMESTAMP
+             SET field_values = $1
              WHERE card_id = $2`,
             [fieldValues, cardIdNum]
         );
@@ -3091,8 +3086,7 @@ app.put('/card/:cardId/fields/bulk', express.json(), wrapAsync(async (req, res) 
         try {
             await transactionClient.query(
                 `UPDATE notes 
-                 SET field_values = $1,
-                     last_modified = CURRENT_TIMESTAMP
+                 SET field_values = $1
                  WHERE note_id = $2`,
                 [fieldValues, noteId]
             );
@@ -3152,8 +3146,7 @@ app.get('/card/:cardId/validate', wrapAsync(async (req, res) => {
                 card_format,
                 array_length(field_values, 1) as field_count,
                 under_review,
-                created,
-                last_modified
+                created
              FROM cards 
              WHERE card_id = $1`,
             [cardIdNum]
@@ -3177,7 +3170,6 @@ app.get('/card/:cardId/validate', wrapAsync(async (req, res) => {
                 field_count: card.field_count || 0,
                 under_review: card.under_review,
                 created: card.created,
-                last_modified: card.last_modified,
                 editable: !card.under_review // Cards under review might need special handling
             }
         });
@@ -3211,7 +3203,6 @@ app.get('/card/:cardId/edit_history', wrapAsync(async (req, res) => {
             `SELECT 
                 card_id,
                 created,
-                last_modified,
                 last_reviewed
              FROM cards 
              WHERE card_id = $1`,
@@ -3232,7 +3223,6 @@ app.get('/card/:cardId/edit_history', wrapAsync(async (req, res) => {
             card_id: cardIdNum,
             history: {
                 created: card.created,
-                last_modified: card.last_modified,
                 last_reviewed: card.last_reviewed,
                 note: "Full edit history would require additional tracking table"
             }
