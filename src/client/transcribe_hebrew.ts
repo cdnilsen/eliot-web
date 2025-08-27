@@ -134,6 +134,9 @@ const hebrewVowels: HebrewToken[] = [
     
     // Hataf Kamatz (ŏ) - reduced 'o' sound
     {input: ["ŏ", "ò"], internal: "hataf_kamatz", output: "ֳ", isVowel: true},
+
+    // Dagesh (·)...not really a vowel but needs to be treated as such
+    {input: ["·"], internal: "dagesh", output: "ּ", isVowel: true}
 ];
 
 type S2SDict = {
@@ -208,39 +211,6 @@ function getNextHebrewToken(str: string, trie: HebrewTrieNode, startingIndex: nu
 
 const hebrewConsonantTrie = constructHebrewTrie([...Object.keys(hebrewConsonantInputToInternal)]);
 const hebrewVowelTrie = constructHebrewTrie([...Object.keys(hebrewVowelInputToInternal)]);
-
-function preprocessHebrew(str: string): string {
-    // Normalize common romanization variants
-    str = str.toLowerCase();
-    
-    const alts: S2SDict = {
-        "ḳ": "q",
-        "ḵ": "kh",
-        "ḥ": "ch",
-        "ḫ": "kh",
-        "ṭ": "t",
-        "ṣ": "ts",
-        "š": "sh",
-        "ś": "s",
-        "ʾ": "'",
-        "ʿ": "'",
-        "ā": "aa",
-        "ē": "ee",
-        "ī": "ii",
-        "ō": "oo",
-        "ū": "uu",
-        "ě": "e",
-        "ph": "f",
-        "th": "t",
-        "kh": "ch"  // Common for ח
-    };
-
-    for (const [from, to] of Object.entries(alts)) {
-        str = str.replaceAll(from, to);
-    }
-    
-    return str;
-}
 
 function maximumMunchTokenizeHebrew(str: string): ParsedHebrewToken[] {
     let strCursor = 0;
@@ -364,7 +334,7 @@ export function transliterateHebrew(str: string, includeNiqqud: boolean = false)
 
 // Hebrew special characters for reference
 export const hebrewSpecialChars: string[] = [
-    "ā", "ē", "ī", "ō", "ū", "ă", "ĕ", "ŏ", "å", "ḥ", "ṭ", "ṣ", "š", "ś", "ʾ", "ʿ"
+    "ā", "ē", "ī", "ō", "ū", "ă", "ĕ", "ŏ", "å", "ḥ", "ṭ", "ṣ", "š", "ś", "ʾ", "ʿ", "·"
 ];
 
 export function hebrewDiacriticify(str: string, isASCII: boolean): string {
