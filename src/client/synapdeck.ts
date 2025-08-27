@@ -368,6 +368,8 @@ function cleanFieldDatum(datum: string, process: string, isBackOfCard: boolean) 
     switch (process) {
         case "Ge'ez":
             return transliterateGeez(datum, isBackOfCard);
+        case "Hebrew":
+            return transliterateHebrew(datum, true)
         default:
             return datum;
     }
