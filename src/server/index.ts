@@ -9,6 +9,9 @@ import { Request, Response, NextFunction } from 'express';
 import { rescheduleCards, getSchedulingStats } from './scheduler';
 import { CronJob } from 'cron';
 
+import multer from 'multer';
+//import { convertUploadedFiles } from './anki-synapdeck-converter';
+
 
 declare module 'express-session' {
     interface SessionData {
