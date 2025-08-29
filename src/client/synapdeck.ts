@@ -772,6 +772,8 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
     return shuffledFinalList;
 }
 
+// Replace your existing generateReviewSheetHTML function with this improved version
+
 function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40%"): string {
     const today = new Date().toLocaleDateString();
     const rightColumnWidth = `calc(100% - ${leftColumnWidth})`;
@@ -858,8 +860,6 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                 
                 .card-item {
                     margin-bottom: 15px;
-                    page-break-inside: avoid;
-                    break-inside: avoid;
                     display: flex;
                     align-items: flex-start;
                     justify-content: flex-end;
@@ -876,8 +876,6 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                 .card-question strong {
                     font-weight: bold;
                 }
-                
-                /* Removed answer-space styles */
                 
                 .controls {
                     position: fixed;
@@ -931,26 +929,29 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                 }
                 
                 @media print {
+                    /* Hide controls */
                     .controls, .width-controls {
                         display: none !important;
                     }
                     
+                    /* Reset to single column for print */
                     body {
-                        font-size: 11pt !important; /* Smaller font for more content */
-                        line-height: 1.2 !important; /* Tighter line spacing */
+                        font-size: 11pt !important;
+                        line-height: 1.3 !important;
                         max-width: none;
                         margin: 0;
-                        padding: 0.3in !important; /* Smaller margins */
+                        padding: 0.4in !important;
                     }
                     
-                    /* Compact header */
+                    /* Compact header with page break control */
                     .header {
-                        margin-bottom: 15px !important; /* Reduced from 30px */
-                        padding-bottom: 10px !important; /* Reduced from 20px */
+                        margin-bottom: 15px !important;
+                        padding-bottom: 10px !important;
+                        page-break-after: avoid;
                     }
                     
                     .title {
-                        font-size: 18px !important; /* Smaller title */
+                        font-size: 18px !important;
                         margin-bottom: 4px !important;
                     }
                     
@@ -965,45 +966,77 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                     
                     .section-title {
                         font-size: 14px !important;
-                        margin: 10px 0 8px 0 !important; /* Much tighter spacing */
+                        margin: 12px 0 8px 0 !important;
+                        page-break-after: avoid;
+                        page-break-before: avoid;
                     }
                     
-                    /* Optimize card spacing */
-                    .card-item {
-                        margin-bottom: 8px !important; /* Reduced from 15px */
-                        page-break-inside: avoid;
-                        break-inside: avoid;
-                    }
-                    
-                    .card-question {
-                        font-size: 11pt !important; /* Consistent with body */
-                        line-height: 1.2 !important;
-                    }
-                    
+                    /* Switch to single column for print */
                     .two-column-container {
+                        display: block !important;
                         min-height: auto;
-                        gap: 15px !important; /* Smaller gap between columns */
+                        gap: 0 !important;
                     }
                     
                     .left-column {
-                        padding-right: 5px !important;
+                        width: 100% !important;
+                        padding: 0 !important;
                     }
                     
                     .right-column {
-                        padding-left: 5px !important;
+                        display: none !important; /* Hide empty answer column in print */
                     }
                     
-                    /* Force content to fill page height better */
-                    .two-column-container {
-                        display: flex;
-                        flex-direction: row;
-                        justify-content: space-between;
+                    /* Critical: Improved card item page break handling */
+                    .card-item {
+                        margin-bottom: 6px !important;
+                        display: block !important;
+                        text-align: left !important;
+                        /* Try to keep together, but allow breaking if too long */
+                        page-break-inside: avoid;
+                        break-inside: avoid;
+                        /* Ensure minimum lines stay together */
+                        orphans: 3;
+                        widows: 3;
+                        /* Add some space before if breaking */
+                        page-break-before: auto;
                     }
                     
-                    /* Prevent orphaned content */
-                    .left-column, .right-column {
+                    /* If a card item must break, ensure number stays with some content */
+                    .card-item:before {
+                        content: "";
+                        display: inline;
+                        page-break-after: avoid;
+                    }
+                    
+                    .card-question {
+                        font-size: 11pt !important;
+                        line-height: 1.3 !important;
+                        /* Ensure text flows properly */
+                        text-align: left !important;
+                        display: inline !important;
+                        /* Keep at least 2 lines together */
                         orphans: 2;
                         widows: 2;
+                    }
+                    
+                    /* Special handling for very long items */
+                    .card-item.long-item {
+                        page-break-inside: auto !important;
+                        break-inside: auto !important;
+                    }
+                    
+                    /* Ensure page margins are respected */
+                    @page {
+                        margin: 0.4in;
+                        orphans: 3;
+                        widows: 3;
+                    }
+                    
+                    /* Fallback: if content is too long, allow breaking but with padding */
+                    .card-item[data-long="true"] {
+                        page-break-inside: auto;
+                        padding-top: 2pt;
                     }
                 }
                 
@@ -1075,6 +1108,33 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                         rightColumn.style.width = newRightWidth;
                     }
                 }
+                
+                // Enhanced print optimization
+                window.addEventListener('beforeprint', () => {
+                    console.log('🖨️ Preparing for print...');
+                    
+                    // Mark potentially long items for special handling
+                    const cardItems = document.querySelectorAll('.card-item');
+                    cardItems.forEach((item, index) => {
+                        const height = item.offsetHeight;
+                        // If item is taller than ~1.5 inches (108pt), mark as long
+                        if (height > 108) {
+                            item.classList.add('long-item');
+                            item.setAttribute('data-long', 'true');
+                        }
+                    });
+                });
+                
+                window.addEventListener('afterprint', () => {
+                    console.log('🖨️ Print completed');
+                    
+                    // Clean up print-specific classes
+                    const longItems = document.querySelectorAll('.long-item');
+                    longItems.forEach(item => {
+                        item.classList.remove('long-item');
+                        item.removeAttribute('data-long');
+                    });
+                });
                 
                 // Optional: Auto-focus for keyboard shortcuts
                 window.addEventListener('load', () => {
