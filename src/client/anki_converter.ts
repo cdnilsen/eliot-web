@@ -1,4 +1,4 @@
-import { convertUploadedFiles, convertAnkiToSynapdeck, AnkiToSynapdeckConverter } from './anki_converter_lib.ts';
+import { convertUploadedFiles, convertAnkiToSynapdeck, AnkiToSynapdeckConverter } from './anki_converter_lib.js';
 
 // Example 1: Simple file upload conversion (most common use case)
 async function handleFileUpload(cardsFile: File, reviewsFile: File) {
