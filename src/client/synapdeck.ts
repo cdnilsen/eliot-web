@@ -1910,10 +1910,10 @@ function generateAnswerKey(cards: CardDue[]): string {
         const processedAnswer = processHTMLContent(answerText);
 
         console.log(`Card ${card.card_id}: Q="${processedQuestion}" A="${processedAnswer}"`);
-        
+        let questionNum = index + 1
         html += `
             <div class="answer-row" data-card-id="${card.card_id}">
-                <div class="qa-cell">${index + 1}. ${processedQuestion} → ${processedAnswer}</div>
+                <div class="qa-cell">${questionNum}. ${processedQuestion} → ${processedAnswer}</div>
                 <div class="radio-cell">
                     <input type="radio" name="card_${card.card_id}" value="pass" checked>
                 </div>
