@@ -1705,21 +1705,14 @@ function getReviewResults(): { cardId: number, result: string }[] {
     answerItems.forEach((item, index) => {
         const cardIdAttr = item.getAttribute('data-card-id');
         const cardId = parseInt(cardIdAttr || '0');
-        console.log(`Item ${index}: data-card-id="${cardIdAttr}", parsed cardId=${cardId}`);
-        
         const selectedRadio = item.querySelector('input[type="radio"]:checked') as HTMLInputElement;
-        console.log(`Item ${index}: selected radio:`, selectedRadio);
         
-        if (selectedRadio) {
-            console.log(`Item ${index}: radio value="${selectedRadio.value}"`);
-        }
         
         if (cardId && selectedRadio) {
             results.push({
                 cardId: cardId,
                 result: selectedRadio.value
             });
-            console.log(`Added result for card ${cardId}: ${selectedRadio.value}`);
         } else {
             console.warn(`Item ${index}: Missing cardId (${cardId}) or selectedRadio (${selectedRadio})`);
         }
@@ -1767,7 +1760,6 @@ function displayAnswerKey(cards: CardDue[], deckName: string): void {
         console.log('Adding event listener to submit button');
         completeReviewButton.addEventListener('click', async () => {
             const results = getReviewResults();
-            console.log('Review results:', results);
             
             if (results.length === 0) {
                 alert('No review results to submit. Please grade at least one card.');
@@ -1918,10 +1910,10 @@ function generateAnswerKey(cards: CardDue[]): string {
         const processedAnswer = processHTMLContent(answerText);
 
         console.log(`Card ${card.card_id}: Q="${processedQuestion}" A="${processedAnswer}"`);
-
+        
         html += `
             <div class="answer-row" data-card-id="${card.card_id}">
-                <div class="qa-cell">${processedQuestion} → ${processedAnswer}</div>
+                <div class="qa-cell">${index + 1}. ${processedQuestion} → ${processedAnswer}</div>
                 <div class="radio-cell">
                     <input type="radio" name="card_${card.card_id}" value="pass" checked>
                 </div>
