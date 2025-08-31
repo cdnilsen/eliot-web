@@ -37,6 +37,8 @@ function createDeckDropdowns() {
     }
 }
 
+// ሊግህት, ዴሲግናቴ
+
 createDeckDropdowns();
 
 
@@ -498,6 +500,12 @@ if (wipeDatabaseButton) {
             console.error('❌ Failed to wipe database');
             alert('Failed to wipe database');
         }
+    });
+}
+
+if (cardFormatDropdown) {
+    cardFormatDropdown.addEventListener('change', (event) => {
+        console.log('Card format changed:', (event.target as HTMLSelectElement).value);
     });
 }
 
