@@ -6,6 +6,40 @@ import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testChar
 import {hebrewSpecialChars, transliterateHebrew} from './transcribe_hebrew.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 
+
+let deckNameList: string[] = [
+    "Akkadian",
+    "Ancient Greek",
+    "Ge'ez",
+    "Hebrew",
+    "Sanskrit"
+]
+
+let specialCharSetsDict = {
+    "Akkadian": akkadianSpecialChars,
+    "Ge'ez": geezSpecialChars,
+    "Hebrew": hebrewSpecialChars
+}
+
+
+function createDeckDropdowns() {
+    let dropdownIDs: string[] = ["upload_dropdownMenu", "review_dropdownMenu", "check_dropdownMenu"];
+    for (let i=0; i < dropdownIDs.length; i++) {
+        let id = dropdownIDs[i];
+        let selectElement = document.getElementById(id) as HTMLSelectElement;
+        for (let j=0; j < deckNameList.length; j++) {
+            let deck = deckNameList[j];
+            let option = document.createElement("option");
+            option.value = deck;
+            option.text = deck;
+            selectElement.appendChild(option);
+        }
+    }
+}
+
+createDeckDropdowns();
+
+
 interface CardFieldData {
     card_id: number;
     note_id: number;
