@@ -92,7 +92,7 @@ const hebrewConsonants: HebrewToken[] = [
 
     {input: ["š", "sh"], internal: "š", output: "שׁ"},
 
-    {input: ["C", "ś"], internal: "š", output: "שׂ"},
+    {input: ["C", "ś"], internal: "ś", output: "שׂ"},
     
     // ת (tav)
     {input: ["t"], internal: "t", output: "ת"},
