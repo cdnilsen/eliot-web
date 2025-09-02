@@ -2756,6 +2756,8 @@ function clearFilters(): void {
     performCardSearch(0);
 }
 
+
+
 // API functions for card management
 async function deleteCardById(cardId: number): Promise<boolean> {
     try {
@@ -2786,11 +2788,19 @@ async function deleteCardById(cardId: number): Promise<boolean> {
 }
 
 
+// Replace your editCard function with this optimized version:
 async function editCard(cardId: number): Promise<void> {
     console.log(`✏️ Opening enhanced editor for card ${cardId}`);
 
+    // Prevent multiple modals from opening
+    const existingModal = document.getElementById('cardEditModal');
+    if (existingModal) {
+        console.log('Modal already open, ignoring request');
+        return;
+    }
+
     try {
-        // Show loading state first
+        // Show loading state immediately
         showLoadingModal(`Loading card ${cardId}...`);
 
         // Get card field details
@@ -2817,9 +2827,8 @@ async function editCard(cardId: number): Promise<void> {
                 card_format: fullCardResult.card?.card_format || 'Unknown'
             };
             
-            // Close loading modal and show edit modal
-            closeEditModal();
-            showCardEditModal(cardId, cardData);
+            // Replace loading modal with edit modal (no flashing)
+            replaceLoadingWithEditModal(cardId, cardData);
         } else {
             throw new Error(result.error || 'Failed to load card data');
         }
@@ -2828,6 +2837,40 @@ async function editCard(cardId: number): Promise<void> {
         console.error('Error loading card for editing:', error);
         closeEditModal();
         showToast(`Failed to load card ${cardId}: ${error.message}`, 'error');
+    }
+}
+
+// New function to replace loading modal smoothly
+function replaceLoadingWithEditModal(cardId: number, cardData: any): void {
+    const existingModal = document.getElementById('cardEditModal');
+    if (!existingModal) return;
+
+    // Find the modal content div
+    const modalContent = existingModal.querySelector('div');
+    if (!modalContent) return;
+
+    // Fade out current content
+    modalContent.style.transition = 'opacity 0.2s ease';
+    modalContent.style.opacity = '0';
+    
+    setTimeout(() => {
+        // Remove existing modal and create new one
+        existingModal.remove();
+        showCardEditModal(cardId, cardData);
+    }, 200);
+}
+
+// Optimized close function to prevent flashing
+function closeEditModal(): void {
+    const modal = document.getElementById('cardEditModal');
+    if (modal && !modal.classList.contains('closing')) {
+        modal.classList.add('closing');
+        modal.style.animation = 'fadeOut 0.2s ease-in';
+        setTimeout(() => {
+            if (modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }, 200);
     }
 }
 // Add this loading modal function to your synapdeck.ts file
@@ -2877,10 +2920,31 @@ function showLoadingModal(message: string): void {
     document.body.appendChild(modal);
 }
 
-// Add this toast notification function to your synapdeck.ts file
+// Add this queue management for toasts
+let toastQueue: Array<{message: string, type: 'success' | 'error' | 'info' | 'warning'}> = [];
+let isShowingToast = false;
 
+// Replace your showToast function with this improved version:
 function showToast(message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info'): void {
-    // Remove existing toast
+    // Add to queue
+    toastQueue.push({ message, type });
+    
+    // Process queue if not already showing
+    if (!isShowingToast) {
+        processToastQueue();
+    }
+}
+
+function processToastQueue(): void {
+    if (toastQueue.length === 0) {
+        isShowingToast = false;
+        return;
+    }
+    
+    isShowingToast = true;
+    const { message, type } = toastQueue.shift()!;
+    
+    // Remove existing toast immediately
     const existingToast = document.getElementById('edit-toast');
     if (existingToast) {
         existingToast.remove();
@@ -2916,15 +2980,17 @@ function showToast(message: string, type: 'success' | 'error' | 'info' | 'warnin
     toast.textContent = message;
     document.body.appendChild(toast);
 
-    // Auto-remove after 4 seconds
+    // Auto-remove and process next in queue
     setTimeout(() => {
         toast.style.animation = 'slideOutRight 0.3s ease-in';
         setTimeout(() => {
             if (toast.parentNode) {
                 toast.parentNode.removeChild(toast);
             }
+            // Process next toast in queue
+            setTimeout(() => processToastQueue(), 100);
         }, 300);
-    }, 4000);
+    }, 2500); // Shortened duration to prevent buildup
 
     // Add animations if they don't exist
     if (!document.getElementById('toast-animations')) {
@@ -3347,20 +3413,6 @@ function showCardEditModal(cardId: number, cardData: any): void {
     console.log(`✅ Edit modal opened for card ${cardId}`);
 }
 
-// Add this close modal function to your synapdeck.ts file
-
-function closeEditModal(): void {
-    const modal = document.getElementById('cardEditModal');
-    if (modal) {
-        modal.style.animation = 'fadeOut 0.2s ease-in';
-        setTimeout(() => {
-            if (modal.parentNode) {
-                modal.parentNode.removeChild(modal);
-            }
-        }, 200);
-    }
-}
-
 // Also add the fadeOut animation to your existing animations
 function addModalAnimations(): void {
     if (!document.getElementById('modal-animations')) {
@@ -3561,7 +3613,14 @@ declare global {
 window.closeEditModal = closeEditModal;
 window.saveAllFields = saveAllFields;
 
+// Replace your deleteCard function with this optimized version:
 async function deleteCard(cardId: number): Promise<void> {
+    // Prevent multiple delete operations on the same card
+    const cardRow = document.querySelector(`tr[data-card-id="${cardId}"]`) as HTMLTableRowElement;
+    if (!cardRow || cardRow.classList.contains('deleting')) {
+        return;
+    }
+
     // Enhanced confirmation dialog
     const confirmed = confirm(
         `⚠️ DELETE CARD ${cardId}\n\n` +
@@ -3574,26 +3633,50 @@ async function deleteCard(cardId: number): Promise<void> {
     }
 
     try {
+        // Mark as deleting to prevent double-clicks
+        cardRow.classList.add('deleting');
+        
+        // Disable action buttons immediately
+        const actionButtons = cardRow.querySelectorAll('.edit-card-btn, .delete-card-btn') as NodeListOf<HTMLButtonElement>;
+        actionButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+        });
+
         const success = await deleteCardById(cardId);
         
         if (success) {
-            // Remove the row from the table immediately for better UX - Fixed type assertion
-            const cardRow = document.querySelector(`tr[data-card-id="${cardId}"]`) as HTMLTableRowElement;
-            if (cardRow) {
-                cardRow.style.transition = 'opacity 0.3s ease';
-                cardRow.style.opacity = '0';
-                setTimeout(() => {
-                    cardRow.remove();
-                    updateCardCount();
-                }, 300);
-            }
+            // Smooth fade out animation
+            cardRow.style.transition = 'all 0.3s ease';
+            cardRow.style.opacity = '0';
+            cardRow.style.transform = 'scale(0.95)';
             
-            showToast(`Card ${cardId} deleted successfully!`, 'success');
+            setTimeout(() => {
+                cardRow.remove();
+                updateCardCount();
+                showToast(`Card ${cardId} deleted successfully!`, 'success');
+            }, 300);
+            
         } else {
+            // Re-enable buttons if delete failed
+            cardRow.classList.remove('deleting');
+            actionButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            });
             showToast(`Failed to delete card ${cardId}. Please try again.`, 'error');
         }
     } catch (error) {
         console.error('Error in deleteCard:', error);
+        
+        // Re-enable buttons on error
+        cardRow.classList.remove('deleting');
+        const actionButtons = cardRow.querySelectorAll('.edit-card-btn, .delete-card-btn') as NodeListOf<HTMLButtonElement>;
+        actionButtons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+        
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         showToast(`Error deleting card ${cardId}: ${errorMessage}`, 'error');
     }
