@@ -98,18 +98,16 @@
                 <input type="checkbox" id="reviewAheadCheckbox" />
                 Review cards ahead of schedule
             </label>
-            <div id="reviewAheadOptions" style="display: none; margin-left: 20px;">
-                <label>
-                    Review cards due within: 
-                    <select id="reviewAheadHours">
-                        <option value="6">6 hours</option>
-                        <option value="12">12 hours</option>
-                        <option value="24" selected>24 hours</option>
-                        <option value="48">48 hours</option>
-                        <option value="72">72 hours</option>
-                        <option value="168">1 week</option>
-                    </select>
-                </label>
+            <div id="reviewAheadOptions" style="display: none;">
+                <label for="reviewDaysAhead">Days ahead:</label>
+                <select id="reviewDaysAhead">
+                    <option value="1">1 day (tomorrow)</option>
+                    <option value="2">2 days</option>
+                    <option value="3">3 days</option>
+                    <option value="7">1 week</option>
+                    <option value="14">2 weeks</option>
+                    <option value="30">1 month</option>
+                </select>
             </div>
 
             <button id="review_submitBtn">Submit</button>

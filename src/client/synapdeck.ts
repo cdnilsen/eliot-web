@@ -6,7 +6,6 @@ import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testChar
 import {hebrewSpecialChars, transliterateHebrew} from './transcribe_hebrew.js'
 let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
 
-
 let deckNameList: string[] = [
     "Akkadian",
     "Ancient Greek",
@@ -605,20 +604,28 @@ uploadSubmitButton.addEventListener('click', async () => {
 
 async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCardsResponse> {
     const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
-    const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
+    const reviewDaysAhead = document.getElementById('reviewDaysAhead') as HTMLSelectElement; // Changed from reviewAheadHours
     
     let checkTime: Date;
+    let targetDate: Date;
     
     if (reviewAheadCheckbox && reviewAheadCheckbox.checked) {
-        // Review ahead - check cards due within the selected timeframe
-        const hoursAhead = parseInt(reviewAheadHours?.value || '24');
-        checkTime = new Date();
-        checkTime.setHours(checkTime.getHours() + hoursAhead);
-        console.log(`📚 Checking cards due within ${hoursAhead} hours`);
+        // Review ahead - check cards due before midnight of target day
+        const daysAhead = parseInt(reviewDaysAhead?.value || '1');
+        targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + daysAhead);
+        
+        // Set to midnight of the target day
+        checkTime = new Date(targetDate);
+        checkTime.setHours(23, 59, 59, 999); // Just before midnight
+        
+        console.log(`📚 Checking cards due before midnight of ${targetDate.toDateString()} (${daysAhead} days ahead)`);
     } else {
-        // Normal mode - only cards due now
+        // Normal mode - cards due before midnight today
         checkTime = new Date();
-        console.log('📚 Checking cards due now');
+        checkTime.setHours(23, 59, 59, 999); // Just before midnight today
+        targetDate = new Date();
+        console.log('📚 Checking cards due before midnight today');
     }
     
     try {
@@ -630,9 +637,10 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
             body: JSON.stringify({ 
                 deck: deckName,
                 current_time: checkTime.toISOString(),
-                actual_current_time: new Date().toISOString(), // Add this
+                actual_current_time: new Date().toISOString(),
                 review_ahead: reviewAheadCheckbox?.checked || false,
-                hours_ahead: reviewAheadCheckbox?.checked ? parseInt(reviewAheadHours?.value || '24') : 0
+                days_ahead: reviewAheadCheckbox?.checked ? parseInt(reviewDaysAhead?.value || '1') : 0,
+                target_date: targetDate.toISOString()
             })
         });
 
@@ -1514,19 +1522,26 @@ let cachedCardResults: CheckCardsResponse | null = null;
 let lastCheckedDeck: string = "";
 let reviewSubmitButton = document.getElementById("review_submitBtn");
 
-function updateSubmitButtonText(numCards: number, totalCardCount: number, reviewAhead: boolean, hoursAhead: number): void {
+function updateSubmitButtonText(numCards: number, totalCardCount: number, reviewAhead: boolean, daysAhead: number): void {
     const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
     if (submitButton) {
         if (totalCardCount === 0) {
-            const timeText = reviewAhead ? ` (${hoursAhead}h ahead)` : '';
-            submitButton.textContent = `No Cards Available${timeText}`;
+            const dateText = reviewAhead ? ` (by ${getTargetDateString(daysAhead)})` : ' (today)';
+            submitButton.textContent = `No Cards Available${dateText}`;
             submitButton.disabled = true;
         } else {
-            const timeText = reviewAhead ? ` (${hoursAhead}h ahead)` : '';
-            submitButton.textContent = `Review ${numCards} of ${totalCardCount} Card${totalCardCount !== 1 ? 's' : ''}${timeText}`;
+            const dateText = reviewAhead ? ` (by ${getTargetDateString(daysAhead)})` : ' (today)';
+            submitButton.textContent = `Review ${numCards} of ${totalCardCount} Card${totalCardCount !== 1 ? 's' : ''}${dateText}`;
             submitButton.disabled = false;
         }
     }
+}
+
+// Helper function to get readable date string
+function getTargetDateString(daysAhead: number): string {
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + daysAhead);
+    return targetDate.toLocaleDateString();
 }
 
 // Frontend function to mark cards as under review
