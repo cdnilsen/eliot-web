@@ -870,7 +870,7 @@ app.post('/wipe_synapdeck_database', express.json(), wrapAsync(async (req, res) 
 
 // Enhanced backend endpoint that handles review ahead
 app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) => {
-    const { deck, current_time, actual_current_time, review_ahead, hours_ahead } = req.body;
+    const { deck, current_time, actual_current_time, review_ahead, days_ahead, target_date } = req.body;
     
     if (!deck) {
         return res.status(400).json({ 
@@ -882,6 +882,7 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
     // Use provided times
     const checkTime = current_time ? new Date(current_time) : new Date();
     const actualCurrentTime = actual_current_time ? new Date(actual_current_time) : new Date();
+    const targetDateTime = target_date ? new Date(target_date) : new Date();
 
     console.log('Testing simple query...');
     const testQuery = await client.query(
@@ -890,17 +891,16 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
     );
     console.log('Simple query result:', testQuery.rows);
 
-    // If that works, try the full query with explicit logging
-    console.log('Parameters being passed:', [deck, checkTime, actualCurrentTime]);
-    console.log('Parameter types:', [typeof deck, typeof checkTime, typeof actualCurrentTime]);
-
     console.log('Request body:', req.body);
     console.log('Deck:', deck);
-    console.log('Current time:', current_time);
-    console.log('Actual current time:', actual_current_time);
+    console.log('Check time (midnight of target day):', checkTime.toISOString());
+    console.log('Target date:', targetDateTime.toDateString());
+    console.log('Actual current time:', actualCurrentTime.toISOString());
     
-    const modeText = review_ahead ? `review ahead (${hours_ahead || 24}h)` : 'due now';
-    console.log(`Checking cards for deck: ${deck} - Mode: ${modeText} - Check time: ${checkTime.toISOString()} - Actual current time: ${actualCurrentTime.toISOString()}`);
+    const modeText = review_ahead ? 
+        `cards due by midnight of ${targetDateTime.toDateString()} (${days_ahead || 1} days ahead)` : 
+        'cards due by midnight today';
+    console.log(`Checking cards for deck: ${deck} - Mode: ${modeText}`);
     
     try {
         const allCards = await client.query(
@@ -935,14 +935,15 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
             FROM cards 
             WHERE deck = $1 
             AND time_due <= $2
+            AND (is_buried = false OR is_buried IS NULL)  -- Exclude buried cards
             ORDER BY time_due ASC`,
-            [deck, checkTime, actualCurrentTime] // Changed $3 to use actualCurrentTime
+            [deck, checkTime, actualCurrentTime]
         );
         
         const dueNow = query.rows.filter(card => card.due_status === 'due_now');
         const dueAhead = query.rows.filter(card => card.due_status === 'due_ahead');
         
-        console.log(`Found ${query.rows.length} cards total (${dueNow.length} due now, ${dueAhead.length} due ahead)`);
+        console.log(`Found ${query.rows.length} cards total (${dueNow.length} due now, ${dueAhead.length} due ahead by target date)`);
         
         res.json({
             status: 'success',
@@ -952,8 +953,9 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
             due_ahead_count: dueAhead.length,
             deck: deck,
             checked_at: checkTime.toISOString(),
+            target_date: targetDateTime.toISOString(),
             review_ahead: review_ahead || false,
-            hours_ahead: hours_ahead || 0
+            days_ahead: days_ahead || 0
         });
         
     } catch (err) {
