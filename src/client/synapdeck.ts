@@ -12,13 +12,15 @@ let deckNameList: string[] = [
     "Ancient Greek",
     "Ge'ez",
     "Hebrew",
-    "Sanskrit"
+    "Sanskrit",
+    "Tocharian B"
 ]
 
 let specialCharSetsDict = {
     "Akkadian": akkadianSpecialChars,
     "Ge'ez": geezSpecialChars,
-    "Hebrew": hebrewSpecialChars
+    "Hebrew": hebrewSpecialChars,
+    "Tocharian B": ["ā", "ä", "ṃ", "ñ", "ṅ", "ṣ", "ś"]
 }
 
 
