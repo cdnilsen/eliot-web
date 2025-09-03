@@ -53,6 +53,29 @@ interface CardFieldData {
     card_format?: string;
 }
 
+interface AdjustIntervalsRequest {
+    deck: string;
+    days_back: number;
+    shift_percentage: number;
+    update_interval: boolean;
+}
+
+interface AdjustIntervalsResponse {
+    status: 'success' | 'error';
+    updated_count?: number;
+    total_cards_found?: number;
+    deck?: string;
+    days_back?: number;
+    shift_percentage?: number;
+    update_interval?: boolean;
+    operation_time?: string;
+    average_old_interval?: number;
+    average_new_interval?: number;
+    duration_seconds?: number;
+    error?: string;
+    details?: string;
+}
+
 declare global {
     interface Window {
         jsPDF: any;
@@ -265,9 +288,11 @@ function initializeTabSwitching() {
                 targetDiv.classList.add('active');
                 console.log("Loaded " + button.id);
                 
-                // Initialize browse cards tab when it becomes active
+                // Initialize specific tabs when they become active
                 if (this.id === 'browse_cards') {
                     setupBrowseCardsTab();
+                } else if (this.id === 'shuffle_cards') {
+                    setupShuffleCardsTab();
                 }
             }
         });
@@ -2102,6 +2127,80 @@ function processHTMLContent(text: string): string {
     return processedParts.join('');
 }
 
+function setupShuffleCardsTab(): void {
+    console.log('Setting up shuffle cards tab...');
+    
+    // Set up bulk reduction button
+    const bulkReduceBtn = document.getElementById('bulkReduceBtn') as HTMLButtonElement;
+    if (bulkReduceBtn && !bulkReduceBtn.dataset.initialized) {
+        bulkReduceBtn.dataset.initialized = 'true';
+        bulkReduceBtn.addEventListener('click', handleBulkReduction);
+    }
+    
+    // Set up interval adjustment button (reuses your existing modal)
+    const intervalAdjustBtn = document.getElementById('openIntervalAdjustmentBtn') as HTMLButtonElement;
+    if (intervalAdjustBtn && !intervalAdjustBtn.dataset.initialized) {
+        intervalAdjustBtn.dataset.initialized = 'true';
+        intervalAdjustBtn.addEventListener('click', showIntervalAdjustmentModal);
+    }
+    
+    // Set up retrievability update button
+    const retrievabilityBtn = document.getElementById('updateRetrievabilityBtn') as HTMLButtonElement;
+    if (retrievabilityBtn && !retrievabilityBtn.dataset.initialized) {
+        retrievabilityBtn.dataset.initialized = 'true';
+        retrievabilityBtn.addEventListener('click', triggerRetrievabilityUpdate);
+    }
+}
+
+async function handleBulkReduction(): Promise<void> {
+    const multiplierInput = document.getElementById('bulkMultiplier') as HTMLInputElement;
+    const bulkReduceBtn = document.getElementById('bulkReduceBtn') as HTMLButtonElement;
+    const multiplier = parseFloat(multiplierInput.value);
+    
+    if (multiplier < 0.01 || multiplier > 1.0) {
+        alert('Multiplier must be between 0.01 and 1.0');
+        return;
+    }
+    
+    const confirmed = confirm(
+        `BULK INTERVAL REDUCTION\n\n` +
+        `This will multiply ALL card intervals by ${multiplier} (${(multiplier * 100).toFixed(0)}%)\n\n` +
+        `This affects your entire database and cannot be undone!\n\n` +
+        `Continue?`
+    );
+    
+    if (!confirmed) return;
+    
+    bulkReduceBtn.textContent = 'Processing...';
+    bulkReduceBtn.disabled = true;
+    
+    try {
+        const response = await fetch('/bulk_reduce_intervals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ interval_multiplier: multiplier })
+        });
+        
+        const result = await response.json();
+        const outputDiv = document.getElementById('shuffle_output');
+        
+        if (result.status === 'success' && outputDiv) {
+            outputDiv.innerHTML = `
+                <div class="success-message">
+                    <h3>✅ Bulk Reduction Complete!</h3>
+                    <p>Updated ${result.updated_count} cards</p>
+                    <p>Average interval: ${result.average_old_interval}d → ${result.average_new_interval}d</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error reducing intervals:', error);
+    } finally {
+        bulkReduceBtn.textContent = 'Apply Bulk Reduction';
+        bulkReduceBtn.disabled = false;
+    }
+}
+
 // Set up the Check Your Work tab functionality
 function setupCheckYourWorkTab(): void {
     const checkDeckDropdown = document.getElementById("check_dropdownMenu") as HTMLSelectElement;
@@ -2589,6 +2688,290 @@ async function performCardSearch(page: number = 0): Promise<void> {
             resultsDiv.innerHTML = '<p class="error">Network error occurred</p>';
         }
     }
+}
+
+
+// Main function to call the backend endpoint
+async function adjustIntervalsByAge(
+    deck: string, 
+    daysBack: number, 
+    shiftPercentage: number, 
+    updateInterval: boolean
+): Promise<AdjustIntervalsResponse> {
+    
+    console.log(`📊 Adjusting intervals for deck "${deck}": ${daysBack} days back, ${(shiftPercentage * 100).toFixed(1)}% shift`);
+    
+    try {
+        const response = await fetch('/adjust_intervals_by_age', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                deck: deck,
+                days_back: daysBack,
+                shift_percentage: shiftPercentage,
+                update_interval: updateInterval
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: AdjustIntervalsResponse = await response.json();
+        console.log('Interval adjustment response:', result);
+        
+        return result;
+    } catch (error) {
+        console.error('Error adjusting intervals:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error adjusting intervals' 
+        };
+    }
+}
+
+// Function to create and show an interval adjustment modal
+function showIntervalAdjustmentModal(): void {
+    // Remove any existing modal
+    const existingModal = document.getElementById('intervalAdjustmentModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Create modal backdrop
+    const modal = document.createElement('div');
+    modal.id = 'intervalAdjustmentModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease-out;
+    `;
+
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        padding: 0;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease-out;
+    `;
+
+    modalContent.innerHTML = `
+        <div style="padding: 24px; border-bottom: 1px solid #e1e5e9;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0; color: #333; font-size: 20px;">📊 Adjust Intervals by Card Age</h2>
+                <button id="closeIntervalModal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">×</button>
+            </div>
+        </div>
+        
+        <div style="padding: 24px;">
+            <div style="margin-bottom: 20px;">
+                <label for="adjustDeckSelect" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Deck:</label>
+                <select id="adjustDeckSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                    <option value="">Select a deck...</option>
+                    <option value="Ge'ez">Ge'ez</option>
+                    <option value="Ancient Greek">Ancient Greek</option>
+                    <option value="Sanskrit">Sanskrit</option>
+                    <option value="Akkadian">Akkadian</option>
+                    <option value="Hebrew">Hebrew</option>
+                    <option value="Tocharian B">Tocharian B</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label for="daysBackInput" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Target cards added within last:</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" id="daysBackInput" min="1" max="365" value="30" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                    <span style="color: #666; font-size: 14px;">days</span>
+                </div>
+                <small style="color: #666; font-size: 12px;">Cards created within this many days will be affected</small>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label for="shiftPercentageInput" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Interval adjustment:</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" id="shiftPercentageInput" min="-100" max="100" value="0" step="1" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                    <span style="color: #666; font-size: 14px;">%</span>
+                </div>
+                <small style="color: #666; font-size: 12px;">
+                    Positive values increase intervals (easier), negative values decrease intervals (harder)<br>
+                    Each card gets a random adjustment between 0 and your value
+                </small>
+            </div>
+            
+            <div style="margin-bottom: 24px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="updateIntervalCheckbox" checked style="transform: scale(1.2);">
+                    <span style="font-weight: 600; color: #333;">Update stored interval values</span>
+                </label>
+                <small style="color: #666; font-size: 12px; margin-left: 32px;">
+                    If unchecked, only due dates change (temporary adjustment)
+                </small>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="color: #6c757d; font-size: 13px;">
+                    <strong>Example:</strong> 30 days, +15% adjustment will randomly increase intervals of cards created in the last 30 days by 0-15%, making them slightly easier.
+                </div>
+            </div>
+        </div>
+        
+        <div style="padding: 20px 24px; border-top: 1px solid #e1e5e9; display: flex; gap: 12px; justify-content: flex-end;">
+            <button id="cancelIntervalAdjust" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+            <button id="executeIntervalAdjust" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Adjust Intervals</button>
+        </div>
+    `;
+
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    // Add event listeners
+    const closeBtn = document.getElementById('closeIntervalModal') as HTMLButtonElement;
+    const cancelBtn = document.getElementById('cancelIntervalAdjust') as HTMLButtonElement;
+    const executeBtn = document.getElementById('executeIntervalAdjust') as HTMLButtonElement;
+
+    const closeModal = () => {
+        modal.style.animation = 'fadeOut 0.3s ease-in';
+        setTimeout(() => modal.remove(), 300);
+    };
+
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    if (executeBtn) {
+        executeBtn.addEventListener('click', async () => {
+            const deckSelect = document.getElementById('adjustDeckSelect') as HTMLSelectElement;
+            const daysBackInput = document.getElementById('daysBackInput') as HTMLInputElement;
+            const shiftInput = document.getElementById('shiftPercentageInput') as HTMLInputElement;
+            const updateCheckbox = document.getElementById('updateIntervalCheckbox') as HTMLInputElement;
+
+            const deck = deckSelect.value.trim();
+            const daysBack = parseInt(daysBackInput.value);
+            const shiftPercent = parseFloat(shiftInput.value) / 100; // Convert to decimal
+            const updateInterval = updateCheckbox.checked;
+
+            // Validation
+            if (!deck) {
+                alert('Please select a deck');
+                return;
+            }
+            if (daysBack < 1 || daysBack > 365) {
+                alert('Days back must be between 1 and 365');
+                return;
+            }
+            if (shiftPercent < -1 || shiftPercent > 1) {
+                alert('Adjustment percentage must be between -100% and +100%');
+                return;
+            }
+
+            // Confirmation
+            const actionType = updateInterval ? 'permanently adjust intervals' : 'temporarily adjust due dates';
+            const direction = shiftPercent > 0 ? 'increase' : (shiftPercent < 0 ? 'decrease' : 'not change');
+            
+            const confirmed = confirm(
+                `${actionType.toUpperCase()} FOR DECK "${deck}"\n\n` +
+                `• Target: Cards created in last ${daysBack} days\n` +
+                `• Adjustment: ${direction} intervals by up to ${Math.abs(shiftPercent * 100)}%\n` +
+                `• Mode: ${updateInterval ? 'Permanent' : 'Temporary'}\n\n` +
+                `Continue?`
+            );
+
+            if (!confirmed) return;
+
+            // Show loading state
+            executeBtn.textContent = 'Processing...';
+            executeBtn.disabled = true;
+
+            try {
+                const result = await adjustIntervalsByAge(deck, daysBack, shiftPercent, updateInterval);
+                
+                if (result.status === 'success') {
+                    const message = `Success! Updated ${result.updated_count} of ${result.total_cards_found} cards in "${deck}"\n\n` +
+                        `Average interval: ${result.average_old_interval?.toFixed(1)}d → ${result.average_new_interval?.toFixed(1)}d\n` +
+                        `Completed in ${result.duration_seconds?.toFixed(2)} seconds`;
+                    
+                    alert(message);
+                    closeModal();
+                } else {
+                    alert(`Error: ${result.error}`);
+                    executeBtn.textContent = 'Adjust Intervals';
+                    executeBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error executing interval adjustment:', error);
+                alert('Network error occurred');
+                executeBtn.textContent = 'Adjust Intervals';
+                executeBtn.disabled = false;
+            }
+        });
+    }
+}
+
+// Function to add the interval adjustment button to an existing tab
+function addIntervalAdjustmentControls(): void {
+    // Add to the "Check Your Work" tab alongside retrievability controls
+    const checkTab = document.getElementById('check_mainDiv');
+    if (!checkTab) return;
+
+    // Find or create management section
+    let managementSection = checkTab.querySelector('.retrievability-management, .management-section');
+    if (!managementSection) {
+        managementSection = document.createElement('div');
+        managementSection.className = 'management-section';
+        managementSection.innerHTML = `
+            <div style="margin-top: 40px; border-top: 2px solid #dee2e6; padding-top: 20px;">
+                <h3>🛠️ Card Management Tools</h3>
+            </div>
+        `;
+        checkTab.appendChild(managementSection);
+    }
+
+    // Add interval adjustment section if it doesn't exist
+    if (!managementSection.querySelector('.interval-adjustment-section')) {
+        const intervalSection = document.createElement('div');
+        intervalSection.className = 'interval-adjustment-section';
+        intervalSection.innerHTML = `
+            <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                <h4>📊 Interval Adjustment by Age</h4>
+                <p style="margin-bottom: 15px; color: #666;">
+                    Adjust intervals for recently added cards to fine-tune their difficulty.
+                </p>
+                <button id="openIntervalAdjustmentBtn" class="btn" style="background: #17a2b8; color: white;">
+                    📊 Adjust Intervals by Card Age
+                </button>
+            </div>
+        `;
+        managementSection.appendChild(intervalSection);
+
+        // Add event listener
+        const openBtn = document.getElementById('openIntervalAdjustmentBtn');
+        if (openBtn) {
+            openBtn.addEventListener('click', showIntervalAdjustmentModal);
+        }
+    }
+}
+
+// Initialize the interval adjustment feature
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addIntervalAdjustmentControls);
+} else {
+    addIntervalAdjustmentControls();
 }
 
 // Generate the back side of a card

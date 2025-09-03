@@ -2438,9 +2438,6 @@ app.post('/update_retrievability', express.json(), wrapAsync(async (req, res) =>
     }
 }));
 
-
-
-
 // Debug endpoint to check card states and retrievability calculation
 app.get('/debug_retrievability/:cardId?', wrapAsync(async (req, res) => {
     const { cardId } = req.params;
@@ -3514,3 +3511,217 @@ async function unburyDailyBuriedCards(): Promise<void> {
         transactionClient.release();
     }
 }
+
+// Add these interfaces near your other type definitions
+interface AdjustIntervalsRequest {
+    deck: string;
+    days_back: number;
+    shift_percentage: number; // between -1 and 1
+    update_interval: boolean;
+}
+
+interface AdjustIntervalsResponse {
+    status: 'success' | 'error';
+    updated_count?: number;
+    total_cards_found?: number;
+    deck?: string;
+    days_back?: number;
+    shift_percentage?: number;
+    update_interval?: boolean;
+    operation_time?: string;
+    average_old_interval?: number;
+    average_new_interval?: number;
+    error?: string;
+    details?: string;
+}
+
+// Add this endpoint to your Express app
+app.post('/adjust_intervals_by_age', express.json(), wrapAsync(async (req, res) => {
+    const { deck, days_back, shift_percentage, update_interval }: AdjustIntervalsRequest = req.body;
+    
+    console.log(`📊 Interval adjustment requested for deck "${deck}"`);
+    console.log(`📊 Parameters: ${days_back} days back, ${(shift_percentage * 100).toFixed(1)}% shift, update_interval: ${update_interval}`);
+    
+    // Validation
+    if (!deck || typeof deck !== 'string') {
+        return res.json({
+            status: 'error',
+            error: 'Deck name is required and must be a string'
+        } as AdjustIntervalsResponse);
+    }
+    
+    if (typeof days_back !== 'number' || days_back < 0) {
+        return res.json({
+            status: 'error',
+            error: 'days_back must be a non-negative number'
+        } as AdjustIntervalsResponse);
+    }
+    
+    if (typeof shift_percentage !== 'number' || shift_percentage < -1 || shift_percentage > 1) {
+        return res.json({
+            status: 'error',
+            error: 'shift_percentage must be a number between -1 and 1'
+        } as AdjustIntervalsResponse);
+    }
+    
+    if (typeof update_interval !== 'boolean') {
+        return res.json({
+            status: 'error',
+            error: 'update_interval must be a boolean'
+        } as AdjustIntervalsResponse);
+    }
+    
+    const startTime = Date.now();
+    const operationTime = new Date().toISOString();
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days_back);
+    
+    console.log(`📊 Looking for cards created on or after: ${cutoffDate.toISOString()}`);
+    
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        console.log('📊 Transaction started for interval adjustment');
+        
+        // Find target cards based on deck and creation date
+        const targetCardsQuery = await transactionClient.query(`
+            SELECT 
+                card_id,
+                interval,
+                time_due,
+                last_reviewed,
+                created,
+                deck
+            FROM cards
+            WHERE deck = $1 
+            AND created >= $2
+            ORDER BY card_id
+        `, [deck, cutoffDate]);
+        
+        const targetCards = targetCardsQuery.rows;
+        const totalCards = targetCards.length;
+        
+        console.log(`📊 Found ${totalCards} cards matching criteria`);
+        
+        if (totalCards === 0) {
+            await transactionClient.query('ROLLBACK');
+            return res.json({
+                status: 'success',
+                updated_count: 0,
+                total_cards_found: 0,
+                deck: deck,
+                days_back: days_back,
+                shift_percentage: shift_percentage,
+                update_interval: update_interval,
+                operation_time: operationTime,
+                message: 'No cards found matching the criteria'
+            } as AdjustIntervalsResponse & { message: string });
+        }
+        
+        // Calculate statistics before update
+        const oldIntervals = targetCards.map(card => card.interval);
+        const averageOldInterval = oldIntervals.reduce((sum, interval) => sum + interval, 0) / totalCards;
+        
+        let updatedCount = 0;
+        let totalNewInterval = 0;
+        
+        // Process each card
+        for (let i = 0; i < targetCards.length; i++) {
+            const card = targetCards[i];
+            
+            // Generate random number in the appropriate range
+            // If shift_percentage is positive: [0, shift_percentage]
+            // If shift_percentage is negative: [shift_percentage, 0]
+            const minRange = Math.min(0, shift_percentage);
+            const maxRange = Math.max(0, shift_percentage);
+            const randomMultiplier = Math.random() * (maxRange - minRange) + minRange;
+            
+            // Calculate new interval
+            const oldInterval = card.interval;
+            const newInterval = Math.max(1, Math.round(oldInterval * (1 + randomMultiplier)));
+            totalNewInterval += newInterval;
+            
+            // Calculate new due date based on last review (or creation if never reviewed)
+            const referenceDate = card.last_reviewed ? new Date(card.last_reviewed) : new Date(card.created);
+            const newDueDate = new Date(referenceDate.getTime() + (newInterval * 24 * 60 * 60 * 1000));
+            
+            // Update the card
+            if (update_interval) {
+                // Update both due date and interval
+                await transactionClient.query(`
+                    UPDATE cards 
+                    SET time_due = $1,
+                        interval = $2
+                    WHERE card_id = $3
+                `, [newDueDate, newInterval, card.card_id]);
+            } else {
+                // Update only due date
+                await transactionClient.query(`
+                    UPDATE cards 
+                    SET time_due = $1
+                    WHERE card_id = $2
+                `, [newDueDate, card.card_id]);
+            }
+            
+            updatedCount++;
+            
+            // Log examples for first few cards
+            if (i < 5) {
+                console.log(`📊 Card ${card.card_id}: ${oldInterval}d → ${newInterval}d (${(randomMultiplier * 100).toFixed(1)}%), due: ${newDueDate.toISOString()}`);
+            }
+            
+            // Progress logging
+            if (updatedCount % 1000 === 0) {
+                console.log(`📊 Updated ${updatedCount}/${totalCards} cards`);
+            }
+        }
+        
+        await transactionClient.query('COMMIT');
+        
+        const endTime = Date.now();
+        const durationSeconds = (endTime - startTime) / 1000;
+        const averageNewInterval = totalNewInterval / totalCards;
+        
+        console.log(`📊 INTERVAL ADJUSTMENT COMPLETED SUCCESSFULLY`);
+        console.log(`📊 Deck: ${deck}`);
+        console.log(`📊 Updated: ${updatedCount}/${totalCards} cards`);
+        console.log(`📊 Duration: ${durationSeconds.toFixed(2)} seconds`);
+        console.log(`📊 Average interval: ${averageOldInterval.toFixed(1)}d → ${averageNewInterval.toFixed(1)}d`);
+        console.log(`📊 Shift range: ${(shift_percentage * 100).toFixed(1)}%`);
+        console.log(`📊 Updated interval values: ${update_interval ? 'YES' : 'NO (due dates only)'}`);
+        
+        res.json({
+            status: 'success',
+            updated_count: updatedCount,
+            total_cards_found: totalCards,
+            deck: deck,
+            days_back: days_back,
+            shift_percentage: shift_percentage,
+            update_interval: update_interval,
+            operation_time: operationTime,
+            average_old_interval: parseFloat(averageOldInterval.toFixed(1)),
+            average_new_interval: parseFloat(averageNewInterval.toFixed(1)),
+            duration_seconds: parseFloat(durationSeconds.toFixed(2))
+        } as AdjustIntervalsResponse & { duration_seconds: number });
+        
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('📊 ERROR in interval adjustment:', error);
+        
+        res.json({
+            status: 'error',
+            error: 'Failed to adjust intervals',
+            details: error instanceof Error ? error.message : 'Unknown error occurred',
+            deck: deck,
+            days_back: days_back,
+            shift_percentage: shift_percentage,
+            update_interval: update_interval,
+            operation_time: operationTime
+        } as AdjustIntervalsResponse);
+        
+    } finally {
+        transactionClient.release();
+        console.log('📊 Transaction client released');
+    }
+}));

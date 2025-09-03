@@ -12,6 +12,7 @@
         <h1>Welcome to Synapdeck!</h1>
         <div class="button-row">
             <button type="button" id="upload_cards" class="active">Upload Card Data</button>
+            <button type="button" id="shuffle_cards">Shuffle Cards</button>
             <button type="button" id="browse_cards">Browse Cards</button>
             <button type="button" id="review_cards">Do Reviews</button>
             <button type="button" id="check_work">Check Your Work</button>
@@ -76,6 +77,43 @@
             <div id="upload_output"></div>
         </div>
 
+        <div id="shuffle_mainDiv" class="tab-content">
+            <h2>Shuffle Cards</h2>
+            <p>Adjust intervals and scheduling for existing cards.</p>
+            
+            <div class="shuffle-options">
+                <div class="shuffle-section">
+                    <h3>🔄 Bulk Interval Adjustments</h3>
+                    
+                    <div class="adjustment-option">
+                        <h4>Reduce All Intervals</h4>
+                        <p>Multiply all card intervals by a percentage to make reviews come up sooner.</p>
+                        <div class="input-group">
+                            <label for="bulkMultiplier">Multiplier (0.1 to 1.0):</label>
+                            <input type="number" id="bulkMultiplier" min="0.1" max="1.0" step="0.1" value="0.8">
+                            <small>Example: 0.8 = reduce all intervals to 80% of current values</small>
+                        </div>
+                        <button id="bulkReduceBtn" class="btn">Apply Bulk Reduction</button>
+                    </div>
+                    
+                    <div class="adjustment-option">
+                        <h4>Adjust by Card Age</h4>
+                        <p>Fine-tune intervals for recently added cards to adjust their difficulty.</p>
+                        <button id="openIntervalAdjustmentBtn" class="btn">Open Interval Adjustment Tool</button>
+                    </div>
+                    
+                    <div class="adjustment-option">
+                        <h4>Manual Retrievability Update</h4>
+                        <p>Recalculate all card retrievability values based on current FSRS parameters.</p>
+                        <button id="updateRetrievabilityBtn" class="btn">Update All Retrievability</button>
+                    </div>
+                </div>
+        </div>
+    
+        <div id="shuffle_output" class="output-section">
+            Select an adjustment option above to modify your card scheduling.
+        </div>
+
         <!-- Add placeholder divs for other tabs -->
         <div id="browse_mainDiv" class="tab-content">
             <h2>Browse Cards</h2>
@@ -94,31 +132,31 @@
             </div>
 
             <div class="review-options">
-            <label>
-                <input type="checkbox" id="reviewAheadCheckbox" />
-                Review cards ahead of schedule
-            </label>
-            <div id="reviewAheadOptions" style="display: none;">
-                <label for="reviewDaysAhead">Days ahead:</label>
-                <select id="reviewDaysAhead">
-                    <option value="1">1 day (tomorrow)</option>
-                    <option value="2">2 days</option>
-                    <option value="3">3 days</option>
-                    <option value="7">1 week</option>
-                    <option value="14">2 weeks</option>
-                    <option value="30">1 month</option>
-                </select>
-            </div>
+                <label>
+                    <input type="checkbox" id="reviewAheadCheckbox" />
+                    Review cards ahead of schedule
+                </label>
+                <div id="reviewAheadOptions" style="display: none;">
+                    <label for="reviewDaysAhead">Days ahead:</label>
+                    <select id="reviewDaysAhead">
+                        <option value="1">1 day (tomorrow)</option>
+                        <option value="2">2 days</option>
+                        <option value="3">3 days</option>
+                        <option value="7">1 week</option>
+                        <option value="14">2 weeks</option>
+                        <option value="30">1 month</option>
+                    </select>
+                </div>
 
-            <button id="review_submitBtn">Submit</button>
+                <button id="review_submitBtn">Submit</button>
 
-            <div class="review-options">
-                <button type="button" id="resetCardReview" style="background: #00ffff; color: black; border: 3px black; padding: 8px 12px; border-radius: 4px; cursor: pointer;">
-                    &#10003; Reset all cards' review status
-                </button>
+                <div class="review-options">
+                    <button type="button" id="resetCardReview" style="background: #00ffff; color: black; border: 3px black; padding: 8px 12px; border-radius: 4px; cursor: pointer;">
+                        &#10003; Reset all cards' review status
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
         <div id="check_mainDiv" class="tab-content">
             <h2>Check Your Work</h2>
