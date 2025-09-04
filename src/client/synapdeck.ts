@@ -55,6 +55,12 @@ function createDeckDropdowns() {
     for (let i=0; i < dropdownIDs.length; i++) {
         let id = dropdownIDs[i];
         let selectElement = document.getElementById(id) as HTMLSelectElement;
+        // null check
+        if (!selectElement) {
+            console.warn(`Dropdown element not found: ${id}`);
+            continue;
+        }
+        
         for (let j=0; j < deckNameList.length; j++) {
             let deck = deckNameList[j];
             let option = document.createElement("option");
