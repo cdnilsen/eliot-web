@@ -78,102 +78,52 @@
         </div>
 
         <div id="shuffle_mainDiv" class="tab-content">
-            <h2>Shuffle Cards</h2>
-            <p>Adjust intervals and scheduling for existing cards.</p>
-            
-            <div class="shuffle-options">
-                <div class="shuffle-section">
-                    <h3>🔄 Bulk Interval Adjustments</h3>
-                    
-                    <div class="adjustment-option">
-                        <h4>Reduce All Intervals</h4>
-                        <p>Multiply all card intervals by a percentage to make reviews come up sooner.</p>
-                        <div class="input-group">
-                            <label for="bulkMultiplier">Multiplier (0.1 to 1.0):</label>
-                            <input type="number" id="bulkMultiplier" min="0.1" max="1.0" step="0.1" value="0.8">
-                            <small>Example: 0.8 = reduce all intervals to 80% of current values</small>
-                        </div>
-                        <button id="bulkReduceBtn" class="btn">Apply Bulk Reduction</button>
-                    </div>
-                    
-                    <div class="adjustment-option">
-                        <h4>Adjust by Card Age</h4>
-                        <p>Fine-tune intervals for recently added cards to adjust their difficulty.</p>
-                        <button id="openIntervalAdjustmentBtn" class="btn">Open Interval Adjustment Tool</button>
-                    </div>
-                    
-                    <div class="adjustment-option">
-                        <h4>Manual Retrievability Update</h4>
-                        <p>Recalculate all card retrievability values based on current FSRS parameters.</p>
-                        <button id="updateRetrievabilityBtn" class="btn">Update All Retrievability</button>
-                    </div>
-                </div>
-        </div>
+            <h2>Shuffle Card Due Dates</h2>
+            <p>Randomly redistribute the due dates of cards within a specified time period to spread out reviews more evenly.</p>
     
-        <div id="shuffle_output" class="output-section">
-            Select an adjustment option above to modify your card scheduling.
-        </div>
-
-        <!-- Add placeholder divs for other tabs -->
-        <div id="browse_mainDiv" class="tab-content">
-            <h2>Browse Cards</h2>
-            <p>Browse cards content will go here...</p>
-        </div>
-
-        <div id="review_mainDiv" class="tab-content">
-            <label for="review_dropdownMenu">Choose a deck to review:</label>
-            <select id="review_dropdownMenu" name="review_dropdownMenu">
-                <option value="" disabled selected>Select a deck</option>
-            </select>
-
-            <div class="review_input-group">
-                <label for="review_numCards">Number of new cards to review:</label>
-                <input type="number" id="review_numCards" name="review_numCards" min="1" max="100" value="10">
-            </div>
-
-            <div class="review-options">
-                <label>
-                    <input type="checkbox" id="reviewAheadCheckbox" />
-                    Review cards ahead of schedule
-                </label>
-                <div id="reviewAheadOptions" style="display: none;">
-                    <label for="reviewDaysAhead">Days ahead:</label>
-                    <select id="reviewDaysAhead">
-                        <option value="1">1 day (tomorrow)</option>
-                        <option value="2">2 days</option>
-                        <option value="3">3 days</option>
-                        <option value="7">1 week</option>
-                        <option value="14">2 weeks</option>
-                        <option value="30">1 month</option>
+            <div class="date-shuffle-form">
+                <div class="input-group">
+                    <label for="shuffleDeckSelect">Select Deck:</label>
+                    <select id="shuffleDeckSelect">
+                        <option value="">Choose a deck...</option>
+                        <option value="Ge'ez">Ge'ez</option>
+                        <option value="Ancient Greek">Ancient Greek</option>
+                        <option value="Sanskrit">Sanskrit</option>
+                        <option value="Akkadian">Akkadian</option>
+                        <option value="Hebrew">Hebrew</option>
+                        <option value="Tocharian B">Tocharian B</option>
                     </select>
                 </div>
-
-                <button id="review_submitBtn">Submit</button>
-
-                <div class="review-options">
-                    <button type="button" id="resetCardReview" style="background: #00ffff; color: black; border: 3px black; padding: 8px 12px; border-radius: 4px; cursor: pointer;">
-                        &#10003; Reset all cards' review status
-                    </button>
+                
+                <div class="input-group">
+                    <label for="shuffleDaysSpan">Time Span (days):</label>
+                    <input type="number" id="shuffleDaysSpan" min="1" max="365" value="7" placeholder="Number of days">
+                    <small>Cards will be randomly distributed across this many days</small>
+                </div>
+                
+                <div class="input-group">
+                    <label for="shuffleBaseDate">Starting Date:</label>
+                    <input type="date" id="shuffleBaseDate">
+                    <small>Leave blank to start from today</small>
+                </div>
+                
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="includeOverdueCards">
+                        Include overdue cards in shuffle
+                    </label>
+                    <small>If checked, includes cards that are already overdue</small>
+                </div>
+                
+                <div class="button-group">
+                    <button id="executeDateShuffleBtn" class="btn">Shuffle Due Dates</button>
                 </div>
             </div>
-        </div>
-
-        <div id="check_mainDiv" class="tab-content">
-            <h2>Check Your Work</h2>
-            <p>View answer keys for cards currently under review.</p>
-            
-            <label for="check_dropdownMenu">Choose a deck to check:</label>
-            <select id="check_dropdownMenu" name="check_dropdownMenu">
-                <option value="" disabled selected>Select a deck</option>
-            </select>
-
-            <div class="check_input-group">
-                <button id="check_submitBtn">Show Answer Key</button>
+    
+            <div id="shuffle_output" class="output-section">
+                Select a deck and configure options above to shuffle due dates.
             </div>
-
-            <div id="check_output">Select a deck and click "Show Answer Key" to see answers for cards currently under review.</div>
         </div>
-    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
     <script>

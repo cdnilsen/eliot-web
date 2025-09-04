@@ -31,6 +31,33 @@ interface CardRow {
     interval?: number;
 }
 
+// Add these interfaces for date shuffling
+interface ShuffleDueDatesRequest {
+    deck: string;
+    days_span: number;
+    base_date: string;
+    include_overdue: boolean;
+}
+
+interface ShuffleDueDatesResponse {
+    status: 'success' | 'error';
+    updated_count?: number;
+    total_cards_found?: number;
+    deck?: string;
+    days_span?: number;
+    base_date?: string;
+    date_range?: {
+        start_date: string;
+        end_date: string;
+    };
+    operation_time?: string;
+    average_old_due_days?: number;
+    average_new_due_days?: number;
+    duration_seconds?: number;
+    error?: string;
+    details?: string;
+}
+
 const app = express()
 const port = parseInt(process.env.PORT || '3000', 10);
 
@@ -3723,5 +3750,193 @@ app.post('/adjust_intervals_by_age', express.json(), wrapAsync(async (req, res) 
     } finally {
         transactionClient.release();
         console.log('📊 Transaction client released');
+    }
+}));
+
+// Add this endpoint after your existing endpoints
+app.post('/shuffle_due_dates', express.json(), wrapAsync(async (req, res) => {
+    const { deck, days_span, base_date, include_overdue }: ShuffleDueDatesRequest = req.body;
+    
+    console.log(`🎲 Due date shuffle requested for deck "${deck}"`);
+    console.log(`🎲 Parameters: ${days_span} days span, base_date: ${base_date}, include_overdue: ${include_overdue}`);
+    
+    // Validation
+    if (!deck || typeof deck !== 'string') {
+        return res.json({
+            status: 'error',
+            error: 'Deck name is required and must be a string'
+        } as ShuffleDueDatesResponse);
+    }
+    
+    if (typeof days_span !== 'number' || days_span < 1 || days_span > 365) {
+        return res.json({
+            status: 'error',
+            error: 'days_span must be a number between 1 and 365'
+        } as ShuffleDueDatesResponse);
+    }
+    
+    const startTime = Date.now();
+    const operationTime = new Date().toISOString();
+    
+    // Set up date range
+    const baseDate = new Date(base_date);
+    const endDate = new Date(baseDate);
+    endDate.setDate(endDate.getDate() + days_span);
+    
+    console.log(`🎲 Date range: ${baseDate.toISOString()} to ${endDate.toISOString()}`);
+    
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        console.log('🎲 Transaction started for due date shuffle');
+        
+        // Build query to find target cards
+        let whereConditions = ['deck = $1'];
+        let queryParams: any[] = [deck];
+        let paramIndex = 2;
+        
+        if (include_overdue) {
+            // Include all cards due up to the end date (including overdue)
+            whereConditions.push(`time_due <= $${paramIndex}`);
+            queryParams.push(endDate);
+            paramIndex++;
+        } else {
+            // Only include cards due within the specified range
+            whereConditions.push(`time_due >= $${paramIndex}`);
+            whereConditions.push(`time_due <= $${paramIndex + 1}`);
+            queryParams.push(baseDate);
+            queryParams.push(endDate);
+            paramIndex += 2;
+        }
+        
+        const whereClause = whereConditions.join(' AND ');
+        
+        // Find target cards
+        const targetCardsQuery = await transactionClient.query(`
+            SELECT 
+                card_id,
+                time_due,
+                interval,
+                deck
+            FROM cards
+            WHERE ${whereClause}
+            ORDER BY card_id
+        `, queryParams);
+        
+        const targetCards = targetCardsQuery.rows;
+        const totalCards = targetCards.length;
+        
+        console.log(`🎲 Found ${totalCards} cards to shuffle`);
+        
+        if (totalCards === 0) {
+            await transactionClient.query('ROLLBACK');
+            return res.json({
+                status: 'success',
+                updated_count: 0,
+                total_cards_found: 0,
+                deck: deck,
+                days_span: days_span,
+                base_date: baseDate.toISOString(),
+                date_range: {
+                    start_date: baseDate.toISOString(),
+                    end_date: endDate.toISOString()
+                },
+                operation_time: operationTime,
+                message: 'No cards found in the specified date range'
+            } as ShuffleDueDatesResponse & { message: string });
+        }
+        
+        // Calculate statistics before shuffle
+        const oldDueDays = targetCards.map(card => {
+            const dueDate = new Date(card.time_due);
+            const diffTime = dueDate.getTime() - baseDate.getTime();
+            return diffTime / (1000 * 60 * 60 * 24);
+        });
+        const averageOldDueDays = oldDueDays.reduce((sum, days) => sum + days, 0) / totalCards;
+        
+        let updatedCount = 0;
+        let totalNewDueDays = 0;
+        
+        // Shuffle each card to a random date within the range
+        for (let i = 0; i < targetCards.length; i++) {
+            const card = targetCards[i];
+            
+            // Generate random number of days between 0 and days_span
+            const randomDays = Math.random() * days_span;
+            
+            // Calculate new due date
+            const newDueDate = new Date(baseDate);
+            newDueDate.setTime(newDueDate.getTime() + (randomDays * 24 * 60 * 60 * 1000));
+            
+            // Update the card's due date (keep original interval)
+            await transactionClient.query(`
+                UPDATE cards 
+                SET time_due = $1
+                WHERE card_id = $2
+            `, [newDueDate, card.card_id]);
+            
+            updatedCount++;
+            totalNewDueDays += randomDays;
+            
+            // Log examples for first few cards
+            if (i < 5) {
+                const oldDueDate = new Date(card.time_due);
+                console.log(`🎲 Card ${card.card_id}: ${oldDueDate.toLocaleDateString()} → ${newDueDate.toLocaleDateString()}`);
+            }
+            
+            // Progress logging
+            if (updatedCount % 1000 === 0) {
+                console.log(`🎲 Shuffled ${updatedCount}/${totalCards} cards`);
+            }
+        }
+        
+        await transactionClient.query('COMMIT');
+        
+        const endTime = Date.now();
+        const durationSeconds = (endTime - startTime) / 1000;
+        const averageNewDueDays = totalNewDueDays / totalCards;
+        
+        console.log(`🎲 DUE DATE SHUFFLE COMPLETED SUCCESSFULLY`);
+        console.log(`🎲 Deck: ${deck}`);
+        console.log(`🎲 Shuffled: ${updatedCount}/${totalCards} cards`);
+        console.log(`🎲 Duration: ${durationSeconds.toFixed(2)} seconds`);
+        console.log(`🎲 Date range: ${baseDate.toDateString()} to ${endDate.toDateString()}`);
+        console.log(`🎲 Average days from base: ${averageOldDueDays.toFixed(1)} → ${averageNewDueDays.toFixed(1)}`);
+        
+        res.json({
+            status: 'success',
+            updated_count: updatedCount,
+            total_cards_found: totalCards,
+            deck: deck,
+            days_span: days_span,
+            base_date: baseDate.toISOString(),
+            date_range: {
+                start_date: baseDate.toISOString(),
+                end_date: endDate.toISOString()
+            },
+            operation_time: operationTime,
+            average_old_due_days: parseFloat(averageOldDueDays.toFixed(1)),
+            average_new_due_days: parseFloat(averageNewDueDays.toFixed(1)),
+            duration_seconds: parseFloat(durationSeconds.toFixed(2))
+        } as ShuffleDueDatesResponse & { duration_seconds: number });
+        
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('🎲 ERROR in due date shuffle:', error);
+        
+        res.json({
+            status: 'error',
+            error: 'Failed to shuffle due dates',
+            details: error instanceof Error ? error.message : 'Unknown error occurred',
+            deck: deck,
+            days_span: days_span,
+            base_date: baseDate.toISOString(),
+            operation_time: operationTime
+        } as ShuffleDueDatesResponse);
+        
+    } finally {
+        transactionClient.release();
+        console.log('🎲 Transaction client released');
     }
 }));

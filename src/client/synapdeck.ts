@@ -23,6 +23,33 @@ let specialCharSetsDict = {
 }
 
 
+interface ShuffleDueDatesRequest {
+    deck: string;
+    days_span: number;
+    base_date: string;
+    include_overdue: boolean;
+}
+
+interface ShuffleDueDatesResponse {
+    status: 'success' | 'error';
+    updated_count?: number;
+    total_cards_found?: number;
+    deck?: string;
+    days_span?: number;
+    base_date?: string;
+    date_range?: {
+        start_date: string;
+        end_date: string;
+    };
+    operation_time?: string;
+    average_old_due_days?: number;
+    average_new_due_days?: number;
+    duration_seconds?: number;
+    error?: string;
+    details?: string;
+}
+
+
 function createDeckDropdowns() {
     let dropdownIDs: string[] = ["upload_dropdownMenu", "review_dropdownMenu", "check_dropdownMenu"];
     for (let i=0; i < dropdownIDs.length; i++) {
@@ -747,6 +774,47 @@ function groupCardsByDueDate(cards: CardDue[], groupByDateOnly = false) {
         .map(([date, cards]) => cards);
     
     return sortedGroups;
+}
+
+// API function to shuffle due dates
+async function shuffleDueDates(
+    deck: string,
+    daysSpan: number,
+    baseDate?: string,
+    includeOverdue: boolean = false
+): Promise<ShuffleDueDatesResponse> {
+    
+    console.log(`🎲 Shuffling due dates for deck "${deck}": ${daysSpan} days from ${baseDate || 'today'}`);
+    
+    try {
+        const response = await fetch('/shuffle_due_dates', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                deck: deck,
+                days_span: daysSpan,
+                base_date: baseDate,
+                include_overdue: includeOverdue
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: ShuffleDueDatesResponse = await response.json();
+        console.log('Shuffle due dates response:', result);
+        
+        return result;
+    } catch (error) {
+        console.error('Error shuffling due dates:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error shuffling due dates' 
+        };
+    }
 }
 
 function shuffleCardArray(cards: CardDue[]): CardDue[] {
@@ -2127,28 +2195,366 @@ function processHTMLContent(text: string): string {
     return processedParts.join('');
 }
 
+
+// Replace your existing setupShuffleCardsTab function with this new version
 function setupShuffleCardsTab(): void {
-    console.log('Setting up shuffle cards tab...');
+    console.log('Setting up date shuffle tab...');
     
-    // Set up bulk reduction button
-    const bulkReduceBtn = document.getElementById('bulkReduceBtn') as HTMLButtonElement;
-    if (bulkReduceBtn && !bulkReduceBtn.dataset.initialized) {
-        bulkReduceBtn.dataset.initialized = 'true';
-        bulkReduceBtn.addEventListener('click', handleBulkReduction);
+    const shuffleTab = document.getElementById('shuffle_mainDiv');
+    if (!shuffleTab) return;
+
+    // Only set up once
+    if (shuffleTab.querySelector('.date-shuffle-controls')) {
+        return;
     }
-    
-    // Set up interval adjustment button (reuses your existing modal)
-    const intervalAdjustBtn = document.getElementById('openIntervalAdjustmentBtn') as HTMLButtonElement;
-    if (intervalAdjustBtn && !intervalAdjustBtn.dataset.initialized) {
-        intervalAdjustBtn.dataset.initialized = 'true';
-        intervalAdjustBtn.addEventListener('click', showIntervalAdjustmentModal);
+
+    // Replace content with new date shuffle interface
+    shuffleTab.innerHTML = `
+        <h2>🎲 Shuffle Card Due Dates</h2>
+        <p class="tab-description">
+            Randomly redistribute the due dates of cards within a specified time period. 
+            This helps spread out card reviews more evenly.
+        </p>
+        
+        <div class="date-shuffle-controls">
+            <div class="shuffle-form">
+                <div class="form-group">
+                    <label for="shuffleDeckSelect">
+                        <strong>Select Deck:</strong>
+                    </label>
+                    <select id="shuffleDeckSelect" class="form-control">
+                        <option value="">Choose a deck...</option>
+                        <option value="Ge'ez">Ge'ez</option>
+                        <option value="Ancient Greek">Ancient Greek</option>
+                        <option value="Sanskrit">Sanskrit</option>
+                        <option value="Akkadian">Akkadian</option>
+                        <option value="Hebrew">Hebrew</option>
+                        <option value="Tocharian B">Tocharian B</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shuffleDaysSpan">
+                        <strong>Time Span (days):</strong>
+                    </label>
+                    <input type="number" id="shuffleDaysSpan" class="form-control" 
+                           min="1" max="365" value="7" placeholder="Number of days">
+                    <small class="form-text">Cards will be randomly distributed across this many days</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shuffleBaseDate">
+                        <strong>Starting Date:</strong>
+                    </label>
+                    <input type="date" id="shuffleBaseDate" class="form-control">
+                    <small class="form-text">Leave blank to start from today</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="includeOverdueCards">
+                        <strong>Include overdue cards</strong>
+                    </label>
+                    <small class="form-text">
+                        If checked, includes cards that are already overdue in the shuffle
+                    </small>
+                </div>
+                
+                <div class="form-actions">
+                    <button id="previewShuffleBtn" class="btn btn-secondary">
+                        👁️ Preview Cards
+                    </button>
+                    <button id="executeDateShuffleBtn" class="btn btn-primary">
+                        🎲 Shuffle Due Dates
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="shuffle_output" class="shuffle-output"></div>
+        
+        <div id="shufflePreviewModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>📋 Cards to be Shuffled</h3>
+                    <button id="closePreviewModal" class="close-btn">×</button>
+                </div>
+                <div class="modal-body" id="previewModalBody">
+                    <!-- Preview content will go here -->
+                </div>
+                <div class="modal-footer">
+                    <button id="cancelShuffle" class="btn btn-secondary">Cancel</button>
+                    <button id="confirmShuffle" class="btn btn-primary">🎲 Confirm Shuffle</button>
+                </div>
+            </div>
+        </div>
+    `;
+    // Add event listeners
+    setupDateShuffleEventListeners();
+}
+
+// Event listener setup for date shuffle
+function setupDateShuffleEventListeners(): void {
+    const previewBtn = document.getElementById('previewShuffleBtn') as HTMLButtonElement;
+    const executeBtn = document.getElementById('executeDateShuffleBtn') as HTMLButtonElement;
+    const closeModalBtn = document.getElementById('closePreviewModal') as HTMLButtonElement;
+    const cancelBtn = document.getElementById('cancelShuffle') as HTMLButtonElement;
+    const confirmBtn = document.getElementById('confirmShuffle') as HTMLButtonElement;
+
+    if (previewBtn && !previewBtn.dataset.initialized) {
+        previewBtn.dataset.initialized = 'true';
+        previewBtn.addEventListener('click', handlePreviewShuffle);
     }
+
+    if (executeBtn && !executeBtn.dataset.initialized) {
+        executeBtn.dataset.initialized = 'true';
+        executeBtn.addEventListener('click', handleDirectShuffle);
+    }
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closePreviewModal);
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closePreviewModal);
+    }
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', handleConfirmedShuffle);
+    }
+
+    // Set default date to today
+    const baseDateInput = document.getElementById('shuffleBaseDate') as HTMLInputElement;
+    if (baseDateInput && !baseDateInput.value) {
+        const today = new Date();
+        baseDateInput.value = today.toISOString().split('T')[0];
+    }
+}
+
+
+// Handle preview shuffle
+async function handlePreviewShuffle(): Promise<void> {
+    const params = getShuffleParameters();
+    if (!params) return;
+
+    try {
+        // Get cards that would be affected (we'll need to add this endpoint)
+        const cardsToShuffle = await getCardsInDateRange(
+            params.deck, 
+            params.base_date, 
+            params.days_span, 
+            params.include_overdue
+        );
+
+        if (cardsToShuffle.length === 0) {
+            showShuffleMessage('No cards found in the specified date range.', 'info');
+            return;
+        }
+
+        showPreviewModal(cardsToShuffle, params);
+    } catch (error) {
+        console.error('Error previewing shuffle:', error);
+        showShuffleMessage('Error loading preview: ' + error.message, 'error');
+    }
+}
+
+// Handle direct shuffle (without preview)
+async function handleDirectShuffle(): Promise<void> {
+    const params = getShuffleParameters();
+    if (!params) return;
+
+    const confirmed = confirm(
+        `SHUFFLE DUE DATES\n\n` +
+        `Deck: ${params.deck}\n` +
+        `Time span: ${params.days_span} days\n` +
+        `Starting: ${new Date(params.base_date).toDateString()}\n` +
+        `Include overdue: ${params.include_overdue ? 'Yes' : 'No'}\n\n` +
+        `This will randomly redistribute due dates and cannot be undone!\n\n` +
+        `Continue?`
+    );
+
+    if (!confirmed) return;
+
+    await executeDateShuffle(params);
+}
+
+
+// Handle confirmed shuffle from modal
+async function handleConfirmedShuffle(): Promise<void> {
+    const params = getShuffleParameters();
+    if (!params) return;
+
+    closePreviewModal();
+    await executeDateShuffle(params);
+}
+
+// Get shuffle parameters from form
+function getShuffleParameters(): ShuffleDueDatesRequest | null {
+    const deckSelect = document.getElementById('shuffleDeckSelect') as HTMLSelectElement;
+    const daysSpanInput = document.getElementById('shuffleDaysSpan') as HTMLInputElement;
+    const baseDateInput = document.getElementById('shuffleBaseDate') as HTMLInputElement;
+    const includeOverdueCheckbox = document.getElementById('includeOverdueCards') as HTMLInputElement;
+
+    const deck = deckSelect?.value?.trim();
+    const daysSpan = parseInt(daysSpanInput?.value || '0');
+    let baseDate = baseDateInput?.value;
+    const includeOverdue = includeOverdueCheckbox?.checked || false;
+
+    // Validation
+    if (!deck) {
+        showShuffleMessage('Please select a deck', 'error');
+        return null;
+    }
+
+    if (daysSpan < 1 || daysSpan > 365) {
+        showShuffleMessage('Days span must be between 1 and 365', 'error');
+        return null;
+    }
+
+    // If no base date provided, use today's date
+    if (!baseDate) {
+        const today = new Date();
+        baseDate = today.toISOString().split('T')[0];
+    }
+
+    return {
+        deck,
+        days_span: daysSpan,
+        base_date: baseDate,
+        include_overdue: includeOverdue
+    };
+}
+
+// Execute the date shuffle
+async function executeDateShuffle(params: ShuffleDueDatesRequest): Promise<void> {
+    const executeBtn = document.getElementById('executeDateShuffleBtn') as HTMLButtonElement;
+    const outputDiv = document.getElementById('shuffle_output') as HTMLDivElement;
+
+    if (executeBtn) {
+        executeBtn.textContent = '🎲 Shuffling...';
+        executeBtn.disabled = true;
+    }
+
+    if (outputDiv) {
+        outputDiv.innerHTML = '<p class="loading">Shuffling due dates...</p>';
+    }
+
+    try {
+        const result = await shuffleDueDates(
+            params.deck,
+            params.days_span,
+            params.base_date,
+            params.include_overdue
+        );
+
+        if (result.status === 'success') {
+            const successMessage = `
+                <div class="success-message">
+                    <h3>✅ Due Date Shuffle Complete!</h3>
+                    <div class="shuffle-stats">
+                        <p><strong>Deck:</strong> ${result.deck}</p>
+                        <p><strong>Cards shuffled:</strong> ${result.updated_count} of ${result.total_cards_found} found</p>
+                        <p><strong>Date range:</strong> ${new Date(result.date_range?.start_date || '').toDateString()} to ${new Date(result.date_range?.end_date || '').toDateString()}</p>
+                        <p><strong>Duration:</strong> ${result.duration_seconds?.toFixed(2)} seconds</p>
+                        ${result.average_old_due_days !== undefined && result.average_new_due_days !== undefined ? 
+                            `<p><strong>Average days from start:</strong> ${result.average_old_due_days.toFixed(1)} → ${result.average_new_due_days.toFixed(1)}</p>` : ''}
+                    </div>
+                </div>
+            `;
+            if (outputDiv) outputDiv.innerHTML = successMessage;
+        } else {
+            if (outputDiv) {
+                outputDiv.innerHTML = `
+                    <div class="error-message">
+                        <h3>❌ Shuffle Failed</h3>
+                        <p>Error: ${result.error}</p>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error executing shuffle:', error);
+        if (outputDiv) {
+            outputDiv.innerHTML = `
+                <div class="error-message">
+                    <h3>❌ Network Error</h3>
+                    <p>Failed to shuffle due dates. Please try again.</p>
+                </div>
+            `;
+        }
+    } finally {
+        if (executeBtn) {
+            executeBtn.textContent = '🎲 Shuffle Due Dates';
+            executeBtn.disabled = false;
+        }
+    }
+}
+
+// Show shuffle message
+function showShuffleMessage(message: string, type: 'success' | 'error' | 'info' | 'warning'): void {
+    const outputDiv = document.getElementById('shuffle_output') as HTMLDivElement;
+    if (!outputDiv) return;
+
+    const className = `${type}-message`;
+    outputDiv.innerHTML = `<div class="${className}"><p>${message}</p></div>`;
+}
+
+// Mock function to get cards in date range (you'll need to implement the backend endpoint)
+async function getCardsInDateRange(
+    deck: string, 
+    baseDate: string, 
+    daysSpan: number, 
+    includeOverdue: boolean
+): Promise<any[]> {
+    // This would need a corresponding backend endpoint
+    // For now, return empty array
+    console.log(`Getting cards for preview: ${deck}, ${baseDate}, ${daysSpan} days, overdue: ${includeOverdue}`);
+    return [];
+}
+
+// Show preview modal
+function showPreviewModal(cards: any[], params: ShuffleDueDatesRequest): void {
+    const modal = document.getElementById('shufflePreviewModal') as HTMLDivElement;
+    const modalBody = document.getElementById('previewModalBody') as HTMLDivElement;
     
-    // Set up retrievability update button
-    const retrievabilityBtn = document.getElementById('updateRetrievabilityBtn') as HTMLButtonElement;
-    if (retrievabilityBtn && !retrievabilityBtn.dataset.initialized) {
-        retrievabilityBtn.dataset.initialized = 'true';
-        retrievabilityBtn.addEventListener('click', triggerRetrievabilityUpdate);
+    if (!modal || !modalBody) return;
+
+    const endDate = new Date(params.base_date || new Date());
+    endDate.setDate(endDate.getDate() + params.days_span);
+
+    modalBody.innerHTML = `
+        <div class="preview-info">
+            <h4>Shuffle Configuration</h4>
+            <p><strong>Deck:</strong> ${params.deck}</p>
+            <p><strong>Date range:</strong> ${new Date(params.base_date || '').toDateString()} to ${endDate.toDateString()}</p>
+            <p><strong>Time span:</strong> ${params.days_span} days</p>
+            <p><strong>Include overdue:</strong> ${params.include_overdue ? 'Yes' : 'No'}</p>
+        </div>
+        
+        <div class="preview-cards">
+            <h4>Cards to be shuffled (${cards.length})</h4>
+            ${cards.length > 0 ? `
+                <div class="card-list">
+                    ${cards.slice(0, 10).map(card => `
+                        <div class="preview-card-item">
+                            <span class="card-id">Card ${card.card_id}</span>
+                            <span class="current-due">Currently due: ${new Date(card.time_due).toLocaleDateString()}</span>
+                        </div>
+                    `).join('')}
+                    ${cards.length > 10 ? `<p class="more-cards">...and ${cards.length - 10} more cards</p>` : ''}
+                </div>
+            ` : '<p>No cards found in the specified range.</p>'}
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+}
+
+// Close preview modal
+function closePreviewModal(): void {
+    const modal = document.getElementById('shufflePreviewModal') as HTMLDivElement;
+    if (modal) {
+        modal.style.display = 'none';
     }
 }
 
