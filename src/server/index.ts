@@ -58,6 +58,28 @@ interface ShuffleDueDatesResponse {
     details?: string;
 }
 
+// Add this interface to your backend index.ts
+interface ReviewForecastRequest {
+    decks?: string[];  // If empty/undefined, return all decks
+    days_ahead?: number;  // Default to 14 days
+    start_date?: string;  // ISO date string, defaults to today
+}
+
+interface ReviewForecastResponse {
+    status: 'success' | 'error';
+    forecast_data?: Array<{
+        date: string;  // YYYY-MM-DD format
+        [deck: string]: number | string;  // deck name -> count, plus the date
+    }>;
+    decks?: string[];  // List of deck names included
+    date_range?: {
+        start_date: string;
+        end_date: string;
+    };
+    total_reviews?: number;
+    error?: string;
+}
+
 const app = express()
 const port = parseInt(process.env.PORT || '3000', 10);
 
@@ -3938,5 +3960,122 @@ app.post('/shuffle_due_dates', express.json(), wrapAsync(async (req, res) => {
     } finally {
         transactionClient.release();
         console.log('🎲 Transaction client released');
+    }
+}));
+
+
+// Add this endpoint to your Express app
+app.get('/review_forecast', wrapAsync(async (req, res) => {
+    const { decks, days_ahead, start_date } = req.query;
+
+    console.log('Review forecast requested:', { decks, days_ahead, start_date });
+
+    // Parse parameters properly
+    const daysAheadNum = days_ahead ? parseInt(days_ahead as string) : 14;
+    const startDate = start_date ? new Date(start_date as string) : new Date();
+    startDate.setHours(0, 0, 0, 0);
+    
+    // Parse deck list
+    let targetDecks: string[] = [];
+    if (decks && typeof decks === 'string') {
+        targetDecks = decks.split(',').map(d => d.trim()).filter(d => d.length > 0);
+    }
+    
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + daysAheadNum);
+    
+    // Parse deck list
+    if (decks && typeof decks === 'string') {
+        targetDecks = decks.split(',').map(d => d.trim()).filter(d => d.length > 0);
+    }
+
+    try {
+        // Build deck filter
+        let deckFilter = '';
+        let deckParams: any[] = [];
+        if (targetDecks.length > 0) {
+            deckFilter = `AND deck = ANY($3::text[])`;
+            deckParams = [targetDecks];
+        }
+
+        // Query to get cards due in the forecast period
+        const query = `
+            SELECT 
+                DATE(time_due) as due_date,
+                deck,
+                COUNT(*) as card_count
+            FROM cards
+            WHERE time_due >= $1 
+            AND time_due < $2
+            ${deckFilter}
+            AND (is_buried = false OR is_buried IS NULL)
+            GROUP BY DATE(time_due), deck
+            ORDER BY due_date, deck
+        `;
+
+        const queryParams = [startDate, endDate, ...deckParams];
+        const result = await client.query(query, queryParams);
+
+        // Get list of all decks involved
+        const allDecksQuery = targetDecks.length > 0 
+            ? `SELECT DISTINCT deck FROM cards WHERE deck = ANY($1::text[]) ORDER BY deck`
+            : `SELECT DISTINCT deck FROM cards ORDER BY deck`;
+        
+        const allDecksParams = targetDecks.length > 0 ? [targetDecks] : [];
+        const decksResult = await client.query(allDecksQuery, allDecksParams);
+        const allDecks = decksResult.rows.map(row => row.deck);
+
+        // Create date range array
+        const dateRange: string[] = [];
+        for (let d = new Date(startDate); d < endDate; d.setDate(d.getDate() + 1)) {
+            dateRange.push(d.toISOString().split('T')[0]); // YYYY-MM-DD format
+        }
+
+        // Initialize forecast data structure
+        const forecastData = dateRange.map(date => {
+            const dayData: { [key: string]: number | string } = { date };
+            // Initialize all decks with 0 counts
+            allDecks.forEach(deck => {
+                dayData[deck] = 0;
+            });
+            return dayData;
+        });
+
+        // Fill in actual counts from query results
+        result.rows.forEach(row => {
+            const dateStr = row.due_date.toISOString().split('T')[0];
+            const deck = row.deck;
+            const count = parseInt(row.card_count);
+
+            const dayIndex = dateRange.indexOf(dateStr);
+            if (dayIndex !== -1) {
+                forecastData[dayIndex][deck] = count;
+            }
+        });
+
+        // Calculate total reviews
+        const totalReviews = result.rows.reduce((sum, row) => sum + parseInt(row.card_count), 0);
+
+        console.log(`📊 Generated forecast for ${allDecks.length} decks over ${daysAheadNum} days`);
+        console.log(`📊 Total reviews in period: ${totalReviews}`);
+
+        res.json({
+            status: 'success',
+            forecast_data: forecastData,
+            decks: allDecks,
+            date_range: {
+                start_date: startDate.toISOString().split('T')[0],
+                end_date: endDate.toISOString().split('T')[0]
+            },
+            total_reviews: totalReviews
+        } as ReviewForecastResponse);
+
+    } catch (err) {
+        console.error('Error generating review forecast:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error generating review forecast',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        } as ReviewForecastResponse);
     }
 }));

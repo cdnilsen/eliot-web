@@ -52,16 +52,20 @@ interface ShuffleDueDatesResponse {
 
 function createDeckDropdowns() {
     let dropdownIDs: string[] = ["upload_dropdownMenu", "review_dropdownMenu", "check_dropdownMenu"];
-    for (let i=0; i < dropdownIDs.length; i++) {
+    
+    for (let i = 0; i < dropdownIDs.length; i++) {
         let id = dropdownIDs[i];
         let selectElement = document.getElementById(id) as HTMLSelectElement;
-        // null check
+        
         if (!selectElement) {
             console.warn(`Dropdown element not found: ${id}`);
             continue;
         }
         
-        for (let j=0; j < deckNameList.length; j++) {
+        // Clear existing options first (in case function runs multiple times)
+        selectElement.innerHTML = '<option value="" disabled selected>(None)</option>';
+        
+        for (let j = 0; j < deckNameList.length; j++) {
             let deck = deckNameList[j];
             let option = document.createElement("option");
             option.value = deck;
@@ -71,7 +75,29 @@ function createDeckDropdowns() {
     }
 }
 
-// ሊግህት, ዴሲግናቴ
+// Better approach: populate dropdowns when tabs become active
+function populateDropdownForTab(dropdownId: string) {
+    const selectElement = document.getElementById(dropdownId) as HTMLSelectElement;
+    if (!selectElement) {
+        console.warn(`Dropdown element not found: ${dropdownId}`);
+        return;
+    }
+    
+    // Check if already populated
+    if (selectElement.children.length > 1) {
+        return; // Already has options
+    }
+    
+    // Clear and populate
+    selectElement.innerHTML = '<option value="" disabled selected>Select a deck</option>';
+    
+    deckNameList.forEach(deck => {
+        const option = document.createElement("option");
+        option.value = deck;
+        option.text = deck;
+        selectElement.appendChild(option);
+    });
+}
 
 createDeckDropdowns();
 
@@ -302,6 +328,9 @@ if (document.readyState === 'loading') {
 function initializeTabSwitching() {
     const buttons = document.querySelectorAll('.button-row button');
     const tabContents = document.querySelectorAll('.tab-content');
+
+    // In your initializeTabSwitching function, when a tab becomes active:
+    
     
     buttons.forEach(button => {
         button.addEventListener('click', function() {
@@ -320,12 +349,16 @@ function initializeTabSwitching() {
             if (targetDiv) {
                 targetDiv.classList.add('active');
                 console.log("Loaded " + button.id);
-                
+
                 // Initialize specific tabs when they become active
                 if (this.id === 'browse_cards') {
                     setupBrowseCardsTab();
                 } else if (this.id === 'shuffle_cards') {
                     setupShuffleCardsTab();
+                } else if (this.id === 'review_cards') {
+                    populateDropdownForTab('review_dropdownMenu');
+                } else if (this.id === 'check_work') {
+                    populateDropdownForTab('check_dropdownMenu');
                 }
             }
         });
