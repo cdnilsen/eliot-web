@@ -2160,3 +2160,66 @@ input[type="file"]:hover {
 .card-table {
     min-width: 1300px !important;
 }
+
+.forecast-controls {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.control-group {
+    margin-bottom: 20px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.control-group select {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.deck-selection-group h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    margin: 30px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.forecast-stats {
+    margin-top: 20px;
+    padding: 15px;
+    background: #e9ecef;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.loading-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 16px;
+    color: #6c757d;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #f5c6cb;
+}

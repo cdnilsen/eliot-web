@@ -4,7 +4,15 @@ import {SanskritDiacriticify} from './transcribe_sanskrit.js';
 import {AkkadianDiacriticify, akkadianSpecialChars} from './transcribe_akkadian.js';
 import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
 import {hebrewSpecialChars, transliterateHebrew} from './transcribe_hebrew.js'
-let outputDiv = document.getElementById("upload_output") as HTMLDivElement;
+import {
+    Chart,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+} from 'chart.js';
 
 let deckNameList: string[] = [
     "Akkadian",
@@ -48,6 +56,32 @@ interface ShuffleDueDatesResponse {
     error?: string;
     details?: string;
 }
+
+// Register the components you need
+Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+interface ReviewForecastData {
+    date: string;
+    [deck: string]: number | string;
+}
+
+interface ReviewForecastResponse {
+    status: 'success' | 'error';
+    forecast_data?: ReviewForecastData[];
+    decks?: string[];
+    date_range?: {
+        start_date: string;
+        end_date: string;
+    };
+    total_reviews?: number;
+    error?: string;
+}
+
+// Color palette for decks
+const DECK_COLORS = [
+    '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00ff7f', '#ff6b6b',
+    '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'
+];
 
 
 function createDeckDropdowns() {
@@ -328,9 +362,6 @@ if (document.readyState === 'loading') {
 function initializeTabSwitching() {
     const buttons = document.querySelectorAll('.button-row button');
     const tabContents = document.querySelectorAll('.tab-content');
-
-    // In your initializeTabSwitching function, when a tab becomes active:
-    
     
     buttons.forEach(button => {
         button.addEventListener('click', function() {
@@ -359,13 +390,14 @@ function initializeTabSwitching() {
                     populateDropdownForTab('review_dropdownMenu');
                 } else if (this.id === 'check_work') {
                     populateDropdownForTab('check_dropdownMenu');
+                } else if (this.id === 'forecast_cards') {
+                    setupReviewForecastTab(); // Add this line
                 }
             }
         });
     });
     
-    setupReviewAheadUI();
-    setupCheckYourWorkTab();
+    // ... rest of your existing setup code
 }
 
 let currentFileContent: string = "";
@@ -3922,7 +3954,6 @@ async function saveIndividualField(cardId: number, fieldIndex: number, textarea:
     }
 }
 
-// Add this main edit modal function to your synapdeck.ts file
 
 // 1. Fixed showCardEditModal function with proper type assertions
 function showCardEditModal(cardId: number, cardData: any): void {
@@ -4308,6 +4339,285 @@ async function getCardFields(cardId: number): Promise<any> {
             error: 'Network error getting card fields' 
         };
     }
+}
+
+let reviewForecastChart: Chart | null = null;
+let availableDecks: string[] = [];
+let selectedDecks: string[] = [];
+// Function to fetch forecast data from backend
+async function fetchReviewForecast(decks?: string[], daysAhead: number = 14): Promise<ReviewForecastResponse> {
+    try {
+        const params = new URLSearchParams();
+        if (decks && decks.length > 0) {
+            params.append('decks', decks.join(','));
+        }
+        params.append('days_ahead', daysAhead.toString());
+
+        const response = await fetch(`/review_forecast?${params.toString()}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: ReviewForecastResponse = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error fetching forecast data:', error);
+        return {
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+
+
+// Function to create/update the chart
+function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) {
+    const ctx = document.getElementById('reviewForecastChart') as HTMLCanvasElement;
+    if (!ctx) {
+        console.error('Canvas element not found');
+        return;
+    }
+
+    // Destroy existing chart if it exists
+    if (reviewForecastChart) {
+        reviewForecastChart.destroy();
+    }
+
+    // Prepare labels (dates)
+    const labels = data.map(item => {
+        const date = new Date(item.date);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    // Prepare datasets (one for each selected deck)
+    const datasets = selectedDecks.map((deck, index) => ({
+        label: deck,
+        data: data.map(item => item[deck] as number || 0),
+        backgroundColor: DECK_COLORS[index % DECK_COLORS.length],
+        borderColor: DECK_COLORS[index % DECK_COLORS.length],
+        borderWidth: 1
+    }));
+
+    // Create the chart
+    reviewForecastChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Review Forecast by Deck',
+                    font: { size: 16, weight: 'bold' }
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        title: function(tooltipItems: any[]) {
+                            // Convert back to full date for tooltip
+                            const item = tooltipItems[0];
+                            const originalDate = data[item.dataIndex].date;
+                            const date = new Date(originalDate);
+                            return date.toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            });
+                        },
+                        label: function(context: any) {
+                            return `${context.dataset.label}: ${context.raw} cards`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Cards'
+                    },
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+// Function to update deck selection
+function updateDeckSelection() {
+    const checkboxes = document.querySelectorAll('#deckSelection input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
+    selectedDecks = [];
+    
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            selectedDecks.push(checkbox.value);
+        }
+    });
+    
+    // Refresh the chart
+    loadReviewForecast();
+}
+
+// Function to load and display forecast data
+async function loadReviewForecast() {
+    const loadingEl = document.getElementById('forecastLoading');
+    const errorEl = document.getElementById('forecastError');
+    const statsEl = document.getElementById('forecastStats');
+    
+    if (loadingEl) loadingEl.style.display = 'block';
+    if (errorEl) errorEl.style.display = 'none';
+    
+    const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
+    const daysAhead = parseInt(daysSelect?.value || '14');
+    
+    try {
+        const result = await fetchReviewForecast(selectedDecks.length > 0 ? selectedDecks : undefined, daysAhead);
+        
+        if (result.status === 'success' && result.forecast_data && result.decks) {
+            // Update available decks if this is the first load
+            if (availableDecks.length === 0) {
+                availableDecks = result.decks;
+                selectedDecks = result.decks; // Select all by default
+                createDeckCheckboxes();
+            }
+            
+            // Create/update chart
+            createReviewForecastChart(result.forecast_data, result.decks);
+            
+            // Update stats
+            if (statsEl && result.date_range) {
+                const startDate = new Date(result.date_range.start_date).toLocaleDateString();
+                const endDate = new Date(result.date_range.end_date).toLocaleDateString();
+                statsEl.innerHTML = `
+                    <strong>Period:</strong> ${startDate} - ${endDate} | 
+                    <strong>Total Reviews:</strong> ${result.total_reviews || 0} | 
+                    <strong>Selected Decks:</strong> ${selectedDecks.length}
+                `;
+                statsEl.style.display = 'block';
+            }
+        } else {
+            throw new Error(result.error || 'Failed to load forecast data');
+        }
+    } catch (error) {
+        console.error('Error loading review forecast:', error);
+        if (errorEl) {
+            errorEl.textContent = `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+            errorEl.style.display = 'block';
+        }
+    } finally {
+        if (loadingEl) loadingEl.style.display = 'none';
+    }
+}
+
+// Function to create deck selection checkboxes
+function createDeckCheckboxes() {
+    const container = document.getElementById('deckSelection');
+    if (!container) return;
+    
+    container.innerHTML = ''; // Clear existing checkboxes
+    
+    // Add select all/none buttons
+    const controlsDiv = document.createElement('div');
+    controlsDiv.style.marginBottom = '10px';
+    
+    const selectAllBtn = document.createElement('button');
+    selectAllBtn.textContent = 'Select All';
+    selectAllBtn.className = 'btn btn-small';
+    selectAllBtn.addEventListener('click', () => {
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
+        checkboxes.forEach(cb => cb.checked = true);
+        updateDeckSelection();
+    });
+    
+    const selectNoneBtn = document.createElement('button');
+    selectNoneBtn.textContent = 'Select None';
+    selectNoneBtn.className = 'btn btn-small';
+    selectNoneBtn.style.marginLeft = '10px';
+    selectNoneBtn.addEventListener('click', () => {
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
+        checkboxes.forEach(cb => cb.checked = false);
+        updateDeckSelection();
+    });
+    
+    controlsDiv.appendChild(selectAllBtn);
+    controlsDiv.appendChild(selectNoneBtn);
+    container.appendChild(controlsDiv);
+    
+    // Add checkboxes for each deck
+    const checkboxContainer = document.createElement('div');
+    checkboxContainer.style.display = 'flex';
+    checkboxContainer.style.flexWrap = 'wrap';
+    checkboxContainer.style.gap = '15px';
+    
+    availableDecks.forEach((deck, index) => {
+        const label = document.createElement('label');
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+        label.style.cursor = 'pointer';
+        label.style.fontSize = '14px';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = deck;
+        checkbox.checked = true; // All selected by default
+        checkbox.style.marginRight = '8px';
+        checkbox.addEventListener('change', updateDeckSelection);
+        
+        const colorBox = document.createElement('span');
+        colorBox.style.display = 'inline-block';
+        colorBox.style.width = '12px';
+        colorBox.style.height = '12px';
+        colorBox.style.backgroundColor = DECK_COLORS[index % DECK_COLORS.length];
+        colorBox.style.marginRight = '6px';
+        colorBox.style.borderRadius = '2px';
+        
+        const text = document.createElement('span');
+        text.textContent = deck;
+        
+        label.appendChild(checkbox);
+        label.appendChild(colorBox);
+        label.appendChild(text);
+        checkboxContainer.appendChild(label);
+    });
+    
+    container.appendChild(checkboxContainer);
+}
+
+// Function to setup the review forecast tab
+function setupReviewForecastTab(): void {
+    console.log('Setting up review forecast tab...');
+    
+    // Add event listener for days selection
+    const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
+    if (daysSelect) {
+        daysSelect.addEventListener('change', () => {
+            loadReviewForecast();
+        });
+    }
+    
+    // Load initial data
+    loadReviewForecast();
 }
 
 // API function to update a specific field
