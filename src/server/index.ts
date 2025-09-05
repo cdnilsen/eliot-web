@@ -3963,8 +3963,6 @@ app.post('/shuffle_due_dates', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
-
-// Add this endpoint to your Express app
 // Replace your existing /review_forecast endpoint with this updated version
 app.get('/review_forecast', wrapAsync(async (req, res) => {
     const { decks, days_ahead, start_date } = req.query;
@@ -4100,14 +4098,15 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
         res.json({
             status: 'success',
             forecast_data: forecastData,
-            decks: allDecksWithOverdue,
+            decks: allDecks, // Return regular decks only, not including "Overdue"
             date_range: {
                 start_date: startDate.toISOString().split('T')[0],
                 end_date: endDate.toISOString().split('T')[0]
             },
             total_reviews: totalReviews,
-            overdue_count: totalOverdueReviews
-        } as ReviewForecastResponse & { overdue_count: number });
+            overdue_count: totalOverdueReviews,
+            has_overdue: hasOverdueCards
+        } as ReviewForecastResponse & { overdue_count: number; has_overdue: boolean });
 
     } catch (err) {
         console.error('Error generating review forecast:', err);

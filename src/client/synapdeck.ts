@@ -4366,8 +4366,6 @@ async function fetchReviewForecast(decks?: string[], daysAhead: number = 14): Pr
     }
 }
 
-
-
 // Function to create/update the chart
 function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) {
     const ctx = document.getElementById('reviewForecastChart') as HTMLCanvasElement;
@@ -4400,43 +4398,24 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
         reviewForecastChart.destroy();
     }
 
+    // Create labels from the data, handling special "Overdue" date
     const labels = data.map(item => {
-        const date = new Date(item.date);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        if (item.date === 'Overdue') {
+            return 'Overdue';
+        } else {
+            const date = new Date(item.date);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
     });
 
-    // Separate overdue from regular decks and handle colors
-    const overdueIndex = decks.indexOf('Overdue');
-    const hasOverdue = overdueIndex !== -1;
-    const regularDecks = decks.filter(deck => deck !== 'Overdue');
-    
-    // Prepare datasets
-    const datasets: any[] = [];
-    
-    // Add overdue dataset first (if it exists) with special styling
-    if (hasOverdue) {
-        datasets.push({
-            label: 'Overdue',
-            data: data.map(item => item['Overdue'] as number || 0),
-            backgroundColor: 'rgba(255, 68, 68, 0.8)', // Semi-transparent red
-            borderColor: '#ff4444',
-            borderWidth: 2,
-            // Make overdue cards stand out
-            borderDash: [5, 5], // Dashed border
-        });
-    }
-    
-    // Add regular deck datasets
-    regularDecks.forEach((deck, index) => {
-        const colorIndex = hasOverdue ? index + 1 : index; // Offset by 1 if overdue exists
-        datasets.push({
-            label: deck,
-            data: data.map(item => item[deck] as number || 0),
-            backgroundColor: DECK_COLORS[colorIndex % DECK_COLORS.length],
-            borderColor: DECK_COLORS[colorIndex % DECK_COLORS.length],
-            borderWidth: 1
-        });
-    });
+    // Prepare datasets (one for each selected deck)
+    const datasets = selectedDecks.map((deck, index) => ({
+        label: deck,
+        data: data.map(item => item[deck] as number || 0),
+        backgroundColor: DECK_COLORS[index % DECK_COLORS.length],
+        borderColor: DECK_COLORS[index % DECK_COLORS.length],
+        borderWidth: 1
+    }));
 
     // Create the chart
     reviewForecastChart = new Chart(ctx, {
@@ -4456,24 +4435,7 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                 },
                 legend: {
                     display: true,
-                    position: 'top',
-                    labels: {
-                        generateLabels: function(chart: any) {
-                            const original = Chart.defaults.plugins.legend.labels.generateLabels;
-                            const labels = original.call(this, chart);
-                            
-                            // Style the overdue label differently
-                            labels.forEach((label: any) => {
-                                if (label.text === 'Overdue') {
-                                    label.fontStyle = 'bold';
-                                    label.strokeStyle = label.fillStyle;
-                                    label.lineWidth = 2;
-                                }
-                            });
-                            
-                            return labels;
-                        }
-                    }
+                    position: 'top'
                 },
                 tooltip: {
                     mode: 'index',
@@ -4482,26 +4444,38 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                         title: function(tooltipItems: any[]) {
                             const item = tooltipItems[0];
                             const originalDate = data[item.dataIndex].date;
-                            const date = new Date(originalDate);
-                            return date.toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            });
+                            
+                            if (originalDate === 'Overdue') {
+                                return '🔴 OVERDUE CARDS';
+                            } else {
+                                const date = new Date(originalDate);
+                                return date.toLocaleDateString('en-US', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                });
+                            }
                         },
                         label: function(context: any) {
-                            const label = context.dataset.label;
+                            const deck = context.dataset.label;
                             const value = context.raw;
+                            const dataIndex = context.dataIndex;
+                            const isOverdue = data[dataIndex].date === 'Overdue';
                             
-                            if (label === 'Overdue') {
-                                return `🔴 ${label}: ${value} cards (OVERDUE!)`;
+                            if (isOverdue && value > 0) {
+                                return `🔴 ${deck}: ${value} cards (OVERDUE!)`;
+                            } else if (isOverdue) {
+                                return `${deck}: ${value} cards`;
                             } else {
-                                return `${label}: ${value} cards`;
+                                return `${deck}: ${value} cards`;
                             }
                         },
                         afterLabel: function(context: any) {
-                            if (context.dataset.label === 'Overdue' && context.raw > 0) {
+                            const dataIndex = context.dataIndex;
+                            const isOverdue = data[dataIndex].date === 'Overdue';
+                            
+                            if (isOverdue && context.raw > 0) {
                                 return 'These cards are past due and ready for review';
                             }
                             return '';
@@ -4515,7 +4489,34 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                         display: true,
                         text: 'Date'
                     },
-                    stacked: false // Set to true if you want stacked bars
+                    ticks: {
+                        callback: function(value: any, index: number) {
+                            const label = labels[index];
+                            // Style the overdue label differently
+                            if (label === 'Overdue') {
+                                return '🔴 ' + label;
+                            }
+                            return label;
+                        },
+                        color: function(context: any) {
+                            const label = labels[context.index];
+                            // Make overdue label red
+                            if (label === 'Overdue') {
+                                return '#ff4444';
+                            }
+                            return '#666';
+                        },
+                        font: function(context: any) {
+                            const label = labels[context.index];
+                            // Make overdue label bold
+                            if (label === 'Overdue') {
+                                return {
+                                    weight: 'bold'
+                                };
+                            }
+                            return {};
+                        }
+                    }
                 },
                 y: {
                     beginAtZero: true,
@@ -4525,18 +4526,68 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                     },
                     ticks: {
                         stepSize: 1
-                    },
-                    stacked: false // Set to true if you want stacked bars
-                }
-            },
-            // Optional: Add animation that highlights overdue cards
-            animation: {
-                onComplete: function() {
-                    // You could add additional visual effects here
+                    }
                 }
             }
         }
     });
+}
+
+function hasOverdueData(forecastData: ReviewForecastData[]): boolean {
+    return forecastData.length > 0 && forecastData[0].date === 'Overdue';
+}
+
+// 5. Optional: Add a function to calculate overdue totals for display
+function calculateOverdueTotals(forecastData: ReviewForecastData[], decks: string[]): { [deck: string]: number } {
+    const totals: { [deck: string]: number } = {};
+    
+    if (hasOverdueData(forecastData)) {
+        const overdueData = forecastData[0];
+        decks.forEach(deck => {
+            totals[deck] = overdueData[deck] as number || 0;
+        });
+    }
+    
+    return totals;
+}
+
+
+// 6. Optional: Update the forecast stats display to show overdue information
+function updateForecastStats(forecastData: ReviewForecastData[], totalReviews: number, decks: string[]) {
+    const statsEl = document.getElementById('forecastStats');
+    if (!statsEl) return;
+    
+    let statsHTML = `<div class="forecast-summary">
+        <h4>Forecast Summary</h4>
+        <p><strong>Total Reviews:</strong> ${totalReviews}</p>
+    `;
+    
+    if (hasOverdueData(forecastData)) {
+        const overdueTotals = calculateOverdueTotals(forecastData, decks);
+        const totalOverdue = Object.values(overdueTotals).reduce((sum, count) => sum + count, 0);
+        
+        if (totalOverdue > 0) {
+            statsHTML += `
+                <div class="overdue-summary" style="color: #ff4444; font-weight: bold; margin-top: 10px;">
+                    <p>🔴 <strong>Overdue Cards:</strong> ${totalOverdue}</p>
+                    <div style="font-size: 12px; margin-left: 20px;">
+            `;
+            
+            Object.entries(overdueTotals).forEach(([deck, count]) => {
+                if (count > 0) {
+                    statsHTML += `<div>${deck}: ${count}</div>`;
+                }
+            });
+            
+            statsHTML += `
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    statsHTML += `</div>`;
+    statsEl.innerHTML = statsHTML;
 }
 
 // Function to update deck selection
@@ -4560,7 +4611,6 @@ async function updateDeckSelection() {
 async function loadReviewForecast() {
     const loadingEl = document.getElementById('forecastLoading');
     const errorEl = document.getElementById('forecastError');
-    const statsEl = document.getElementById('forecastStats');
     
     if (loadingEl) loadingEl.style.display = 'block';
     if (errorEl) errorEl.style.display = 'none';
@@ -4578,16 +4628,20 @@ async function loadReviewForecast() {
                 createDeckCheckboxes();
             }
             
-            // Await the chart creation
-            await createReviewForecastChart(result.forecast_data, result.decks);
+            createReviewForecastChart(result.forecast_data, result.decks);
             
-            // Rest of your existing code...
+            // Update stats display with overdue information
+            updateForecastStats(result.forecast_data, result.total_reviews || 0, result.decks);
+            
         } else {
             throw new Error(result.error || 'Failed to load forecast data');
         }
     } catch (error) {
         console.error('Error loading review forecast:', error);
-        // error handling...
+        if (errorEl) {
+            errorEl.style.display = 'block';
+            errorEl.textContent = `Error: ${error.message}`;
+        }
     } finally {
         if (loadingEl) loadingEl.style.display = 'none';
     }
