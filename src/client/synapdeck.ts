@@ -4490,31 +4490,30 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                         text: 'Date'
                     },
                     ticks: {
-                        callback: function(value: any, index: number) {
-                            const label = labels[index];
-                            // Style the overdue label differently
-                            if (label === 'Overdue') {
-                                return '🔴 ' + label;
-                            }
-                            return label;
-                        },
                         color: function(context: any) {
                             const label = labels[context.index];
                             // Make overdue label red
                             if (label === 'Overdue') {
-                                return '#ff4444';
+                                return '#ff0000';
                             }
-                            return '#666';
+                            return '#666666';
                         },
                         font: function(context: any) {
                             const label = labels[context.index];
                             // Make overdue label bold
                             if (label === 'Overdue') {
                                 return {
-                                    weight: 'bold'
+                                    weight: 'bold',
+                                    size: 12
                                 };
                             }
-                            return {};
+                            return {
+                                weight: 'normal',
+                                size: 12
+                            };
+                        },
+                        callback: function(value: any, index: number) {
+                            return labels[index];
                         }
                     }
                 },
