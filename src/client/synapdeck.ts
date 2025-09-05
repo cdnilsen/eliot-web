@@ -4717,7 +4717,6 @@ declare global {
 }
 
 // Export functions to global scope
-window.loadReviewForecast = loadReviewForecast;
 window.setupReviewForecastTab = setupReviewForecastTab;
 
 // Updated setupReviewForecastTab with direct function reference
@@ -4746,17 +4745,7 @@ function setupReviewForecastTab(): void {
         newSelect.addEventListener('change', function(event) {
             const target = event.target as HTMLSelectElement;
             console.log('Dropdown changed to:', target.value);
-            
-            // Call the function directly from global scope
-            if (window.loadReviewForecast) {
-                console.log('Calling window.loadReviewForecast...');
-                window.loadReviewForecast();
-            } else if (typeof loadReviewForecast === 'function') {
-                console.log('Calling local loadReviewForecast...');
-                loadReviewForecast();
-            } else {
-                console.error('loadReviewForecast function not found!');
-            }
+            window.loadReviewForecast();
         });
         
         // Add input event as backup
@@ -4775,6 +4764,9 @@ function setupReviewForecastTab(): void {
         
     }, 300); // Increased delay
 }
+
+window.loadReviewForecast = loadReviewForecast;
+
 
 function patchForecastIssues() {
     console.log('🔧 Applying forecast patches...');
