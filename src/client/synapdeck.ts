@@ -4707,12 +4707,24 @@ function createDeckCheckboxes() {
     container.appendChild(checkboxContainer);
 }
 
-// Function to setup the review forecast tab
-// Function to setup the review forecast tab with proper dropdown handling
+// Add this near the end of your TypeScript file, after the loadReviewForecast function is defined
+// Make loadReviewForecast globally accessible
+declare global {
+    interface Window {
+        loadReviewForecast: () => Promise<void>;
+        setupReviewForecastTab: () => void;
+    }
+}
+
+// Export functions to global scope
+window.loadReviewForecast = loadReviewForecast;
+window.setupReviewForecastTab = setupReviewForecastTab;
+
+// Updated setupReviewForecastTab with direct function reference
 function setupReviewForecastTab(): void {
     console.log('Setting up review forecast tab...');
     
-    // Wait a bit longer for DOM to be fully ready
+    // Wait for DOM to be ready
     setTimeout(() => {
         console.log('Attaching event listener to forecast dropdown...');
         
@@ -4722,11 +4734,7 @@ function setupReviewForecastTab(): void {
             return;
         }
         
-        console.log('Found forecastDays dropdown:', {
-            id: daysSelect.id,
-            value: daysSelect.value,
-            options: Array.from(daysSelect.options).map(opt => opt.value)
-        });
+        console.log('Found forecastDays dropdown, current value:', daysSelect.value);
         
         // Remove any existing event listeners by cloning the element
         const newSelect = daysSelect.cloneNode(true) as HTMLSelectElement;
@@ -4734,31 +4742,39 @@ function setupReviewForecastTab(): void {
             daysSelect.parentNode.replaceChild(newSelect, daysSelect);
         }
         
-        // Add the event listener with enhanced debugging
+        // Add the event listener that directly calls the function
         newSelect.addEventListener('change', function(event) {
             const target = event.target as HTMLSelectElement;
-            console.log('🎯 DROPDOWN CHANGED! New value:', target.value);
-            console.log('🎯 Event triggered, calling loadReviewForecast...');
+            console.log('Dropdown changed to:', target.value);
             
-            // Call loadReviewForecast immediately
-            loadReviewForecast();
+            // Call the function directly from global scope
+            if (window.loadReviewForecast) {
+                console.log('Calling window.loadReviewForecast...');
+                window.loadReviewForecast();
+            } else if (typeof loadReviewForecast === 'function') {
+                console.log('Calling local loadReviewForecast...');
+                loadReviewForecast();
+            } else {
+                console.error('loadReviewForecast function not found!');
+            }
         });
         
-        // Also add input event as backup
+        // Add input event as backup
         newSelect.addEventListener('input', function(event) {
             const target = event.target as HTMLSelectElement;
-            console.log('⌨️ DROPDOWN INPUT EVENT! New value:', target.value);
-            loadReviewForecast();
+            console.log('Dropdown input event:', target.value);
+            if (window.loadReviewForecast) {
+                window.loadReviewForecast();
+            }
         });
         
-        console.log('✅ Event listeners attached successfully');
+        console.log('Event listeners attached successfully');
         
         // Load initial data
         loadReviewForecast();
         
-    }, 200); // Increased delay to 200ms
+    }, 300); // Increased delay
 }
-
 
 function patchForecastIssues() {
     console.log('🔧 Applying forecast patches...');
