@@ -166,6 +166,61 @@
             </div>
         </div>
 
+        <!-- Add these divs after the forecast_mainDiv -->
+        <div id="review_mainDiv" class="tab-content">
+            <h2>Do Reviews</h2>
+            <div class="review-controls">
+                <div class="input-group">
+                    <label for="review_dropdownMenu">Select Deck:</label>
+                    <select id="review_dropdownMenu" name="review_dropdownMenu">
+                        <option value="" disabled selected>Select a deck</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="review_numCards">Number of Cards:</label>
+                    <input type="number" id="review_numCards" min="1" max="100" value="20">
+                </div>
+                
+                <div class="review-ahead-section">
+                    <label>
+                        <input type="checkbox" id="reviewAheadCheckbox">
+                        Review ahead
+                    </label>
+                    <div id="reviewAheadOptions" style="display: none;">
+                        <select id="reviewAheadHours">
+                            <option value="24">24 hours</option>
+                            <option value="48">48 hours</option>
+                            <option value="72">72 hours</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button id="review_submitBtn" class="btn">Start Review</button>
+                <button id="resetCardReview" class="btn btn-secondary">Reset All Reviews</button>
+            </div>
+            <div id="review_output"></div>
+        </div>
+
+        <div id="check_mainDiv" class="tab-content">
+            <h2>Check Your Work</h2>
+            <div class="check-controls">
+                <div class="input-group">
+                    <label for="check_dropdownMenu">Select Deck:</label>
+                    <select id="check_dropdownMenu" name="check_dropdownMenu">
+                        <option value="" disabled selected>Select a deck</option>
+                    </select>
+                </div>
+                <button id="check_submitBtn" class="btn">Show Answer Key</button>
+            </div>
+            <div id="check_output"></div>
+        </div>
+
+        <div id="browse_mainDiv" class="tab-content">
+            <h2>Browse Cards</h2>
+            <div id="browse_results"></div>
+        </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
     <script type="module">
         // Make jsPDF available to your module
