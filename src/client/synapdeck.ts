@@ -4341,13 +4341,16 @@ let reviewForecastChart: Chart | null = null;
 let availableDecks: string[] = [];
 let selectedDecks: string[] = [];
 // Function to fetch forecast data from backend
-async function fetchReviewForecast(decks?: string[], daysAhead: number = 14): Promise<ReviewForecastResponse> {
+async function fetchReviewForecast(decks?: string[], daysAhead: number = 14, startDate?: string): Promise<ReviewForecastResponse> {
     try {
         const params = new URLSearchParams();
         if (decks && decks.length > 0) {
             params.append('decks', decks.join(','));
         }
         params.append('days_ahead', daysAhead.toString());
+        if (startDate) {
+            params.append('start_date', startDate); // Add this line
+        }
 
         const response = await fetch(`/review_forecast?${params.toString()}`);
         if (!response.ok) {
@@ -4830,9 +4833,13 @@ async function loadReviewForecast() {
     try {
         console.log(`🔄 Loading forecast for ${daysAhead} days ahead...`);
         
+        const today = new Date();
+        const localMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+        
         const result = await fetchReviewForecast(
             selectedDecks.length > 0 ? selectedDecks : undefined, 
-            daysAhead
+            daysAhead,
+            localMidnight.toISOString() // Now this third argument is supported
         );
         
         if (result.status === 'success' && result.forecast_data && result.decks) {
