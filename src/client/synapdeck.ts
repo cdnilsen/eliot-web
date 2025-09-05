@@ -729,9 +729,16 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
     
     let checkTime: Date;
     let targetDate: Date;
+
+    if (reviewAheadCheckbox) {
+        reviewAheadCheckbox.addEventListener('change', async () => {
+            if (reviewAheadCheckbox.checked) {
+                reviewAheadDropdown.style.display = "block";
+            }
+        });
+    }
     
     if (reviewAheadCheckbox && reviewAheadCheckbox.checked) {
-        reviewAheadDropdown.style.display = "block";
         const daysAhead = parseInt(reviewDaysAhead?.value || '1');
         targetDate = new Date();
         targetDate.setDate(targetDate.getDate() + daysAhead);
