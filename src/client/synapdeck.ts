@@ -4366,7 +4366,8 @@ async function fetchReviewForecast(decks?: string[], daysAhead: number = 14): Pr
     }
 }
 
-// Function to create/update the chart
+// Function to create/update the chart with proper overdue detection
+// Function to create/update the chart with proper overdue detection
 function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) {
     const ctx = document.getElementById('reviewForecastChart') as HTMLCanvasElement;
     if (!ctx) {
@@ -4398,14 +4399,33 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
         reviewForecastChart.destroy();
     }
 
-    // Create labels from the data, handling special "Overdue" date
+    // Get today's date for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset to midnight for accurate comparison
+
+    // Create labels and determine which dates are overdue
     const labels = data.map(item => {
         if (item.date === 'Overdue') {
-            return 'Overdue';
+            return 'OVERDUE';
         } else {
-            const date = new Date(item.date);
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const itemDate = new Date(item.date);
+            itemDate.setHours(0, 0, 0, 0);
+            
+            if (itemDate < today) {
+                // This date is overdue
+                return `${itemDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (OVERDUE)`;
+            } else {
+                return itemDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
         }
+    });
+
+    // Check if each data point is overdue
+    const isOverdueArray = data.map(item => {
+        if (item.date === 'Overdue') return true;
+        const itemDate = new Date(item.date);
+        itemDate.setHours(0, 0, 0, 0);
+        return itemDate < today;
     });
 
     // Prepare datasets (one for each selected deck)
@@ -4443,10 +4463,11 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                     callbacks: {
                         title: function(tooltipItems: any[]) {
                             const item = tooltipItems[0];
-                            const originalDate = data[item.dataIndex].date;
+                            const dataIndex = item.dataIndex;
+                            const originalDate = data[dataIndex].date;
                             
-                            if (originalDate === 'Overdue') {
-                                return '🔴 OVERDUE CARDS';
+                            if (originalDate === 'Overdue' || isOverdueArray[dataIndex]) {
+                                return 'OVERDUE CARDS';
                             } else {
                                 const date = new Date(originalDate);
                                 return date.toLocaleDateString('en-US', {
@@ -4461,21 +4482,20 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                             const deck = context.dataset.label;
                             const value = context.raw;
                             const dataIndex = context.dataIndex;
-                            const isOverdue = data[dataIndex].date === 'Overdue';
+                            const originalDate = data[dataIndex].date;
+                            const isThisOverdue = originalDate === 'Overdue' || isOverdueArray[dataIndex];
                             
-                            if (isOverdue && value > 0) {
-                                return `🔴 ${deck}: ${value} cards (OVERDUE!)`;
-                            } else if (isOverdue) {
-                                return `${deck}: ${value} cards`;
+                            if (isThisOverdue && value > 0) {
+                                return `${deck}: ${value} cards (OVERDUE!)`;
                             } else {
                                 return `${deck}: ${value} cards`;
                             }
                         },
                         afterLabel: function(context: any) {
                             const dataIndex = context.dataIndex;
-                            const isOverdue = data[dataIndex].date === 'Overdue';
+                            const isThisOverdue = data[dataIndex].date === 'Overdue' || isOverdueArray[dataIndex];
                             
-                            if (isOverdue && context.raw > 0) {
+                            if (isThisOverdue && context.raw > 0) {
                                 return 'These cards are past due and ready for review';
                             }
                             return '';
@@ -4491,17 +4511,17 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                     },
                     ticks: {
                         color: function(context: any) {
-                            const label = labels[context.index];
-                            // Make overdue label red
-                            if (label === 'Overdue') {
+                            const dataIndex = context.index;
+                            // Make overdue labels red
+                            if (data[dataIndex] && (data[dataIndex].date === 'Overdue' || isOverdueArray[dataIndex])) {
                                 return '#ff0000';
                             }
                             return '#666666';
                         },
                         font: function(context: any) {
-                            const label = labels[context.index];
-                            // Make overdue label bold
-                            if (label === 'Overdue') {
+                            const dataIndex = context.index;
+                            // Make overdue labels bold
+                            if (data[dataIndex] && (data[dataIndex].date === 'Overdue' || isOverdueArray[dataIndex])) {
                                 return {
                                     weight: 'bold',
                                     size: 12
@@ -4511,9 +4531,6 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                                 weight: 'normal',
                                 size: 12
                             };
-                        },
-                        callback: function(value: any, index: number) {
-                            return labels[index];
                         }
                     }
                 },
@@ -4549,7 +4566,6 @@ function calculateOverdueTotals(forecastData: ReviewForecastData[], decks: strin
     
     return totals;
 }
-
 
 // 6. Optional: Update the forecast stats display to show overdue information
 function updateForecastStats(forecastData: ReviewForecastData[], totalReviews: number, decks: string[]) {
@@ -4604,46 +4620,6 @@ async function updateDeckSelection() {
     // (You might want to make this configurable)
     
     await loadReviewForecast();
-}
-
-// Function to load and display forecast data
-async function loadReviewForecast() {
-    const loadingEl = document.getElementById('forecastLoading');
-    const errorEl = document.getElementById('forecastError');
-    
-    if (loadingEl) loadingEl.style.display = 'block';
-    if (errorEl) errorEl.style.display = 'none';
-    
-    const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
-    const daysAhead = parseInt(daysSelect?.value || '14');
-    
-    try {
-        const result = await fetchReviewForecast(selectedDecks.length > 0 ? selectedDecks : undefined, daysAhead);
-        
-        if (result.status === 'success' && result.forecast_data && result.decks) {
-            if (availableDecks.length === 0) {
-                availableDecks = result.decks;
-                selectedDecks = result.decks;
-                createDeckCheckboxes();
-            }
-            
-            createReviewForecastChart(result.forecast_data, result.decks);
-            
-            // Update stats display with overdue information
-            updateForecastStats(result.forecast_data, result.total_reviews || 0, result.decks);
-            
-        } else {
-            throw new Error(result.error || 'Failed to load forecast data');
-        }
-    } catch (error) {
-        console.error('Error loading review forecast:', error);
-        if (errorEl) {
-            errorEl.style.display = 'block';
-            errorEl.textContent = `Error: ${error.message}`;
-        }
-    } finally {
-        if (loadingEl) loadingEl.style.display = 'none';
-    }
 }
 
 // Function to create deck selection checkboxes
@@ -4732,19 +4708,174 @@ function createDeckCheckboxes() {
 }
 
 // Function to setup the review forecast tab
+// Function to setup the review forecast tab with proper dropdown handling
 function setupReviewForecastTab(): void {
     console.log('Setting up review forecast tab...');
     
-    // Add event listener for days selection
-    const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
+    // Make sure the forecast tab HTML has the correct structure
+    const forecastTab = document.getElementById('forecast_mainDiv');
+    if (forecastTab && !forecastTab.querySelector('#forecastDays')) {
+        // If the dropdown doesn't exist, create the proper HTML structure
+        const forecastHTML = `
+            <h2>Review Forecast</h2>
+            <div class="forecast-controls">
+                <div class="forecast-period-section">
+                    <label for="forecastDays">Forecast Period:</label>
+                    <select id="forecastDays">
+                        <option value="7">7 days</option>
+                        <option value="14" selected>14 days</option>
+                        <option value="21">21 days</option>
+                        <option value="30">30 days</option>
+                    </select>
+                </div>
+                
+                <div class="deck-selection-section">
+                    <h3>Select Decks to Display:</h3>
+                    <div id="deckSelection"></div>
+                </div>
+            </div>
+            
+            <div id="forecastLoading" class="loading" style="display: none;">
+                Loading forecast data...
+            </div>
+            
+            <div id="forecastError" class="error" style="display: none;"></div>
+            
+            <div id="forecastStats" class="forecast-stats"></div>
+            
+            <div class="chart-container" style="height: 400px; margin-top: 20px;">
+                <canvas id="reviewForecastChart"></canvas>
+            </div>
+        `;
+        
+        forecastTab.innerHTML = forecastHTML;
+    }
+    
+    // Add event listener for days selection - try multiple possible IDs
+    const possibleSelectors = ['#forecastDays', 'select[name="forecastDays"]', '.forecast-period select'];
+    let daysSelect: HTMLSelectElement | null = null;
+    
+    for (const selector of possibleSelectors) {
+        daysSelect = document.querySelector(selector) as HTMLSelectElement;
+        if (daysSelect) {
+            console.log(`Found forecast days dropdown with selector: ${selector}`);
+            break;
+        }
+    }
+    
     if (daysSelect) {
-        daysSelect.addEventListener('change', () => {
+        // Remove any existing event listeners first
+        const newSelect = daysSelect.cloneNode(true) as HTMLSelectElement;
+        daysSelect.parentNode?.replaceChild(newSelect, daysSelect);
+        daysSelect = newSelect;
+        
+        daysSelect.addEventListener('change', (event) => {
+            const target = event.target as HTMLSelectElement;
+            console.log(`Forecast period changed to: ${target.value} days`);
             loadReviewForecast();
         });
+        
+        console.log('✅ Event listener attached to forecast days dropdown');
+    } else {
+        console.error('❌ Could not find forecast days dropdown element');
     }
     
     // Load initial data
     loadReviewForecast();
+}
+
+function patchForecastIssues() {
+    console.log('🔧 Applying forecast patches...');
+    
+    // Fix 1: Ensure dropdown has proper event listener
+    const forecastDropdown = document.querySelector('select') as HTMLSelectElement;
+    if (forecastDropdown) {
+        // Remove old event listeners by cloning the element
+        const newDropdown = forecastDropdown.cloneNode(true) as HTMLSelectElement;
+        forecastDropdown.parentNode?.replaceChild(newDropdown, forecastDropdown);
+        
+        // Add the correct event listener
+        newDropdown.addEventListener('change', (event) => {
+            const target = event.target as HTMLSelectElement;
+            console.log(`📅 Forecast period changed to: ${target.value}`);
+            loadReviewForecast();
+        });
+        
+        console.log('✅ Dropdown event listener fixed');
+    }
+    
+    // Fix 2: Force reload of forecast data to trigger overdue detection
+    if (typeof loadReviewForecast === 'function') {
+        console.log('🔄 Reloading forecast data...');
+        loadReviewForecast();
+    }
+}
+
+// Call this function after your page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', patchForecastIssues);
+} else {
+    patchForecastIssues();
+}
+
+// Enhanced loadReviewForecast function with better error handling
+async function loadReviewForecast() {
+    const loadingEl = document.getElementById('forecastLoading');
+    const errorEl = document.getElementById('forecastError');
+    
+    if (loadingEl) loadingEl.style.display = 'block';
+    if (errorEl) errorEl.style.display = 'none';
+    
+    // Try multiple ways to get the days value
+    let daysAhead = 14; // default
+    
+    const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
+    if (daysSelect && daysSelect.value) {
+        daysAhead = parseInt(daysSelect.value);
+        console.log(`Using selected days: ${daysAhead}`);
+    } else {
+        // Try alternative selectors
+        const altSelect = document.querySelector('select[name="forecastDays"], .forecast-period select') as HTMLSelectElement;
+        if (altSelect && altSelect.value) {
+            daysAhead = parseInt(altSelect.value);
+            console.log(`Using alternative selector days: ${daysAhead}`);
+        } else {
+            console.warn('Could not find days selection, using default: 14 days');
+        }
+    }
+    
+    try {
+        console.log(`🔄 Loading forecast for ${daysAhead} days ahead...`);
+        
+        const result = await fetchReviewForecast(
+            selectedDecks.length > 0 ? selectedDecks : undefined, 
+            daysAhead
+        );
+        
+        if (result.status === 'success' && result.forecast_data && result.decks) {
+            console.log(`✅ Loaded forecast data:`, result);
+            
+            if (availableDecks.length === 0) {
+                availableDecks = result.decks;
+                selectedDecks = result.decks;
+                createDeckCheckboxes();
+            }
+            
+            createReviewForecastChart(result.forecast_data, result.decks);
+            updateForecastStats(result.forecast_data, result.total_reviews || 0, result.decks);
+            
+        } else {
+            throw new Error(result.error || 'Failed to load forecast data');
+        }
+    } catch (error) {
+        console.error('❌ Error loading review forecast:', error);
+        if (errorEl) {
+            errorEl.style.display = 'block';
+            errorEl.textContent = `Error: ${error.message}`;
+        }
+    } finally {
+        if (loadingEl) loadingEl.style.display = 'none';
+    }
 }
 
 // API function to update a specific field
