@@ -4712,77 +4712,53 @@ function createDeckCheckboxes() {
 function setupReviewForecastTab(): void {
     console.log('Setting up review forecast tab...');
     
-    // Make sure the forecast tab HTML has the correct structure
-    const forecastTab = document.getElementById('forecast_mainDiv');
-    if (forecastTab && !forecastTab.querySelector('#forecastDays')) {
-        // If the dropdown doesn't exist, create the proper HTML structure
-        const forecastHTML = `
-            <h2>Review Forecast</h2>
-            <div class="forecast-controls">
-                <div class="forecast-period-section">
-                    <label for="forecastDays">Forecast Period:</label>
-                    <select id="forecastDays">
-                        <option value="7">7 days</option>
-                        <option value="14" selected>14 days</option>
-                        <option value="21">21 days</option>
-                        <option value="30">30 days</option>
-                    </select>
-                </div>
-                
-                <div class="deck-selection-section">
-                    <h3>Select Decks to Display:</h3>
-                    <div id="deckSelection"></div>
-                </div>
-            </div>
-            
-            <div id="forecastLoading" class="loading" style="display: none;">
-                Loading forecast data...
-            </div>
-            
-            <div id="forecastError" class="error" style="display: none;"></div>
-            
-            <div id="forecastStats" class="forecast-stats"></div>
-            
-            <div class="chart-container" style="height: 400px; margin-top: 20px;">
-                <canvas id="reviewForecastChart"></canvas>
-            </div>
-        `;
+    // Wait a bit longer for DOM to be fully ready
+    setTimeout(() => {
+        console.log('Attaching event listener to forecast dropdown...');
         
-        forecastTab.innerHTML = forecastHTML;
-    }
-    
-    // Add event listener for days selection - try multiple possible IDs
-    const possibleSelectors = ['#forecastDays', 'select[name="forecastDays"]', '.forecast-period select'];
-    let daysSelect: HTMLSelectElement | null = null;
-    
-    for (const selector of possibleSelectors) {
-        daysSelect = document.querySelector(selector) as HTMLSelectElement;
-        if (daysSelect) {
-            console.log(`Found forecast days dropdown with selector: ${selector}`);
-            break;
+        const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
+        if (!daysSelect) {
+            console.error('forecastDays dropdown not found!');
+            return;
         }
-    }
-    
-    if (daysSelect) {
-        // Remove any existing event listeners first
-        const newSelect = daysSelect.cloneNode(true) as HTMLSelectElement;
-        daysSelect.parentNode?.replaceChild(newSelect, daysSelect);
-        daysSelect = newSelect;
         
-        daysSelect.addEventListener('change', (event) => {
+        console.log('Found forecastDays dropdown:', {
+            id: daysSelect.id,
+            value: daysSelect.value,
+            options: Array.from(daysSelect.options).map(opt => opt.value)
+        });
+        
+        // Remove any existing event listeners by cloning the element
+        const newSelect = daysSelect.cloneNode(true) as HTMLSelectElement;
+        if (daysSelect.parentNode) {
+            daysSelect.parentNode.replaceChild(newSelect, daysSelect);
+        }
+        
+        // Add the event listener with enhanced debugging
+        newSelect.addEventListener('change', function(event) {
             const target = event.target as HTMLSelectElement;
-            console.log(`Forecast period changed to: ${target.value} days`);
+            console.log('🎯 DROPDOWN CHANGED! New value:', target.value);
+            console.log('🎯 Event triggered, calling loadReviewForecast...');
+            
+            // Call loadReviewForecast immediately
             loadReviewForecast();
         });
         
-        console.log('✅ Event listener attached to forecast days dropdown');
-    } else {
-        console.error('❌ Could not find forecast days dropdown element');
-    }
-    
-    // Load initial data
-    loadReviewForecast();
+        // Also add input event as backup
+        newSelect.addEventListener('input', function(event) {
+            const target = event.target as HTMLSelectElement;
+            console.log('⌨️ DROPDOWN INPUT EVENT! New value:', target.value);
+            loadReviewForecast();
+        });
+        
+        console.log('✅ Event listeners attached successfully');
+        
+        // Load initial data
+        loadReviewForecast();
+        
+    }, 200); // Increased delay to 200ms
 }
+
 
 function patchForecastIssues() {
     console.log('🔧 Applying forecast patches...');
