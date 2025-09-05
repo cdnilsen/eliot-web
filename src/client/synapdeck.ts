@@ -724,12 +724,14 @@ uploadSubmitButton.addEventListener('click', async () => {
 
 async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCardsResponse> {
     const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
+    const reviewAheadDropdown = document.getElementById('reviewAheadOptions') as HTMLInputElement;
     const reviewDaysAhead = document.getElementById('reviewDaysAhead') as HTMLSelectElement;
     
     let checkTime: Date;
     let targetDate: Date;
     
     if (reviewAheadCheckbox && reviewAheadCheckbox.checked) {
+        reviewAheadDropdown.style.display = "block";
         const daysAhead = parseInt(reviewDaysAhead?.value || '1');
         targetDate = new Date();
         targetDate.setDate(targetDate.getDate() + daysAhead);
