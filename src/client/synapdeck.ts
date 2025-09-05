@@ -747,6 +747,12 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
         targetDate = new Date();
         console.log('📚 Checking cards due before midnight today');
     }
+
+    const currentTime = new Date();
+    console.log('DEBUG - Check time being used:', checkTime.toISOString());
+    console.log('DEBUG - Current actual time:', currentTime.toISOString());
+    console.log('DEBUG - Review ahead enabled:', reviewAheadCheckbox?.checked || false);
+    console.log('DEBUG - Days ahead:', reviewAheadCheckbox?.checked ? parseInt(reviewDaysAhead?.value || '1') : 0);
     
     try {
         const response = await fetch('/check_cards_available', {
@@ -769,8 +775,6 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
         }
 
         const result: CheckCardsResponse = await response.json();
-        console.log('Available cards response:', result);
-        
         return result;
     } catch (error) {
         console.error('Error checking available cards:', error);
