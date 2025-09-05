@@ -3965,6 +3965,7 @@ app.post('/shuffle_due_dates', express.json(), wrapAsync(async (req, res) => {
 
 
 // Add this endpoint to your Express app
+// Replace your existing /review_forecast endpoint with this updated version
 app.get('/review_forecast', wrapAsync(async (req, res) => {
     const { decks, days_ahead, start_date } = req.query;
 
@@ -3972,7 +3973,7 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
 
     // Parse parameters properly
     const daysAheadNum = days_ahead ? parseInt(days_ahead as string) : 14;
-    const startDate = start_date ? new Date(start_date as string) : new Date();
+    const startDate = new Date(start_date as string || new Date());
     startDate.setHours(0, 0, 0, 0);
     
     // Parse deck list
@@ -3983,11 +3984,6 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
     
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + daysAheadNum);
-    
-    // Parse deck list
-    if (decks && typeof decks === 'string') {
-        targetDecks = decks.split(',').map(d => d.trim()).filter(d => d.length > 0);
-    }
 
     try {
         // Build deck filter
@@ -3998,8 +3994,8 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
             deckParams = [targetDecks];
         }
 
-        // Query to get cards due in the forecast period
-        const query = `
+        // Query for future cards (existing logic)
+        const futureQuery = `
             SELECT 
                 DATE(time_due) as due_date,
                 deck,
@@ -4013,8 +4009,27 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
             ORDER BY due_date, deck
         `;
 
+        // Query for overdue cards (NEW)
+        const overdueQuery = `
+            SELECT 
+                deck,
+                COUNT(*) as card_count
+            FROM cards
+            WHERE time_due < $1
+            ${deckFilter}
+            AND (is_buried = false OR is_buried IS NULL)
+            GROUP BY deck
+            ORDER BY deck
+        `;
+
         const queryParams = [startDate, endDate, ...deckParams];
-        const result = await client.query(query, queryParams);
+        const overdueParams = [startDate, ...deckParams];
+
+        // Execute both queries
+        const [futureResult, overdueResult] = await Promise.all([
+            client.query(futureQuery, queryParams),
+            client.query(overdueQuery, overdueParams)
+        ]);
 
         // Get list of all decks involved
         const allDecksQuery = targetDecks.length > 0 
@@ -4025,6 +4040,10 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
         const decksResult = await client.query(allDecksQuery, allDecksParams);
         const allDecks = decksResult.rows.map(row => row.deck);
 
+        // Add "Overdue" as a special deck if there are any overdue cards
+        const hasOverdueCards = overdueResult.rows.length > 0;
+        const allDecksWithOverdue = hasOverdueCards ? ['Overdue', ...allDecks] : allDecks;
+
         // Create date range array
         const dateRange: string[] = [];
         for (let d = new Date(startDate); d < endDate; d.setDate(d.getDate() + 1)) {
@@ -4032,17 +4051,24 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
         }
 
         // Initialize forecast data structure
-        const forecastData = dateRange.map(date => {
+        const forecastData = dateRange.map((date, index) => {
             const dayData: { [key: string]: number | string } = { date };
-            // Initialize all decks with 0 counts
+            
+            // Initialize all regular decks with 0 counts
             allDecks.forEach(deck => {
                 dayData[deck] = 0;
             });
+            
+            // Add overdue column only to the first day (today)
+            if (index === 0 && hasOverdueCards) {
+                dayData['Overdue'] = 0;
+            }
+            
             return dayData;
         });
 
-        // Fill in actual counts from query results
-        result.rows.forEach(row => {
+        // Fill in actual counts from future cards query
+        futureResult.rows.forEach(row => {
             const dateStr = row.due_date.toISOString().split('T')[0];
             const deck = row.deck;
             const count = parseInt(row.card_count);
@@ -4053,22 +4079,35 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
             }
         });
 
-        // Calculate total reviews
-        const totalReviews = result.rows.reduce((sum, row) => sum + parseInt(row.card_count), 0);
+        // Fill in overdue counts for the first day only
+        if (hasOverdueCards && forecastData.length > 0) {
+            let totalOverdue = 0;
+            overdueResult.rows.forEach(row => {
+                totalOverdue += parseInt(row.card_count);
+            });
+            forecastData[0]['Overdue'] = totalOverdue;
+        }
+
+        // Calculate total reviews (including overdue)
+        const totalFutureReviews = futureResult.rows.reduce((sum, row) => sum + parseInt(row.card_count), 0);
+        const totalOverdueReviews = overdueResult.rows.reduce((sum, row) => sum + parseInt(row.card_count), 0);
+        const totalReviews = totalFutureReviews + totalOverdueReviews;
 
         console.log(`📊 Generated forecast for ${allDecks.length} decks over ${daysAheadNum} days`);
+        console.log(`📊 Total future reviews: ${totalFutureReviews}, Overdue: ${totalOverdueReviews}`);
         console.log(`📊 Total reviews in period: ${totalReviews}`);
 
         res.json({
             status: 'success',
             forecast_data: forecastData,
-            decks: allDecks,
+            decks: allDecksWithOverdue,
             date_range: {
                 start_date: startDate.toISOString().split('T')[0],
                 end_date: endDate.toISOString().split('T')[0]
             },
-            total_reviews: totalReviews
-        } as ReviewForecastResponse);
+            total_reviews: totalReviews,
+            overdue_count: totalOverdueReviews
+        } as ReviewForecastResponse & { overdue_count: number });
 
     } catch (err) {
         console.error('Error generating review forecast:', err);

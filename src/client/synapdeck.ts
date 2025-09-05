@@ -75,6 +75,7 @@ interface ReviewForecastResponse {
 
 // Color palette for decks
 const DECK_COLORS = [
+    '#ff4444', // Red for overdue cards (first color)
     '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00ff7f', '#ff6b6b',
     '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'
 ];
@@ -4382,7 +4383,7 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
         return;
     }
 
-    // Add this registration here (only once per chart creation):
+    // Register Chart.js components if not already done
     if (!Chart._registered) {
         Chart.register(
             Chart.CategoryScale, 
@@ -4395,7 +4396,6 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
         Chart._registered = true;
     }
 
-    // Rest of your existing code stays exactly the same...
     if (reviewForecastChart) {
         reviewForecastChart.destroy();
     }
@@ -4405,14 +4405,38 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     });
 
-    // Prepare datasets (one for each selected deck)
-    const datasets = selectedDecks.map((deck, index) => ({
-        label: deck,
-        data: data.map(item => item[deck] as number || 0),
-        backgroundColor: DECK_COLORS[index % DECK_COLORS.length],
-        borderColor: DECK_COLORS[index % DECK_COLORS.length],
-        borderWidth: 1
-    }));
+    // Separate overdue from regular decks and handle colors
+    const overdueIndex = decks.indexOf('Overdue');
+    const hasOverdue = overdueIndex !== -1;
+    const regularDecks = decks.filter(deck => deck !== 'Overdue');
+    
+    // Prepare datasets
+    const datasets: any[] = [];
+    
+    // Add overdue dataset first (if it exists) with special styling
+    if (hasOverdue) {
+        datasets.push({
+            label: 'Overdue',
+            data: data.map(item => item['Overdue'] as number || 0),
+            backgroundColor: 'rgba(255, 68, 68, 0.8)', // Semi-transparent red
+            borderColor: '#ff4444',
+            borderWidth: 2,
+            // Make overdue cards stand out
+            borderDash: [5, 5], // Dashed border
+        });
+    }
+    
+    // Add regular deck datasets
+    regularDecks.forEach((deck, index) => {
+        const colorIndex = hasOverdue ? index + 1 : index; // Offset by 1 if overdue exists
+        datasets.push({
+            label: deck,
+            data: data.map(item => item[deck] as number || 0),
+            backgroundColor: DECK_COLORS[colorIndex % DECK_COLORS.length],
+            borderColor: DECK_COLORS[colorIndex % DECK_COLORS.length],
+            borderWidth: 1
+        });
+    });
 
     // Create the chart
     reviewForecastChart = new Chart(ctx, {
@@ -4432,7 +4456,24 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                 },
                 legend: {
                     display: true,
-                    position: 'top'
+                    position: 'top',
+                    labels: {
+                        generateLabels: function(chart: any) {
+                            const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                            const labels = original.call(this, chart);
+                            
+                            // Style the overdue label differently
+                            labels.forEach((label: any) => {
+                                if (label.text === 'Overdue') {
+                                    label.fontStyle = 'bold';
+                                    label.strokeStyle = label.fillStyle;
+                                    label.lineWidth = 2;
+                                }
+                            });
+                            
+                            return labels;
+                        }
+                    }
                 },
                 tooltip: {
                     mode: 'index',
@@ -4450,7 +4491,20 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                             });
                         },
                         label: function(context: any) {
-                            return `${context.dataset.label}: ${context.raw} cards`;
+                            const label = context.dataset.label;
+                            const value = context.raw;
+                            
+                            if (label === 'Overdue') {
+                                return `🔴 ${label}: ${value} cards (OVERDUE!)`;
+                            } else {
+                                return `${label}: ${value} cards`;
+                            }
+                        },
+                        afterLabel: function(context: any) {
+                            if (context.dataset.label === 'Overdue' && context.raw > 0) {
+                                return 'These cards are past due and ready for review';
+                            }
+                            return '';
                         }
                     }
                 }
@@ -4460,7 +4514,8 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                     title: {
                         display: true,
                         text: 'Date'
-                    }
+                    },
+                    stacked: false // Set to true if you want stacked bars
                 },
                 y: {
                     beginAtZero: true,
@@ -4470,13 +4525,18 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
                     },
                     ticks: {
                         stepSize: 1
-                    }
+                    },
+                    stacked: false // Set to true if you want stacked bars
+                }
+            },
+            // Optional: Add animation that highlights overdue cards
+            animation: {
+                onComplete: function() {
+                    // You could add additional visual effects here
                 }
             }
         }
     });
-
-    // ... rest of your existing chart code
 }
 
 // Function to update deck selection
@@ -4490,7 +4550,9 @@ async function updateDeckSelection() {
         }
     });
     
-    // Await the refresh
+    // Always include overdue cards if any deck is selected
+    // (You might want to make this configurable)
+    
     await loadReviewForecast();
 }
 
@@ -4578,6 +4640,12 @@ function createDeckCheckboxes() {
         label.style.cursor = 'pointer';
         label.style.fontSize = '14px';
         
+        // Special styling for overdue
+        if (deck === 'Overdue') {
+            label.style.fontWeight = 'bold';
+            label.style.color = '#ff4444';
+        }
+        
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.value = deck;
@@ -4592,6 +4660,11 @@ function createDeckCheckboxes() {
         colorBox.style.backgroundColor = DECK_COLORS[index % DECK_COLORS.length];
         colorBox.style.marginRight = '6px';
         colorBox.style.borderRadius = '2px';
+        
+        // Special styling for overdue color box
+        if (deck === 'Overdue') {
+            colorBox.style.border = '2px solid #cc0000';
+        }
         
         const text = document.createElement('span');
         text.textContent = deck;
