@@ -4405,6 +4405,77 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     });
 
+    // Prepare datasets (one for each selected deck)
+    const datasets = selectedDecks.map((deck, index) => ({
+        label: deck,
+        data: data.map(item => item[deck] as number || 0),
+        backgroundColor: DECK_COLORS[index % DECK_COLORS.length],
+        borderColor: DECK_COLORS[index % DECK_COLORS.length],
+        borderWidth: 1
+    }));
+
+    // Create the chart
+    reviewForecastChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Review Forecast by Deck',
+                    font: { size: 16, weight: 'bold' }
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        title: function(tooltipItems: any[]) {
+                            const item = tooltipItems[0];
+                            const originalDate = data[item.dataIndex].date;
+                            const date = new Date(originalDate);
+                            return date.toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            });
+                        },
+                        label: function(context: any) {
+                            return `${context.dataset.label}: ${context.raw} cards`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Cards'
+                    },
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+
     // ... rest of your existing chart code
 }
 
