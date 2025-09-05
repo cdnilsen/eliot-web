@@ -734,16 +734,13 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
         targetDate = new Date();
         targetDate.setDate(targetDate.getDate() + daysAhead);
         
-        // Set to end of target day in LOCAL timezone
+        // Create end of target day in LOCAL timezone, then convert to UTC
         checkTime = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
-        
-        console.log(`📚 Checking cards due before midnight of ${targetDate.toDateString()} (${daysAhead} days ahead)`);
     } else {
-        // Set to end of today in LOCAL timezone
+        // Create end of today in LOCAL timezone, then convert to UTC  
         const today = new Date();
         checkTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
         targetDate = new Date();
-        console.log('📚 Checking cards due before midnight today');
     }
 
     const currentTime = new Date();
