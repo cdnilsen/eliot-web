@@ -80,6 +80,18 @@ const DECK_COLORS = [
     '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'
 ];
 
+function genericEventListener(target: HTMLElement, condition: boolean, trueOutcome: any, falseOutcome: any = "") {
+    if (target) {
+        target.addEventListener('change', async () => {
+            if (condition) {
+                trueOutcome;
+            } else if (falseOutcome != "") {
+                falseOutcome
+            }
+        })
+    }
+}
+
 
 function createDeckDropdowns() {
     let dropdownIDs: string[] = ["upload_dropdownMenu", "review_dropdownMenu", "check_dropdownMenu"];
@@ -412,6 +424,7 @@ if (uploadDeckDropdown) {
         // Update special characters panel
         const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
         if (textRadio && textRadio.checked) {
+            console.log("Should show characters...")
             updateSpecialCharacters(currentDeck);
         }
     });
