@@ -724,26 +724,24 @@ uploadSubmitButton.addEventListener('click', async () => {
 
 async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCardsResponse> {
     const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
-    const reviewDaysAhead = document.getElementById('reviewDaysAhead') as HTMLSelectElement; // Changed from reviewAheadHours
+    const reviewDaysAhead = document.getElementById('reviewDaysAhead') as HTMLSelectElement;
     
     let checkTime: Date;
     let targetDate: Date;
     
     if (reviewAheadCheckbox && reviewAheadCheckbox.checked) {
-        // Review ahead - check cards due before midnight of target day
         const daysAhead = parseInt(reviewDaysAhead?.value || '1');
         targetDate = new Date();
         targetDate.setDate(targetDate.getDate() + daysAhead);
         
-        // Set to midnight of the target day
-        checkTime = new Date(targetDate);
-        checkTime.setHours(23, 59, 59, 999); // Just before midnight
+        // Set to end of target day in LOCAL timezone
+        checkTime = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
         
         console.log(`📚 Checking cards due before midnight of ${targetDate.toDateString()} (${daysAhead} days ahead)`);
     } else {
-        // Normal mode - cards due before midnight today
-        checkTime = new Date();
-        checkTime.setHours(23, 59, 59, 999); // Just before midnight today
+        // Set to end of today in LOCAL timezone
+        const today = new Date();
+        checkTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
         targetDate = new Date();
         console.log('📚 Checking cards due before midnight today');
     }
