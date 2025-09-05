@@ -394,7 +394,7 @@ function initializeTabSwitching() {
         });
     });
     
-    // ... rest of your existing setup code
+    setupCheckYourWorkTab();
 }
 
 let currentFileContent: string = "";
