@@ -3964,27 +3964,60 @@ app.post('/shuffle_due_dates', express.json(), wrapAsync(async (req, res) => {
 }));
 
 // Replace your existing /review_forecast endpoint with this updated version
+// Replace your existing /review_forecast endpoint with this fixed version
 app.get('/review_forecast', wrapAsync(async (req, res) => {
     const { decks, days_ahead, start_date } = req.query;
 
-    console.log('Review forecast requested:', { decks, days_ahead, start_date });
-
-    // Parse parameters properly
-    const daysAheadNum = days_ahead ? parseInt(days_ahead as string) : 14;
-    const startDate = new Date(start_date as string || new Date());
-    startDate.setHours(0, 0, 0, 0);
-    
-    // Parse deck list
-    let targetDecks: string[] = [];
-    if (decks && typeof decks === 'string') {
-        targetDecks = decks.split(',').map(d => d.trim()).filter(d => d.length > 0);
-    }
-    
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + daysAheadNum);
+    console.log('Review forecast requested (raw):', { decks, days_ahead, start_date });
 
     try {
-        // Build deck filter
+        // Parse parameters properly with URL decoding
+        const daysAheadNum = days_ahead ? parseInt(days_ahead as string) : 14;
+        const startDate = new Date(start_date as string || new Date());
+        startDate.setHours(0, 0, 0, 0);
+        
+        // Parse deck list with proper URL decoding
+        let targetDecks: string[] = [];
+        if (decks && typeof decks === 'string') {
+            // First decode the entire string, then split and process
+            const decodedDecks = decodeURIComponent(decks);
+            console.log('Decoded decks string:', decodedDecks);
+            
+            targetDecks = decodedDecks
+                .split(',')
+                .map(d => d.trim())
+                .filter(d => d.length > 0)
+                .map(d => {
+                    // Additional cleanup for common URL encoding issues
+                    return d.replace(/\+/g, ' '); // Convert + back to spaces
+                });
+        }
+        
+        console.log('Processed target decks:', targetDecks);
+        
+        // Validate deck names exist in database before proceeding
+        if (targetDecks.length > 0) {
+            const deckValidationQuery = await client.query(
+                'SELECT DISTINCT deck FROM cards WHERE deck = ANY($1::text[])',
+                [targetDecks]
+            );
+            
+            const validDecks = deckValidationQuery.rows.map(row => row.deck);
+            const invalidDecks = targetDecks.filter(deck => !validDecks.includes(deck));
+            
+            if (invalidDecks.length > 0) {
+                console.warn('Invalid deck names found:', invalidDecks);
+                // Remove invalid decks but continue processing
+                targetDecks = validDecks;
+            }
+            
+            console.log('Valid decks for query:', targetDecks);
+        }
+        
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + daysAheadNum);
+
+        // Build deck filter with proper parameterization
         let deckFilter = '';
         let deckParams: any[] = [];
         if (targetDecks.length > 0) {
@@ -3992,7 +4025,7 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
             deckParams = [targetDecks];
         }
 
-        // Query for future cards (existing logic)
+        // Query for future cards
         const futureQuery = `
             SELECT 
                 DATE(time_due) as due_date,
@@ -4007,7 +4040,7 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
             ORDER BY due_date, deck
         `;
 
-        // Query for overdue cards (NEW)
+        // Query for overdue cards
         const overdueQuery = `
             SELECT 
                 deck,
@@ -4022,6 +4055,8 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
 
         const queryParams = [startDate, endDate, ...deckParams];
         const overdueParams = [startDate, ...deckParams];
+
+        console.log('Executing queries with params:', { queryParams, overdueParams });
 
         // Execute both queries
         const [futureResult, overdueResult] = await Promise.all([
@@ -4040,7 +4075,6 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
 
         // Add "Overdue" as a special deck if there are any overdue cards
         const hasOverdueCards = overdueResult.rows.length > 0;
-        const allDecksWithOverdue = hasOverdueCards ? ['Overdue', ...allDecks] : allDecks;
 
         // Create date range array
         const dateRange: string[] = [];
@@ -4057,7 +4091,7 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
                 dayData[deck] = 0;
             });
             
-            // Add overdue column only to the first day (today)
+            // Add overdue column only to the first day (today) if there are overdue cards
             if (index === 0 && hasOverdueCards) {
                 dayData['Overdue'] = 0;
             }
@@ -4091,9 +4125,8 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
         const totalOverdueReviews = overdueResult.rows.reduce((sum, row) => sum + parseInt(row.card_count), 0);
         const totalReviews = totalFutureReviews + totalOverdueReviews;
 
-        console.log(`📊 Generated forecast for ${allDecks.length} decks over ${daysAheadNum} days`);
-        console.log(`📊 Total future reviews: ${totalFutureReviews}, Overdue: ${totalOverdueReviews}`);
-        console.log(`📊 Total reviews in period: ${totalReviews}`);
+        console.log(`Generated forecast for ${allDecks.length} decks over ${daysAheadNum} days`);
+        console.log(`Total future reviews: ${totalFutureReviews}, Overdue: ${totalOverdueReviews}`);
 
         res.json({
             status: 'success',
@@ -4110,6 +4143,14 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
 
     } catch (err) {
         console.error('Error generating review forecast:', err);
+        
+        // Enhanced error logging for debugging
+        console.error('Error details:', {
+            message: err instanceof Error ? err.message : 'Unknown error',
+            stack: err instanceof Error ? err.stack : undefined,
+            requestParams: { decks, days_ahead, start_date }
+        });
+        
         res.status(500).json({
             status: 'error',
             error: 'Error generating review forecast',
