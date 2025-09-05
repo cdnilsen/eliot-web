@@ -22,7 +22,11 @@ let specialCharSetsDict = {
     "Tocharian B": ["ā", "ä", "ṃ", "ñ", "ṅ", "ṣ", "ś"]
 }
 
-declare const Chart: any;
+declare global {
+    interface Window {
+        Chart: any;
+    }
+}
 
 
 interface ShuffleDueDatesRequest {
@@ -4368,6 +4372,13 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) 
     const ctx = document.getElementById('reviewForecastChart') as HTMLCanvasElement;
     if (!ctx) {
         console.error('Canvas element not found');
+        return;
+    }
+
+    const Chart = window.Chart;
+    if (!Chart) {
+        console.log('Chart.js not ready, waiting...');
+        setTimeout(() => createReviewForecastChart(data, decks), 100);
         return;
     }
 
