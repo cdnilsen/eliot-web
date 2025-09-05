@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/cdnilsen/eliotweb#readme",
   "dependencies": {
+    "@types/chart.js": "^2.9.41",
     "@types/multer": "^2.0.0",
     "bcrypt": "^5.1.1",
     "chart.js": "^4.5.0",
