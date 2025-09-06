@@ -928,18 +928,25 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
         });
     }
     
-    // Use provided times
-
-    let checkTime: Date;
-    if (current_time) {
-        checkTime = new Date(current_time);
-    } else {
-        // Set to start of tomorrow (midnight)
-        checkTime = new Date();
-        checkTime.setDate(checkTime.getDate() + 1);
-        checkTime.setHours(0, 0, 0, 0);
-    }
     const actualCurrentTime = actual_current_time ? new Date(actual_current_time) : new Date();
+    
+    // FIXED: Calculate checkTime properly for "cards due by end of day"
+    let checkTime;
+    
+    if (review_ahead && target_date) {
+        // For review ahead: get cards due by end of target date
+        checkTime = new Date(target_date);
+        checkTime.setHours(23, 59, 59, 999); // End of target day
+    } else if (current_time) {
+        // If specific time provided, use it but ensure it's end of that day
+        checkTime = new Date(current_time);
+        checkTime.setHours(23, 59, 59, 999);
+    } else {
+        // Default: cards due by end of today
+        checkTime = new Date();
+        checkTime.setHours(23, 59, 59, 999);
+    }
+    
     const targetDateTime = target_date ? new Date(target_date) : new Date();
 
     console.log('Testing simple query...');
@@ -951,13 +958,13 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
 
     console.log('Request body:', req.body);
     console.log('Deck:', deck);
-    console.log('Check time (midnight of target day):', checkTime.toISOString());
+    console.log('Check time (end of target day):', checkTime.toISOString());
     console.log('Target date:', targetDateTime.toDateString());
     console.log('Actual current time:', actualCurrentTime.toISOString());
     
     const modeText = review_ahead ? 
-        `cards due by midnight of ${targetDateTime.toDateString()} (${days_ahead || 1} days ahead)` : 
-        'cards due by midnight today';
+        `cards due by end of ${targetDateTime.toDateString()} (${days_ahead || 1} days ahead)` : 
+        'cards due by end of today';
     console.log(`Checking cards for deck: ${deck} - Mode: ${modeText}`);
     
     try {
@@ -1001,7 +1008,7 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
         const dueNow = query.rows.filter(card => card.due_status === 'due_now');
         const dueAhead = query.rows.filter(card => card.due_status === 'due_ahead');
         
-        console.log(`Found ${query.rows.length} cards total (${dueNow.length} due now, ${dueAhead.length} due ahead by target date)`);
+        console.log(`Found ${query.rows.length} cards total (${dueNow.length} due now, ${dueAhead.length} due ahead by end of target date)`);
         
         res.json({
             status: 'success',
@@ -1025,7 +1032,6 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
         });
     }
 }));
-
 // Additional endpoint to get deck statistics
 app.get('/deck_stats/:deckName', wrapAsync(async (req, res) => {
     const { deckName } = req.params;
