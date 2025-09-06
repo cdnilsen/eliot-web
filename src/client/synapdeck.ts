@@ -558,14 +558,30 @@ if (uploadDeckDropdown) {
     });
 }
 
-// Add this code to initialize the special characters panel
+// Enhanced radio button event listeners with proper text input area management
 
-// Enhanced radio button event listeners with special characters panel management
 if (textRadio) {
     textRadio.addEventListener('change', function() {
         if (this.checked) {
             console.log('Text input mode selected');
+            
+            // Show the card format dropdown
             cardFormatDropdownDiv.style.display = "block";
+            
+            // Show the text input section (this was likely missing)
+            const textInputSection = document.getElementById("textInputSection");
+            if (textInputSection) {
+                textInputSection.style.display = "block";
+            }
+            
+            // Show the textarea specifically
+            const cardTextInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+            if (cardTextInput) {
+                cardTextInput.style.display = "block";
+                if (cardTextInput.parentElement) {
+                    cardTextInput.parentElement.style.display = "block";
+                } // Show parent container too
+            }
             
             // Create special characters panel when switching to text mode
             createSpecialCharactersPanel();
@@ -583,7 +599,22 @@ if (fileRadio) {
     fileRadio.addEventListener('change', function() {
         if (this.checked) {
             console.log('File input mode selected');
+            
+            // Hide the card format dropdown
             cardFormatDropdownDiv.style.display = "none";
+            
+            // Hide the text input section
+            const textInputSection = document.getElementById("textInputSection");
+            if (textInputSection) {
+                textInputSection.style.display = "none";
+            }
+            
+            // Hide the textarea specifically  
+            const cardTextInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+            if (cardTextInput) {
+                cardTextInput.style.display = "none";
+                // Don't hide parent container as it might contain file input
+            }
             
             // Hide special characters panel when switching to file mode
             const specialCharsPanel = document.getElementById("specialCharsPanel");
