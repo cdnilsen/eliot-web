@@ -17,7 +17,11 @@ let deckNameList: string[] = [
     "Tocharian B"
 ]
 
-let specialCharSetsDict = {
+type charSetsType = {
+    [key: string]: string[]
+}
+
+let specialCharSetsDict: charSetsType = {
     "Akkadian": akkadianSpecialChars,
     "Ancient Greek": [],
     "Ge'ez": geezSpecialChars,
