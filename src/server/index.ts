@@ -929,7 +929,16 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
     }
     
     // Use provided times
-    const checkTime = current_time ? new Date(current_time) : new Date();
+
+    let checkTime: Date;
+    if (current_time) {
+        checkTime = new Date(current_time);
+    } else {
+        // Set to start of tomorrow (midnight)
+        checkTime = new Date();
+        checkTime.setDate(checkTime.getDate() + 1);
+        checkTime.setHours(0, 0, 0, 0);
+    }
     const actualCurrentTime = actual_current_time ? new Date(actual_current_time) : new Date();
     const targetDateTime = target_date ? new Date(target_date) : new Date();
 
