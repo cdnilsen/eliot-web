@@ -94,6 +94,34 @@ function genericEventListener(target: HTMLElement, condition: boolean, trueOutco
     }
 }
 
+function applyColorCoding(output: string, code: string): string {
+    switch (code) {
+        case "m" :
+            return `<span style="color: #0000ff;">${output}</span>`;
+        case "f":
+            return `<span style="color: #ff0000;">${output}</span>`;
+        case "n":
+            return `<span style="background-color: #00ff00;">${output}</span>`;
+        default:
+            return output;
+    }
+}
+
+function checkColorCoding(fieldValues: string[], targetIndex: number, cardFormat: string): string {
+    let colorCodingIndex = 4;
+    if (cardFormat == "Target to Native") {
+        colorCodingIndex = 2;
+    }
+
+    let output = fieldValues[targetIndex];
+    if (fieldValues.length < (colorCodingIndex - 1)) {
+        return output;
+    } else {
+        let output: string = fieldValues[targetIndex];
+        let colorCoding = fieldValues[colorCodingIndex];
+        return applyColorCoding(output, colorCoding);
+    }  
+}
 
 function createDeckDropdowns() {
     let dropdownIDs: string[] = ["upload_dropdownMenu", "review_dropdownMenu", "check_dropdownMenu"];
@@ -806,15 +834,25 @@ let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButt
 let uploadCancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
 
 // This will probably be later on...
-function cleanFieldDatum(datum: string, process: string, isBackOfCard: boolean) {
+//Can probably nuke cardFormat
+function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boolean) {
+    let cardFormat = card.card_format;
+    let datum = card.field_values[targetIndex];
+    let process = card.field_processing[targetIndex];
+
+    let output: string = datum;
     switch (process) {
         case "Ge'ez":
-            return transliterateGeez(datum, isBackOfCard);
+            output = transliterateGeez(datum, isBackOfCard);
         case "Hebrew":
-            return transliterateHebrew(datum, true)
+            output = transliterateHebrew(datum, true)
         default:
-            return datum;
+            output = datum;
     }
+    if (isBackOfCard) {
+        output = checkColorCoding(card.field_values, targetIndex, cardFormat)
+    }
+    return output;
 }
 
 // Add this new function to wipe the database before processing
@@ -1816,9 +1854,7 @@ function generateCardFrontLine(card: CardDue): string {
         targetIndex = 1; 
     }
 
-    let targetField = card.field_values[targetIndex];
-    let targetProcessing = card.field_processing[targetIndex];
-    let processedField = cleanFieldDatum(targetField, targetProcessing, false);
+    let processedField = cleanFieldDatum(card, targetIndex, false);
     return processedField;
 }
 
@@ -2451,34 +2487,29 @@ function generateAnswerKey(cards: CardDue[]): string {
         
         const questionText = generateCardFrontLine(card);
         
-        // Generate answer based on card format
-        let targetBack = card.field_values[2];
-        let targetProcessing = card.field_processing[2];
-        // Safe trim check
-        if (!targetBack || targetBack.trim() === '') {
-            targetBack = card.field_values[0] || '';
-            targetProcessing = card.field_processing[0] || '';
-        }
-
         let answerText = '';
-        let nativeBack = card.field_values[3] || '';  // Default to empty string if undefined
-        let nativeProcessing = card.field_processing[3] || '';
-        
-        // Safe trim check
-        if (!nativeBack || nativeBack.trim() === '') {
-            nativeBack = card.field_values[1] || '';
-            nativeProcessing = card.field_processing[1] || '';
-        }
-
-        
+        let answerIndex: number;
 
         if (card.card_format === "Native to Target") {
-            // If question shows native (index 1), answer is target (index 0)
-            answerText = cleanFieldDatum(targetBack || '', targetProcessing || '', true);
+            // If question shows native (index 1), answer is target (index 0 or 2)
+            // Check if index 2 has content, otherwise use index 0
+            if (card.field_values.length > 2 && card.field_values[2] && card.field_values[2].trim() !== '') {
+                answerIndex = 2;
+            } else {
+                answerIndex = 0;
+            }
         } else {
-            // If question shows target (index 0), answer is native (index 1)  
-            answerText = cleanFieldDatum(nativeBack || '', nativeProcessing || '', true);
+            // If question shows target (index 0 or 2), answer is native (index 1 or 3)
+            // Check if index 3 has content, otherwise use index 1
+            if (card.field_values.length > 3 && card.field_values[3] && card.field_values[3].trim() !== '') {
+                answerIndex = 3;
+            } else {
+                answerIndex = 1;
+            }
         }
+
+        // Call cleanFieldDatum with the correct signature
+        answerText = cleanFieldDatum(card, answerIndex, true);
 
         // Process HTML in both question and answer
         const processedQuestion = processHTMLContent(questionText);
@@ -3757,12 +3788,8 @@ function generateCardBackLine(card: CardDue): string {
             targetIndex = 3;
         }
     }
-
     
-    let targetField = card.field_values[targetIndex];
-    let targetProcessing = card.field_processing[targetIndex];
-    
-    let processedField = cleanFieldDatum(targetField, targetProcessing, true);
+    let processedField = cleanFieldDatum(card, targetIndex, true);
     return processedField;
 }
 
