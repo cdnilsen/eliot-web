@@ -3978,7 +3978,6 @@ app.post('/shuffle_due_dates', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
-// Replace your existing /review_forecast endpoint with this updated version
 // Replace your existing /review_forecast endpoint with this fixed version
 app.get('/review_forecast', wrapAsync(async (req, res) => {
     const { decks, days_ahead, start_date } = req.query;
@@ -3986,31 +3985,44 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
     console.log('Review forecast requested (raw):', { decks, days_ahead, start_date });
 
     try {
-        // Parse parameters properly with URL decoding
+        // Parse parameters with better error handling
         const daysAheadNum = days_ahead ? parseInt(days_ahead as string) : 14;
-        const startDate = new Date(start_date as string || new Date());
+        
+        // Fix date parsing issue
+        let startDate: Date;
+        if (start_date && typeof start_date === 'string') {
+            startDate = new Date(start_date);
+            // Validate the date
+            if (isNaN(startDate.getTime())) {
+                startDate = new Date();
+            }
+        } else {
+            startDate = new Date();
+        }
         startDate.setHours(0, 0, 0, 0);
         
-        // Parse deck list with proper URL decoding
+        // Parse deck list with simpler logic
         let targetDecks: string[] = [];
         if (decks && typeof decks === 'string') {
-            // First decode the entire string, then split and process
-            const decodedDecks = decodeURIComponent(decks);
-            console.log('Decoded decks string:', decodedDecks);
-            
-            targetDecks = decodedDecks
-                .split(',')
-                .map(d => d.trim())
-                .filter(d => d.length > 0)
-                .map(d => {
-                    // Additional cleanup for common URL encoding issues
-                    return d.replace(/\+/g, ' '); // Convert + back to spaces
-                });
+            try {
+                // Simple split and trim approach
+                targetDecks = decks
+                    .split(',')
+                    .map(d => d.trim())
+                    .filter(d => d.length > 0);
+            } catch (error) {
+                console.warn('Error parsing decks parameter:', error);
+                targetDecks = [];
+            }
         }
         
-        console.log('Processed target decks:', targetDecks);
+        console.log('Processed parameters:', {
+            daysAheadNum,
+            startDate: startDate.toISOString(),
+            targetDecks
+        });
         
-        // Validate deck names exist in database before proceeding
+        // Validate deck names exist in database if specified
         if (targetDecks.length > 0) {
             const deckValidationQuery = await client.query(
                 'SELECT DISTINCT deck FROM cards WHERE deck = ANY($1::text[])',
@@ -4022,80 +4034,118 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
             
             if (invalidDecks.length > 0) {
                 console.warn('Invalid deck names found:', invalidDecks);
-                // Remove invalid decks but continue processing
                 targetDecks = validDecks;
             }
-            
-            console.log('Valid decks for query:', targetDecks);
         }
         
         const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + daysAheadNum);
 
-        // Build deck filter with proper parameterization
-        let deckFilter = '';
-        let deckParams: any[] = [];
+        console.log('Date range:', {
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+            validDecks: targetDecks
+        });
+
+        // Build queries with simplified deck filtering
+        let futureQuery: string;
+        let overdueQuery: string;
+        let futureParams: any[];
+        let overdueParams: any[];
+
         if (targetDecks.length > 0) {
-            deckFilter = `AND deck = ANY($3::text[])`;
-            deckParams = [targetDecks];
+            // With deck filter
+            futureQuery = `
+                SELECT 
+                    DATE(time_due) as due_date,
+                    deck,
+                    COUNT(*) as card_count
+                FROM cards
+                WHERE time_due >= $1 
+                AND time_due < $2
+                AND deck = ANY($3::text[])
+                GROUP BY DATE(time_due), deck
+                ORDER BY due_date, deck
+            `;
+            
+            overdueQuery = `
+                SELECT 
+                    deck,
+                    COUNT(*) as card_count
+                FROM cards
+                WHERE time_due < $1
+                AND deck = ANY($2::text[])
+                GROUP BY deck
+                ORDER BY deck
+            `;
+            
+            futureParams = [startDate, endDate, targetDecks];
+            overdueParams = [startDate, targetDecks];
+            
+        } else {
+            // No deck filter
+            futureQuery = `
+                SELECT 
+                    DATE(time_due) as due_date,
+                    deck,
+                    COUNT(*) as card_count
+                FROM cards
+                WHERE time_due >= $1 
+                AND time_due < $2
+                GROUP BY DATE(time_due), deck
+                ORDER BY due_date, deck
+            `;
+            
+            overdueQuery = `
+                SELECT 
+                    deck,
+                    COUNT(*) as card_count
+                FROM cards
+                WHERE time_due < $1
+                GROUP BY deck
+                ORDER BY deck
+            `;
+            
+            futureParams = [startDate, endDate];
+            overdueParams = [startDate];
         }
 
-        // Query for future cards
-        const futureQuery = `
-            SELECT 
-                DATE(time_due) as due_date,
-                deck,
-                COUNT(*) as card_count
-            FROM cards
-            WHERE time_due >= $1 
-            AND time_due < $2
-            ${deckFilter}
-            AND (is_buried = false OR is_buried IS NULL)
-            GROUP BY DATE(time_due), deck
-            ORDER BY due_date, deck
-        `;
-
-        // Query for overdue cards
-        const overdueQuery = `
-            SELECT 
-                deck,
-                COUNT(*) as card_count
-            FROM cards
-            WHERE time_due < $1
-            ${deckFilter}
-            AND (is_buried = false OR is_buried IS NULL)
-            GROUP BY deck
-            ORDER BY deck
-        `;
-
-        const queryParams = [startDate, endDate, ...deckParams];
-        const overdueParams = [startDate, ...deckParams];
-
-        console.log('Executing queries with params:', { queryParams, overdueParams });
+        console.log('Executing future query:', futureQuery);
+        console.log('Future params:', futureParams);
 
         // Execute both queries
         const [futureResult, overdueResult] = await Promise.all([
-            client.query(futureQuery, queryParams),
+            client.query(futureQuery, futureParams),
             client.query(overdueQuery, overdueParams)
         ]);
 
+        console.log('Query results:', {
+            futureRows: futureResult.rows.length,
+            overdueRows: overdueResult.rows.length
+        });
+
         // Get list of all decks involved
         const allDecksQuery = targetDecks.length > 0 
-            ? `SELECT DISTINCT deck FROM cards WHERE deck = ANY($1::text[]) ORDER BY deck`
-            : `SELECT DISTINCT deck FROM cards ORDER BY deck`;
+            ? 'SELECT DISTINCT deck FROM cards WHERE deck = ANY($1::text[]) ORDER BY deck'
+            : 'SELECT DISTINCT deck FROM cards ORDER BY deck';
         
         const allDecksParams = targetDecks.length > 0 ? [targetDecks] : [];
         const decksResult = await client.query(allDecksQuery, allDecksParams);
         const allDecks = decksResult.rows.map(row => row.deck);
 
-        // Add "Overdue" as a special deck if there are any overdue cards
-        const hasOverdueCards = overdueResult.rows.length > 0;
+        console.log('All decks found:', allDecks);
+
+        // Check if we have overdue cards
+        const hasOverdueCards = overdueResult.rows.length > 0 && 
+            overdueResult.rows.some(row => parseInt(row.card_count) > 0);
 
         // Create date range array
         const dateRange: string[] = [];
         for (let d = new Date(startDate); d < endDate; d.setDate(d.getDate() + 1)) {
             dateRange.push(d.toISOString().split('T')[0]); // YYYY-MM-DD format
         }
+
+        console.log('Date range created:', dateRange.length, 'days');
 
         // Initialize forecast data structure
         const forecastData = dateRange.map((date, index) => {
@@ -4106,7 +4156,7 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
                 dayData[deck] = 0;
             });
             
-            // Add overdue column only to the first day (today) if there are overdue cards
+            // Add overdue column only to the first day if there are overdue cards
             if (index === 0 && hasOverdueCards) {
                 dayData['Overdue'] = 0;
             }
@@ -4121,7 +4171,7 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
             const count = parseInt(row.card_count);
 
             const dayIndex = dateRange.indexOf(dateStr);
-            if (dayIndex !== -1) {
+            if (dayIndex !== -1 && forecastData[dayIndex]) {
                 forecastData[dayIndex][deck] = count;
             }
         });
@@ -4132,21 +4182,27 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
             overdueResult.rows.forEach(row => {
                 totalOverdue += parseInt(row.card_count);
             });
-            forecastData[0]['Overdue'] = totalOverdue;
+            if (totalOverdue > 0) {
+                forecastData[0]['Overdue'] = totalOverdue;
+            }
         }
 
-        // Calculate total reviews (including overdue)
+        // Calculate total reviews
         const totalFutureReviews = futureResult.rows.reduce((sum, row) => sum + parseInt(row.card_count), 0);
         const totalOverdueReviews = overdueResult.rows.reduce((sum, row) => sum + parseInt(row.card_count), 0);
         const totalReviews = totalFutureReviews + totalOverdueReviews;
 
-        console.log(`Generated forecast for ${allDecks.length} decks over ${daysAheadNum} days`);
-        console.log(`Total future reviews: ${totalFutureReviews}, Overdue: ${totalOverdueReviews}`);
+        console.log('Final statistics:', {
+            totalFutureReviews,
+            totalOverdueReviews,
+            totalReviews,
+            forecastDataLength: forecastData.length
+        });
 
         res.json({
             status: 'success',
             forecast_data: forecastData,
-            decks: allDecks, // Return regular decks only, not including "Overdue"
+            decks: allDecks,
             date_range: {
                 start_date: startDate.toISOString().split('T')[0],
                 end_date: endDate.toISOString().split('T')[0]
@@ -4159,7 +4215,7 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
     } catch (err) {
         console.error('Error generating review forecast:', err);
         
-        // Enhanced error logging for debugging
+        // Enhanced error logging
         console.error('Error details:', {
             message: err instanceof Error ? err.message : 'Unknown error',
             stack: err instanceof Error ? err.stack : undefined,
