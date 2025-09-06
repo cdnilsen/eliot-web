@@ -415,6 +415,7 @@ let uploadDeckDropdown = document.getElementById("upload_dropdownMenu") as HTMLS
 
 // Modify your existing deck dropdown event listener
 if (uploadDeckDropdown) {
+    console.log("Deck upload dropdown works...")
     uploadDeckDropdown.addEventListener('change', (event) => {
         const selectedValue = (event.target as HTMLSelectElement).value;
         currentDeck = selectedValue;
