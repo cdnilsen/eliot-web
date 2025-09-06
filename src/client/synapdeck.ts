@@ -18,9 +18,11 @@ let deckNameList: string[] = [
 
 let specialCharSetsDict = {
     "Akkadian": akkadianSpecialChars,
+    "Ancient Greek": [],
     "Ge'ez": geezSpecialChars,
     "Gothic": ["þ", "ē", "ō", "ƕ"],
     "Hebrew": hebrewSpecialChars,
+    "Sanskrit": ["ā", "ī", "ū", "ṭ", "ḍ", "ṇ", "ṣ", "ś", "ñ", "ṅ", "ṛ", "ḷ", "ṝ", "ḹ", "ṃ", "ḥ", "◌́", "◌̀"],
     "Tocharian B": ["ā", "ä", "ṃ", "ñ", "ṅ", "ṣ", "ś"]
 }
 
@@ -306,7 +308,7 @@ function updateSpecialCharacters(deckName: string): void {
     charGrid.innerHTML = "";
 
     // Get characters for the selected deck
-    const characters = specialCharacterSets[deckName];
+    const characters = specialCharSetsDict[deckName];
     
     console.log(`Found ${characters?.length || 0} characters for deck "${deckName}":`, characters);
     
@@ -357,6 +359,12 @@ function updateSpecialCharacters(deckName: string): void {
 
 // Add this function to insert character at cursor position in textarea
 function insertCharacterAtCursor(character: string): void {
+    if (character == "◌́") {
+        character = "\u0301";
+    } else if (character == "◌̀") {
+        character = "\u0300";
+    }
+
     const textarea = document.getElementById("cardTextInput") as HTMLTextAreaElement;
     if (!textarea) return;
 
