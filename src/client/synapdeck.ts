@@ -10,6 +10,7 @@ let deckNameList: string[] = [
     "Akkadian",
     "Ancient Greek",
     "Ge'ez",
+    "Gothic",
     "Hebrew",
     "Sanskrit",
     "Tocharian B"
@@ -18,6 +19,7 @@ let deckNameList: string[] = [
 let specialCharSetsDict = {
     "Akkadian": akkadianSpecialChars,
     "Ge'ez": geezSpecialChars,
+    "Gothic": ["þ", "ē", "ō", "ƕ"],
     "Hebrew": hebrewSpecialChars,
     "Tocharian B": ["ā", "ä", "ṃ", "ñ", "ṅ", "ṣ", "ś"]
 }
@@ -999,8 +1001,9 @@ uploadSubmitButton.addEventListener('click', async () => {
             console.error(`✗ Note ${i + 1} error:`, error);
         }
     }
-    if (textInputBox) {
-        textInputBox.value = "";
+    const textInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+    if (textInput) {
+        textInput.value = "";
     }
     console.log('All notes processed!');
 });
