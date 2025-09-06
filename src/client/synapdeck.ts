@@ -3803,7 +3803,7 @@ function showRelationshipModal(cardId: number, cardData: any): void {
                             ${cardData.deck || 'Unknown'} | ${cardData.card_format || 'Unknown'}
                         </p>
                     </div>
-                    <button id="closeRelationshipModal" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #666;">×</button>
+                    <button id="closeRelationshipModal_${cardId}" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #666;">×</button>
                 </div>
             </div>
             
@@ -3816,31 +3816,31 @@ function showRelationshipModal(cardId: number, cardData: any): void {
                     </div>
                 </div>
 
-                <div id="existingRelationships" style="margin-bottom: 24px;">
+                <div id="existingRelationships_${cardId}" style="margin-bottom: 24px;">
                     <h4>Current Relationships</h4>
-                    <div id="relationshipsList">Loading...</div>
+                    <div id="relationshipsList_${cardId}">Loading...</div>
                 </div>
 
                 <div style="border-top: 2px solid #dee2e6; padding-top: 24px;">
                     <h4>Create New Relationship</h4>
                     <p>Search for a card to create a relationship with:</p>
-                    <input type="text" id="cardSearchInput" placeholder="Search by card content..." style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px;">
-                    <div id="cardSearchResults" style="border: 1px solid #ddd; border-radius: 6px; max-height: 200px; overflow-y: auto; display: none;"></div>
+                    <input type="text" id="cardSearchInput_${cardId}" placeholder="Search by card content..." style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px;">
+                    <div id="cardSearchResults_${cardId}" style="border: 1px solid #ddd; border-radius: 6px; max-height: 200px; overflow-y: auto; display: none;"></div>
                     
-                    <select id="relationshipType" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px;">
+                    <select id="relationshipType_${cardId}" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px;">
                         <option value="peer">Peer (mutual relationship)</option>
                         <option value="dependent">Dependent (this card depends on target)</option>
                         <option value="prereq">Prerequisite (target is required for this card)</option>
                     </select>
                     
-                    <button id="createRelationshipBtn" disabled style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; opacity: 0.5;">
+                    <button id="createRelationshipBtn_${cardId}" disabled style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; opacity: 0.5;">
                         Create Relationship
                     </button>
                 </div>
             </div>
             
             <div style="padding: 20px 24px; border-top: 1px solid #e1e5e9; background: #f8f9fa; text-align: right;">
-                <button id="closeRelationshipModalBtn" style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                <button id="closeRelationshipModalBtn_${cardId}" style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
                     Close
                 </button>
             </div>
@@ -3849,22 +3849,20 @@ function showRelationshipModal(cardId: number, cardData: any): void {
 
     document.body.appendChild(modal);
 
-    // Set up event listeners
+    // Set up event listeners with unique IDs
     setupRelationshipModalEventListeners(cardId);
     loadExistingRelationships(cardId);
 }
 
 // Setup event listeners for the modal
 function setupRelationshipModalEventListeners(cardId: number): void {
-    // Use setTimeout to ensure DOM elements are ready
     setTimeout(() => {
-        const closeBtn = document.getElementById('closeRelationshipModal');
-        const closeBtn2 = document.getElementById('closeRelationshipModalBtn');
+        const closeBtn = document.getElementById(`closeRelationshipModal_${cardId}`);
+        const closeBtn2 = document.getElementById(`closeRelationshipModalBtn_${cardId}`);
         const modal = document.getElementById('cardRelationshipModal');
 
-        console.log('Setting up event listeners...', { closeBtn, closeBtn2, modal });
+        console.log('Setting up event listeners for card', cardId);
 
-        // Close button handlers
         if (closeBtn) {
             closeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -3881,20 +3879,16 @@ function setupRelationshipModalEventListeners(cardId: number): void {
             });
         }
 
-        // Backdrop click
         if (modal) {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
-                    console.log('Backdrop clicked');
                     closeRelationshipModal();
                 }
             });
         }
 
-        // ESC key
         document.addEventListener('keydown', function escHandler(e) {
             if (e.key === 'Escape') {
-                console.log('ESC pressed');
                 closeRelationshipModal();
                 document.removeEventListener('keydown', escHandler);
             }
@@ -3904,7 +3898,7 @@ function setupRelationshipModalEventListeners(cardId: number): void {
 
 // Function to load existing relationships
 async function loadExistingRelationships(cardId: number): Promise<void> {
-    const relationshipsList = document.getElementById('relationshipsList');
+    const relationshipsList = document.getElementById(`relationshipsList_${cardId}`);
     if (!relationshipsList) return;
 
     try {
@@ -3918,17 +3912,14 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
         const card = result.card;
         let html = '';
 
-        // Show peers
         if (card.peers && card.peers.length > 0) {
             html += `<div><strong>Peers:</strong> ${card.peers.join(', ')}</div>`;
         }
 
-        // Show dependents  
         if (card.dependents && card.dependents.length > 0) {
             html += `<div><strong>Dependents:</strong> ${card.dependents.join(', ')}</div>`;
         }
 
-        // Show prerequisites
         if (card.prereqs && card.prereqs.length > 0) {
             html += `<div><strong>Prerequisites:</strong> ${card.prereqs.join(', ')}</div>`;
         }
