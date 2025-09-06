@@ -4244,3 +4244,395 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
         } as ReviewForecastResponse);
     }
 }));
+
+
+// Add these interfaces near your other type definitions in index.ts
+interface CreateCardRelationshipRequest {
+    card_a_id: number;
+    card_b_id: number;
+    relationship: 'peer' | 'dependent' | 'prereq';
+}
+
+interface CreateCardRelationshipResponse {
+    status: 'success' | 'error';
+    card_a_id?: number;
+    card_b_id?: number;
+    relationship?: string;
+    changes_made?: {
+        card_a_changes: string[];
+        card_b_changes: string[];
+    };
+    error?: string;
+    details?: string;
+}
+
+// First, you'll need to add these columns to your cards table:
+/*
+ALTER TABLE cards ADD COLUMN IF NOT EXISTS dependents integer[] DEFAULT '{}';
+ALTER TABLE cards ADD COLUMN IF NOT EXISTS prereqs integer[] DEFAULT '{}';
+*/
+
+// Add this endpoint to your Express app
+app.post('/create_card_relationship', express.json(), wrapAsync(async (req, res) => {
+    const { card_a_id, card_b_id, relationship }: CreateCardRelationshipRequest = req.body;
+    
+    console.log(`🔗 Creating ${relationship} relationship between cards ${card_a_id} and ${card_b_id}`);
+    
+    // Validation
+    if (!card_a_id || !card_b_id || !relationship) {
+        return res.json({
+            status: 'error',
+            error: 'card_a_id, card_b_id, and relationship are all required'
+        } as CreateCardRelationshipResponse);
+    }
+    
+    if (typeof card_a_id !== 'number' || typeof card_b_id !== 'number') {
+        return res.json({
+            status: 'error',
+            error: 'card_a_id and card_b_id must be numbers'
+        } as CreateCardRelationshipResponse);
+    }
+    
+    if (!['peer', 'dependent', 'prereq'].includes(relationship)) {
+        return res.json({
+            status: 'error',
+            error: 'relationship must be one of: peer, dependent, prereq'
+        } as CreateCardRelationshipResponse);
+    }
+    
+    if (card_a_id === card_b_id) {
+        return res.json({
+            status: 'error',
+            error: 'A card cannot have a relationship with itself'
+        } as CreateCardRelationshipResponse);
+    }
+    
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        console.log('🔗 Transaction started for relationship creation');
+        
+        // Verify both cards exist
+        const cardsQuery = await transactionClient.query(
+            `SELECT card_id, peers, dependents, prereqs, deck 
+             FROM cards 
+             WHERE card_id IN ($1, $2)`,
+            [card_a_id, card_b_id]
+        );
+        
+        if (cardsQuery.rows.length !== 2) {
+            await transactionClient.query('ROLLBACK');
+            const foundIds = cardsQuery.rows.map(row => row.card_id);
+            const missingIds = [card_a_id, card_b_id].filter(id => !foundIds.includes(id));
+            return res.json({
+                status: 'error',
+                error: `Cards not found: ${missingIds.join(', ')}`
+            } as CreateCardRelationshipResponse);
+        }
+        
+        // Get card data
+        const cardA = cardsQuery.rows.find(row => row.card_id === card_a_id);
+        const cardB = cardsQuery.rows.find(row => row.card_id === card_b_id);
+        
+        if (!cardA || !cardB) {
+            await transactionClient.query('ROLLBACK');
+            return res.json({
+                status: 'error',
+                error: 'Error retrieving card data'
+            } as CreateCardRelationshipResponse);
+        }
+        
+        console.log(`🔗 Found cards: ${cardA.card_id} (deck: ${cardA.deck}) and ${cardB.card_id} (deck: ${cardB.deck})`);
+        
+        // Initialize arrays if null
+        const cardAPeers = cardA.peers || [];
+        const cardADependents = cardA.dependents || [];
+        const cardAPrereqs = cardA.prereqs || [];
+        const cardBPeers = cardB.peers || [];
+        const cardBDependents = cardB.dependents || [];
+        const cardBPrereqs = cardB.prereqs || [];
+        
+        let cardAChanges: string[] = [];
+        let cardBChanges: string[] = [];
+        
+        // Check for existing relationships to prevent duplicates
+        const checkExistingRelationship = (arrayA: number[], arrayB: number[], relType: string): boolean => {
+            const aHasB = arrayA.includes(card_b_id);
+            const bHasA = arrayB.includes(card_a_id);
+            if (aHasB || bHasA) {
+                console.log(`⚠️ Existing ${relType} relationship detected: A->B: ${aHasB}, B->A: ${bHasA}`);
+                return true;
+            }
+            return false;
+        };
+        
+        // Apply relationship logic
+        switch (relationship) {
+            case 'peer':
+                // Check for existing peer relationship
+                if (checkExistingRelationship(cardAPeers, cardBPeers, 'peer')) {
+                    await transactionClient.query('ROLLBACK');
+                    return res.json({
+                        status: 'error',
+                        error: 'Peer relationship already exists between these cards'
+                    } as CreateCardRelationshipResponse);
+                }
+                
+                // Add each other to peers arrays
+                if (!cardAPeers.includes(card_b_id)) {
+                    cardAPeers.push(card_b_id);
+                    cardAChanges.push(`Added card ${card_b_id} to peers`);
+                }
+                if (!cardBPeers.includes(card_a_id)) {
+                    cardBPeers.push(card_a_id);
+                    cardBChanges.push(`Added card ${card_a_id} to peers`);
+                }
+                
+                // Update both cards
+                await transactionClient.query(
+                    'UPDATE cards SET peers = $1 WHERE card_id = $2',
+                    [cardAPeers, card_a_id]
+                );
+                await transactionClient.query(
+                    'UPDATE cards SET peers = $1 WHERE card_id = $2',
+                    [cardBPeers, card_b_id]
+                );
+                break;
+                
+            case 'dependent':
+                // Card A adds Card B to dependents, Card B adds Card A to prereqs
+                if (checkExistingRelationship(cardADependents, cardBPrereqs, 'dependent/prereq')) {
+                    await transactionClient.query('ROLLBACK');
+                    return res.json({
+                        status: 'error',
+                        error: 'Dependent/prerequisite relationship already exists between these cards'
+                    } as CreateCardRelationshipResponse);
+                }
+                
+                if (!cardADependents.includes(card_b_id)) {
+                    cardADependents.push(card_b_id);
+                    cardAChanges.push(`Added card ${card_b_id} to dependents`);
+                }
+                if (!cardBPrereqs.includes(card_a_id)) {
+                    cardBPrereqs.push(card_a_id);
+                    cardBChanges.push(`Added card ${card_a_id} to prereqs`);
+                }
+                
+                // Update both cards
+                await transactionClient.query(
+                    'UPDATE cards SET dependents = $1 WHERE card_id = $2',
+                    [cardADependents, card_a_id]
+                );
+                await transactionClient.query(
+                    'UPDATE cards SET prereqs = $1 WHERE card_id = $2',
+                    [cardBPrereqs, card_b_id]
+                );
+                break;
+                
+            case 'prereq':
+                // Card A adds Card B to prereqs, Card B adds Card A to dependents
+                if (checkExistingRelationship(cardAPrereqs, cardBDependents, 'prereq/dependent')) {
+                    await transactionClient.query('ROLLBACK');
+                    return res.json({
+                        status: 'error',
+                        error: 'Prerequisite/dependent relationship already exists between these cards'
+                    } as CreateCardRelationshipResponse);
+                }
+                
+                if (!cardAPrereqs.includes(card_b_id)) {
+                    cardAPrereqs.push(card_b_id);
+                    cardAChanges.push(`Added card ${card_b_id} to prereqs`);
+                }
+                if (!cardBDependents.includes(card_a_id)) {
+                    cardBDependents.push(card_a_id);
+                    cardBChanges.push(`Added card ${card_a_id} to dependents`);
+                }
+                
+                // Update both cards
+                await transactionClient.query(
+                    'UPDATE cards SET prereqs = $1 WHERE card_id = $2',
+                    [cardAPrereqs, card_a_id]
+                );
+                await transactionClient.query(
+                    'UPDATE cards SET dependents = $1 WHERE card_id = $2',
+                    [cardBDependents, card_b_id]
+                );
+                break;
+        }
+        
+        await transactionClient.query('COMMIT');
+        
+        console.log(`🔗 Successfully created ${relationship} relationship`);
+        console.log(`   Card ${card_a_id} changes: ${cardAChanges.join(', ')}`);
+        console.log(`   Card ${card_b_id} changes: ${cardBChanges.join(', ')}`);
+        
+        res.json({
+            status: 'success',
+            card_a_id: card_a_id,
+            card_b_id: card_b_id,
+            relationship: relationship,
+            changes_made: {
+                card_a_changes: cardAChanges,
+                card_b_changes: cardBChanges
+            }
+        } as CreateCardRelationshipResponse);
+        
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('🔗 Error creating card relationship:', error);
+        res.json({
+            status: 'error',
+            error: 'Failed to create card relationship',
+            details: error instanceof Error ? error.message : 'Unknown error occurred'
+        } as CreateCardRelationshipResponse);
+    } finally {
+        transactionClient.release();
+        console.log('🔗 Transaction client released');
+    }
+}));
+
+// Bonus: Add an endpoint to remove relationships
+app.post('/remove_card_relationship', express.json(), wrapAsync(async (req, res) => {
+    const { card_a_id, card_b_id, relationship }: CreateCardRelationshipRequest = req.body;
+    
+    console.log(`🔗❌ Removing ${relationship} relationship between cards ${card_a_id} and ${card_b_id}`);
+    
+    // Same validation as create
+    if (!card_a_id || !card_b_id || !relationship) {
+        return res.json({
+            status: 'error',
+            error: 'card_a_id, card_b_id, and relationship are all required'
+        } as CreateCardRelationshipResponse);
+    }
+    
+    if (typeof card_a_id !== 'number' || typeof card_b_id !== 'number') {
+        return res.json({
+            status: 'error',
+            error: 'card_a_id and card_b_id must be numbers'
+        } as CreateCardRelationshipResponse);
+    }
+    
+    if (!['peer', 'dependent', 'prereq'].includes(relationship)) {
+        return res.json({
+            status: 'error',
+            error: 'relationship must be one of: peer, dependent, prereq'
+        } as CreateCardRelationshipResponse);
+    }
+    
+    const transactionClient = await client.connect();
+    
+    try {
+        await transactionClient.query('BEGIN');
+        
+        // Get current card data
+        const cardsQuery = await transactionClient.query(
+            `SELECT card_id, peers, dependents, prereqs 
+             FROM cards 
+             WHERE card_id IN ($1, $2)`,
+            [card_a_id, card_b_id]
+        );
+        
+        if (cardsQuery.rows.length !== 2) {
+            await transactionClient.query('ROLLBACK');
+            return res.json({
+                status: 'error',
+                error: 'One or both cards not found'
+            } as CreateCardRelationshipResponse);
+        }
+        
+        const cardA = cardsQuery.rows.find(row => row.card_id === card_a_id);
+        const cardB = cardsQuery.rows.find(row => row.card_id === card_b_id);
+        
+        if (!cardA || !cardB) {
+            await transactionClient.query('ROLLBACK');
+            return res.json({
+                status: 'error',
+                error: 'Error retrieving card data'
+            } as CreateCardRelationshipResponse);
+        }
+        
+        let cardAChanges: string[] = [];
+        let cardBChanges: string[] = [];
+        
+        // Remove relationship logic
+        switch (relationship) {
+            case 'peer':
+                // Remove each other from peers arrays
+                const newCardAPeers = (cardA.peers || []).filter((id: number) => id !== card_b_id);
+                const newCardBPeers = (cardB.peers || []).filter((id: number) => id !== card_a_id);
+                
+                if (newCardAPeers.length !== (cardA.peers || []).length) {
+                    cardAChanges.push(`Removed card ${card_b_id} from peers`);
+                }
+                if (newCardBPeers.length !== (cardB.peers || []).length) {
+                    cardBChanges.push(`Removed card ${card_a_id} from peers`);
+                }
+                
+                await transactionClient.query('UPDATE cards SET peers = $1 WHERE card_id = $2', [newCardAPeers, card_a_id]);
+                await transactionClient.query('UPDATE cards SET peers = $1 WHERE card_id = $2', [newCardBPeers, card_b_id]);
+                break;
+                
+            case 'dependent':
+                // Remove B from A's dependents, remove A from B's prereqs
+                const newCardADependents = (cardA.dependents || []).filter((id: number) => id !== card_b_id);
+                const newCardBPrereqs = (cardB.prereqs || []).filter((id: number) => id !== card_a_id);
+                
+                if (newCardADependents.length !== (cardA.dependents || []).length) {
+                    cardAChanges.push(`Removed card ${card_b_id} from dependents`);
+                }
+                if (newCardBPrereqs.length !== (cardB.prereqs || []).length) {
+                    cardBChanges.push(`Removed card ${card_a_id} from prereqs`);
+                }
+                
+                await transactionClient.query('UPDATE cards SET dependents = $1 WHERE card_id = $2', [newCardADependents, card_a_id]);
+                await transactionClient.query('UPDATE cards SET prereqs = $1 WHERE card_id = $2', [newCardBPrereqs, card_b_id]);
+                break;
+                
+            case 'prereq':
+                // Remove B from A's prereqs, remove A from B's dependents
+                const newCardAPrereqs = (cardA.prereqs || []).filter((id: number) => id !== card_b_id);
+                const newCardBDependents = (cardB.dependents || []).filter((id: number) => id !== card_a_id);
+                
+                if (newCardAPrereqs.length !== (cardA.prereqs || []).length) {
+                    cardAChanges.push(`Removed card ${card_b_id} from prereqs`);
+                }
+                if (newCardBDependents.length !== (cardB.dependents || []).length) {
+                    cardBChanges.push(`Removed card ${card_a_id} from dependents`);
+                }
+                
+                await transactionClient.query('UPDATE cards SET prereqs = $1 WHERE card_id = $2', [newCardAPrereqs, card_a_id]);
+                await transactionClient.query('UPDATE cards SET dependents = $1 WHERE card_id = $2', [newCardBDependents, card_b_id]);
+                break;
+        }
+        
+        await transactionClient.query('COMMIT');
+        
+        console.log(`🔗❌ Successfully removed ${relationship} relationship`);
+        console.log(`   Card ${card_a_id} changes: ${cardAChanges.join(', ') || 'None'}`);
+        console.log(`   Card ${card_b_id} changes: ${cardBChanges.join(', ') || 'None'}`);
+        
+        res.json({
+            status: 'success',
+            card_a_id: card_a_id,
+            card_b_id: card_b_id,
+            relationship: relationship,
+            changes_made: {
+                card_a_changes: cardAChanges,
+                card_b_changes: cardBChanges
+            }
+        } as CreateCardRelationshipResponse);
+        
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('🔗❌ Error removing card relationship:', error);
+        res.json({
+            status: 'error',
+            error: 'Failed to remove card relationship',
+            details: error instanceof Error ? error.message : 'Unknown error occurred'
+        } as CreateCardRelationshipResponse);
+    } finally {
+        transactionClient.release();
+    }
+}));
+

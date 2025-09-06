@@ -3142,6 +3142,9 @@ function displayBrowseResults(cards: CardDue[], totalCount: number): void {
                         <button class="btn btn-small edit-card-btn" data-card-id="${card.card_id}" title="Edit card">
                             ✏️
                         </button>
+                        <button class="btn btn-small relationship-btn" data-card-id="${card.card_id}" title="Manage relationships">
+                            🔗
+                        </button>
                         <button class="btn btn-small delete-card-btn" data-card-id="${card.card_id}" title="Delete card">
                             🗑️
                         </button>
@@ -3625,12 +3628,302 @@ function setupCardActionButtons(): void {
                 console.error('No card ID found for delete button');
             }
         }
+
+        else if (target.classList.contains('relationship-btn') || target.closest('.relationship-btn')) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const button = target.classList.contains('relationship-btn') ? target : target.closest('.relationship-btn') as HTMLElement;
+            const cardId = button?.getAttribute('data-card-id');
+            
+            if (cardId) {
+                console.log(`Relationship button clicked for card ${cardId}`);
+                await showCardRelationshipModal(parseInt(cardId));
+            } else {
+                console.error('No card ID found for relationship button');
+            }
+        }
     });
 
     // Log button count for debugging
     const editButtons = resultsDiv.querySelectorAll('.edit-card-btn');
     const deleteButtons = resultsDiv.querySelectorAll('.delete-card-btn');
     console.log(`Set up action handlers for ${editButtons.length} edit buttons and ${deleteButtons.length} delete buttons`);
+}
+
+// Add these interfaces first
+interface CreateCardRelationshipRequest {
+    card_a_id: number;
+    card_b_id: number;
+    relationship: 'peer' | 'dependent' | 'prereq';
+}
+
+interface CreateCardRelationshipResponse {
+    status: 'success' | 'error';
+    card_a_id?: number;
+    card_b_id?: number;
+    relationship?: string;
+    changes_made?: {
+        card_a_changes: string[];
+        card_b_changes: string[];
+    };
+    error?: string;
+    details?: string;
+}
+
+// API functions
+async function createCardRelationship(cardAId: number, cardBId: number, relationship: 'peer' | 'dependent' | 'prereq'): Promise<CreateCardRelationshipResponse> {
+    try {
+        const response = await fetch('/create_card_relationship', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                card_a_id: cardAId,
+                card_b_id: cardBId,
+                relationship: relationship
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: CreateCardRelationshipResponse = await response.json();
+        console.log('Create relationship response:', result);
+        
+        return result;
+    } catch (error) {
+        console.error('Error creating card relationship:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error creating card relationship' 
+        };
+    }
+}
+
+async function removeCardRelationship(cardAId: number, cardBId: number, relationship: 'peer' | 'dependent' | 'prereq'): Promise<CreateCardRelationshipResponse> {
+    try {
+        const response = await fetch('/remove_card_relationship', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                card_a_id: cardAId,
+                card_b_id: cardBId,
+                relationship: relationship
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: CreateCardRelationshipResponse = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error removing card relationship:', error);
+        return { 
+            status: 'error', 
+            error: 'Network error removing card relationship' 
+        };
+    }
+}
+
+// Main function to show the relationship modal
+async function showCardRelationshipModal(cardId: number): Promise<void> {
+    console.log(`Opening relationship manager for card ${cardId}`);
+
+    // Prevent multiple modals
+    const existingModal = document.getElementById('cardRelationshipModal');
+    if (existingModal) {
+        return;
+    }
+
+    // Show loading first
+    showLoadingModal(`Loading relationships for card ${cardId}...`);
+
+    try {
+        // Get card details including existing relationships
+        const response = await fetch(`/card/${cardId}`);
+        const cardDetails = await response.json();
+        
+        if (cardDetails.status !== 'success') {
+            throw new Error(cardDetails.error || 'Failed to load card details');
+        }
+
+        // Replace loading with relationship modal
+        const existingLoadingModal = document.getElementById('cardEditModal');
+        if (existingLoadingModal) {
+            existingLoadingModal.remove();
+        }
+        
+        showRelationshipModal(cardId, cardDetails.card);
+        
+    } catch (error) {
+        console.error('Error loading card relationships:', error);
+        closeRelationshipModal();
+        showToast(`Failed to load relationships for card ${cardId}: ${error.message}`, 'error');
+    }
+}
+
+// Function to create the relationship modal
+function showRelationshipModal(cardId: number, cardData: any): void {
+    const modal = document.createElement('div');
+    modal.id = 'cardRelationshipModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.2s ease-out;
+    `;
+
+    // Get card preview text
+    const frontText = cardData.field_values?.[0] || 'No content';
+    const backText = cardData.field_values?.[1] || 'No content';
+
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 12px; width: 90%; max-width: 800px; max-height: 85vh; overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);">
+            <div style="padding: 20px 24px; border-bottom: 1px solid #e1e5e9; background: #f8f9fa;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="margin: 0; color: #333; font-size: 20px; font-weight: 600;">
+                            Manage Relationships - Card ${cardId}
+                        </h2>
+                        <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">
+                            ${cardData.deck || 'Unknown'} | ${cardData.card_format || 'Unknown'}
+                        </p>
+                    </div>
+                    <button id="closeRelationshipModal" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #666;">×</button>
+                </div>
+            </div>
+            
+            <div style="padding: 24px;">
+                <div style="background: #f0f8ff; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+                    <h4 style="margin: 0 0 12px 0; color: #0c5460;">Card Preview</h4>
+                    <div style="font-size: 14px; color: #495057;">
+                        <div><strong>Front:</strong> ${frontText.substring(0, 80)}${frontText.length > 80 ? '...' : ''}</div>
+                        <div><strong>Back:</strong> ${backText.substring(0, 80)}${backText.length > 80 ? '...' : ''}</div>
+                    </div>
+                </div>
+
+                <div id="existingRelationships" style="margin-bottom: 24px;">
+                    <h4>Current Relationships</h4>
+                    <div id="relationshipsList">Loading...</div>
+                </div>
+
+                <div style="border-top: 2px solid #dee2e6; padding-top: 24px;">
+                    <h4>Create New Relationship</h4>
+                    <p>Search for a card to create a relationship with:</p>
+                    <input type="text" id="cardSearchInput" placeholder="Search by card content..." style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px;">
+                    <div id="cardSearchResults" style="border: 1px solid #ddd; border-radius: 6px; max-height: 200px; overflow-y: auto; display: none;"></div>
+                    
+                    <select id="relationshipType" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px;">
+                        <option value="peer">Peer (mutual relationship)</option>
+                        <option value="dependent">Dependent (this card depends on target)</option>
+                        <option value="prereq">Prerequisite (target is required for this card)</option>
+                    </select>
+                    
+                    <button id="createRelationshipBtn" disabled style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; opacity: 0.5;">
+                        Create Relationship
+                    </button>
+                </div>
+            </div>
+            
+            <div style="padding: 20px 24px; border-top: 1px solid #e1e5e9; background: #f8f9fa; text-align: right;">
+                <button id="closeRelationshipModalBtn" style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Set up event listeners
+    setupRelationshipModalEventListeners(cardId);
+    loadExistingRelationships(cardId);
+}
+
+// Setup event listeners for the modal
+function setupRelationshipModalEventListeners(cardId: number): void {
+    const closeBtn = document.getElementById('closeRelationshipModal');
+    const closeBtn2 = document.getElementById('closeRelationshipModalBtn');
+    const modal = document.getElementById('cardRelationshipModal');
+
+    [closeBtn, closeBtn2].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', closeRelationshipModal);
+        }
+    });
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeRelationshipModal();
+        });
+    }
+}
+
+// Function to load existing relationships
+async function loadExistingRelationships(cardId: number): Promise<void> {
+    const relationshipsList = document.getElementById('relationshipsList');
+    if (!relationshipsList) return;
+
+    try {
+        const response = await fetch(`/card/${cardId}`);
+        const result = await response.json();
+        
+        if (result.status !== 'success') {
+            throw new Error('Failed to load card details');
+        }
+
+        const card = result.card;
+        let html = '';
+
+        // Show peers
+        if (card.peers && card.peers.length > 0) {
+            html += `<div><strong>Peers:</strong> ${card.peers.join(', ')}</div>`;
+        }
+
+        // Show dependents  
+        if (card.dependents && card.dependents.length > 0) {
+            html += `<div><strong>Dependents:</strong> ${card.dependents.join(', ')}</div>`;
+        }
+
+        // Show prerequisites
+        if (card.prereqs && card.prereqs.length > 0) {
+            html += `<div><strong>Prerequisites:</strong> ${card.prereqs.join(', ')}</div>`;
+        }
+
+        if (html === '') {
+            html = '<p style="color: #666; font-style: italic;">No relationships found.</p>';
+        }
+
+        relationshipsList.innerHTML = html;
+
+    } catch (error) {
+        console.error('Error loading relationships:', error);
+        if (relationshipsList) {
+            relationshipsList.innerHTML = `<p style="color: #dc3545;">Error: ${error.message}</p>`;
+        }
+    }
+}
+
+// Function to close the modal
+function closeRelationshipModal(): void {
+    const modal = document.getElementById('cardRelationshipModal');
+    if (modal) {
+        modal.remove();
+    }
 }
 
 // Update pagination controls
@@ -5428,3 +5721,4 @@ if (document.readyState === 'loading') {
     // DOM is already loaded
     addRetrievabilityManagementSection();
 }
+
