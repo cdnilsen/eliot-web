@@ -223,51 +223,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js"></script>
     <script type="module">
-        // Make jsPDF available to your module
-        window.jsPDF = window.jspdf.jsPDF;
-        console.log('jsPDF available:', typeof window.jsPDF);
-
-        // Handle radio button changes to show/hide appropriate input sections
-        document.addEventListener('DOMContentLoaded', function() {
-            const fileRadio = document.getElementById('fileInputRadio');
-            const textRadio = document.getElementById('textInputRadio');
-            const fileSection = document.getElementById('fileUploadSection');
-            const textSection = document.getElementById('textInputSection');
-            const submitBtn = document.getElementById('upload_submitBtn');
-            const cancelBtn = document.getElementById('upload_cancel');
-
-            function toggleInputSections() {
-                if (fileRadio.checked) {
-                    fileSection.style.display = 'block';
-                    textSection.style.display = 'none';
-                } else if (textRadio.checked) {
-                    fileSection.style.display = 'none';
-                    textSection.style.display = 'block';
-                }
-                
-                // Show submit and cancel buttons when either input method is selected
-                if (fileRadio.checked || textRadio.checked) {
-                    submitBtn.classList.remove('hidden');
-                    cancelBtn.classList.remove('hidden');
-                }
-            }
-
-            fileRadio.addEventListener('change', toggleInputSections);
-            textRadio.addEventListener('change', toggleInputSections);
-
-            // Initialize the display
-            toggleInputSections();
-        });
-        
-        import('./synapdeck.js')
-            .then(() => {
-                console.log('synapdeck.js loaded successfully');
-            })
-            .catch(error => {
-                console.error('Failed to load synapdeck.js:', error);
-            });
-    </script>
-    <script type="module">
         // Add this debug info
         console.log('Chart available at page load:', typeof Chart);
         console.log('Window.Chart available:', typeof window.Chart);
