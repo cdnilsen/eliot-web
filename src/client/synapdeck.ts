@@ -322,7 +322,7 @@ function updateSpecialCharacters(deckName: string): void {
     panel.style.display = "block";
 
     // Create buttons for each character
-    characters.forEach((char, index) => {
+    characters.forEach((char: string, index: number) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "special-char-btn";
