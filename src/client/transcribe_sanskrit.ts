@@ -50,3 +50,17 @@ export function SanskritDiacriticify(str: string, isASCII: boolean): string {
 export let sanskritChars: string[] = [
     "á", "í", "ú", "ā", "ā́"
 ]
+
+export function postProcessSanskrit(datum: string): string {
+    let acuteTargets = ["á", "é", "í", "ó", "ú"];
+    let acuteVowels = ["á", "é", "í", "ó", "ú"];
+
+    let graveTargets = ["à", "è", "ì", "ò", "ù"];
+    let graveVowels = ["à", "è", "ì", "ò", "ù"];
+
+    for (let i=0; i < acuteTargets.length; i++) {
+        datum = datum.replaceAll(acuteTargets[i], acuteVowels[i]);
+        datum = datum.replaceAll(graveTargets[i], graveVowels[i]);
+    }
+    return datum;
+}

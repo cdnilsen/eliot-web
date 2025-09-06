@@ -3,6 +3,7 @@ import {transliterateGreek} from './transcribe_ancient_greek.js';
 import {SanskritDiacriticify} from './transcribe_sanskrit.js';
 import {AkkadianDiacriticify, akkadianSpecialChars} from './transcribe_akkadian.js';
 import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
+import {postProcessSanskrit} from './transcribe_sanskrit.js';
 import {hebrewSpecialChars, transliterateHebrew} from './transcribe_hebrew.js'
 
 
@@ -736,9 +737,7 @@ if (cardFormatDropdown) {
 
 // Modified submit button event listener
 uploadSubmitButton.addEventListener('click', async () => {
-    console.log('Submit button clicked');
-    
-    let currentNoteType = "";
+        let currentNoteType = "";
     const lines = currentFileContent.split('\n');
 
     let thisNoteProcessList: string[] = [];
@@ -776,6 +775,14 @@ uploadSubmitButton.addEventListener('click', async () => {
                 }
                 while (thisNoteDataList.length < maxLength) {
                     thisNoteDataList.push("");
+                }
+            }
+
+            if (currentDeck == "Sanskrit") {
+                for (let i=0; i < thisNoteDataList.length; i++) {
+                    if (thisNoteProcessList[i] == "Sanskrit") {
+                        thisNoteDataList[i] = postProcessSanskrit(thisNoteDataList[i]);
+                    }
                 }
             }
             
