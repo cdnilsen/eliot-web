@@ -739,7 +739,20 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
     const transactionClient = await client.connect();
 
     const baseTime = new Date(timeCreated);
-    const dueDate = new Date(baseTime.getTime() + initial_interval_ms);
+
+    // Calculate due date as the start of the following day
+    const dueDate = new Date(baseTime);
+    dueDate.setDate(dueDate.getDate() + 1); // Move to next day
+    dueDate.setHours(6, 0, 0, 0); // Set to 6 AM the next day (or adjust time as preferred)
+
+    // WITH THIS:
+    // For new cards, ignore individual interval and use next day logic
+    const cardDueDate = new Date(baseTime);
+    cardDueDate.setDate(cardDueDate.getDate() + 1);
+    cardDueDate.setHours(6, 0, 0, 0); // 6 AM the next day
+
+    // Set interval to 1 day for new cards
+    const cardIntervalDays = 1;
     
     try {
         await transactionClient.query('BEGIN');
@@ -812,10 +825,12 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                 const config = card_configs[i];
                 
                 // Each card can have its own interval, or inherit from the note
-                const cardIntervalMs = config.initial_interval_ms || initial_interval_ms;
-                const cardDueDate = new Date(baseTime.getTime() + cardIntervalMs);  // ← Add this line
-                const cardIntervalDays = Math.ceil(cardIntervalMs / (1000 * 60 * 60 * 24));
-                console.log("Card interval: " + cardIntervalDays.toString())
+                const cardDueDate = new Date(baseTime);
+                cardDueDate.setDate(cardDueDate.getDate() + 1);
+                cardDueDate.setHours(6, 0, 0, 0);
+
+                // Keep the interval calculation for database storage
+                const cardIntervalDays = 1; // All new cards start with 1-day interval
                 const cardResult = await transactionClient.query(
                     `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, time_due, interval, retrievability, created) 
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
