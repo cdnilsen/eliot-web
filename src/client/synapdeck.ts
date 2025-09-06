@@ -3992,7 +3992,6 @@ function processToastQueue(): void {
 }
 
 // Add this individual field save function to your synapdeck.ts file
-
 async function saveIndividualField(cardId: number, fieldIndex: number, textarea: HTMLTextAreaElement, saveBtn: HTMLButtonElement): Promise<void> {
     const newValue = textarea.value;
     const originalValue = textarea.dataset.originalValue || '';

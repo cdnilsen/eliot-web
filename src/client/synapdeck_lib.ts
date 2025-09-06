@@ -47,13 +47,13 @@ export function TwoWayCard(values: string[], processing: string[]): any[] {
     return [
         {
             card_format: "Target to Native",
-            field_names: ["Target", "Native", "Target_Back", "Native_Back"],
+            field_names: ["Target", "Native", "Target_Back", "Native_Back", "Coloring"],
             field_values: values,
             field_processing: processing
         },
         {
             card_format: "Native to Target", 
-            field_names: ["Target", "Native", "Target_Back", "Native_Back"],
+            field_names: ["Target", "Native", "Target_Back", "Native_Back", "Coloring"],
             field_values: values,
             field_processing: processing
         }
@@ -64,8 +64,8 @@ export function OneWayCard(values: string[], processing: string[]): any[] {
     return [
         {
             card_format: "One Way",
-            field_names: ["Front", "Back"],
-            field_values: [values[0], values[1]],
+            field_names: ["Front", "Back", "Coloring"],
+            field_values: [values[0], values[1], values[2]],
             field_processing: processing
         }
     ];
