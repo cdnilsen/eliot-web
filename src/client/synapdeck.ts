@@ -221,22 +221,6 @@ declare global {
     }
 }
 
-
-// First, add this interface near your other type definitions
-interface SpecialCharacterSet {
-    [key: string]: string[];
-}
-
-
-// Add this after your imports (you'll need to make sure these are exported from their respective modules)
-const specialCharacterSets: SpecialCharacterSet = {
-    "Ge'ez": geezSpecialChars || [],
-    "Akkadian": akkadianSpecialChars || [],
-    "Hebrew": hebrewSpecialChars || []
-    // Add more as needed
-    // "Sanskrit": sanskritSpecialChars || [], // if you have this
-};
-
 // Enhanced createSpecialCharactersPanel function
 function createSpecialCharactersPanel(): void {
     console.log("Creating special characters panel...");
@@ -250,7 +234,6 @@ function createSpecialCharactersPanel(): void {
     // Check if panel already exists
     let existingPanel = document.getElementById("specialCharsPanel");
     if (existingPanel) {
-        console.log("Panel already exists, removing old one");
         existingPanel.remove();
     }
 
@@ -289,23 +272,15 @@ function createSpecialCharactersPanel(): void {
     } else {
         // Fallback: append to textInputSection
         textInputSection.appendChild(panel);
-        console.log("Panel appended to textInputSection");
     }
-    
-    console.log("Special characters panel created successfully");
 }
-
-// Add this function to update the special characters based on selected deck
 
 // Enhanced updateSpecialCharacters function with better debugging
 function updateSpecialCharacters(deckName: string): void {
-    console.log(`Updating special characters for deck: "${deckName}"`);
-    
     const panel = document.getElementById("specialCharsPanel");
     const charGrid = document.getElementById("specialCharsGrid");
     
     if (!panel || !charGrid) {
-        console.error("Special characters panel or grid not found");
         return;
     }
 
@@ -313,17 +288,12 @@ function updateSpecialCharacters(deckName: string): void {
     charGrid.innerHTML = "";
 
     // Get characters for the selected deck
-    const characters = specialCharSetsDict[deckName];
-    
-    console.log(`Found ${characters?.length || 0} characters for deck "${deckName}":`, characters);
-    
+    const characters = specialCharSetsDict[deckName];    
     if (!characters || characters.length === 0) {
-        console.log("No characters found, hiding panel");
         panel.style.display = "none";
         return;
     }
 
-    console.log("Showing panel and creating character buttons");
     panel.style.display = "block";
 
     // Create buttons for each character
@@ -351,15 +321,11 @@ function updateSpecialCharacters(deckName: string): void {
         
         // Add click handler to insert character
         button.addEventListener("click", () => {
-            console.log(`Inserting character: ${char}`);
             insertCharacterAtCursor(char);
         });
         
         charGrid.appendChild(button);
-        console.log(`Created button ${index + 1}/${characters.length}: ${char}`);
     });
-    
-    console.log(`Successfully created ${characters.length} character buttons`);
 }
 
 // Add this function to insert character at cursor position in textarea
@@ -494,7 +460,8 @@ function initializeTabSwitching() {
                 } else if (this.id === 'check_work') {
                     populateDropdownForTab('check_dropdownMenu');
                 } else if (this.id === 'forecast_cards') {
-                    setupReviewForecastTab(); // Add this line
+                    // Clean setup for forecast tab
+                    setupReviewForecastTab();
                 }
             }
         });
@@ -506,6 +473,7 @@ function initializeTabSwitching() {
 let currentFileContent: string = "";
 let currentDeck: string = "";
 let uploadDeckDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;// Optional: Also handle when radio buttons change to reset the content
+
 // Also fix the text radio button event listener to be more explicit
 const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
 const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
@@ -4860,110 +4828,53 @@ declare global {
     }
 }
 
-// Export functions to global scope
-window.setupReviewForecastTab = setupReviewForecastTab;
 window.loadReviewForecast = loadReviewForecast;
+window.setupReviewForecastTab = setupReviewForecastTab;
 
 // Updated setupReviewForecastTab with direct function reference
 function setupReviewForecastTab(): void {
     console.log('Setting up review forecast tab...');
     
-    setTimeout(() => {
-        console.log('Attaching event listener to forecast dropdown ONLY...');
-        
-        // ONLY listen to the forecast-specific dropdown, not all dropdowns
-        const forecastDaysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
-        if (!forecastDaysSelect) {
-            console.error('forecastDays dropdown not found!');
-            return;
-        }
-        
-        console.log('Found forecastDays dropdown, current value:', forecastDaysSelect.value);
-        
-        // Remove any existing event listeners by cloning the element
-        const newForecastSelect = forecastDaysSelect.cloneNode(true) as HTMLSelectElement;
-        if (forecastDaysSelect.parentNode) {
-            forecastDaysSelect.parentNode.replaceChild(newForecastSelect, forecastDaysSelect);
-        }
-        
-        // Add event listener ONLY to forecast dropdown
-        newForecastSelect.addEventListener('change', function(event) {
-            const target = event.target as HTMLSelectElement;
-            
-            // Double-check this is actually the forecast dropdown
-            if (target.id === 'forecastDays') {
-                console.log('📅 FORECAST DROPDOWN changed to:', target.value);
-                if (window.loadReviewForecast) {
-                    window.loadReviewForecast();
-                }
-            } else {
-                console.log('⚠️ Non-forecast dropdown triggered forecast listener:', target.id);
+    // Only set up once - check if already initialized
+    const forecastDays = document.getElementById('forecastDays') as HTMLSelectElement;
+    if (!forecastDays) {
+        console.error('forecastDays dropdown not found!');
+        return;
+    }
+    
+    // Remove any existing event listeners by checking if already set up
+    if (forecastDays.dataset.initialized === 'true') {
+        console.log('Forecast tab already initialized, skipping...');
+        return;
+    }
+    
+    // Mark as initialized
+    forecastDays.dataset.initialized = 'true';
+    
+    // Add clean event listener
+    forecastDays.addEventListener('change', function(event) {
+        const target = event.target as HTMLSelectElement;
+        console.log(`Forecast period changed to: ${target.value} days`);
+        loadReviewForecast();
+    });
+    
+    // Set up deck selection if it exists
+    const deckSelection = document.getElementById('deckSelection');
+    if (deckSelection && !deckSelection.dataset.initialized) {
+        deckSelection.dataset.initialized = 'true';
+        deckSelection.addEventListener('change', function(event) {
+            const target = event.target as HTMLInputElement;
+            if (target.type === 'checkbox') {
+                console.log('Forecast deck selection changed');
+                updateDeckSelection();
             }
         });
-        
-        // Also check for deck selection in forecast tab (if that exists)
-        const forecastDeckSelection = document.getElementById('deckSelection');
-        if (forecastDeckSelection) {
-            forecastDeckSelection.addEventListener('change', function(event) {
-                const target = event.target as HTMLElement;
-                
-                // Only trigger if we're actually in the forecast tab
-                const forecastTab = document.getElementById('forecast_mainDiv');
-                if (forecastTab && forecastTab.classList.contains('active')) {
-                    console.log('📅 FORECAST DECK selection changed');
-                    if (window.loadReviewForecast) {
-                        window.loadReviewForecast();
-                    }
-                } else {
-                    console.log('⚠️ Forecast deck selection triggered but forecast tab not active');
-                }
-            });
-        }
-        
-        console.log('✅ Forecast event listeners properly isolated');
-        
-        // Load initial data
-        try {
-            loadReviewForecast();
-        } catch (error) {
-            console.error('Error calling loadReviewForecast:', error);
-        }
-        
-    }, 300);
-}
-
-function patchForecastIssues() {
-    console.log('🔧 Applying forecast patches...');
-    
-    // Fix 1: Ensure dropdown has proper event listener
-    const forecastDropdown = document.getElementById('forecastDays') as HTMLSelectElement;
-    if (forecastDropdown) {
-        // Remove old event listeners by cloning the element
-        const newDropdown = forecastDropdown.cloneNode(true) as HTMLSelectElement;
-        forecastDropdown.parentNode?.replaceChild(newDropdown, forecastDropdown);
-        
-        // Add the correct event listener
-        newDropdown.addEventListener('change', (event) => {
-            const target = event.target as HTMLSelectElement;
-            console.log(`📅 Forecast period changed to: ${target.value}`);
-            loadReviewForecast();
-        });
-        
-        console.log('✅ Dropdown event listener fixed');
     }
     
-    // Fix 2: Force reload of forecast data to trigger overdue detection
-    if (typeof loadReviewForecast === 'function') {
-        console.log('🔄 Reloading forecast data...');
-        loadReviewForecast();
-    }
-}
-
-// Call this function after your page loads
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', patchForecastIssues);
-} else {
-    patchForecastIssues();
+    console.log('Forecast event listeners set up successfully');
+    
+    // Load initial data
+    loadReviewForecast();
 }
 
 // Enhanced loadReviewForecast function with better error handling
@@ -4974,38 +4885,31 @@ async function loadReviewForecast() {
     if (loadingEl) loadingEl.style.display = 'block';
     if (errorEl) errorEl.style.display = 'none';
     
-    // Try multiple ways to get the days value
+    // Simple, reliable way to get the days value
+    const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
     let daysAhead = 14; // default
     
-    const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
     if (daysSelect && daysSelect.value) {
-        daysAhead = parseInt(daysSelect.value);
-        console.log(`Using selected days: ${daysAhead}`);
-    } else {
-        // Try alternative selectors
-        const altSelect = document.querySelector('select[name="forecastDays"], .forecast-period select') as HTMLSelectElement;
-        if (altSelect && altSelect.value) {
-            daysAhead = parseInt(altSelect.value);
-            console.log(`Using alternative selector days: ${daysAhead}`);
-        } else {
-            console.warn('Could not find days selection, using default: 14 days');
+        const parsedDays = parseInt(daysSelect.value);
+        if (!isNaN(parsedDays) && parsedDays > 0) {
+            daysAhead = parsedDays;
         }
     }
     
+    console.log(`Loading forecast for ${daysAhead} days ahead (dropdown value: "${daysSelect?.value}")`);
+    
     try {
-        console.log(`🔄 Loading forecast for ${daysAhead} days ahead...`);
-        
         const today = new Date();
         const localMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
         
         const result = await fetchReviewForecast(
             selectedDecks.length > 0 ? selectedDecks : undefined, 
             daysAhead,
-            localMidnight.toISOString() // Now this third argument is supported
+            localMidnight.toISOString()
         );
         
         if (result.status === 'success' && result.forecast_data && result.decks) {
-            console.log(`✅ Loaded forecast data:`, result);
+            console.log(`Successfully loaded forecast data for ${daysAhead} days:`, result);
             
             if (availableDecks.length === 0) {
                 availableDecks = result.decks;
@@ -5020,7 +4924,7 @@ async function loadReviewForecast() {
             throw new Error(result.error || 'Failed to load forecast data');
         }
     } catch (error) {
-        console.error('❌ Error loading review forecast:', error);
+        console.error('Error loading review forecast:', error);
         if (errorEl) {
             errorEl.style.display = 'block';
             errorEl.textContent = `Error: ${error.message}`;
