@@ -1005,6 +1005,7 @@ uploadSubmitButton.addEventListener('click', async () => {
     if (textInput) {
         textInput.value = "";
     }
+    currentFileContent = "";
     console.log('All notes processed!');
 });
 
