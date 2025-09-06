@@ -416,17 +416,18 @@ let uploadDeckDropdown = document.getElementById("upload_dropdownMenu") as HTMLS
 // Modify your existing deck dropdown event listener
 if (uploadDeckDropdown) {
     console.log("Deck upload dropdown works...")
+    let currentUploadDeck: string = ""
     uploadDeckDropdown.addEventListener('change', (event) => {
         const selectedValue = (event.target as HTMLSelectElement).value;
-        currentDeck = selectedValue;
+        currentUploadDeck = selectedValue;
 
-        console.log("Current deck is: <" + currentDeck + ">")
+        console.log("Current deck is: <" + currentUploadDeck + ">")
         
         // Update special characters panel
         const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
         if (textRadio && textRadio.checked) {
             console.log("Should show characters...")
-            updateSpecialCharacters(currentDeck);
+            updateSpecialCharacters(currentUploadDeck);
         }
     });
 }
