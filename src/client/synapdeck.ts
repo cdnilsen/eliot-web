@@ -4962,54 +4962,465 @@ declare global {
 
 // Export functions to global scope
 window.setupReviewForecastTab = setupReviewForecastTab;
+window.loadReviewForecast = loadReviewForecast;
 
 // Updated setupReviewForecastTab with direct function reference
 function setupReviewForecastTab(): void {
     console.log('Setting up review forecast tab...');
     
-    // Wait for DOM to be ready
     setTimeout(() => {
-        console.log('Attaching event listener to forecast dropdown...');
+        console.log('Attaching event listener to forecast dropdown ONLY...');
         
-        const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
-        if (!daysSelect) {
+        // ONLY listen to the forecast-specific dropdown, not all dropdowns
+        const forecastDaysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
+        if (!forecastDaysSelect) {
             console.error('forecastDays dropdown not found!');
             return;
         }
         
-        console.log('Found forecastDays dropdown, current value:', daysSelect.value);
+        console.log('Found forecastDays dropdown, current value:', forecastDaysSelect.value);
         
         // Remove any existing event listeners by cloning the element
-        const newSelect = daysSelect.cloneNode(true) as HTMLSelectElement;
-        if (daysSelect.parentNode) {
-            daysSelect.parentNode.replaceChild(newSelect, daysSelect);
+        const newForecastSelect = forecastDaysSelect.cloneNode(true) as HTMLSelectElement;
+        if (forecastDaysSelect.parentNode) {
+            forecastDaysSelect.parentNode.replaceChild(newForecastSelect, forecastDaysSelect);
         }
         
-        // Add the event listener that directly calls the function
-        newSelect.addEventListener('change', function(event) {
+        // Add event listener ONLY to forecast dropdown
+        newForecastSelect.addEventListener('change', function(event) {
             const target = event.target as HTMLSelectElement;
-            console.log('Dropdown changed to:', target.value);
-            window.loadReviewForecast();
-        });
-        
-        // Add input event as backup
-        newSelect.addEventListener('input', function(event) {
-            const target = event.target as HTMLSelectElement;
-            console.log('Dropdown input event:', target.value);
-            if (window.loadReviewForecast) {
-                window.loadReviewForecast();
+            
+            // Double-check this is actually the forecast dropdown
+            if (target.id === 'forecastDays') {
+                console.log('📅 FORECAST DROPDOWN changed to:', target.value);
+                if (window.loadReviewForecast) {
+                    window.loadReviewForecast();
+                }
+            } else {
+                console.log('⚠️ Non-forecast dropdown triggered forecast listener:', target.id);
             }
         });
         
-        console.log('Event listeners attached successfully');
+        // Also check for deck selection in forecast tab (if that exists)
+        const forecastDeckSelection = document.getElementById('deckSelection');
+        if (forecastDeckSelection) {
+            forecastDeckSelection.addEventListener('change', function(event) {
+                const target = event.target as HTMLElement;
+                
+                // Only trigger if we're actually in the forecast tab
+                const forecastTab = document.getElementById('forecast_mainDiv');
+                if (forecastTab && forecastTab.classList.contains('active')) {
+                    console.log('📅 FORECAST DECK selection changed');
+                    if (window.loadReviewForecast) {
+                        window.loadReviewForecast();
+                    }
+                } else {
+                    console.log('⚠️ Forecast deck selection triggered but forecast tab not active');
+                }
+            });
+        }
+        
+        console.log('✅ Forecast event listeners properly isolated');
         
         // Load initial data
-        loadReviewForecast();
+        try {
+            loadReviewForecast();
+        } catch (error) {
+            console.error('Error calling loadReviewForecast:', error);
+        }
         
-    }, 300); // Increased delay
+    }, 300);
 }
 
-window.loadReviewForecast = loadReviewForecast;
+
+// 1. First, let's properly isolate the upload dropdown
+function setupUploadDropdownClean(): void {
+    const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+    
+    if (!uploadDropdown) {
+        console.error("Upload dropdown not found");
+        return;
+    }
+    
+    // Remove any existing listeners by cloning
+    const newUploadDropdown = uploadDropdown.cloneNode(true) as HTMLSelectElement;
+    newUploadDropdown.value = uploadDropdown.value; // Preserve selection
+    
+    if (uploadDropdown.parentNode) {
+        uploadDropdown.parentNode.replaceChild(newUploadDropdown, uploadDropdown);
+    }
+    
+    // Add clean event listener
+    newUploadDropdown.addEventListener('change', function(event) {
+        event.stopPropagation(); // Prevent bubbling
+        
+        const target = event.target as HTMLSelectElement;
+        const selectedDeck = target.value;
+        
+        console.log(`Upload deck changed to: "${selectedDeck}"`);
+        
+        // Update global variable
+        currentDeck = selectedDeck;
+        
+        // Only update special characters if conditions are right
+        const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+        const uploadTab = document.getElementById('upload_mainDiv');
+        const isUploadTabActive = uploadTab?.classList.contains('active');
+        
+        if (textRadio?.checked && isUploadTabActive && selectedDeck) {
+            console.log(`Showing special characters for: ${selectedDeck}`);
+            updateSpecialCharacters(selectedDeck);
+        }
+    });
+    
+    console.log("Upload dropdown setup complete");
+}
+
+// 2. Fix the forecast dropdown to ONLY listen to its own element
+function setupForecastDropdownClean(): void {
+    const forecastDropdown = document.getElementById('forecastDays') as HTMLSelectElement;
+    
+    if (!forecastDropdown) {
+        console.log("Forecast dropdown not found (this is OK if not on forecast tab)");
+        return;
+    }
+    
+    // Remove existing listeners
+    const newForecastDropdown = forecastDropdown.cloneNode(true) as HTMLSelectElement;
+    newForecastDropdown.value = forecastDropdown.value;
+    
+    if (forecastDropdown.parentNode) {
+        forecastDropdown.parentNode.replaceChild(newForecastDropdown, forecastDropdown);
+    }
+    
+    // Add clean event listener
+    newForecastDropdown.addEventListener('change', function(event) {
+        event.stopPropagation();
+        
+        const target = event.target as HTMLSelectElement;
+        console.log(`Forecast period changed to: ${target.value}`);
+        
+        // Only call forecast function if we're in forecast tab
+        const forecastTab = document.getElementById('forecast_mainDiv');
+        if (forecastTab?.classList.contains('active')) {
+            // Call loadReviewForecast directly - it's defined globally
+            loadReviewForecast();
+        }
+    });
+    
+    console.log("Forecast dropdown setup complete");
+}
+
+// 3. Setup special characters properly
+function setupSpecialCharactersClean(): void {
+    const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+    const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
+    
+    if (!textRadio || !fileRadio) {
+        console.error("Radio buttons not found");
+        return;
+    }
+    
+    // Remove existing listeners
+    const newTextRadio = textRadio.cloneNode(true) as HTMLInputElement;
+    const newFileRadio = fileRadio.cloneNode(true) as HTMLInputElement;
+    
+    // Preserve checked states
+    newTextRadio.checked = textRadio.checked;
+    newFileRadio.checked = fileRadio.checked;
+    
+    // Replace elements
+    if (textRadio.parentNode) {
+        textRadio.parentNode.replaceChild(newTextRadio, textRadio);
+    }
+    if (fileRadio.parentNode) {
+        fileRadio.parentNode.replaceChild(newFileRadio, fileRadio);
+    }
+    
+    // Text radio listener
+    newTextRadio.addEventListener('change', function() {
+        if (newTextRadio.checked) {
+            console.log("Text input selected");
+            
+            // Show card format dropdown
+            const cardFormatDiv = document.getElementById("cardFormatSection");
+            if (cardFormatDiv) cardFormatDiv.style.display = "block";
+            
+            // Create special characters panel
+            createSpecialCharactersPanel();
+            
+            // If deck is already selected, show characters
+            const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+            if (uploadDropdown?.value) {
+                currentDeck = uploadDropdown.value;
+                updateSpecialCharacters(currentDeck);
+            }
+        }
+    });
+    
+    // File radio listener
+    newFileRadio.addEventListener('change', function() {
+        if (newFileRadio.checked) {
+            console.log("File input selected");
+            
+            // Hide card format dropdown
+            const cardFormatDiv = document.getElementById("cardFormatSection");
+            if (cardFormatDiv) cardFormatDiv.style.display = "none";
+            
+            // Hide special characters
+            const panel = document.getElementById("specialCharsPanel");
+            if (panel) panel.style.display = "none";
+        }
+    });
+    
+    console.log("Radio buttons setup complete");
+}
+
+// 4. Master cleanup and setup function
+function cleanupAndSetupDropdowns(): void {
+    console.log("🧹 Cleaning up all dropdown conflicts...");
+    
+    // Setup each component cleanly
+    setupUploadDropdownClean();
+    setupForecastDropdownClean();
+    setupSpecialCharactersClean();
+    
+    // If we're in upload tab with text input selected, trigger special chars
+    const uploadTab = document.getElementById('upload_mainDiv');
+    const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+    const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+    
+    if (uploadTab?.classList.contains('active') && textRadio?.checked && uploadDropdown?.value) {
+        console.log("Auto-triggering special characters setup...");
+        currentDeck = uploadDropdown.value;
+        createSpecialCharactersPanel();
+        updateSpecialCharacters(currentDeck);
+    }
+    
+    console.log("✅ All dropdowns cleaned up and properly configured");
+}
+
+// 5. Add a single fix button
+function addCleanFixButton(): void {
+    const uploadTab = document.getElementById('upload_mainDiv');
+    
+    // Remove any existing fix buttons
+    const existingBtn = document.getElementById('cleanFixBtn');
+    if (existingBtn) existingBtn.remove();
+    
+    if (uploadTab) {
+        const fixBtn = document.createElement('button');
+        fixBtn.id = 'cleanFixBtn';
+        fixBtn.textContent = '🔧 Fix All Dropdown Issues';
+        fixBtn.style.cssText = `
+            margin: 10px;
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        `;
+        
+        fixBtn.addEventListener('click', cleanupAndSetupDropdowns);
+        uploadTab.insertBefore(fixBtn, uploadTab.firstChild);
+    }
+}
+
+// 6. Test function to verify everything works
+function testSpecialCharsFlow(): void {
+    console.log("🧪 Testing special characters flow...");
+    
+    const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+    const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+    
+    if (!uploadDropdown || !textRadio) {
+        console.error("Required elements not found");
+        return;
+    }
+    
+    console.log(`Current state:`);
+    console.log(`  - Upload dropdown value: "${uploadDropdown.value}"`);
+    console.log(`  - Text radio checked: ${textRadio.checked}`);
+    console.log(`  - Upload tab active: ${document.getElementById('upload_mainDiv')?.classList.contains('active')}`);
+    
+    if (uploadDropdown.value && textRadio.checked) {
+        console.log("🧪 Conditions met - triggering special characters...");
+        currentDeck = uploadDropdown.value;
+        updateSpecialCharacters(currentDeck);
+    } else {
+        console.log("🧪 Conditions not met for special characters");
+    }
+}
+
+// Initialize everything
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addCleanFixButton);
+} else {
+    addCleanFixButton();
+}
+
+// Add test button too
+setTimeout(() => {
+    const uploadTab = document.getElementById('upload_mainDiv');
+    if (uploadTab && !document.getElementById('testBtn')) {
+        const testBtn = document.createElement('button');
+        testBtn.id = 'testBtn';
+        testBtn.textContent = '🧪 Test Special Chars';
+        testBtn.style.cssText = `
+            margin: 10px;
+            padding: 8px 12px;
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        `;
+        testBtn.addEventListener('click', testSpecialCharsFlow);
+        uploadTab.appendChild(testBtn);
+    }
+}, 100);
+
+
+// 3. Add this function to remove any rogue global listeners
+function removeGlobalDropdownListeners(): void {
+    console.log('🧹 Cleaning up global dropdown listeners...');
+    
+    // Find all select elements
+    const allSelects = document.querySelectorAll('select');
+    
+    allSelects.forEach((select, index) => {
+        // Clone each select to remove ALL event listeners
+        const newSelect = select.cloneNode(true) as HTMLSelectElement;
+        
+        // Preserve the selected value
+        newSelect.value = select.value;
+        
+        if (select.parentNode) {
+            select.parentNode.replaceChild(newSelect, select);
+            console.log(`🧹 Cleaned listeners from select #${index + 1} (ID: ${select.id})`);
+        }
+    });
+    
+    console.log('🧹 Global cleanup complete');
+}
+
+
+// 4. Add this function to properly set up upload dropdown (after cleanup)
+function setupUploadDropdownSpecifically(): void {
+    console.log('🎯 Setting up upload dropdown specifically...');
+    
+    const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+    
+    if (uploadDropdown) {
+        uploadDropdown.addEventListener('change', function(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            
+            const target = event.target as HTMLSelectElement;
+            const selectedValue = target.value;
+            
+            // Verify this is actually the upload dropdown
+            if (target.id === 'upload_dropdownMenu') {
+                console.log(`🎯 UPLOAD DROPDOWN changed to: "${selectedValue}"`);
+                currentDeck = selectedValue;
+                
+                // Check if we should update special characters
+                const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+                const uploadTab = document.getElementById('upload_mainDiv');
+                const isUploadTabActive = uploadTab?.classList.contains('active');
+                
+                if (textRadio && textRadio.checked && isUploadTabActive) {
+                    console.log('🎯 Updating special characters for upload...');
+                    updateSpecialCharacters(currentDeck);
+                } else {
+                    console.log('🎯 Not updating special chars - conditions not met');
+                }
+            } else {
+                console.log('⚠️ Wrong dropdown triggered upload handler:', target.id);
+            }
+        });
+        
+        console.log('✅ Upload dropdown properly isolated');
+    } else {
+        console.error('❌ Upload dropdown not found');
+    }
+}
+
+// 5. Master function to fix everything
+function fixDropdownConflicts(): void {
+    console.log('🔧 FIXING DROPDOWN CONFLICTS...');
+    
+    // Step 1: Remove all existing listeners
+    removeGlobalDropdownListeners();
+    
+    // Step 2: Wait a moment for DOM to settle
+    setTimeout(() => {
+        // Step 3: Set up specific listeners
+        setupUploadDropdownSpecifically();
+        setupReviewForecastTab();
+        
+        console.log('✅ Dropdown conflicts should be resolved');
+        
+        // Step 4: Test the upload dropdown
+        const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+        if (uploadDropdown && uploadDropdown.value) {
+            console.log(`🔧 Current upload dropdown value: "${uploadDropdown.value}"`);
+            
+            // Trigger special characters if conditions are right
+            const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+            const uploadTab = document.getElementById('upload_mainDiv');
+            
+            if (textRadio && textRadio.checked && uploadTab && uploadTab.classList.contains('active')) {
+                console.log('🔧 Auto-triggering special characters...');
+                currentDeck = uploadDropdown.value;
+                updateSpecialCharacters(currentDeck);
+            }
+        }
+    }, 500);
+}
+
+// 6. Add button to trigger the fix
+function addFixButton(): void {
+    const uploadTab = document.getElementById('upload_mainDiv');
+    if (uploadTab && !document.getElementById('fixConflictsBtn')) {
+        const fixBtn = document.createElement('button');
+        fixBtn.id = 'fixConflictsBtn';
+        fixBtn.textContent = '🔧 Fix Dropdown Conflicts';
+        fixBtn.style.margin = '10px';
+        fixBtn.style.padding = '8px 12px';
+        fixBtn.style.backgroundColor = '#dc3545';
+        fixBtn.style.color = 'white';
+        fixBtn.style.border = 'none';
+        fixBtn.style.borderRadius = '4px';
+        fixBtn.style.fontWeight = 'bold';
+        fixBtn.addEventListener('click', fixDropdownConflicts);
+        uploadTab.insertBefore(fixBtn, uploadTab.firstChild);
+    }
+}
+
+// Initialize
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addFixButton);
+} else {
+    addFixButton();
+}
+
+// 7. Quick test function
+function testUploadDropdown(): void {
+    console.log('🧪 TESTING UPLOAD DROPDOWN...');
+    
+    const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+    if (uploadDropdown) {
+        // Simulate a change event
+        const event = new Event('change', { bubbles: true });
+        uploadDropdown.dispatchEvent(event);
+        
+        console.log('🧪 Test event dispatched');
+    }
+}
 
 
 function patchForecastIssues() {
