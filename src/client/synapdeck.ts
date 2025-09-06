@@ -3856,21 +3856,50 @@ function showRelationshipModal(cardId: number, cardData: any): void {
 
 // Setup event listeners for the modal
 function setupRelationshipModalEventListeners(cardId: number): void {
-    const closeBtn = document.getElementById('closeRelationshipModal');
-    const closeBtn2 = document.getElementById('closeRelationshipModalBtn');
-    const modal = document.getElementById('cardRelationshipModal');
+    // Use setTimeout to ensure DOM elements are ready
+    setTimeout(() => {
+        const closeBtn = document.getElementById('closeRelationshipModal');
+        const closeBtn2 = document.getElementById('closeRelationshipModalBtn');
+        const modal = document.getElementById('cardRelationshipModal');
 
-    [closeBtn, closeBtn2].forEach(btn => {
-        if (btn) {
-            btn.addEventListener('click', closeRelationshipModal);
+        console.log('Setting up event listeners...', { closeBtn, closeBtn2, modal });
+
+        // Close button handlers
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Close button 1 clicked');
+                closeRelationshipModal();
+            });
         }
-    });
 
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeRelationshipModal();
+        if (closeBtn2) {
+            closeBtn2.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Close button 2 clicked');
+                closeRelationshipModal();
+            });
+        }
+
+        // Backdrop click
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    console.log('Backdrop clicked');
+                    closeRelationshipModal();
+                }
+            });
+        }
+
+        // ESC key
+        document.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                console.log('ESC pressed');
+                closeRelationshipModal();
+                document.removeEventListener('keydown', escHandler);
+            }
         });
-    }
+    }, 100);
 }
 
 // Function to load existing relationships
@@ -3921,10 +3950,17 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
 // Function to close the modal
 function closeRelationshipModal(): void {
     const modal = document.getElementById('cardRelationshipModal');
-    if (modal) {
-        modal.remove();
+    if (modal && !modal.classList.contains('closing')) {
+        modal.classList.add('closing');
+        modal.style.animation = 'fadeOut 0.2s ease-in';
+        setTimeout(() => {
+            if (modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }, 200);
     }
 }
+
 
 // Update pagination controls
 function updatePagination(totalCount: number, limit: number, currentPage: number): void {
