@@ -2544,7 +2544,6 @@ function generateAnswerKey(cards: CardDue[]): string {
         </div>
     `;
 
-    console.log('Generated HTML:', html.substring(0, 500) + '...');
     return html;
 }
 
@@ -2591,9 +2590,7 @@ function processHTMLContent(text: string): string {
 
 
 // Replace your existing setupShuffleCardsTab function with this new version
-function setupShuffleCardsTab(): void {
-    console.log('Setting up date shuffle tab...');
-    
+function setupShuffleCardsTab(): void {    
     const shuffleTab = document.getElementById('shuffle_mainDiv');
     if (!shuffleTab) return;
 
@@ -2902,7 +2899,6 @@ async function getCardsInDateRange(
 ): Promise<any[]> {
     // This would need a corresponding backend endpoint
     // For now, return empty array
-    console.log(`Getting cards for preview: ${deck}, ${baseDate}, ${daysSpan} days, overdue: ${includeOverdue}`);
     return [];
 }
 
@@ -3130,6 +3126,10 @@ function setupBrowseCardsTab(): void {
         return;
     }
 
+    const deckOptions = deckNameList.map(deck => 
+        `<option value="${deck}">${deck}</option>`
+    ).join('');
+
     // Create the browse cards UI with spreadsheet-like layout
     browseTab.innerHTML = `
         <h2>Browse Cards</h2>
@@ -3141,11 +3141,7 @@ function setupBrowseCardsTab(): void {
                         <label for="browse_deck_select">Deck:</label>
                         <select id="browse_deck_select">
                             <option value="">All Decks</option>
-                            <option value="Ge'ez">Ge'ez</option>
-                            <option value="Ancient Greek">Ancient Greek</option>
-                            <option value="Sanskrit">Sanskrit</option>
-                            <option value="Akkadian">Akkadian</option>
-                            <option value="Hebrew">Hebrew</option>
+                            ${deckOptions}
                         </select>
                     </div>
                     
