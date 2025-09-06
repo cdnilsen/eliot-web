@@ -499,192 +499,6 @@ const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
 const cardFormatDropdownDiv = document.getElementById("cardFormatSection") as HTMLDivElement;
 const cardFormatDropdown = document.getElementById("card_format_dropdown") as HTMLSelectElement;
 
-
-// Single, clean radio button setup function
-function setupRadioButtonsClean(): void {
-    console.log('Setting up radio buttons...');
-    
-    // Get elements
-    const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
-    const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
-    const fileSection = document.getElementById('fileUploadSection') as HTMLDivElement;
-    const textSection = document.getElementById('textInputSection') as HTMLDivElement;
-    const cardFormatSection = document.getElementById('cardFormatSection') as HTMLDivElement;
-    const submitBtn = document.getElementById('upload_submitBtn') as HTMLButtonElement;
-    const cancelBtn = document.getElementById('upload_cancel') as HTMLButtonElement;
-    
-    if (!fileRadio || !textRadio || !fileSection || !textSection) {
-        console.error('Required elements not found');
-        return;
-    }
-    
-    // Remove any existing event listeners by cloning (clean slate)
-    const newFileRadio = fileRadio.cloneNode(true) as HTMLInputElement;
-    const newTextRadio = textRadio.cloneNode(true) as HTMLInputElement;
-    
-    // Preserve checked states
-    newFileRadio.checked = fileRadio.checked;
-    newTextRadio.checked = textRadio.checked;
-    
-    // Replace in DOM
-    fileRadio.parentNode?.replaceChild(newFileRadio, fileRadio);
-    textRadio.parentNode?.replaceChild(newTextRadio, textRadio);
-    
-    // Single toggle function
-    function toggleSections() {
-        console.log(`Toggle: File=${newFileRadio.checked}, Text=${newTextRadio.checked}`);
-        
-        if (newFileRadio.checked) {
-            // Show file upload, hide text input
-            fileSection.style.display = 'block';
-            textSection.style.display = 'none';
-            if (cardFormatSection) cardFormatSection.style.display = 'none';
-            
-            // Clear text input
-            const textInput = document.getElementById('cardTextInput') as HTMLTextAreaElement;
-            if (textInput) textInput.value = '';
-            currentFileContent = '';
-            
-            // Hide special characters panel
-            const specialPanel = document.getElementById('specialCharsPanel');
-            if (specialPanel) specialPanel.style.display = 'none';
-            
-            console.log('File upload mode activated');
-            
-        } else if (newTextRadio.checked) {
-            // Hide file upload, show text input
-            fileSection.style.display = 'none';
-            textSection.style.display = 'block';
-            if (cardFormatSection) cardFormatSection.style.display = 'block';
-            
-            // Clear file input
-            const fileInput = document.getElementById('uploadTextFile') as HTMLInputElement;
-            if (fileInput) fileInput.value = '';
-            currentFileContent = '';
-            
-            // Setup special characters if deck is selected
-            const uploadDropdown = document.getElementById('upload_dropdownMenu') as HTMLSelectElement;
-            if (uploadDropdown?.value) {
-                currentDeck = uploadDropdown.value;
-                createSpecialCharactersPanel();
-                updateSpecialCharacters(currentDeck);
-            }
-            
-            console.log('Text input mode activated');
-        }
-        
-        // Update button states
-        if (submitBtn) submitBtn.disabled = true;
-        if (cancelBtn) cancelBtn.disabled = true;
-        if (submitBtn) submitBtn.classList.remove('hidden');
-        if (cancelBtn) cancelBtn.classList.remove('hidden');
-    }
-    
-    // Add clean event listeners
-    newFileRadio.addEventListener('change', toggleSections);
-    newTextRadio.addEventListener('change', toggleSections);
-    
-    // Initial toggle to set correct state
-    toggleSections();
-    
-    console.log('Radio buttons setup complete');
-}
-
-// Clean file input handler
-function setupFileInputClean(): void {
-    const fileInput = document.getElementById('uploadTextFile') as HTMLInputElement;
-    const submitBtn = document.getElementById('upload_submitBtn') as HTMLButtonElement;
-    const cancelBtn = document.getElementById('upload_cancel') as HTMLButtonElement;
-    
-    if (!fileInput) return;
-    
-    // Remove existing listeners
-    const newFileInput = fileInput.cloneNode(true) as HTMLInputElement;
-    fileInput.parentNode?.replaceChild(newFileInput, fileInput);
-    
-    newFileInput.addEventListener('change', (event) => {
-        const file = (event.target as HTMLInputElement).files?.[0];
-        if (file && file.type === 'text/plain') {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                if (currentDeck !== "") {
-                    if (submitBtn) submitBtn.disabled = false;
-                    if (cancelBtn) cancelBtn.disabled = false;
-                    currentFileContent = e.target?.result as string;
-                    console.log('File loaded successfully');
-                }
-            };
-            reader.readAsText(file);
-        } else {
-            console.warn('Please select a valid text file.');
-        }
-    });
-}
-
-// Clean text input handler
-function setupTextInputClean(): void {
-    const textInput = document.getElementById('cardTextInput') as HTMLTextAreaElement;
-    const submitBtn = document.getElementById('upload_submitBtn') as HTMLButtonElement;
-    const cancelBtn = document.getElementById('upload_cancel') as HTMLButtonElement;
-    
-    if (!textInput) return;
-    
-    // Remove existing listeners
-    const newTextInput = textInput.cloneNode(true) as HTMLTextAreaElement;
-    newTextInput.value = textInput.value; // Preserve content
-    textInput.parentNode?.replaceChild(newTextInput, textInput);
-    
-    newTextInput.addEventListener('input', (event) => {
-        const textContent = (event.target as HTMLTextAreaElement).value;
-        if (textContent.trim().length > 0) {
-            if (submitBtn) submitBtn.disabled = false;
-            if (cancelBtn) cancelBtn.disabled = false;
-            currentFileContent = textContent;
-        } else {
-            if (submitBtn) submitBtn.disabled = true;
-            if (cancelBtn) cancelBtn.disabled = true;
-            currentFileContent = "";
-        }
-    });
-}
-
-// Clean upload dropdown handler (avoid conflicts with other dropdowns)
-function setupUploadDropdownClean(): void {
-    const uploadDropdown = document.getElementById('upload_dropdownMenu') as HTMLSelectElement;
-    if (!uploadDropdown) return;
-    
-    // Remove existing listeners
-    const newUploadDropdown = uploadDropdown.cloneNode(true) as HTMLSelectElement;
-    newUploadDropdown.value = uploadDropdown.value; // Preserve selection
-    uploadDropdown.parentNode?.replaceChild(newUploadDropdown, uploadDropdown);
-    
-    newUploadDropdown.addEventListener('change', (event) => {
-        const target = event.target as HTMLSelectElement;
-        currentDeck = target.value;
-        console.log(`Upload deck changed to: ${currentDeck}`);
-        
-        // Only update special characters if in text mode
-        const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
-        if (textRadio?.checked && currentDeck) {
-            createSpecialCharactersPanel();
-            updateSpecialCharacters(currentDeck);
-        }
-    });
-}
-
-// Master initialization function
-function initializeUploadTab(): void {
-    console.log('Initializing upload tab...');
-    
-    // Setup all components in order
-    setupRadioButtonsClean();
-    setupFileInputClean();
-    setupTextInputClean();
-    setupUploadDropdownClean();
-    
-    console.log('Upload tab initialization complete');
-}
-
 // Initialize visibility on page load
 if (fileRadio.checked) {
     cardFormatDropdownDiv.style.display = "none";
@@ -731,10 +545,69 @@ if (uploadDeckDropdown) {
     });
 }
 
+// Add this code to initialize the special characters panel
+
+// Enhanced radio button event listeners with special characters panel management
+if (textRadio) {
+    textRadio.addEventListener('change', function() {
+        if (this.checked) {
+            console.log('Text input mode selected');
+            cardFormatDropdownDiv.style.display = "block";
+            
+            // Create special characters panel when switching to text mode
+            createSpecialCharactersPanel();
+            
+            // Update special characters if a deck is already selected
+            if (currentDeck) {
+                console.log(`Updating special characters for already selected deck: ${currentDeck}`);
+                updateSpecialCharacters(currentDeck);
+            }
+        }
+    });
+}
+
+if (fileRadio) {
+    fileRadio.addEventListener('change', function() {
+        if (this.checked) {
+            console.log('File input mode selected');
+            cardFormatDropdownDiv.style.display = "none";
+            
+            // Hide special characters panel when switching to file mode
+            const specialCharsPanel = document.getElementById("specialCharsPanel");
+            if (specialCharsPanel) {
+                specialCharsPanel.style.display = "none";
+            }
+        }
+    });
+}
+
+// Initialize special characters panel on page load if text mode is selected
+document.addEventListener('DOMContentLoaded', function() {
+    const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+    
+    if (textRadio && textRadio.checked) {
+        console.log('Page loaded with text input mode - creating special characters panel');
+        createSpecialCharactersPanel();
+        
+        // If a deck is pre-selected, update the characters
+        const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+        if (uploadDropdown && uploadDropdown.value) {
+            console.log(`Page loaded with pre-selected deck: ${uploadDropdown.value}`);
+            updateSpecialCharacters(uploadDropdown.value);
+        }
+    }
+});
+
+// Also add this to the text input event listener to keep the panel updated
+const cardTextInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+if (cardTextInput) {
+    cardTextInput.addEventListener('input', function() {
+        currentFileContent = this.value;
+    });
+}
+
 let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
 
-// This will probably be later on...
-//Can probably nuke cardFormat
 function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boolean) {
     let cardFormat = card.card_format;
     let datum = card.field_values[targetIndex];
