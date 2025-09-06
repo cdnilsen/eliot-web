@@ -6291,3 +6291,277 @@ function addDebugButtons(): void {
 
 // Initialize
 addDebugButtons();
+
+// Fix the opacity: 0 issue and zero dimensions
+
+function fixOpacityAndSizing(): void {
+    console.log('🔧 FIXING OPACITY AND SIZING ISSUES...');
+    
+    const panel = document.getElementById("specialCharsPanel");
+    const charGrid = document.getElementById("specialCharsGrid");
+    const textarea = document.getElementById("cardTextInput");
+    
+    // Fix textarea first
+    if (textarea) {
+        const textareaStyle = textarea.style;
+        textareaStyle.display = 'block';
+        textareaStyle.visibility = 'visible';
+        textareaStyle.opacity = '1';
+        textareaStyle.width = '100%';
+        textareaStyle.minHeight = '100px';
+        textareaStyle.padding = '10px';
+        textareaStyle.border = '1px solid #ccc';
+        textareaStyle.borderRadius = '4px';
+        textareaStyle.fontSize = '14px';
+        textareaStyle.fontFamily = 'Arial, sans-serif';
+        textareaStyle.resize = 'vertical';
+        textareaStyle.boxSizing = 'border-box';
+        
+        console.log('✅ Textarea styling fixed');
+    }
+    
+    // Fix panel opacity and sizing
+    if (panel) {
+        const panelStyle = panel.style;
+        
+        // Kill any animations/transitions that might be interfering
+        panelStyle.transition = 'none';
+        panelStyle.animation = 'none';
+        
+        // Force proper display and opacity
+        panelStyle.display = 'block';
+        panelStyle.visibility = 'visible';
+        panelStyle.opacity = '1'; // FIX THE MAIN ISSUE
+        
+        // Force proper sizing
+        panelStyle.width = 'auto';
+        panelStyle.minWidth = '300px';
+        panelStyle.height = 'auto';
+        panelStyle.minHeight = '80px';
+        
+        // Force proper positioning
+        panelStyle.position = 'relative';
+        panelStyle.zIndex = '100';
+        
+        // Force proper spacing and styling
+        panelStyle.marginTop = '15px';
+        panelStyle.marginBottom = '15px';
+        panelStyle.padding = '15px';
+        panelStyle.backgroundColor = '#f8f9fa';
+        panelStyle.border = '2px solid #007bff';
+        panelStyle.borderRadius = '8px';
+        panelStyle.boxSizing = 'border-box';
+        
+        console.log('✅ Panel opacity and sizing fixed');
+    }
+    
+    // Fix grid layout
+    if (charGrid) {
+        const gridStyle = charGrid.style;
+        
+        gridStyle.display = 'flex';
+        gridStyle.flexWrap = 'wrap';
+        gridStyle.gap = '6px';
+        gridStyle.alignItems = 'center';
+        gridStyle.justifyContent = 'flex-start';
+        gridStyle.width = '100%';
+        gridStyle.minHeight = '50px';
+        gridStyle.opacity = '1';
+        gridStyle.visibility = 'visible';
+        
+        console.log('✅ Grid layout fixed');
+    }
+    
+    // Fix all buttons
+    const buttons = document.querySelectorAll('#specialCharsPanel button');
+    console.log(`🔧 Fixing ${buttons.length} buttons...`);
+    
+    buttons.forEach((button, index) => {
+        const btn = button as HTMLElement;
+        const btnStyle = btn.style;
+        
+        // Kill any problematic styles
+        btnStyle.transition = 'none';
+        btnStyle.animation = 'none';
+        
+        // Force visibility
+        btnStyle.display = 'inline-flex';
+        btnStyle.visibility = 'visible';
+        btnStyle.opacity = '1';
+        
+        // Force proper sizing
+        btnStyle.width = 'auto';
+        btnStyle.height = 'auto';
+        btnStyle.minWidth = '40px';
+        btnStyle.minHeight = '40px';
+        
+        // Force proper styling
+        btnStyle.fontSize = '24px';
+        btnStyle.fontWeight = 'normal';
+        btnStyle.fontFamily = 'Arial, sans-serif';
+        btnStyle.padding = '8px 12px';
+        btnStyle.margin = '2px';
+        btnStyle.border = '1px solid #333';
+        btnStyle.borderRadius = '4px';
+        btnStyle.backgroundColor = '#ffffff';
+        btnStyle.color = '#000000';
+        btnStyle.cursor = 'pointer';
+        btnStyle.textAlign = 'center';
+        btnStyle.alignItems = 'center';
+        btnStyle.justifyContent = 'center';
+        btnStyle.boxSizing = 'border-box';
+        
+        // Add hover effect
+        btn.addEventListener('mouseenter', () => {
+            btnStyle.backgroundColor = '#e9ecef';
+        });
+        btn.addEventListener('mouseleave', () => {
+            btnStyle.backgroundColor = '#ffffff';
+        });
+        
+        if (index < 5) {
+            console.log(`✅ Button ${index + 1} fixed: "${btn.textContent}"`);
+        }
+    });
+    
+    console.log('✅ ALL OPACITY AND SIZING ISSUES FIXED');
+    
+    // Verify the fix
+    setTimeout(() => {
+        const panelRect = panel?.getBoundingClientRect();
+        const textareaRect = textarea?.getBoundingClientRect();
+        
+        console.log('🔍 After fix verification:');
+        console.log('Panel rect:', panelRect);
+        console.log('Textarea rect:', textareaRect);
+        console.log('Panel opacity:', panel ? window.getComputedStyle(panel).opacity : 'N/A');
+        console.log('Textarea opacity:', textarea ? window.getComputedStyle(textarea).opacity : 'N/A');
+    }, 100);
+}
+
+function createVisibleTextareaIfNeeded(): void {
+    console.log('🔧 ENSURING TEXTAREA IS VISIBLE...');
+    
+    let textarea = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+    
+    // If textarea doesn't exist or has zero dimensions, create a new one
+    if (!textarea || textarea.getBoundingClientRect().width === 0) {
+        console.log('Creating new visible textarea...');
+        
+        // Find the text input section
+        const textInputSection = document.getElementById("textInputSection");
+        const uploadTab = document.getElementById('upload_mainDiv');
+        const container = textInputSection || uploadTab;
+        
+        if (container) {
+            // Remove old textarea if it exists
+            if (textarea) textarea.remove();
+            
+            // Create new textarea
+            const newTextarea = document.createElement('textarea');
+            newTextarea.id = 'cardTextInput';
+            newTextarea.placeholder = 'Enter your card text here (separated by //)...';
+            newTextarea.style.cssText = `
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                width: 100% !important;
+                min-height: 120px !important;
+                padding: 12px !important;
+                border: 2px solid #007bff !important;
+                border-radius: 6px !important;
+                font-size: 16px !important;
+                font-family: Arial, sans-serif !important;
+                resize: vertical !important;
+                box-sizing: border-box !important;
+                background-color: white !important;
+                color: black !important;
+                margin: 10px 0 !important;
+            `;
+            
+            container.appendChild(newTextarea);
+            console.log('✅ New visible textarea created');
+            
+            // Add input event listener
+            newTextarea.addEventListener('input', (event) => {
+                const textContent = (event.target as HTMLTextAreaElement).value;
+                if (textContent.trim().length > 0) {
+                    const uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
+                    const uploadCancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
+                    if (uploadSubmitButton) uploadSubmitButton.disabled = false;
+                    if (uploadCancelButton) uploadCancelButton.disabled = false;
+                    currentFileContent = textContent;
+                } else {
+                    const uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
+                    const uploadCancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
+                    if (uploadSubmitButton) uploadSubmitButton.disabled = true;
+                    if (uploadCancelButton) uploadCancelButton.disabled = true;
+                    currentFileContent = "";
+                }
+            });
+        }
+    } else {
+        console.log('✅ Textarea exists and has dimensions');
+    }
+}
+
+function completeVisibilityFix(): void {
+    console.log('🚀 COMPLETE VISIBILITY FIX...');
+    
+    // Step 1: Ensure textarea is visible
+    createVisibleTextareaIfNeeded();
+    
+    // Step 2: Fix opacity and sizing issues
+    setTimeout(() => {
+        fixOpacityAndSizing();
+        
+        // Step 3: Force refresh the special characters if a deck is selected
+        setTimeout(() => {
+            const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+            const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+            
+            if (uploadDropdown?.value && textRadio?.checked) {
+                console.log('🚀 Re-triggering special characters after visibility fix...');
+                currentDeck = uploadDropdown.value;
+                
+                // Recreate the panel to make sure it's fresh
+                createSpecialCharactersPanel();
+                updateSpecialCharacters(currentDeck);
+                
+                // Apply the fix again to the new panel
+                setTimeout(fixOpacityAndSizing, 100);
+            }
+        }, 200);
+    }, 100);
+}
+
+// Add the fix button
+function addVisibilityFixButton(): void {
+    const uploadTab = document.getElementById('upload_mainDiv');
+    if (!uploadTab) return;
+    
+    // Remove existing fix button
+    const existingBtn = document.getElementById('visibilityFixBtn');
+    if (existingBtn) existingBtn.remove();
+    
+    const fixBtn = document.createElement('button');
+    fixBtn.id = 'visibilityFixBtn';
+    fixBtn.textContent = '👁️ FIX VISIBILITY (opacity: 0)';
+    fixBtn.style.cssText = `
+        margin: 10px;
+        padding: 12px 18px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 16px;
+    `;
+    
+    fixBtn.addEventListener('click', completeVisibilityFix);
+    uploadTab.insertBefore(fixBtn, uploadTab.firstChild);
+}
+
+// Initialize
+addVisibilityFixButton();
