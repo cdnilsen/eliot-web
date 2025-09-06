@@ -5427,7 +5427,7 @@ function patchForecastIssues() {
     console.log('🔧 Applying forecast patches...');
     
     // Fix 1: Ensure dropdown has proper event listener
-    const forecastDropdown = document.querySelector('select') as HTMLSelectElement;
+    const forecastDropdown = document.getElementById('forecastDays') as HTMLSelectElement;
     if (forecastDropdown) {
         // Remove old event listeners by cloning the element
         const newDropdown = forecastDropdown.cloneNode(true) as HTMLSelectElement;
