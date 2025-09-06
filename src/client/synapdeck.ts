@@ -6029,3 +6029,265 @@ interface BulkIntervalUpdateResponse {
     details?: string;
 }
 
+
+
+// The buttons are being created but not showing visually - let's debug and fix
+
+function debugVisibility(): void {
+    console.log('🔍 DEBUGGING PANEL VISIBILITY...');
+    
+    // Check if panel exists in DOM
+    const panel = document.getElementById("specialCharsPanel");
+    const charGrid = document.getElementById("specialCharsGrid");
+    const textarea = document.getElementById("cardTextInput");
+    
+    console.log('Panel exists:', !!panel);
+    console.log('Grid exists:', !!charGrid);
+    console.log('Textarea exists:', !!textarea);
+    
+    if (panel) {
+        console.log('Panel HTML:', panel.outerHTML.substring(0, 200));
+        console.log('Panel computed styles:');
+        const styles = window.getComputedStyle(panel);
+        console.log('  display:', styles.display);
+        console.log('  visibility:', styles.visibility);
+        console.log('  opacity:', styles.opacity);
+        console.log('  position:', styles.position);
+        console.log('  top:', styles.top);
+        console.log('  left:', styles.left);
+        console.log('  width:', styles.width);
+        console.log('  height:', styles.height);
+        console.log('  z-index:', styles.zIndex);
+        
+        // Check if panel is in viewport
+        const rect = panel.getBoundingClientRect();
+        console.log('Panel bounding rect:', rect);
+        console.log('Panel is in viewport:', 
+            rect.top >= 0 && 
+            rect.left >= 0 && 
+            rect.bottom <= window.innerHeight && 
+            rect.right <= window.innerWidth
+        );
+        
+        // Count child buttons
+        const buttons = panel.querySelectorAll('button');
+        console.log('Button count in DOM:', buttons.length);
+        
+        if (buttons.length > 0) {
+            const firstButton = buttons[0];
+            const buttonStyles = window.getComputedStyle(firstButton);
+            console.log('First button styles:');
+            console.log('  display:', buttonStyles.display);
+            console.log('  visibility:', buttonStyles.visibility);
+            console.log('  font-size:', buttonStyles.fontSize);
+        }
+    }
+    
+    if (textarea) {
+        console.log('Textarea computed styles:');
+        const textareaStyles = window.getComputedStyle(textarea);
+        console.log('  display:', textareaStyles.display);
+        console.log('  visibility:', textareaStyles.visibility);
+        
+        const textareaRect = textarea.getBoundingClientRect();
+        console.log('Textarea bounding rect:', textareaRect);
+    }
+}
+
+function forceVisibility(): void {
+    console.log('🔧 FORCING PANEL VISIBILITY...');
+    
+    const panel = document.getElementById("specialCharsPanel");
+    const charGrid = document.getElementById("specialCharsGrid");
+    const textarea = document.getElementById("cardTextInput");
+    
+    // Force textarea to be visible
+    if (textarea) {
+        textarea.style.display = 'block';
+        textarea.style.visibility = 'visible';
+        textarea.style.opacity = '1';
+        console.log('✅ Textarea forced visible');
+    }
+    
+    // Force panel to be visible with strong CSS
+    if (panel) {
+        panel.style.display = 'block !important';
+        panel.style.visibility = 'visible !important';
+        panel.style.opacity = '1 !important';
+        panel.style.position = 'relative !important';
+        panel.style.zIndex = '1000 !important';
+        panel.style.backgroundColor = '#f0f8ff !important';
+        panel.style.border = '2px solid #007bff !important';
+        panel.style.padding = '15px !important';
+        panel.style.margin = '10px 0 !important';
+        panel.style.borderRadius = '5px !important';
+        
+        console.log('✅ Panel forced visible with strong styles');
+    }
+    
+    // Force grid to be visible
+    if (charGrid) {
+        charGrid.style.display = 'flex !important';
+        charGrid.style.flexWrap = 'wrap !important';
+        charGrid.style.gap = '5px !important';
+        charGrid.style.visibility = 'visible !important';
+        
+        console.log('✅ Grid forced visible');
+    }
+    
+    // Force all buttons to be visible
+    const buttons = document.querySelectorAll('#specialCharsPanel button');
+    buttons.forEach((button, index) => {
+        const btn = button as HTMLElement;
+        btn.style.display = 'inline-block !important';
+        btn.style.visibility = 'visible !important';
+        btn.style.opacity = '1 !important';
+        btn.style.fontSize = '24px !important';
+        btn.style.padding = '8px 12px !important';
+        btn.style.margin = '2px !important';
+        btn.style.border = '1px solid #333 !important';
+        btn.style.borderRadius = '4px !important';
+        btn.style.backgroundColor = '#ffffff !important';
+        btn.style.cursor = 'pointer !important';
+        btn.style.minWidth = '40px !important';
+        btn.style.minHeight = '40px !important';
+        
+        if (index < 3) {
+            console.log(`✅ Button ${index + 1} forced visible: "${btn.textContent}"`);
+        }
+    });
+    
+    console.log(`✅ Forced ${buttons.length} buttons visible`);
+}
+
+function createTestPanel(): void {
+    console.log('🧪 CREATING TEST PANEL...');
+    
+    // Remove any existing test panel
+    const existingTest = document.getElementById('testSpecialChars');
+    if (existingTest) existingTest.remove();
+    
+    // Create a simple test panel that we know will work
+    const testPanel = document.createElement('div');
+    testPanel.id = 'testSpecialChars';
+    testPanel.style.cssText = `
+        display: block !important;
+        visibility: visible !important;
+        background-color: #ffeb3b !important;
+        border: 3px solid #f57c00 !important;
+        padding: 20px !important;
+        margin: 20px 0 !important;
+        border-radius: 8px !important;
+        font-size: 16px !important;
+        font-weight: bold !important;
+        color: #333 !important;
+        position: relative !important;
+        z-index: 9999 !important;
+    `;
+    
+    testPanel.innerHTML = `
+        <h3 style="margin: 0 0 10px 0; color: #d84315;">🧪 TEST SPECIAL CHARACTERS PANEL</h3>
+        <p style="margin: 5px 0;">If you can see this, CSS is working!</p>
+        <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px;">
+            <button style="font-size: 20px; padding: 5px 10px; border: 1px solid #333; background: white; cursor: pointer;">ä</button>
+            <button style="font-size: 20px; padding: 5px 10px; border: 1px solid #333; background: white; cursor: pointer;">ā</button>
+            <button style="font-size: 20px; padding: 5px 10px; border: 1px solid #333; background: white; cursor: pointer;">ə</button>
+        </div>
+    `;
+    
+    // Insert after textarea or at upload tab
+    const textarea = document.getElementById("cardTextInput");
+    const uploadTab = document.getElementById('upload_mainDiv');
+    
+    if (textarea && textarea.parentNode) {
+        textarea.parentNode.insertBefore(testPanel, textarea.nextSibling);
+        console.log('✅ Test panel inserted after textarea');
+    } else if (uploadTab) {
+        uploadTab.appendChild(testPanel);
+        console.log('✅ Test panel inserted in upload tab');
+    }
+    
+    // Make test buttons functional
+    const testButtons = testPanel.querySelectorAll('button');
+    testButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const textarea = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+            if (textarea) {
+                textarea.value += btn.textContent;
+                console.log(`✅ Test button "${btn.textContent}" clicked`);
+            }
+        });
+    });
+}
+
+function addDebugButtons(): void {
+    const uploadTab = document.getElementById('upload_mainDiv');
+    if (!uploadTab) return;
+    
+    // Clear existing debug buttons
+    uploadTab.querySelectorAll('[id*="debug"], [id*="Debug"], [id*="test"], [id*="Test"]').forEach(btn => btn.remove());
+    
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = `
+        background: #f8f9fa;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+    `;
+    
+    const title = document.createElement('h4');
+    title.textContent = 'Debug Special Characters Visibility';
+    title.style.margin = '0 0 10px 0';
+    buttonContainer.appendChild(title);
+    
+    // Debug button
+    const debugBtn = document.createElement('button');
+    debugBtn.textContent = '🔍 Debug Visibility';
+    debugBtn.style.cssText = `
+        margin: 5px;
+        padding: 8px 12px;
+        background-color: #17a2b8;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    `;
+    debugBtn.addEventListener('click', debugVisibility);
+    buttonContainer.appendChild(debugBtn);
+    
+    // Force visibility button
+    const forceBtn = document.createElement('button');
+    forceBtn.textContent = '🔧 Force Visible';
+    forceBtn.style.cssText = `
+        margin: 5px;
+        padding: 8px 12px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    `;
+    forceBtn.addEventListener('click', forceVisibility);
+    buttonContainer.appendChild(forceBtn);
+    
+    // Test panel button
+    const testBtn = document.createElement('button');
+    testBtn.textContent = '🧪 Create Test Panel';
+    testBtn.style.cssText = `
+        margin: 5px;
+        padding: 8px 12px;
+        background-color: #ffc107;
+        color: black;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    `;
+    testBtn.addEventListener('click', createTestPanel);
+    buttonContainer.appendChild(testBtn);
+    
+    uploadTab.insertBefore(buttonContainer, uploadTab.firstChild);
+}
+
+// Initialize
+addDebugButtons();
