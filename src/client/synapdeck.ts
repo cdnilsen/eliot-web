@@ -200,16 +200,20 @@ const specialCharacterSets: SpecialCharacterSet = {
     // "Sanskrit": sanskritSpecialChars || [], // if you have this
 };
 
-
-
-// Add this function to create the special characters panel
+// Enhanced createSpecialCharactersPanel function
 function createSpecialCharactersPanel(): void {
+    console.log("Creating special characters panel...");
+    
     const textInputSection = document.getElementById("textInputSection");
-    if (!textInputSection) return;
+    if (!textInputSection) {
+        console.error("textInputSection not found");
+        return;
+    }
 
     // Check if panel already exists
     let existingPanel = document.getElementById("specialCharsPanel");
     if (existingPanel) {
+        console.log("Panel already exists, removing old one");
         existingPanel.remove();
     }
 
@@ -217,14 +221,25 @@ function createSpecialCharactersPanel(): void {
     const panel = document.createElement("div");
     panel.id = "specialCharsPanel";
     panel.className = "special-chars-panel";
+    panel.style.marginTop = "15px";
+    panel.style.padding = "10px";
+    panel.style.border = "1px solid #ddd";
+    panel.style.borderRadius = "5px";
+    panel.style.backgroundColor = "#f8f9fa";
     
     const panelTitle = document.createElement("h4");
     panelTitle.textContent = "Special Characters";
     panelTitle.className = "special-chars-title";
+    panelTitle.style.margin = "0 0 10px 0";
+    panelTitle.style.fontSize = "14px";
+    panelTitle.style.fontWeight = "bold";
     
     const charGrid = document.createElement("div");
     charGrid.id = "specialCharsGrid";
     charGrid.className = "special-chars-grid";
+    charGrid.style.display = "flex";
+    charGrid.style.flexWrap = "wrap";
+    charGrid.style.gap = "4px";
     
     panel.appendChild(panelTitle);
     panel.appendChild(charGrid);
@@ -233,15 +248,29 @@ function createSpecialCharactersPanel(): void {
     const textarea = document.getElementById("cardTextInput");
     if (textarea && textarea.parentNode) {
         textarea.parentNode.insertBefore(panel, textarea.nextSibling);
+        console.log("Panel inserted after textarea");
+    } else {
+        // Fallback: append to textInputSection
+        textInputSection.appendChild(panel);
+        console.log("Panel appended to textInputSection");
     }
+    
+    console.log("Special characters panel created successfully");
 }
 
 // Add this function to update the special characters based on selected deck
+
+// Enhanced updateSpecialCharacters function with better debugging
 function updateSpecialCharacters(deckName: string): void {
+    console.log(`Updating special characters for deck: "${deckName}"`);
+    
     const panel = document.getElementById("specialCharsPanel");
     const charGrid = document.getElementById("specialCharsGrid");
     
-    if (!panel || !charGrid) return;
+    if (!panel || !charGrid) {
+        console.error("Special characters panel or grid not found");
+        return;
+    }
 
     // Clear existing characters
     charGrid.innerHTML = "";
@@ -249,29 +278,51 @@ function updateSpecialCharacters(deckName: string): void {
     // Get characters for the selected deck
     const characters = specialCharacterSets[deckName];
     
+    console.log(`Found ${characters?.length || 0} characters for deck "${deckName}":`, characters);
+    
     if (!characters || characters.length === 0) {
+        console.log("No characters found, hiding panel");
         panel.style.display = "none";
         return;
     }
 
+    console.log("Showing panel and creating character buttons");
     panel.style.display = "block";
 
     // Create buttons for each character
-    characters.forEach(char => {
+    characters.forEach((char, index) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "special-char-btn";
         button.style.fontSize = "30px";
+        button.style.margin = "2px";
+        button.style.padding = "5px 8px";
+        button.style.border = "1px solid #ccc";
+        button.style.borderRadius = "4px";
+        button.style.backgroundColor = "#f9f9f9";
+        button.style.cursor = "pointer";
         button.textContent = char;
         button.title = `Insert ${char}`;
         
+        // Add hover effect
+        button.addEventListener("mouseover", () => {
+            button.style.backgroundColor = "#e9e9e9";
+        });
+        button.addEventListener("mouseout", () => {
+            button.style.backgroundColor = "#f9f9f9";
+        });
+        
         // Add click handler to insert character
         button.addEventListener("click", () => {
+            console.log(`Inserting character: ${char}`);
             insertCharacterAtCursor(char);
         });
         
         charGrid.appendChild(button);
+        console.log(`Created button ${index + 1}/${characters.length}: ${char}`);
     });
+    
+    console.log(`Successfully created ${characters.length} character buttons`);
 }
 
 // Add this function to insert character at cursor position in textarea
@@ -411,23 +462,86 @@ function initializeTabSwitching() {
 
 let currentFileContent: string = "";
 let currentDeck: string = "";
-let uploadDeckDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+let uploadDeckDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;// Optional: Also handle when radio buttons change to reset the content
+const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
+const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+const cardFormatDropdownDiv = document.getElementById("cardFormatSection") as HTMLDivElement;
+const cardFormatDropdown = document.getElementById("card_format_dropdown") as HTMLSelectElement;
 
-// Modify your existing deck dropdown event listener
+// Initialize visibility on page load
+if (fileRadio.checked) {
+    cardFormatDropdownDiv.style.display = "none";
+}
+
+// Enhanced deck dropdown event listener with better debugging
 if (uploadDeckDropdown) {
-    console.log("Deck upload dropdown works...")
-    let currentUploadDeck: string = ""
+    console.log("Setting up deck upload dropdown event listener...");
     uploadDeckDropdown.addEventListener('change', (event) => {
         const selectedValue = (event.target as HTMLSelectElement).value;
-        currentUploadDeck = selectedValue;
+        currentDeck = selectedValue;
 
-        console.log("Current deck is: <" + currentUploadDeck + ">")
+        console.log(`Deck changed to: "${currentDeck}"`);
         
         // Update special characters panel
         const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
         if (textRadio && textRadio.checked) {
-            console.log("Should show characters...")
-            updateSpecialCharacters(currentUploadDeck);
+            console.log("Text input is selected, updating special characters...");
+            updateSpecialCharacters(currentDeck);
+        } else {
+            console.log("Text input is not selected, skipping special characters update");
+        }
+    });
+}
+
+// Enhanced text radio button event listener
+if (textRadio) {
+    textRadio.addEventListener('change', () => {
+        if (textRadio.checked) {
+            console.log("Text input selected, setting up special characters...");
+            
+            // Clear file input and reset content
+            fileInput.value = "";
+            currentFileContent = "";
+            uploadSubmitButton.disabled = true;
+            uploadCancelButton.disabled = true;
+            
+            // Show dropdown when typing directly
+            cardFormatDropdownDiv.style.display = "block";
+            
+            // Create and show special characters panel
+            createSpecialCharactersPanel();
+            
+            if (currentDeck) {
+                console.log(`Current deck is "${currentDeck}", updating special characters...`);
+                updateSpecialCharacters(currentDeck);
+            } else {
+                console.log("No deck selected yet");
+            }
+        }
+    });
+}
+
+// Enhanced file radio button event listener 
+if (fileRadio) {
+    fileRadio.addEventListener('change', () => {
+        if (fileRadio.checked) {
+            console.log("File input selected, hiding special characters...");
+            
+            // Clear text input and reset content
+            textInputBox.value = "";
+            currentFileContent = "";
+            uploadSubmitButton.disabled = true;
+            uploadCancelButton.disabled = true;
+            
+            // Hide dropdown when using file upload
+            cardFormatDropdownDiv.style.display = "none";
+            
+            // Hide special characters panel
+            const panel = document.getElementById("specialCharsPanel");
+            if (panel) {
+                panel.style.display = "none";
+                console.log("Special characters panel hidden");
+            }
         }
     });
 }
@@ -473,16 +587,7 @@ textInputBox.addEventListener('input', (event) => {
     }
 });
 
-// Optional: Also handle when radio buttons change to reset the content
-const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
-const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
-const cardFormatDropdownDiv = document.getElementById("cardFormatSection") as HTMLDivElement;
-const cardFormatDropdown = document.getElementById("card_format_dropdown") as HTMLSelectElement;
 
-// Initialize visibility on page load
-if (fileRadio.checked) {
-    cardFormatDropdownDiv.style.display = "none";
-}
 
 
 // Modify your text radio button event listener to create the panel when text input is selected
