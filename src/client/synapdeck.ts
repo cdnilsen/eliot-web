@@ -3854,19 +3854,154 @@ function showRelationshipModal(cardId: number, cardData: any): void {
     loadExistingRelationships(cardId);
 }
 
-// Setup event listeners for the modal
+// Add this function to handle the card search functionality
+function setupCardSearchFunctionality(cardId: number): void {
+    const searchInput = document.getElementById(`cardSearchInput_${cardId}`) as HTMLInputElement;
+    const searchResults = document.getElementById(`cardSearchResults_${cardId}`);
+    const createBtn = document.getElementById(`createRelationshipBtn_${cardId}`) as HTMLButtonElement;
+    
+    if (!searchInput || !searchResults || !createBtn) return;
+
+    let selectedCardId: number | null = null;
+    let searchTimeout: NodeJS.Timeout;
+
+    // Handle search input
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+
+        searchTimeout = setTimeout(async () => {
+            try {
+                const results = await searchCardsForRelationship(query, cardId);
+                displaySearchResults(results, cardId);
+            } catch (error) {
+                console.error('Search error:', error);
+                searchResults.innerHTML = '<div style="padding: 8px; color: #dc3545;">Search error occurred</div>';
+                searchResults.style.display = 'block';
+            }
+        }, 300);
+    });
+
+    // Handle Enter key
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const firstResult = searchResults.querySelector('.search-result-item') as HTMLElement;
+            if (firstResult) {
+                firstResult.click();
+            }
+        }
+    });
+
+    // Hide results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target as Node) && !searchResults.contains(e.target as Node)) {
+            searchResults.style.display = 'none';
+        }
+    });
+}
+
+// Add this function to display search results
+function displaySearchResults(cards: CardDue[], currentCardId: number): void {
+    const searchResults = document.getElementById(`cardSearchResults_${currentCardId}`);
+    if (!searchResults) return;
+
+    if (cards.length === 0) {
+        searchResults.innerHTML = '<div style="padding: 8px; color: #666; font-size: 12px;">No cards found</div>';
+        searchResults.style.display = 'block';
+        return;
+    }
+
+    const html = cards.map(card => {
+        const frontText = card.field_values?.[0] || 'No content';
+        const backText = card.field_values?.[1] || 'No content';
+        
+        return `
+            <div class="search-result-item" data-card-id="${card.card_id}" style="padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 12px; transition: background 0.2s;">
+                <div style="font-weight: 600; color: #333;">Card ${card.card_id} (${card.deck})</div>
+                <div style="color: #666;">${frontText.substring(0, 60)}${frontText.length > 60 ? '...' : ''} → ${backText.substring(0, 60)}${backText.length > 60 ? '...' : ''}</div>
+            </div>
+        `;
+    }).join('');
+
+    searchResults.innerHTML = html;
+    searchResults.style.display = 'block';
+
+    // Add click handlers to search results
+    searchResults.querySelectorAll('.search-result-item').forEach((item, index) => {
+        item.addEventListener('mouseenter', function() {
+            (this as HTMLElement).style.background = '#f0f8ff';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            (this as HTMLElement).style.background = 'white';
+        });
+        
+        item.addEventListener('click', function() {
+            selectCard(cards[index], currentCardId);
+            searchResults.style.display = 'none';
+        });
+    });
+}
+
+// Add this function to handle card selection
+function selectCard(card: CardDue, currentCardId: number): void {
+    const searchInput = document.getElementById(`cardSearchInput_${currentCardId}`) as HTMLInputElement;
+    const createBtn = document.getElementById(`createRelationshipBtn_${currentCardId}`) as HTMLButtonElement;
+    
+    if (!searchInput || !createBtn) return;
+
+    // Show selected card in the input
+    const frontText = card.field_values?.[0] || 'No content';
+    searchInput.value = `Card ${card.card_id}: ${frontText.substring(0, 40)}${frontText.length > 40 ? '...' : ''}`;
+    searchInput.dataset.selectedCardId = card.card_id.toString();
+
+    // Enable the create button
+    createBtn.disabled = false;
+    createBtn.style.opacity = '1';
+    
+    console.log(`Selected card ${card.card_id} for relationship`);
+}
+
+// Add this function to implement the search API call
+async function searchCardsForRelationship(searchTerm: string, excludeCardId: number): Promise<CardDue[]> {
+    try {
+        const result = await browseCards({
+            searchTerm: searchTerm,
+            limit: 10,
+            offset: 0
+        });
+        
+        if (result.status === 'success' && result.cards) {
+            // Exclude the current card from results
+            return result.cards.filter(card => card.card_id !== excludeCardId);
+        }
+        return [];
+    } catch (error) {
+        console.error('Error searching cards for relationship:', error);
+        return [];
+    }
+}
+
+// Update the setupRelationshipModalEventListeners function to include search setup:
 function setupRelationshipModalEventListeners(cardId: number): void {
     setTimeout(() => {
         const closeBtn = document.getElementById(`closeRelationshipModal_${cardId}`);
         const closeBtn2 = document.getElementById(`closeRelationshipModalBtn_${cardId}`);
         const modal = document.getElementById('cardRelationshipModal');
+        const createBtn = document.getElementById(`createRelationshipBtn_${cardId}`) as HTMLButtonElement;
+        const relationshipSelect = document.getElementById(`relationshipType_${cardId}`) as HTMLSelectElement;
 
         console.log('Setting up event listeners for card', cardId);
 
         if (closeBtn) {
             closeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                console.log('Close button 1 clicked');
                 closeRelationshipModal();
             });
         }
@@ -3874,7 +4009,6 @@ function setupRelationshipModalEventListeners(cardId: number): void {
         if (closeBtn2) {
             closeBtn2.addEventListener('click', (e) => {
                 e.preventDefault();
-                console.log('Close button 2 clicked');
                 closeRelationshipModal();
             });
         }
@@ -3886,6 +4020,50 @@ function setupRelationshipModalEventListeners(cardId: number): void {
                 }
             });
         }
+
+        // Set up create relationship button
+        if (createBtn) {
+            createBtn.addEventListener('click', async () => {
+                const searchInput = document.getElementById(`cardSearchInput_${cardId}`) as HTMLInputElement;
+                const selectedCardId = parseInt(searchInput.dataset.selectedCardId || '0');
+                const relationship = relationshipSelect.value as 'peer' | 'dependent' | 'prereq';
+
+                if (!selectedCardId) {
+                    showToast('Please select a card first', 'warning');
+                    return;
+                }
+
+                createBtn.textContent = 'Creating...';
+                createBtn.disabled = true;
+
+                try {
+                    const result = await createCardRelationship(cardId, selectedCardId, relationship);
+                    
+                    if (result.status === 'success') {
+                        showToast(`${relationship} relationship created successfully!`, 'success');
+                        
+                        // Clear the form
+                        searchInput.value = '';
+                        searchInput.dataset.selectedCardId = '';
+                        createBtn.disabled = true;
+                        createBtn.style.opacity = '0.5';
+                        
+                        // Reload existing relationships
+                        loadExistingRelationships(cardId);
+                    } else {
+                        throw new Error(result.error || 'Failed to create relationship');
+                    }
+                } catch (error) {
+                    console.error('Error creating relationship:', error);
+                    showToast(`Failed to create relationship: ${error.message}`, 'error');
+                } finally {
+                    createBtn.textContent = 'Create Relationship';
+                }
+            });
+        }
+
+        // Set up search functionality
+        setupCardSearchFunctionality(cardId);
 
         document.addEventListener('keydown', function escHandler(e) {
             if (e.key === 'Escape') {
