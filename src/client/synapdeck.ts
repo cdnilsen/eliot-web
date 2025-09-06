@@ -463,8 +463,9 @@ function initializeTabSwitching() {
 let currentFileContent: string = "";
 let currentDeck: string = "";
 let uploadDeckDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;// Optional: Also handle when radio buttons change to reset the content
-const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
+// Also fix the text radio button event listener to be more explicit
 const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
 const cardFormatDropdownDiv = document.getElementById("cardFormatSection") as HTMLDivElement;
 const cardFormatDropdown = document.getElementById("card_format_dropdown") as HTMLSelectElement;
 
@@ -474,76 +475,188 @@ if (fileRadio.checked) {
 }
 
 // Enhanced deck dropdown event listener with better debugging
+
+// First, make sure we get the right dropdown element
 if (uploadDeckDropdown) {
-    console.log("Setting up deck upload dropdown event listener...");
-    uploadDeckDropdown.addEventListener('change', (event) => {
+    // Remove the old event listener by cloning the element
+    const newUploadDropdown = uploadDeckDropdown.cloneNode(true) as HTMLSelectElement;
+    if (uploadDeckDropdown.parentNode) {
+        uploadDeckDropdown.parentNode.replaceChild(newUploadDropdown, uploadDeckDropdown);
+    }
+    
+    console.log("Upload deck dropdown event listener setup...");
+    
+    // Add the corrected event listener
+    newUploadDropdown.addEventListener('change', (event) => {
+        // Prevent this event from bubbling up and triggering other listeners
+        event.stopPropagation();
+        event.preventDefault();
+        
         const selectedValue = (event.target as HTMLSelectElement).value;
         currentDeck = selectedValue;
 
-        console.log(`Deck changed to: "${currentDeck}"`);
+        console.log(`UPLOAD TAB: Deck changed to: "${currentDeck}"`);
         
-        // Update special characters panel
+        // Only update special characters if we're in text input mode
         const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
-        if (textRadio && textRadio.checked) {
-            console.log("Text input is selected, updating special characters...");
+        const uploadTab = document.getElementById('upload_mainDiv');
+        const isUploadTabActive = uploadTab?.classList.contains('active');
+        
+        console.log(`Upload tab active: ${isUploadTabActive}, Text radio checked: ${textRadio?.checked}`);
+        
+        if (textRadio && textRadio.checked && isUploadTabActive) {
+            console.log("Conditions met - updating special characters...");
             updateSpecialCharacters(currentDeck);
         } else {
-            console.log("Text input is not selected, skipping special characters update");
+            console.log("Conditions not met - skipping special characters update");
+            console.log(`  Upload tab active: ${isUploadTabActive}`);
+            console.log(`  Text radio checked: ${textRadio?.checked}`);
         }
     });
 }
 
-// Enhanced text radio button event listener
+
 if (textRadio) {
-    textRadio.addEventListener('change', () => {
-        if (textRadio.checked) {
-            console.log("Text input selected, setting up special characters...");
+    // Remove existing listeners
+    const newTextRadio = textRadio.cloneNode(true) as HTMLInputElement;
+    if (textRadio.parentNode) {
+        textRadio.parentNode.replaceChild(newTextRadio, textRadio);
+    }
+    
+    newTextRadio.addEventListener('change', (event) => {
+        event.stopPropagation();
+        
+        if (newTextRadio.checked) {
+            console.log("TEXT RADIO: Text input selected, setting up special characters...");
             
             // Clear file input and reset content
-            fileInput.value = "";
+            const fileInput = document.getElementById("uploadTextFile") as HTMLInputElement;
+            const textInputBox = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+            const uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
+            const uploadCancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
+            
+            if (fileInput) fileInput.value = "";
             currentFileContent = "";
-            uploadSubmitButton.disabled = true;
-            uploadCancelButton.disabled = true;
+            if (uploadSubmitButton) uploadSubmitButton.disabled = true;
+            if (uploadCancelButton) uploadCancelButton.disabled = true;
             
             // Show dropdown when typing directly
-            cardFormatDropdownDiv.style.display = "block";
+            if (cardFormatDropdownDiv) cardFormatDropdownDiv.style.display = "block";
             
             // Create and show special characters panel
             createSpecialCharactersPanel();
             
-            if (currentDeck) {
-                console.log(`Current deck is "${currentDeck}", updating special characters...`);
-                updateSpecialCharacters(currentDeck);
+            // Get the current deck from the UPLOAD dropdown specifically
+            const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+            const selectedDeck = uploadDropdown?.value || "";
+            
+            console.log(`TEXT RADIO: Current deck from upload dropdown: "${selectedDeck}"`);
+            
+            if (selectedDeck) {
+                currentDeck = selectedDeck; // Make sure we update the global variable
+                console.log(`TEXT RADIO: Updating special characters for deck "${selectedDeck}"`);
+                updateSpecialCharacters(selectedDeck);
             } else {
-                console.log("No deck selected yet");
+                console.log("TEXT RADIO: No deck selected in upload dropdown yet");
             }
         }
     });
 }
 
-// Enhanced file radio button event listener 
 if (fileRadio) {
-    fileRadio.addEventListener('change', () => {
-        if (fileRadio.checked) {
-            console.log("File input selected, hiding special characters...");
+    // Remove existing listeners  
+    const newFileRadio = fileRadio.cloneNode(true) as HTMLInputElement;
+    if (fileRadio.parentNode) {
+        fileRadio.parentNode.replaceChild(newFileRadio, fileRadio);
+    }
+    
+    newFileRadio.addEventListener('change', (event) => {
+        event.stopPropagation();
+        
+        if (newFileRadio.checked) {
+            console.log("FILE RADIO: File input selected, hiding special characters...");
+            
+            const textInputBox = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+            const uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
+            const uploadCancelButton = document.getElementById("upload_cancel") as HTMLButtonElement;
             
             // Clear text input and reset content
-            textInputBox.value = "";
+            if (textInputBox) textInputBox.value = "";
             currentFileContent = "";
-            uploadSubmitButton.disabled = true;
-            uploadCancelButton.disabled = true;
+            if (uploadSubmitButton) uploadSubmitButton.disabled = true;
+            if (uploadCancelButton) uploadCancelButton.disabled = true;
             
             // Hide dropdown when using file upload
-            cardFormatDropdownDiv.style.display = "none";
+            if (cardFormatDropdownDiv) cardFormatDropdownDiv.style.display = "none";
             
             // Hide special characters panel
             const panel = document.getElementById("specialCharsPanel");
             if (panel) {
                 panel.style.display = "none";
-                console.log("Special characters panel hidden");
+                console.log("FILE RADIO: Special characters panel hidden");
             }
         }
     });
+}
+
+
+// Enhanced debug function to check conflicts
+function debugDropdownConflicts(): void {
+    console.log("=== DROPDOWN CONFLICT DEBUG ===");
+    
+    // Check all dropdowns on the page
+    const allSelects = document.querySelectorAll('select');
+    console.log(`Found ${allSelects.length} select elements on page:`);
+    
+    allSelects.forEach((select, index) => {
+        console.log(`  ${index + 1}. ID: "${select.id}", Name: "${select.name}", Classes: "${select.className}"`);
+        console.log(`      Current value: "${select.value}"`);
+        console.log(`      Options count: ${select.options.length}`);
+        if (select.options.length > 0) {
+            const optionValues = Array.from(select.options).map(opt => opt.value).slice(0, 5);
+            console.log(`      First 5 option values: ${optionValues.join(', ')}`);
+        }
+    });
+    
+    // Check current tab
+    const uploadTab = document.getElementById('upload_mainDiv');
+    const forecastTab = document.getElementById('forecast_mainDiv');
+    console.log(`Upload tab active: ${uploadTab?.classList.contains('active')}`);
+    console.log(`Forecast tab active: ${forecastTab?.classList.contains('active')}`);
+    
+    // Check specifically the upload dropdown
+    const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+    console.log(`Upload dropdown exists: ${!!uploadDropdown}`);
+    console.log(`Upload dropdown value: "${uploadDropdown?.value}"`);
+    console.log(`Upload dropdown event listeners: ${uploadDropdown?.getAttribute('data-listeners') || 'unknown'}`);
+    
+    console.log("=== END DROPDOWN DEBUG ===");
+}
+
+
+// Add this debug button specifically for dropdown conflicts
+function addDropdownDebugButton(): void {
+    const uploadTab = document.getElementById('upload_mainDiv');
+    if (uploadTab && !document.getElementById('debugDropdownBtn')) {
+        const debugBtn = document.createElement('button');
+        debugBtn.id = 'debugDropdownBtn';
+        debugBtn.textContent = 'Debug Dropdowns';
+        debugBtn.style.margin = '10px';
+        debugBtn.style.padding = '5px 10px';
+        debugBtn.style.backgroundColor = '#28a745';
+        debugBtn.style.color = 'white';
+        debugBtn.style.border = 'none';
+        debugBtn.style.borderRadius = '4px';
+        debugBtn.addEventListener('click', debugDropdownConflicts);
+        uploadTab.insertBefore(debugBtn, uploadTab.firstChild);
+    }
+}
+
+// Initialize the fixes
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addDropdownDebugButton);
+} else {
+    addDropdownDebugButton();
 }
 
 let fileInput = document.getElementById("uploadTextFile") as HTMLInputElement;
