@@ -114,19 +114,18 @@ function applyColorCoding(output: string, code: string): string {
     }
 }
 
-function checkColorCoding(fieldValues: string[], targetIndex: number, cardFormat: string): string {
+function checkColorCoding(fieldValues: string[], targetIndex: number, cardFormat: string, processedText?: string): string {
     let colorCodingIndex = 4;
     if (cardFormat == "Target to Native") {
         colorCodingIndex = 2;
     }
 
-    let output = fieldValues[targetIndex];
+    let output = processedText || fieldValues[targetIndex];  // Use processed text if provided
     if (fieldValues.length < (colorCodingIndex - 1)) {
         return output;
     } else {
-        let output: string = fieldValues[targetIndex];
         let colorCoding = fieldValues[colorCodingIndex];
-        return applyColorCoding(output, colorCoding);
+        return applyColorCoding(output, colorCoding);  // Apply color coding to the processed text
     }  
 }
 
@@ -637,7 +636,7 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
             output = datum;
     }
     if (isBackOfCard) {
-        output = checkColorCoding(card.field_values, targetIndex, cardFormat)
+        output = checkColorCoding(card.field_values, targetIndex, cardFormat, output)  // Pass the processed output
     }
     return output;
 }
