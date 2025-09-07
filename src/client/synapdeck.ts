@@ -3802,6 +3802,7 @@ async function showCardRelationshipModal(cardId: number): Promise<void> {
 
 
 // Function to create the relationship modal
+// Function to create the relationship modal
 function showRelationshipModal(cardId: number, cardData: any): void {
     // Double-check that no modal exists
     const existingModal = document.getElementById('cardRelationshipModal');
@@ -3826,8 +3827,173 @@ function showRelationshipModal(cardId: number, cardData: any): void {
         animation: fadeIn 0.2s ease-out;
     `;
 
-    // Rest of your modal HTML remains the same...
-    // (keep the existing innerHTML code)
+    // Create the modal content
+    modal.innerHTML = `
+        <div style="
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease-out;
+        ">
+            <!-- Modal Header -->
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px 24px;
+                border-bottom: 1px solid #e1e5e9;
+                background: #f8f9fa;
+            ">
+                <h2 style="margin: 0; color: #333; font-size: 20px; font-weight: 600;">
+                    🔗 Manage Relationships - Card ${cardId}
+                </h2>
+                <button id="closeRelationshipModal_${cardId}" style="
+                    background: none;
+                    border: none;
+                    font-size: 28px;
+                    cursor: pointer;
+                    color: #666;
+                    width: 40px;
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 6px;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='none'">×</button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="padding: 24px; max-height: 50vh; overflow-y: auto;">
+                <!-- Card Info Section -->
+                <div style="
+                    background: #f0f8ff;
+                    padding: 16px;
+                    border-radius: 8px;
+                    border: 1px solid #b8daff;
+                    margin-bottom: 24px;
+                ">
+                    <div style="font-weight: 600; color: #0c5460; margin-bottom: 8px;">Card Information</div>
+                    <div style="font-size: 14px; color: #495057;">
+                        <strong>Deck:</strong> ${cardData.deck || 'Unknown'}<br>
+                        <strong>Format:</strong> ${cardData.card_format || 'Unknown'}<br>
+                        <strong>Card ID:</strong> ${cardId}<br>
+                        <strong>Front:</strong> ${cardData.field_values?.[0]?.substring(0, 60) || 'No content'}${(cardData.field_values?.[0]?.length || 0) > 60 ? '...' : ''}
+                    </div>
+                </div>
+
+                <!-- Create New Relationship Section -->
+                <div style="margin-bottom: 24px;">
+                    <h3 style="color: #333; margin-bottom: 16px;">Create New Relationship</h3>
+                    
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                            Search for card to relate to:
+                        </label>
+                        <div style="position: relative;">
+                            <input type="text" id="cardSearchInput_${cardId}" placeholder="Type to search for cards..." style="
+                                width: 100%;
+                                padding: 10px;
+                                border: 1px solid #ced4da;
+                                border-radius: 6px;
+                                font-size: 14px;
+                                box-sizing: border-box;
+                            ">
+                            <div id="cardSearchResults_${cardId}" style="
+                                position: absolute;
+                                top: 100%;
+                                left: 0;
+                                right: 0;
+                                background: white;
+                                border: 1px solid #ced4da;
+                                border-top: none;
+                                border-radius: 0 0 6px 6px;
+                                max-height: 200px;
+                                overflow-y: auto;
+                                z-index: 1000;
+                                display: none;
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                            "></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                            Relationship Type:
+                        </label>
+                        <select id="relationshipType_${cardId}" style="
+                            width: 100%;
+                            padding: 10px;
+                            border: 1px solid #ced4da;
+                            border-radius: 6px;
+                            font-size: 14px;
+                            box-sizing: border-box;
+                        ">
+                            <option value="peer">Peer (cards of similar difficulty)</option>
+                            <option value="dependent">Dependent (this card depends on the other)</option>
+                            <option value="prereq">Prerequisite (other card depends on this)</option>
+                        </select>
+                    </div>
+
+                    <button id="createRelationshipBtn_${cardId}" disabled style="
+                        padding: 10px 20px;
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 600;
+                        opacity: 0.5;
+                        transition: all 0.2s;
+                    ">Create Relationship</button>
+                </div>
+
+                <!-- Existing Relationships Section -->
+                <div>
+                    <h3 style="color: #333; margin-bottom: 16px;">Existing Relationships</h3>
+                    <div id="relationshipsList_${cardId}" style="
+                        background: #f8f9fa;
+                        padding: 16px;
+                        border-radius: 8px;
+                        border: 1px solid #dee2e6;
+                        min-height: 60px;
+                    ">
+                        <p style="color: #666; font-style: italic;">Loading relationships...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                padding: 20px 24px;
+                border-top: 1px solid #e1e5e9;
+                background: #f8f9fa;
+                gap: 12px;
+            ">
+                <button id="closeRelationshipModalBtn_${cardId}" style="
+                    padding: 10px 20px;
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='#545b62'" onmouseout="this.style.background='#6c757d'">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
 
     document.body.appendChild(modal);
     console.log(`Created relationship modal for card ${cardId}`);
