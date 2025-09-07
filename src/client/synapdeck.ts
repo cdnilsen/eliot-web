@@ -3669,6 +3669,7 @@ interface CreateCardRelationshipRequest {
     card_a_id: number;
     card_b_id: number;
     relationship: 'peer' | 'dependent' | 'prereq';
+    between_notes?: boolean; // Add this
 }
 
 interface CreateCardRelationshipResponse {
@@ -3685,7 +3686,7 @@ interface CreateCardRelationshipResponse {
 }
 
 // API functions
-async function createCardRelationship(cardAId: number, cardBId: number, relationship: 'peer' | 'dependent' | 'prereq'): Promise<CreateCardRelationshipResponse> {
+async function createCardRelationship(cardAId: number, cardBId: number, relationship: 'peer' | 'dependent' | 'prereq', betweenNotes?: boolean): Promise<CreateCardRelationshipResponse> {
     try {
         const response = await fetch('/create_card_relationship', {
             method: 'POST',
@@ -3695,7 +3696,8 @@ async function createCardRelationship(cardAId: number, cardBId: number, relation
             body: JSON.stringify({
                 card_a_id: cardAId,
                 card_b_id: cardBId,
-                relationship: relationship
+                relationship: relationship,
+                between_notes: betweenNotes
             })
         });
 
@@ -3801,7 +3803,6 @@ async function showCardRelationshipModal(cardId: number): Promise<void> {
 }
 
 
-// Function to create the relationship modal
 // Function to create the relationship modal
 function showRelationshipModal(cardId: number, cardData: any): void {
     // Double-check that no modal exists
@@ -3937,6 +3938,19 @@ function showRelationshipModal(cardId: number, cardData: any): void {
                             <option value="dependent">Dependent (this card depends on the other)</option>
                             <option value="prereq">Prerequisite (other card depends on this)</option>
                         </select>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="relationshipBetweenNotes_${cardId}" checked style="
+                                transform: scale(1.2);
+                                cursor: pointer;
+                            ">
+                            <span style="font-weight: 600; color: #333;">Relationship between notes</span>
+                        </label>
+                        <small style="color: #666; font-size: 12px; margin-left: 32px;">
+                            When checked, creates relationship between all cards in both notes
+                        </small>
                     </div>
 
                     <button id="createRelationshipBtn_${cardId}" disabled style="
@@ -4186,7 +4200,10 @@ function setupRelationshipModalEventListeners(cardId: number): void {
                 createBtn.disabled = true;
 
                 try {
-                    const result = await createCardRelationship(cardId, selectedCardId, relationship);
+                    const relationshipBetweenNotesCheckbox = document.getElementById(`relationshipBetweenNotes_${cardId}`) as HTMLInputElement;
+                    const betweenNotes = relationshipBetweenNotesCheckbox.checked;
+
+                    const result = await createCardRelationship(cardId, selectedCardId, relationship, betweenNotes);
                     
                     if (result.status === 'success') {
                         showToast(`${relationship} relationship created successfully!`, 'success');
