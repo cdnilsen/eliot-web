@@ -3885,7 +3885,10 @@ function showRelationshipModal(cardId: number, cardData: any): void {
                         <strong>Deck:</strong> ${cardData.deck || 'Unknown'}<br>
                         <strong>Format:</strong> ${cardData.card_format || 'Unknown'}<br>
                         <strong>Card ID:</strong> ${cardId}<br>
-                        <strong>Front:</strong> ${cardData.field_values?.[0]?.substring(0, 60) || 'No content'}${(cardData.field_values?.[0]?.length || 0) > 60 ? '...' : ''}
+                        <strong>Front:</strong> ${(() => {
+                        const frontText = cleanFieldDatum(cardData, 0, false);
+                        return frontText.substring(0, 60) + (frontText.length > 60 ? '...' : '');
+                    })() || 'No content'}
                     </div>
                 </div>
 
@@ -4083,8 +4086,8 @@ function displaySearchResults(cards: CardDue[], currentCardId: number): void {
     }
 
     const html = cards.map(card => {
-        const frontText = card.field_values?.[0] || 'No content';
-        const backText = card.field_values?.[1] || 'No content';
+        const frontText = cleanFieldDatum(card, 0, false) || 'No content';
+        const backText = cleanFieldDatum(card, 1, true) || 'No content';
         
         return `
             <div class="search-result-item" data-card-id="${card.card_id}" style="padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 12px; transition: background 0.2s;">
@@ -4122,7 +4125,7 @@ function selectCard(card: CardDue, currentCardId: number): void {
     if (!searchInput || !createBtn) return;
 
     // Show selected card in the input
-    const frontText = card.field_values?.[0] || 'No content';
+    const frontText = cleanFieldDatum(card, 0, false) || 'No content';
     searchInput.value = `Card ${card.card_id}: ${frontText.substring(0, 40)}${frontText.length > 40 ? '...' : ''}`;
     searchInput.dataset.selectedCardId = card.card_id.toString();
 
