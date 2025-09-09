@@ -2209,6 +2209,7 @@ app.put('/card/:cardId', express.json(), wrapAsync(async (req, res) => {
 }));
 
 // Delete card endpoint
+// Enhanced delete card endpoint with proper relationship cleanup
 app.delete('/card/:cardId', wrapAsync(async (req, res) => {
     const { cardId } = req.params;
     const cardIdNum = parseInt(cardId);
@@ -2225,9 +2226,9 @@ app.delete('/card/:cardId', wrapAsync(async (req, res) => {
     try {
         await transactionClient.query('BEGIN');
         
-        // Check if card exists and get its info
+        // Check if card exists and get its complete relationship info
         const existingCard = await transactionClient.query(
-            'SELECT card_id, note_id, deck, peers FROM cards WHERE card_id = $1',
+            'SELECT card_id, note_id, deck, peers, prereqs, dependents FROM cards WHERE card_id = $1',
             [cardIdNum]
         );
         
@@ -2240,20 +2241,113 @@ app.delete('/card/:cardId', wrapAsync(async (req, res) => {
         }
 
         const card = existingCard.rows[0];
+        const cardPeers = card.peers || [];
+        const cardPrereqs = card.prereqs || [];
+        const cardDependents = card.dependents || [];
         
-        // Remove this card from peers' peer lists
-        if (card.peers && card.peers.length > 0) {
-            for (const peerId of card.peers) {
-                await transactionClient.query(
-                    `UPDATE cards 
-                     SET peers = array_remove(peers, $1) 
-                     WHERE card_id = $2`,
-                    [cardIdNum, peerId]
-                );
+        console.log(`🗑️ Deleting card ${cardIdNum}:`);
+        console.log(`  Peers: [${cardPeers.join(', ')}]`);
+        console.log(`  Prereqs: [${cardPrereqs.join(', ')}]`);
+        console.log(`  Dependents: [${cardDependents.join(', ')}]`);
+        
+        // Handle transitive prereq/dependent relationships
+        // If A -> B -> C and we delete B, then A should become prereq of C
+        if (cardPrereqs.length > 0 && cardDependents.length > 0) {
+            console.log(`🔗 Creating transitive relationships:`);
+            
+            for (const prereqId of cardPrereqs) {
+                for (const dependentId of cardDependents) {
+                    // Avoid self-relationships
+                    if (prereqId === dependentId) {
+                        console.log(`  ⚠️ Skipping self-relationship for card ${prereqId}`);
+                        continue;
+                    }
+                    
+                    console.log(`  📎 Making ${prereqId} -> ${dependentId}`);
+                    
+                    // Add dependent to prereq's dependents list (if not already there)
+                    await transactionClient.query(
+                        `UPDATE cards 
+                         SET dependents = CASE 
+                             WHEN dependents IS NULL THEN ARRAY[$1]
+                             WHEN NOT ($1 = ANY(dependents)) THEN array_append(dependents, $1)
+                             ELSE dependents
+                         END
+                         WHERE card_id = $2`,
+                        [dependentId, prereqId]
+                    );
+                    
+                    // Add prereq to dependent's prereqs list (if not already there)
+                    await transactionClient.query(
+                        `UPDATE cards 
+                         SET prereqs = CASE 
+                             WHEN prereqs IS NULL THEN ARRAY[$1]
+                             WHEN NOT ($1 = ANY(prereqs)) THEN array_append(prereqs, $1)
+                             ELSE prereqs
+                         END
+                         WHERE card_id = $2`,
+                        [prereqId, dependentId]
+                    );
+                }
             }
         }
+        
+        // Remove this card from all other cards' relationship arrays
+        console.log(`🧹 Cleaning up relationships...`);
+        
+        // Remove from peers (bidirectional relationships)
+        if (cardPeers.length > 0) {
+            console.log(`  Removing from ${cardPeers.length} peer cards`);
+            await transactionClient.query(
+                `UPDATE cards 
+                 SET peers = array_remove(peers, $1) 
+                 WHERE card_id = ANY($2::int[])`,
+                [cardIdNum, cardPeers]
+            );
+        }
+        
+        // Remove from cards that have this card as a prereq (i.e., this card's dependents)
+        if (cardDependents.length > 0) {
+            console.log(`  Removing from prereqs of ${cardDependents.length} dependent cards`);
+            await transactionClient.query(
+                `UPDATE cards 
+                 SET prereqs = array_remove(prereqs, $1) 
+                 WHERE card_id = ANY($2::int[])`,
+                [cardIdNum, cardDependents]
+            );
+        }
+        
+        // Remove from cards that have this card as a dependent (i.e., this card's prereqs)
+        if (cardPrereqs.length > 0) {
+            console.log(`  Removing from dependents of ${cardPrereqs.length} prereq cards`);
+            await transactionClient.query(
+                `UPDATE cards 
+                 SET dependents = array_remove(dependents, $1) 
+                 WHERE card_id = ANY($2::int[])`,
+                [cardIdNum, cardPrereqs]
+            );
+        }
+        
+        // Safety cleanup: remove this card from ANY other cards that might reference it
+        // (handles cases where relationships might be inconsistent)
+        console.log(`  🔍 Safety cleanup - removing from all relationship arrays`);
+        const cleanupResult = await transactionClient.query(
+            `UPDATE cards 
+             SET peers = array_remove(peers, $1),
+                 prereqs = array_remove(prereqs, $1),
+                 dependents = array_remove(dependents, $1)
+             WHERE $1 = ANY(peers) OR $1 = ANY(prereqs) OR $1 = ANY(dependents)
+             RETURNING card_id`,
+            [cardIdNum]
+        );
+        
+        if (cleanupResult.rows.length > 0) {
+            const cleanedCardIds = cleanupResult.rows.map(row => row.card_id);
+            console.log(`  🧽 Additional cleanup performed on cards: [${cleanedCardIds.join(', ')}]`);
+        }
 
-        // Delete the card
+        // Delete the card itself
+        console.log(`🗑️ Deleting card ${cardIdNum}`);
         await transactionClient.query(
             'DELETE FROM cards WHERE card_id = $1',
             [cardIdNum]
@@ -2267,7 +2361,7 @@ app.delete('/card/:cardId', wrapAsync(async (req, res) => {
         
         let noteDeleted = false;
         if (parseInt(remainingCards.rows[0].count) === 0) {
-            // Delete the note if no cards remain
+            console.log(`🗑️ Deleting empty note ${card.note_id}`);
             await transactionClient.query(
                 'DELETE FROM notes WHERE note_id = $1',
                 [card.note_id]
@@ -2277,17 +2371,30 @@ app.delete('/card/:cardId', wrapAsync(async (req, res) => {
         
         await transactionClient.query('COMMIT');
         
+        const transitiveCount = cardPrereqs.length * cardDependents.length;
+        
+        console.log(`✅ Card ${cardIdNum} deleted successfully`);
+        console.log(`  📊 Relationships cleaned: ${cardPeers.length} peers, ${cardPrereqs.length} prereqs, ${cardDependents.length} dependents`);
+        console.log(`  🔗 Transitive relationships created: ${transitiveCount}`);
+        console.log(`  📝 Note deleted: ${noteDeleted}`);
+        
         res.json({
             status: 'success',
             message: `Card ${cardIdNum} deleted successfully`,
             note_deleted: noteDeleted,
             card_id: cardIdNum,
-            note_id: card.note_id
+            note_id: card.note_id,
+            relationships_cleaned: {
+                peers_removed: cardPeers.length,
+                prereq_relationships_removed: cardPrereqs.length, 
+                dependent_relationships_removed: cardDependents.length,
+                transitive_relationships_created: transitiveCount
+            }
         });
         
     } catch (err) {
         await transactionClient.query('ROLLBACK');
-        console.error('Error deleting card:', err);
+        console.error('❌ Error deleting card:', err);
         res.status(500).json({
             status: 'error',
             error: 'Error deleting card',
