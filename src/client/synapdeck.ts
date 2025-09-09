@@ -2349,37 +2349,52 @@ function processHTMLContent(text: string): string {
     // Define allowed HTML tags
     const allowedTags = ['b', 'strong', 'i', 'em', 'u', 'span', 'br'];
     
-    // Split text into parts: HTML tags vs regular text
-    const parts = processed.split(/(<\/?[^>]+>)/);
+    // Use a more careful approach that preserves spaces
+    // Match HTML tags while capturing surrounding content
+    const htmlTagRegex = /<\/?[^>]+>/g;
     
-    const processedParts = parts.map(part => {
-        if (part.match(/^<\/?[^>]+>$/)) {
-            // This is an HTML tag
-            const tagMatch = part.match(/^<\/?(\w+)(?:\s|>)/);
-            const tagName = tagMatch ? tagMatch[1].toLowerCase() : '';
-            
-            if (allowedTags.includes(tagName)) {
-                // Keep allowed tags as-is
-                return part;
-            } else {
-                // Escape disallowed tags
-                return part
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;');
-            }
+    let result = '';
+    let lastIndex = 0;
+    let match;
+    
+    while ((match = htmlTagRegex.exec(processed)) !== null) {
+        // Add the text before this tag (preserving all spaces)
+        const textBeforeTag = processed.substring(lastIndex, match.index);
+        result += escapeTextContent(textBeforeTag);
+        
+        // Process the HTML tag itself
+        const tag = match[0];
+        const tagMatch = tag.match(/^<\/?(\w+)(?:\s|>)/);
+        const tagName = tagMatch ? tagMatch[1].toLowerCase() : '';
+        
+        if (allowedTags.includes(tagName)) {
+            // Keep allowed tags as-is
+            result += tag;
         } else {
-            // This is regular text - only escape dangerous characters, not HTML entities
-            return part
-                .replace(/&(?!(?:amp|lt|gt|quot|apos);)/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
+            // Escape disallowed tags
+            result += escapeTextContent(tag);
         }
-    });
+        
+        lastIndex = match.index + match[0].length;
+    }
     
-    return processedParts.join('');
+    // Add any remaining text after the last tag
+    const remainingText = processed.substring(lastIndex);
+    result += escapeTextContent(remainingText);
+    
+    return result;
 }
 
+function escapeTextContent(text: string): string {
+    if (!text) return '';
+    
+    return text
+        // Only escape & if it's not part of an existing HTML entity
+        .replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, '&amp;')
+        // Escape < and > that aren't part of tags (this function is only called on text content)
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
 
 // Replace your existing setupShuffleCardsTab function with this new version
 function setupShuffleCardsTab(): void {    

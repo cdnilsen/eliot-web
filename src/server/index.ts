@@ -4808,3 +4808,5 @@ app.post('/remove_card_relationship', express.json(), wrapAsync(async (req, res)
     }
 }));
 
+// <b>principal parts</b>: βάλλω, / βαλῶ, ἔβαλον, βέβληκα, βέβλημαι, ἐβλήθην
+// <b>principal parts</b>: βάλλω, βαλῶ, ἔβαλον, βέβληκα, βέβλημαι, ἐβλήθην
