@@ -4019,6 +4019,7 @@ function showRelationshipModal(cardId: number, cardData: any): void {
     // Set up event listeners
     setupRelationshipModalEventListeners(cardId);
     loadExistingRelationships(cardId);
+    addRemoveAllRelationshipsButton(cardId);
 }
 
 // Add this function to handle the card search functionality
