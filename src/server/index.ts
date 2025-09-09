@@ -4549,88 +4549,92 @@ app.post('/create_card_relationship', express.json(), wrapAsync(async (req, res)
             // Apply relationship logic
             switch (relationship) {
                 case 'peer':
-                    if (checkExistingRelationship(cardAPeers, cardBPeers, 'peer')) {
-                        await transactionClient.query('ROLLBACK');
-                        return res.json({
-                            status: 'error',
-                            error: 'Peer relationship already exists between these cards'
-                        } as CreateCardRelationshipResponse);
-                    }
-                    
-                    if (!cardAPeers.includes(card_b_id)) {
-                        cardAPeers.push(card_b_id);
-                        cardAChanges.push(`Added card ${card_b_id} to peers`);
-                    }
-                    if (!cardBPeers.includes(card_a_id)) {
-                        cardBPeers.push(card_a_id);
-                        cardBChanges.push(`Added card ${card_a_id} to peers`);
-                    }
-                    
-                    await transactionClient.query(
-                        'UPDATE cards SET peers = $1 WHERE card_id = $2',
-                        [cardAPeers, card_a_id]
-                    );
-                    await transactionClient.query(
-                        'UPDATE cards SET peers = $1 WHERE card_id = $2',
-                        [cardBPeers, card_b_id]
-                    );
-                    break;
-                    
+        if (checkExistingRelationship(cardAPeers, cardBPeers, 'peer')) {
+            await transactionClient.query('ROLLBACK');
+            return res.json({
+                status: 'error',
+                error: 'Peer relationship already exists between these cards'
+            } as CreateCardRelationshipResponse);
+        }
+        
+        if (!cardAPeers.includes(card_b_id)) {
+            cardAPeers.push(card_b_id);
+            cardAChanges.push(`Added card ${card_b_id} to peers`);
+        }
+        if (!cardBPeers.includes(card_a_id)) {
+            cardBPeers.push(card_a_id);
+            cardBChanges.push(`Added card ${card_a_id} to peers`);
+        }
+        
+        await transactionClient.query(
+            'UPDATE cards SET peers = $1 WHERE card_id = $2',
+            [cardAPeers, card_a_id]
+        );
+        await transactionClient.query(
+            'UPDATE cards SET peers = $1 WHERE card_id = $2',
+            [cardBPeers, card_b_id]
+        );
+        break;
+        
                 case 'dependent':
-                    if (checkExistingRelationship(cardADependents, cardBPrereqs, 'dependent/prereq')) {
-                        await transactionClient.query('ROLLBACK');
-                        return res.json({
-                            status: 'error',
-                            error: 'Dependent/prerequisite relationship already exists between these cards'
-                        } as CreateCardRelationshipResponse);
-                    }
-                    
-                    if (!cardADependents.includes(card_b_id)) {
-                        cardADependents.push(card_b_id);
-                        cardAChanges.push(`Added card ${card_b_id} to dependents`);
-                    }
-                    if (!cardBPrereqs.includes(card_a_id)) {
-                        cardBPrereqs.push(card_a_id);
-                        cardBChanges.push(`Added card ${card_a_id} to prereqs`);
-                    }
-                    
-                    await transactionClient.query(
-                        'UPDATE cards SET dependents = $1 WHERE card_id = $2',
-                        [cardADependents, card_a_id]
-                    );
-                    await transactionClient.query(
-                        'UPDATE cards SET prereqs = $1 WHERE card_id = $2',
-                        [cardBPrereqs, card_b_id]
-                    );
-                    break;
-                    
+        // FIXED: "A is dependent on B" means B is prerequisite of A
+        // So: A gets B in prereqs, B gets A in dependents
+        if (checkExistingRelationship(cardAPrereqs, cardBDependents, 'dependent/prereq')) {
+            await transactionClient.query('ROLLBACK');
+            return res.json({
+                status: 'error',
+                error: 'Dependent/prerequisite relationship already exists between these cards'
+            } as CreateCardRelationshipResponse);
+        }
+        
+        if (!cardAPrereqs.includes(card_b_id)) {
+            cardAPrereqs.push(card_b_id);
+            cardAChanges.push(`Added card ${card_b_id} to prereqs (A is dependent on B)`);
+        }
+        if (!cardBDependents.includes(card_a_id)) {
+            cardBDependents.push(card_a_id);
+            cardBChanges.push(`Added card ${card_a_id} to dependents (B is prerequisite of A)`);
+        }
+        
+        await transactionClient.query(
+            'UPDATE cards SET prereqs = $1 WHERE card_id = $2',
+            [cardAPrereqs, card_a_id]
+        );
+        await transactionClient.query(
+            'UPDATE cards SET dependents = $1 WHERE card_id = $2',
+            [cardBDependents, card_b_id]
+        );
+        break;
+        
                 case 'prereq':
-                    if (checkExistingRelationship(cardAPrereqs, cardBDependents, 'prereq/dependent')) {
-                        await transactionClient.query('ROLLBACK');
-                        return res.json({
-                            status: 'error',
-                            error: 'Prerequisite/dependent relationship already exists between these cards'
-                        } as CreateCardRelationshipResponse);
-                    }
-                    
-                    if (!cardAPrereqs.includes(card_b_id)) {
-                        cardAPrereqs.push(card_b_id);
-                        cardAChanges.push(`Added card ${card_b_id} to prereqs`);
-                    }
-                    if (!cardBDependents.includes(card_a_id)) {
-                        cardBDependents.push(card_a_id);
-                        cardBChanges.push(`Added card ${card_a_id} to dependents`);
-                    }
-                    
-                    await transactionClient.query(
-                        'UPDATE cards SET prereqs = $1 WHERE card_id = $2',
-                        [cardAPrereqs, card_a_id]
-                    );
-                    await transactionClient.query(
-                        'UPDATE cards SET dependents = $1 WHERE card_id = $2',
-                        [cardBDependents, card_b_id]
-                    );
-                    break;
+        // "A is prerequisite of B" means A must be learned before B
+        // So: A gets B in dependents, B gets A in prereqs
+        if (checkExistingRelationship(cardADependents, cardBPrereqs, 'prereq/dependent')) {
+            await transactionClient.query('ROLLBACK');
+            return res.json({
+                status: 'error',
+                error: 'Prerequisite/dependent relationship already exists between these cards'
+            } as CreateCardRelationshipResponse);
+        }
+        
+        if (!cardADependents.includes(card_b_id)) {
+            cardADependents.push(card_b_id);
+            cardAChanges.push(`Added card ${card_b_id} to dependents (A is prerequisite of B)`);
+        }
+        if (!cardBPrereqs.includes(card_a_id)) {
+            cardBPrereqs.push(card_a_id);
+            cardBChanges.push(`Added card ${card_a_id} to prereqs (B depends on A)`);
+        }
+        
+        await transactionClient.query(
+            'UPDATE cards SET dependents = $1 WHERE card_id = $2',
+            [cardADependents, card_a_id]
+        );
+        await transactionClient.query(
+            'UPDATE cards SET prereqs = $1 WHERE card_id = $2',
+            [cardBPrereqs, card_b_id]
+        );
+        break;
             }
             
             totalChanges = [...cardAChanges, ...cardBChanges];
