@@ -4758,35 +4758,23 @@ app.post('/remove_card_relationship', express.json(), wrapAsync(async (req, res)
                 break;
                 
             case 'dependent':
-                // Remove B from A's dependents, remove A from B's prereqs
+            // Remove B from A's prereqs, remove A from B's dependents
+                const newCardAPrereqs = (cardA.prereqs || []).filter((id: number) => id !== card_b_id);
+                const newCardBDependents = (cardB.dependents || []).filter((id: number) => id !== card_a_id);
+    
+    // Update the arrays and log changes...
+                await transactionClient.query('UPDATE cards SET prereqs = $1 WHERE card_id = $2', [newCardAPrereqs, card_a_id]);
+                await transactionClient.query('UPDATE cards SET dependents = $1 WHERE card_id = $2', [newCardBDependents, card_b_id]);
+                break;
+
+            case 'prereq':
+            // Remove B from A's dependents, remove A from B's prereqs  
                 const newCardADependents = (cardA.dependents || []).filter((id: number) => id !== card_b_id);
                 const newCardBPrereqs = (cardB.prereqs || []).filter((id: number) => id !== card_a_id);
                 
-                if (newCardADependents.length !== (cardA.dependents || []).length) {
-                    cardAChanges.push(`Removed card ${card_b_id} from dependents`);
-                }
-                if (newCardBPrereqs.length !== (cardB.prereqs || []).length) {
-                    cardBChanges.push(`Removed card ${card_a_id} from prereqs`);
-                }
-                
+                // Update the arrays and log changes...
                 await transactionClient.query('UPDATE cards SET dependents = $1 WHERE card_id = $2', [newCardADependents, card_a_id]);
                 await transactionClient.query('UPDATE cards SET prereqs = $1 WHERE card_id = $2', [newCardBPrereqs, card_b_id]);
-                break;
-                
-            case 'prereq':
-                // Remove B from A's prereqs, remove A from B's dependents
-                const newCardAPrereqs = (cardA.prereqs || []).filter((id: number) => id !== card_b_id);
-                const newCardBDependents = (cardB.dependents || []).filter((id: number) => id !== card_a_id);
-                
-                if (newCardAPrereqs.length !== (cardA.prereqs || []).length) {
-                    cardAChanges.push(`Removed card ${card_b_id} from prereqs`);
-                }
-                if (newCardBDependents.length !== (cardB.dependents || []).length) {
-                    cardBChanges.push(`Removed card ${card_a_id} from dependents`);
-                }
-                
-                await transactionClient.query('UPDATE cards SET prereqs = $1 WHERE card_id = $2', [newCardAPrereqs, card_a_id]);
-                await transactionClient.query('UPDATE cards SET dependents = $1 WHERE card_id = $2', [newCardBDependents, card_b_id]);
                 break;
         }
         
