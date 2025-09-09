@@ -4318,8 +4318,8 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
 
         // Create sections for each relationship type
         html += createRelationshipItems(card.peers, 'peer', 'Peers');
-        html += createRelationshipItems(card.dependents, 'dependent', 'Dependents');
-        html += createRelationshipItems(card.prereqs, 'prereq', 'Prerequisites');
+        html += createRelationshipItems(card.dependents, 'prereq', 'Dependents (this card is prerequisite of)');
+        html += createRelationshipItems(card.prereqs, 'dependent', 'Prerequisites (this card depends on)');
 
         if (html === '') {
             html = `
