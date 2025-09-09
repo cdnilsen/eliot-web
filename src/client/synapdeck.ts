@@ -4260,30 +4260,286 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
         const card = result.card;
         let html = '';
 
-        if (card.peers && card.peers.length > 0) {
-            html += `<div><strong>Peers:</strong> ${card.peers.join(', ')}</div>`;
-        }
+        // Helper function to create relationship items with delete buttons
+        const createRelationshipItems = (relationships: number[], type: 'peer' | 'dependent' | 'prereq', label: string) => {
+            if (!relationships || relationships.length === 0) return '';
+            
+            let itemsHtml = `
+                <div class="relationship-section" style="margin-bottom: 16px;">
+                    <strong style="color: #333; display: block; margin-bottom: 8px;">${label}:</strong>
+                    <div class="relationship-items" style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+            
+            relationships.forEach(relatedCardId => {
+                itemsHtml += `
+                    <div class="relationship-item" style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 8px 12px;
+                        background: #f8f9fa;
+                        border: 1px solid #dee2e6;
+                        border-radius: 6px;
+                    ">
+                        <span style="color: #495057; font-weight: 500;">Card ${relatedCardId}</span>
+                        <button 
+                            class="remove-relationship-btn"
+                            data-card-a-id="${cardId}"
+                            data-card-b-id="${relatedCardId}"
+                            data-relationship-type="${type}"
+                            style="
+                                background: #dc3545;
+                                color: white;
+                                border: none;
+                                border-radius: 4px;
+                                padding: 4px 8px;
+                                font-size: 12px;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            "
+                            onmouseover="this.style.background='#c82333'"
+                            onmouseout="this.style.background='#dc3545'"
+                            title="Remove this relationship"
+                        >
+                            🗑️ Remove
+                        </button>
+                    </div>
+                `;
+            });
+            
+            itemsHtml += `
+                    </div>
+                </div>
+            `;
+            
+            return itemsHtml;
+        };
 
-        if (card.dependents && card.dependents.length > 0) {
-            html += `<div><strong>Dependents:</strong> ${card.dependents.join(', ')}</div>`;
-        }
-
-        if (card.prereqs && card.prereqs.length > 0) {
-            html += `<div><strong>Prerequisites:</strong> ${card.prereqs.join(', ')}</div>`;
-        }
+        // Create sections for each relationship type
+        html += createRelationshipItems(card.peers, 'peer', 'Peers');
+        html += createRelationshipItems(card.dependents, 'dependent', 'Dependents');
+        html += createRelationshipItems(card.prereqs, 'prereq', 'Prerequisites');
 
         if (html === '') {
-            html = '<p style="color: #666; font-style: italic;">No relationships found.</p>';
+            html = `
+                <div style="
+                    text-align: center;
+                    padding: 20px;
+                    color: #6c757d;
+                    font-style: italic;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    border: 1px dashed #dee2e6;
+                ">
+                    No relationships found for this card.
+                </div>
+            `;
         }
 
         relationshipsList.innerHTML = html;
 
+        // Add event listeners to remove buttons
+        setupRemoveRelationshipListeners(cardId);
+
     } catch (error) {
         console.error('Error loading relationships:', error);
         if (relationshipsList) {
-            relationshipsList.innerHTML = `<p style="color: #dc3545;">Error: ${error.message}</p>`;
+            relationshipsList.innerHTML = `
+                <div style="
+                    padding: 16px;
+                    color: #dc3545;
+                    background: #f8d7da;
+                    border: 1px solid #f5c6cb;
+                    border-radius: 6px;
+                ">
+                    Error: ${error.message}
+                </div>
+            `;
         }
     }
+}
+
+
+// Add this new function to handle remove relationship button clicks
+function setupRemoveRelationshipListeners(cardId: number): void {
+    const relationshipsList = document.getElementById(`relationshipsList_${cardId}`);
+    if (!relationshipsList) return;
+
+    // Use event delegation to handle button clicks
+    relationshipsList.addEventListener('click', async (event: MouseEvent) => {
+        const target = event.target as HTMLElement;
+        
+        if (target.classList.contains('remove-relationship-btn')) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const cardAId = parseInt(target.getAttribute('data-card-a-id') || '0');
+            const cardBId = parseInt(target.getAttribute('data-card-b-id') || '0');
+            const relationshipType = target.getAttribute('data-relationship-type') as 'peer' | 'dependent' | 'prereq';
+            
+            if (!cardAId || !cardBId || !relationshipType) {
+                console.error('Missing data attributes for remove button');
+                return;
+            }
+            
+            // Confirm deletion
+            const confirmed = confirm(
+                `Remove ${relationshipType} relationship between cards ${cardAId} and ${cardBId}?\n\n` +
+                `This action cannot be undone.`
+            );
+            
+            if (!confirmed) return;
+            
+            // Show loading state
+            const originalText = target.textContent;
+            target.textContent = '⏳ Removing...';
+            (target as HTMLButtonElement).disabled = true;
+            
+            try {
+                console.log(`Removing ${relationshipType} relationship: ${cardAId} -> ${cardBId}`);
+                
+                const result = await removeCardRelationship(cardAId, cardBId, relationshipType);
+                
+                if (result.status === 'success') {
+                    showToast(`${relationshipType} relationship removed successfully!`, 'success');
+                    
+                    // Reload the relationships list to show updated state
+                    await loadExistingRelationships(cardId);
+                    
+                } else {
+                    throw new Error(result.error || 'Failed to remove relationship');
+                }
+                
+            } catch (error) {
+                console.error('Error removing relationship:', error);
+                showToast(`Failed to remove relationship: ${error.message}`, 'error');
+                
+                // Reset button state on error
+                target.textContent = originalText;
+                (target as HTMLButtonElement).disabled = false;
+            }
+        }
+    });
+}
+
+// Optional: Add a "Remove All Relationships" button to the modal
+function addRemoveAllRelationshipsButton(cardId: number): void {
+    const relationshipsList = document.getElementById(`relationshipsList_${cardId}`);
+    if (!relationshipsList) return;
+
+    // Check if the button already exists
+    if (document.getElementById(`removeAllBtn_${cardId}`)) return;
+
+    const removeAllSection = document.createElement('div');
+    removeAllSection.style.cssText = `
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid #dee2e6;
+        text-align: center;
+    `;
+    
+    const removeAllBtn = document.createElement('button');
+    removeAllBtn.id = `removeAllBtn_${cardId}`;
+    removeAllBtn.textContent = '🗑️ Remove All Relationships';
+    removeAllBtn.style.cssText = `
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    `;
+    
+    removeAllBtn.addEventListener('mouseover', function() {
+        this.style.background = '#c82333';
+    });
+    
+    removeAllBtn.addEventListener('mouseout', function() {
+        this.style.background = '#dc3545';
+    });
+    
+    removeAllBtn.addEventListener('click', async () => {
+        const confirmed = confirm(
+            `⚠️ REMOVE ALL RELATIONSHIPS\n\n` +
+            `This will remove ALL peer, dependent, and prerequisite relationships for card ${cardId}.\n\n` +
+            `This action cannot be undone!\n\n` +
+            `Continue?`
+        );
+        
+        if (!confirmed) return;
+        
+        // Get current relationships
+        try {
+            const response = await fetch(`/card/${cardId}`);
+            const result = await response.json();
+            
+            if (result.status !== 'success') {
+                throw new Error('Failed to get card data');
+            }
+            
+            const card = result.card;
+            const allRelationships: Array<{cardBId: number, type: 'peer' | 'dependent' | 'prereq'}> = [];
+            
+            // Collect all relationships
+            if (card.peers) {
+                card.peers.forEach((peerId: number) => {
+                    allRelationships.push({cardBId: peerId, type: 'peer'});
+                });
+            }
+            if (card.dependents) {
+                card.dependents.forEach((depId: number) => {
+                    allRelationships.push({cardBId: depId, type: 'dependent'});
+                });
+            }
+            if (card.prereqs) {
+                card.prereqs.forEach((prereqId: number) => {
+                    allRelationships.push({cardBId: prereqId, type: 'prereq'});
+                });
+            }
+            
+            if (allRelationships.length === 0) {
+                showToast('No relationships to remove', 'info');
+                return;
+            }
+            
+            // Show loading state
+            removeAllBtn.textContent = `⏳ Removing ${allRelationships.length} relationships...`;
+            removeAllBtn.disabled = true;
+            
+            // Remove all relationships
+            let successCount = 0;
+            for (const rel of allRelationships) {
+                try {
+                    const result = await removeCardRelationship(cardId, rel.cardBId, rel.type);
+                    if (result.status === 'success') {
+                        successCount++;
+                    }
+                    // Small delay to avoid overwhelming the server
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                } catch (error) {
+                    console.error(`Failed to remove ${rel.type} relationship with ${rel.cardBId}:`, error);
+                }
+            }
+            
+            showToast(`Successfully removed ${successCount} of ${allRelationships.length} relationships`, 'success');
+            
+            // Reload relationships
+            await loadExistingRelationships(cardId);
+            
+        } catch (error) {
+            console.error('Error removing all relationships:', error);
+            showToast(`Failed to remove relationships: ${error.message}`, 'error');
+        } finally {
+            removeAllBtn.textContent = '🗑️ Remove All Relationships';
+            removeAllBtn.disabled = false;
+        }
+    });
+    
+    removeAllSection.appendChild(removeAllBtn);
+    relationshipsList.appendChild(removeAllSection);
 }
 
 // Function to close the modal
