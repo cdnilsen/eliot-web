@@ -4455,13 +4455,13 @@ app.post('/create_card_relationship', express.json(), wrapAsync(async (req, res)
         let cardsToUpdate: { cardId: number; peers: number[] }[] = [];
         let totalChanges: string[] = [];
         
-        if (between_notes && relationship === 'peer') {
+        if (between_notes && (relationship === 'peer' || relationship === 'dependent' || relationship === 'prereq')) {
             // Get all cards from both notes
             const noteCardsQuery = await transactionClient.query(
                 `SELECT card_id, peers, dependents, prereqs, note_id 
-                 FROM cards 
-                 WHERE note_id IN ($1, $2)
-                 ORDER BY note_id, card_id`,
+                FROM cards 
+                WHERE note_id IN ($1, $2)
+                ORDER BY note_id, card_id`,
                 [cardA.note_id, cardB.note_id]
             );
             
@@ -4469,62 +4469,157 @@ app.post('/create_card_relationship', express.json(), wrapAsync(async (req, res)
             const noteBCards = noteCardsQuery.rows.filter(row => row.note_id === cardB.note_id);
             
             console.log(`🔗 Found ${noteACards.length} cards in note ${cardA.note_id} and ${noteBCards.length} cards in note ${cardB.note_id}`);
+    
+            let totalChanges: string[] = [];
+            let cardsToUpdate: any[] = [];
             
-            // Create peer relationships between all cards from note A and all cards from note B
-            for (const noteACard of noteACards) {
-                for (const noteBCard of noteBCards) {
-                    // Skip if same card
-                    if (noteACard.card_id === noteBCard.card_id) continue;
-                    
-                    const cardAPeers = noteACard.peers || [];
-                    const cardBPeers = noteBCard.peers || [];
-                    
-                    let updated = false;
-                    
-                    // Add noteB card to noteA card's peers if not already there
-                    if (!cardAPeers.includes(noteBCard.card_id)) {
-                        cardAPeers.push(noteBCard.card_id);
-                        updated = true;
-                    }
-                    
-                    // Add noteA card to noteB card's peers if not already there
-                    if (!cardBPeers.includes(noteACard.card_id)) {
-                        cardBPeers.push(noteACard.card_id);
-                        updated = true;
-                    }
-                    
-                    if (updated) {
-                        // Store updates to apply later
-                        cardsToUpdate.push({
-                            cardId: noteACard.card_id,
-                            peers: cardAPeers
-                        });
-                        cardsToUpdate.push({
-                            cardId: noteBCard.card_id,
-                            peers: cardBPeers
-                        });
+            if (relationship === 'peer') {
+                // Create peer relationships between all cards from note A and all cards from note B
+                for (const noteACard of noteACards) {
+                    for (const noteBCard of noteBCards) {
+                        // Skip if same card
+                        if (noteACard.card_id === noteBCard.card_id) continue;
                         
-                        totalChanges.push(`Added peer relationship: ${noteACard.card_id} ↔ ${noteBCard.card_id}`);
+                        const cardAPeers = noteACard.peers || [];
+                        const cardBPeers = noteBCard.peers || [];
+                        
+                        let updated = false;
+                        
+                        // Add noteB card to noteA card's peers if not already there
+                        if (!cardAPeers.includes(noteBCard.card_id)) {
+                            cardAPeers.push(noteBCard.card_id);
+                            updated = true;
+                        }
+                        
+                        // Add noteA card to noteB card's peers if not already there
+                        if (!cardBPeers.includes(noteACard.card_id)) {
+                            cardBPeers.push(noteACard.card_id);
+                            updated = true;
+                        }
+                        
+                        if (updated) {
+                            cardsToUpdate.push({
+                                cardId: noteACard.card_id,
+                                updateType: 'peers',
+                                newArray: cardAPeers
+                            });
+                            cardsToUpdate.push({
+                                cardId: noteBCard.card_id,
+                                updateType: 'peers',
+                                newArray: cardBPeers
+                            });
+                            
+                            totalChanges.push(`Added peer relationship: ${noteACard.card_id} ↔ ${noteBCard.card_id}`);
+                        }
+                    }
+                }
+            } else if (relationship === 'dependent') {
+                // Create dependent relationships: all cards in note A depend on all cards in note B
+                // So: A cards get B cards in prereqs, B cards get A cards in dependents
+                for (const noteACard of noteACards) {
+                    for (const noteBCard of noteBCards) {
+                        // Skip if same card
+                        if (noteACard.card_id === noteBCard.card_id) continue;
+                        
+                        const cardAPrereqs = noteACard.prereqs || [];
+                        const cardBDependents = noteBCard.dependents || [];
+                        
+                        let updated = false;
+                        
+                        // Add noteB card to noteA card's prereqs if not already there
+                        if (!cardAPrereqs.includes(noteBCard.card_id)) {
+                            cardAPrereqs.push(noteBCard.card_id);
+                            updated = true;
+                        }
+                        
+                        // Add noteA card to noteB card's dependents if not already there
+                        if (!cardBDependents.includes(noteACard.card_id)) {
+                            cardBDependents.push(noteACard.card_id);
+                            updated = true;
+                        }
+                        
+                        if (updated) {
+                            cardsToUpdate.push({
+                                cardId: noteACard.card_id,
+                                updateType: 'prereqs',
+                                newArray: cardAPrereqs
+                            });
+                            cardsToUpdate.push({
+                                cardId: noteBCard.card_id,
+                                updateType: 'dependents',
+                                newArray: cardBDependents
+                            });
+                            
+                            totalChanges.push(`Added dependent relationship: ${noteACard.card_id} depends on ${noteBCard.card_id}`);
+                        }
+                    }
+                }
+            } else if (relationship === 'prereq') {
+                // Create prerequisite relationships: all cards in note A are prerequisites of all cards in note B
+                // So: A cards get B cards in dependents, B cards get A cards in prereqs
+                for (const noteACard of noteACards) {
+                    for (const noteBCard of noteBCards) {
+                        // Skip if same card
+                        if (noteACard.card_id === noteBCard.card_id) continue;
+                        
+                        const cardADependents = noteACard.dependents || [];
+                        const cardBPrereqs = noteBCard.prereqs || [];
+                        
+                        let updated = false;
+                        
+                        // Add noteB card to noteA card's dependents if not already there
+                        if (!cardADependents.includes(noteBCard.card_id)) {
+                            cardADependents.push(noteBCard.card_id);
+                            updated = true;
+                        }
+                        
+                        // Add noteA card to noteB card's prereqs if not already there
+                        if (!cardBPrereqs.includes(noteACard.card_id)) {
+                            cardBPrereqs.push(noteACard.card_id);
+                            updated = true;
+                        }
+                        
+                        if (updated) {
+                            cardsToUpdate.push({
+                                cardId: noteACard.card_id,
+                                updateType: 'dependents',
+                                newArray: cardADependents
+                            });
+                            cardsToUpdate.push({
+                                cardId: noteBCard.card_id,
+                                updateType: 'prereqs',
+                                newArray: cardBPrereqs
+                            });
+                            
+                            totalChanges.push(`Added prereq relationship: ${noteACard.card_id} is prerequisite of ${noteBCard.card_id}`);
+                        }
                     }
                 }
             }
-            
-            // Remove duplicates from cardsToUpdate
-            const uniqueUpdates = new Map();
-            cardsToUpdate.forEach(update => {
-                uniqueUpdates.set(update.cardId, update);
-            });
-            
-            // Apply all updates
-            for (const [cardId, update] of uniqueUpdates.entries()) {
-                await transactionClient.query(
-                    'UPDATE cards SET peers = $1 WHERE card_id = $2',
-                    [update.peers, cardId]
-                );
-            }
-            
+    
+    // Remove duplicates from cardsToUpdate by creating a map
+    const uniqueUpdates = new Map();
+    cardsToUpdate.forEach(update => {
+        const key = `${update.cardId}-${update.updateType}`;
+        uniqueUpdates.set(key, update);
+    });
+    
+    // Apply all updates
+    for (const [key, update] of uniqueUpdates.entries()) {
+        const { cardId, updateType, newArray } = update;
+        
+        await transactionClient.query(
+            `UPDATE cards SET ${updateType} = $1 WHERE card_id = $2`,
+            [newArray, cardId]
+        );
+    }
+    
+    console.log(`🔗 Successfully created ${relationship} relationships between notes`);
+    console.log(`   Total relationships created: ${totalChanges.length}`);
+    console.log(`   Unique cards updated: ${uniqueUpdates.size}`);
+    
         } else {
-            // Original single-card relationship logic
+            // Original single-card relationship logic (when between_notes is false)
             const cardAPeers = cardA.peers || [];
             const cardADependents = cardA.dependents || [];
             const cardAPrereqs = cardA.prereqs || [];
@@ -4549,92 +4644,88 @@ app.post('/create_card_relationship', express.json(), wrapAsync(async (req, res)
             // Apply relationship logic
             switch (relationship) {
                 case 'peer':
-        if (checkExistingRelationship(cardAPeers, cardBPeers, 'peer')) {
-            await transactionClient.query('ROLLBACK');
-            return res.json({
-                status: 'error',
-                error: 'Peer relationship already exists between these cards'
-            } as CreateCardRelationshipResponse);
-        }
-        
-        if (!cardAPeers.includes(card_b_id)) {
-            cardAPeers.push(card_b_id);
-            cardAChanges.push(`Added card ${card_b_id} to peers`);
-        }
-        if (!cardBPeers.includes(card_a_id)) {
-            cardBPeers.push(card_a_id);
-            cardBChanges.push(`Added card ${card_a_id} to peers`);
-        }
-        
-        await transactionClient.query(
-            'UPDATE cards SET peers = $1 WHERE card_id = $2',
-            [cardAPeers, card_a_id]
-        );
-        await transactionClient.query(
-            'UPDATE cards SET peers = $1 WHERE card_id = $2',
-            [cardBPeers, card_b_id]
-        );
-        break;
-        
+                    if (checkExistingRelationship(cardAPeers, cardBPeers, 'peer')) {
+                        await transactionClient.query('ROLLBACK');
+                        return res.json({
+                            status: 'error',
+                            error: 'Peer relationship already exists between these cards'
+                        } as CreateCardRelationshipResponse);
+                    }
+                    
+                    if (!cardAPeers.includes(card_b_id)) {
+                        cardAPeers.push(card_b_id);
+                        cardAChanges.push(`Added card ${card_b_id} to peers`);
+                    }
+                    if (!cardBPeers.includes(card_a_id)) {
+                        cardBPeers.push(card_a_id);
+                        cardBChanges.push(`Added card ${card_a_id} to peers`);
+                    }
+                    
+                    await transactionClient.query(
+                        'UPDATE cards SET peers = $1 WHERE card_id = $2',
+                        [cardAPeers, card_a_id]
+                    );
+                    await transactionClient.query(
+                        'UPDATE cards SET peers = $1 WHERE card_id = $2',
+                        [cardBPeers, card_b_id]
+                    );
+                    break;
+                    
                 case 'dependent':
-        // FIXED: "A is dependent on B" means B is prerequisite of A
-        // So: A gets B in prereqs, B gets A in dependents
-        if (checkExistingRelationship(cardAPrereqs, cardBDependents, 'dependent/prereq')) {
-            await transactionClient.query('ROLLBACK');
-            return res.json({
-                status: 'error',
-                error: 'Dependent/prerequisite relationship already exists between these cards'
-            } as CreateCardRelationshipResponse);
-        }
-        
-        if (!cardAPrereqs.includes(card_b_id)) {
-            cardAPrereqs.push(card_b_id);
-            cardAChanges.push(`Added card ${card_b_id} to prereqs (A is dependent on B)`);
-        }
-        if (!cardBDependents.includes(card_a_id)) {
-            cardBDependents.push(card_a_id);
-            cardBChanges.push(`Added card ${card_a_id} to dependents (B is prerequisite of A)`);
-        }
-        
-        await transactionClient.query(
-            'UPDATE cards SET prereqs = $1 WHERE card_id = $2',
-            [cardAPrereqs, card_a_id]
-        );
-        await transactionClient.query(
-            'UPDATE cards SET dependents = $1 WHERE card_id = $2',
-            [cardBDependents, card_b_id]
-        );
-        break;
-        
+                    if (checkExistingRelationship(cardAPrereqs, cardBDependents, 'dependent/prereq')) {
+                        await transactionClient.query('ROLLBACK');
+                        return res.json({
+                            status: 'error',
+                            error: 'Dependent/prerequisite relationship already exists between these cards'
+                        } as CreateCardRelationshipResponse);
+                    }
+                    
+                    if (!cardAPrereqs.includes(card_b_id)) {
+                        cardAPrereqs.push(card_b_id);
+                        cardAChanges.push(`Added card ${card_b_id} to prereqs (A is dependent on B)`);
+                    }
+                    if (!cardBDependents.includes(card_a_id)) {
+                        cardBDependents.push(card_a_id);
+                        cardBChanges.push(`Added card ${card_a_id} to dependents (B is prerequisite of A)`);
+                    }
+                    
+                    await transactionClient.query(
+                        'UPDATE cards SET prereqs = $1 WHERE card_id = $2',
+                        [cardAPrereqs, card_a_id]
+                    );
+                    await transactionClient.query(
+                        'UPDATE cards SET dependents = $1 WHERE card_id = $2',
+                        [cardBDependents, card_b_id]
+                    );
+                    break;
+                    
                 case 'prereq':
-        // "A is prerequisite of B" means A must be learned before B
-        // So: A gets B in dependents, B gets A in prereqs
-        if (checkExistingRelationship(cardADependents, cardBPrereqs, 'prereq/dependent')) {
-            await transactionClient.query('ROLLBACK');
-            return res.json({
-                status: 'error',
-                error: 'Prerequisite/dependent relationship already exists between these cards'
-            } as CreateCardRelationshipResponse);
-        }
-        
-        if (!cardADependents.includes(card_b_id)) {
-            cardADependents.push(card_b_id);
-            cardAChanges.push(`Added card ${card_b_id} to dependents (A is prerequisite of B)`);
-        }
-        if (!cardBPrereqs.includes(card_a_id)) {
-            cardBPrereqs.push(card_a_id);
-            cardBChanges.push(`Added card ${card_a_id} to prereqs (B depends on A)`);
-        }
-        
-        await transactionClient.query(
-            'UPDATE cards SET dependents = $1 WHERE card_id = $2',
-            [cardADependents, card_a_id]
-        );
-        await transactionClient.query(
-            'UPDATE cards SET prereqs = $1 WHERE card_id = $2',
-            [cardBPrereqs, card_b_id]
-        );
-        break;
+                    if (checkExistingRelationship(cardADependents, cardBPrereqs, 'prereq/dependent')) {
+                        await transactionClient.query('ROLLBACK');
+                        return res.json({
+                            status: 'error',
+                            error: 'Prerequisite/dependent relationship already exists between these cards'
+                        } as CreateCardRelationshipResponse);
+                    }
+                    
+                    if (!cardADependents.includes(card_b_id)) {
+                        cardADependents.push(card_b_id);
+                        cardAChanges.push(`Added card ${card_b_id} to dependents (A is prerequisite of B)`);
+                    }
+                    if (!cardBPrereqs.includes(card_a_id)) {
+                        cardBPrereqs.push(card_a_id);
+                        cardBChanges.push(`Added card ${card_a_id} to prereqs (B depends on A)`);
+                    }
+                    
+                    await transactionClient.query(
+                        'UPDATE cards SET dependents = $1 WHERE card_id = $2',
+                        [cardADependents, card_a_id]
+                    );
+                    await transactionClient.query(
+                        'UPDATE cards SET prereqs = $1 WHERE card_id = $2',
+                        [cardBPrereqs, card_b_id]
+                    );
+                    break;
             }
             
             totalChanges = [...cardAChanges, ...cardBChanges];
@@ -4808,5 +4899,152 @@ app.post('/remove_card_relationship', express.json(), wrapAsync(async (req, res)
     }
 }));
 
-// <b>principal parts</b>: βάλλω, / βαλῶ, ἔβαλον, βέβληκα, βέβλημαι, ἐβλήθην
-// <b>principal parts</b>: βάλλω, βαλῶ, ἔβαλον, βέβληκα, βέβλημαι, ἐβλήθην
+// Add this interface near your other type definitions in index.ts
+interface PreviewTodaysCardsResponse {
+    status: 'success' | 'error';
+    deck?: string;
+    cards?: any[];
+    total_count?: number;
+    date_range?: {
+        start: string;
+        end: string;
+    };
+    error?: string;
+    details?: string;
+}
+
+// Add this endpoint to your Express app (before the app.listen call)
+app.get('/preview_todays_cards/:deckName', wrapAsync(async (req, res) => {
+    const { deckName } = req.params;
+    
+    if (!deckName || typeof deckName !== 'string') {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Deck name is required'
+        } as PreviewTodaysCardsResponse);
+    }
+    
+    console.log(`👀 Previewing today's cards for deck: "${deckName}"`);
+    
+    // Get today's date range (start and end of today in local timezone)
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours
+    
+    console.log(`📅 Looking for cards created between: ${startOfToday.toISOString()} and ${endOfToday.toISOString()}`);
+    
+    try {
+        const query = await client.query(
+            `SELECT 
+                card_id,
+                note_id,
+                deck,
+                card_format,
+                field_names,
+                field_values,
+                field_processing,
+                created,
+                time_due,
+                interval,
+                retrievability,
+                under_review
+            FROM cards 
+            WHERE deck = $1 
+            AND created >= $2 
+            AND created < $3
+            ORDER BY created ASC, card_id ASC`,
+            [deckName, startOfToday, endOfToday]
+        );
+        
+        console.log(`📊 Found ${query.rows.length} cards created today in deck "${deckName}"`);
+        
+        // Log some examples if there are cards
+        if (query.rows.length > 0) {
+            console.log(`📝 First few cards:`, query.rows.slice(0, 3).map(card => ({
+                card_id: card.card_id,
+                created: card.created,
+                field_values: card.field_values?.slice(0, 2) // Show first 2 fields only
+            })));
+        }
+        
+        res.json({
+            status: 'success',
+            deck: deckName,
+            cards: query.rows,
+            total_count: query.rows.length,
+            date_range: {
+                start: startOfToday.toISOString(),
+                end: endOfToday.toISOString()
+            }
+        } as PreviewTodaysCardsResponse);
+        
+    } catch (err) {
+        console.error('Error previewing today\'s cards:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error previewing today\'s cards',
+            details: err instanceof Error ? err.message : 'Unknown error',
+            deck: deckName
+        } as PreviewTodaysCardsResponse);
+    }
+}));
+
+// Optional: Add an endpoint to get a summary of today's card creation across all decks
+app.get('/todays_cards_summary', wrapAsync(async (req, res) => {
+    console.log(`📊 Getting summary of today's card creation across all decks`);
+    
+    // Get today's date range
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000);
+    
+    try {
+        const summaryQuery = await client.query(`
+            SELECT 
+                deck,
+                COUNT(*) as cards_created_today,
+                MIN(created) as first_card_time,
+                MAX(created) as last_card_time
+            FROM cards 
+            WHERE created >= $1 
+            AND created < $2
+            GROUP BY deck
+            ORDER BY cards_created_today DESC, deck ASC
+        `, [startOfToday, endOfToday]);
+        
+        const totalQuery = await client.query(`
+            SELECT COUNT(*) as total_cards_today
+            FROM cards 
+            WHERE created >= $1 
+            AND created < $2
+        `, [startOfToday, endOfToday]);
+        
+        const totalCardsToday = parseInt(totalQuery.rows[0].total_cards_today) || 0;
+        
+        console.log(`📊 Total cards created today: ${totalCardsToday} across ${summaryQuery.rows.length} decks`);
+        
+        res.json({
+            status: 'success',
+            date_range: {
+                start: startOfToday.toISOString(),
+                end: endOfToday.toISOString()
+            },
+            total_cards_today: totalCardsToday,
+            decks_with_new_cards: summaryQuery.rows.length,
+            deck_breakdown: summaryQuery.rows.map(row => ({
+                deck: row.deck,
+                cards_created: parseInt(row.cards_created_today),
+                first_card_time: row.first_card_time,
+                last_card_time: row.last_card_time
+            }))
+        });
+        
+    } catch (err) {
+        console.error('Error getting today\'s cards summary:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error getting today\'s cards summary',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));
