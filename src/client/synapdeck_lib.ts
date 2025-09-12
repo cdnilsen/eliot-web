@@ -199,17 +199,25 @@ export interface ProcessedCard {
 
 export function processCard(rawCard: string): ProcessedCard {
     const line = rawCard.trim();
+    console.log('Raw input:', line);
     
     // Split card fields from relationship metadata
     const parts = line.split(' // ');
+    console.log('Split parts:', parts);
+    
     const cardFieldsRaw = parts[0];
-    const relationshipData = parts.slice(1).join(' // '); // In case there are multiple //
+    const relationshipData = parts.slice(1).join(' // ');
+    
+    console.log('Card fields raw:', cardFieldsRaw);
+    console.log('Relationship data:', relationshipData);
     
     // Process card fields normally
     const fields = cardFieldsRaw.split(' / ').map(field => field.trim());
+    console.log('Processed fields:', fields);
     
     // Parse relationships
     const relationships = parseRelationships(relationshipData);
+    console.log('Parsed relationships:', relationships);
     
     return {
         fields,
