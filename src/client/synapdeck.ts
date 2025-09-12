@@ -773,12 +773,22 @@ uploadSubmitButton.addEventListener('click', async () => {
                 thisNoteDataList.push(thisDatum);
             }
             if (thisNoteProcessList.length != thisNoteDataList.length) {
-                const maxLength = Math.max(thisNoteProcessList.length, thisNoteDataList.length);
-                while (thisNoteProcessList.length < maxLength) {
-                    thisNoteProcessList.push("");
-                }
+    const maxLength = Math.max(thisNoteProcessList.length, thisNoteDataList.length);
+    
+    // Extend processing list if needed
+    while (thisNoteProcessList.length < maxLength) {
+        thisNoteProcessList.push("");
+    }
+    
+                // Smart extension for data list
                 while (thisNoteDataList.length < maxLength) {
-                    thisNoteDataList.push("");
+                    // Special case for two-way cards: if we have 3 fields and need 4,
+                    // duplicate the second field (native language) into the fourth position
+                    if (currentNoteType === "Two-Way" && thisNoteDataList.length === 3 && maxLength === 4) {
+                        thisNoteDataList.push(thisNoteDataList[1]); // Copy field 2 to field 4
+                    } else {
+                        thisNoteDataList.push(""); // Default behavior
+                    }
                 }
             }
 
