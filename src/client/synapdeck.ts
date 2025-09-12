@@ -2,7 +2,7 @@ import {transliterateGeez, GeezDiacriticify, geezSpecialChars} from './transcrib
 import {transliterateGreek} from './transcribe_ancient_greek.js';
 import {SanskritDiacriticify} from './transcribe_sanskrit.js';
 import {AkkadianDiacriticify, akkadianSpecialChars} from './transcribe_akkadian.js';
-import {OneWayCard, TwoWayCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
+import {OneWayCard, TwoWayCard, CardRelationships, ProcessedCard, processCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
 import {postProcessSanskrit} from './transcribe_sanskrit.js';
 import {hebrewSpecialChars, transliterateHebrew} from './transcribe_hebrew.js'
 
@@ -388,6 +388,7 @@ interface NoteToProcess {
     noteType: string;
     dataList: string[];
     processList: string[];
+    relationships: CardRelationships;
 }
 
 // Interface for card data returned from backend
@@ -677,7 +678,7 @@ function delay(ms: number) {
 }
 
 // The program creates a 'pretracker' which gets handed off to the backend.
-async function sendNoteToBackend(deck: string, note_type: string, field_values: string[], field_processing: string[], createdTimestamp: string) {
+async function sendNoteToBackend(deck: string, note_type: string, field_values: string[], field_processing: string[],  createdTimestamp: string) {
     // Generate card configurations based on note type
     let card_configs: any[] = [];
     
@@ -697,6 +698,7 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         field_processing: field_processing,
         card_configs: card_configs,
         timeCreated: createdTimestamp
+        // Don't include relationships here
     };
     
     console.log('Sending payload:', JSON.stringify(payload, null, 2));
@@ -715,6 +717,13 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         
         if (result.status === 'success') {
             console.log(`Note ${result.note_id} with ${result.card_ids.length} cards created successfully`);
+            
+            // Return both the result and the relationships for later processing
+            return {
+                ...result,
+                primary_field: field_values[0], // Store the primary field for lookup
+                deck: deck
+            };
         } else {
             console.error('Error sending note:', result.error);
         }
@@ -772,57 +781,62 @@ uploadSubmitButton.addEventListener('click', async () => {
     
     // Collect all notes first
     const notesToProcess: NoteToProcess[] = [];
-    
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i].trim();
-        if (line.length > 0 && line.includes(" / ")) {
-            line = line.replaceAll(" / ", " // "); // Necessary to deal with HTML tags in the fields
-            let thisNoteFieldData = line.split("//");
-            let thisNoteDataList: string[] = [];
-            for (let j = 0; j < thisNoteFieldData.length; j++) {
-                let thisDatum = thisNoteFieldData[j].trim();
-                thisNoteDataList.push(thisDatum);
-            }
-            if (thisNoteProcessList.length != thisNoteDataList.length) {
-                const maxLength = Math.max(thisNoteProcessList.length, thisNoteDataList.length);
-                
-                // Extend processing list if needed
-                while (thisNoteProcessList.length < maxLength) {
-                    thisNoteProcessList.push("");
-                }
-    
-                // Smart extension for data list
-                while (thisNoteDataList.length < maxLength) {
-                    // Special case for two-way cards: if we have 3 fields and need 4,
-                    // duplicate the second field (native language) into the fourth position
-                    if (currentNoteType === "Two-Way" && thisNoteDataList.length === 3 && maxLength === 4) {
-                        thisNoteDataList.push(thisNoteDataList[1]); // Copy field 2 to field 4
-                    } else {
-                        thisNoteDataList.push(""); // Default behavior
-                    }
-                }
+        if (line.length == 0 || !line.includes(" / ")) {
+            continue;
+        }
+        
+        let cardData: ProcessedCard = processCard(line);
+        let thisNoteDataList: string[] = cardData.fields; // Use the processed fields directly
+        
+        if (thisNoteProcessList.length != thisNoteDataList.length) {
+            const maxLength = Math.max(thisNoteProcessList.length, thisNoteDataList.length);
+            
+            // Extend processing list if needed
+            while (thisNoteProcessList.length < maxLength) {
+                thisNoteProcessList.push("");
             }
 
-            if (currentDeck == "Sanskrit") {
-                for (let i=0; i < thisNoteDataList.length; i++) {
-                    if (thisNoteProcessList[i] == "Sanskrit") {
-                        thisNoteDataList[i] = postProcessSanskrit(thisNoteDataList[i]);
-                    }
+            // Smart extension for data list
+            while (thisNoteDataList.length < maxLength) {
+                // Special case for two-way cards: if we have 3 fields and need 4,
+                // duplicate the second field (native language) into the fourth position
+                if (currentNoteType === "Two-Way" && thisNoteDataList.length === 3 && maxLength === 4) {
+                    thisNoteDataList.push(thisNoteDataList[1]); // Copy field 2 to field 4
+                } else {
+                    thisNoteDataList.push(""); // Default behavior
                 }
             }
-            
-            // Add to collection instead of sending immediately
-            notesToProcess.push({
-                deck: currentDeck,
-                noteType: currentNoteType,
-                dataList: thisNoteDataList,
-                processList: thisNoteProcessList
-            });
         }
+
+        if (currentDeck == "Sanskrit") {
+            for (let j = 0; j < thisNoteDataList.length; j++) { // Changed variable name to avoid collision
+                if (thisNoteProcessList[j] == "Sanskrit") {
+                    thisNoteDataList[j] = postProcessSanskrit(thisNoteDataList[j]);
+                }
+            }
+        }
+        
+        // Add to collection instead of sending immediately
+        notesToProcess.push({
+            deck: currentDeck,
+            noteType: currentNoteType,
+            dataList: thisNoteDataList,
+            processList: thisNoteProcessList,
+            relationships: cardData.relationships // Add the relationships
+        });
     }
     
     // Now process notes sequentially with delays to avoid deadlocks
     console.log(`Processing ${notesToProcess.length} notes sequentially...`);
+
+    const cardsWithRelationships: Array<{
+        cardIds: number[],
+        deck: string,
+        primaryField: string,
+        relationships: CardRelationships
+    }> = [];
     
     for (let i = 0; i < notesToProcess.length; i++) {
         const note = notesToProcess[i];
@@ -839,19 +853,40 @@ uploadSubmitButton.addEventListener('click', async () => {
             
             if (result.status === 'success') {
                 console.log(`✓ Note ${i + 1} processed successfully`);
+                
+                // Store for relationship processing if there are any relationships
+                const hasRelationships = note.relationships.peers.length > 0 || 
+                                    note.relationships.prereqs.length > 0 || 
+                                    note.relationships.dependents.length > 0;
+                
+                if (hasRelationships) {
+                    cardsWithRelationships.push({
+                        cardIds: result.card_ids,
+                        deck: note.deck,
+                        primaryField: note.dataList[0], // First field is primary
+                        relationships: note.relationships
+                    });
+                }
             } else {
                 console.error(`✗ Note ${i + 1} failed:`, result.error);
             }
             
-            // Add a small delay between requests to avoid overwhelming the database
+            // Add delay between requests
             if (i < notesToProcess.length - 1) {
-                await delay(100); // 100ms delay between requests
+                await delay(100);
             }
             
         } catch (error) {
             console.error(`✗ Note ${i + 1} error:`, error);
         }
     }
+
+// Phase 2: Process relationships after all cards are created
+    if (cardsWithRelationships.length > 0) {
+        console.log(`Processing relationships for ${cardsWithRelationships.length} card sets...`);
+        await processAllRelationships(cardsWithRelationships);
+    }
+
     const textInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
     if (textInput) {
         textInput.value = "";
@@ -859,6 +894,95 @@ uploadSubmitButton.addEventListener('click', async () => {
     currentFileContent = "";
     console.log('All notes processed!');
 });
+
+async function findCardByPrimaryField(deck: string, primaryValue: string): Promise<{card_id: number} | null> {
+    try {
+        const response = await fetch('/find_card_by_primary_field', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                deck: deck,
+                primary_field_value: primaryValue 
+            })
+        });
+        
+        const result = await response.json();
+        return result.status === 'success' ? result : null;
+    } catch (error) {
+        console.error('Error finding card:', error);
+        return null;
+    }
+}
+
+async function processAllRelationships(cardsWithRelationships: Array<{
+    cardIds: number[],
+    deck: string,
+    primaryField: string,
+    relationships: CardRelationships
+}>): Promise<void> {
+    
+    for (const cardSet of cardsWithRelationships) {
+        const { cardIds, deck, relationships } = cardSet;
+        
+        console.log(`🔗 Processing relationships for ${cardIds.length} cards in deck "${deck}"`);
+        
+        // For each card created from this note
+        for (const cardId of cardIds) {
+            // Create peer relationships
+            for (const peerPrimary of relationships.peers) {
+                try {
+                    const peerResult = await findCardByPrimaryField(deck, peerPrimary);
+                    if (peerResult && peerResult.card_id) {
+                        console.log(`Creating peer relationship: ${cardId} <-> ${peerResult.card_id}`);
+                        await createCardRelationship(cardId, peerResult.card_id, 'peer', true); // between_notes = true
+                    } else {
+                        console.warn(`Peer card not found: "${peerPrimary}" in deck "${deck}"`);
+                    }
+                } catch (error) {
+                    console.error(`Error creating peer relationship for "${peerPrimary}":`, error);
+                }
+                
+                // Add small delay to avoid overwhelming the server
+                await delay(50);
+            }
+            
+            // Create prerequisite relationships (this card depends on prereqs)
+            for (const prereqPrimary of relationships.prereqs) {
+                try {
+                    const prereqResult = await findCardByPrimaryField(deck, prereqPrimary);
+                    if (prereqResult && prereqResult.card_id) {
+                        console.log(`Creating prereq relationship: ${cardId} depends on ${prereqResult.card_id}`);
+                        await createCardRelationship(cardId, prereqResult.card_id, 'dependent', true);
+                    } else {
+                        console.warn(`Prereq card not found: "${prereqPrimary}" in deck "${deck}"`);
+                    }
+                } catch (error) {
+                    console.error(`Error creating prereq relationship for "${prereqPrimary}":`, error);
+                }
+                
+                await delay(50);
+            }
+            
+            // Create dependent relationships (dependents depend on this card)
+            for (const depPrimary of relationships.dependents) {
+                try {
+                    const depResult = await findCardByPrimaryField(deck, depPrimary);
+                    if (depResult && depResult.card_id) {
+                        console.log(`Creating dependent relationship: ${depResult.card_id} depends on ${cardId}`);
+                        await createCardRelationship(depResult.card_id, cardId, 'dependent', true);
+                    } else {
+                        console.warn(`Dependent card not found: "${depPrimary}" in deck "${deck}"`);
+                    }
+                } catch (error) {
+                    console.error(`Error creating dependent relationship for "${depPrimary}":`, error);
+                }
+                
+                await delay(50);
+            }
+        }
+    }
+    console.log('✅ Finished processing all relationships');
+}
 
 async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCardsResponse> {
     const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;

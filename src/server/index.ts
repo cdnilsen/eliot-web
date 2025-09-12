@@ -890,6 +890,119 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
+// Add this interface near your other type definitions
+interface FindCardByPrimaryFieldRequest {
+    deck: string;
+    primary_field_value: string;
+}
+
+interface FindCardByPrimaryFieldResponse {
+    status: 'success' | 'error';
+    card_id?: number;
+    deck?: string;
+    primary_field_value?: string;
+    card_data?: any;
+    error?: string;
+    details?: string;
+}
+
+// Add this endpoint to your Express app
+app.post('/find_card_by_primary_field', express.json(), wrapAsync(async (req, res) => {
+    const { deck, primary_field_value }: FindCardByPrimaryFieldRequest = req.body;
+    
+    console.log(`🔍 Searching for card in deck "${deck}" with primary field: "${primary_field_value}"`);
+    
+    // Validation
+    if (!deck || typeof deck !== 'string') {
+        return res.json({
+            status: 'error',
+            error: 'Deck name is required and must be a string'
+        } as FindCardByPrimaryFieldResponse);
+    }
+    
+    if (!primary_field_value || typeof primary_field_value !== 'string') {
+        return res.json({
+            status: 'error',
+            error: 'Primary field value is required and must be a string'
+        } as FindCardByPrimaryFieldResponse);
+    }
+    
+    try {
+        // Search for cards where the first element of field_values array matches
+        // We need to check both exact match and trimmed match for robustness
+        const searchQuery = await client.query(`
+            SELECT 
+                card_id,
+                note_id,
+                deck,
+                card_format,
+                field_names,
+                field_values,
+                field_processing,
+                created
+            FROM cards
+            WHERE deck = $1 
+            AND array_length(field_values, 1) > 0
+            AND (
+                field_values[1] = $2 
+                OR TRIM(field_values[1]) = TRIM($2)
+                OR LOWER(TRIM(field_values[1])) = LOWER(TRIM($2))
+            )
+            ORDER BY created DESC
+            LIMIT 5
+        `, [deck, primary_field_value]);
+        
+        console.log(`🔍 Found ${searchQuery.rows.length} potential matches`);
+        
+        if (searchQuery.rows.length === 0) {
+            console.log(`❌ No card found in deck "${deck}" with primary field: "${primary_field_value}"`);
+            return res.json({
+                status: 'error',
+                error: `No card found with primary field "${primary_field_value}" in deck "${deck}"`,
+                deck: deck,
+                primary_field_value: primary_field_value
+            } as FindCardByPrimaryFieldResponse);
+        }
+        
+        // Take the first (most recent) match
+        const matchedCard = searchQuery.rows[0];
+        
+        console.log(`✅ Found card ${matchedCard.card_id} with primary field: "${matchedCard.field_values[0]}"`);
+        
+        // Log additional matches if found
+        if (searchQuery.rows.length > 1) {
+            const otherMatches = searchQuery.rows.slice(1).map(row => row.card_id);
+            console.log(`ℹ️ Other potential matches found: ${otherMatches.join(', ')}`);
+        }
+        
+        res.json({
+            status: 'success',
+            card_id: matchedCard.card_id,
+            deck: deck,
+            primary_field_value: primary_field_value,
+            card_data: {
+                card_id: matchedCard.card_id,
+                note_id: matchedCard.note_id,
+                deck: matchedCard.deck,
+                card_format: matchedCard.card_format,
+                field_values: matchedCard.field_values,
+                primary_field_actual: matchedCard.field_values[0],
+                created: matchedCard.created
+            }
+        } as FindCardByPrimaryFieldResponse);
+        
+    } catch (error) {
+        console.error('🔍❌ Error finding card by primary field:', error);
+        res.status(500).json({
+            status: 'error',
+            error: 'Database error while searching for card',
+            details: error instanceof Error ? error.message : 'Unknown error',
+            deck: deck,
+            primary_field_value: primary_field_value
+        } as FindCardByPrimaryFieldResponse);
+    }
+}));
+
 // Add a separate endpoint for wiping the database during debugging
 app.post('/wipe_synapdeck_database', express.json(), wrapAsync(async (req, res) => {
     console.log('🧹 WIPING SYNAPDECK DATABASE FOR DEBUG...');

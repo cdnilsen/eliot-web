@@ -185,3 +185,87 @@ async function renderTextToCanvas(text: string, fontSize: number = 14): Promise<
         return null;
     }
 }
+
+export interface CardRelationships {
+    peers: string[];
+    prereqs: string[];
+    dependents: string[];
+}
+
+export interface ProcessedCard {
+    fields: string[];
+    relationships: CardRelationships;
+}
+
+export function processCard(rawCard: string): ProcessedCard {
+    const line = rawCard.trim();
+    
+    // Split card fields from relationship metadata
+    const parts = line.split(' // ');
+    const cardFieldsRaw = parts[0];
+    const relationshipData = parts.slice(1).join(' // '); // In case there are multiple //
+    
+    // Process card fields normally
+    const fields = cardFieldsRaw.split(' / ').map(field => field.trim());
+    
+    // Parse relationships
+    const relationships = parseRelationships(relationshipData);
+    
+    return {
+        fields,
+        relationships
+    };
+}
+
+function parseRelationships(relationshipData: string): CardRelationships {
+    const relationships: CardRelationships = {
+        peers: [],
+        prereqs: [],
+        dependents: []
+    };
+    
+    if (!relationshipData) return relationships;
+    
+    // Split by commas but be careful of commas inside brackets
+    const sections = relationshipData.split(',');
+    let currentSection = '';
+    
+    for (const section of sections) {
+        currentSection += section;
+        
+        // If we have matching brackets, process this section
+        const openBrackets = (currentSection.match(/\[/g) || []).length;
+        const closeBrackets = (currentSection.match(/\]/g) || []).length;
+        
+        if (openBrackets === closeBrackets) {
+            processRelationshipSection(currentSection.trim(), relationships);
+            currentSection = '';
+        } else {
+            currentSection += ','; // Add back the comma we split on
+        }
+    }
+    
+    return relationships;
+}
+
+function processRelationshipSection(section: string, relationships: CardRelationships) {
+    // Match patterns like "PEERS: [σκάπτω]" or "PREREQS: []"
+    const peerMatch = section.match(/PEERS\s*:\s*\[([^\]]*)\]/i);
+    const prereqMatch = section.match(/PREREQS\s*:\s*\[([^\]]*)\]/i);
+    const depMatch = section.match(/DEPENDENTS\s*:\s*\[([^\]]*)\]/i);
+    
+    if (peerMatch) {
+        const peers = peerMatch[1] ? peerMatch[1].split(',').map(p => p.trim()).filter(p => p) : [];
+        relationships.peers.push(...peers);
+    }
+    
+    if (prereqMatch) {
+        const prereqs = prereqMatch[1] ? prereqMatch[1].split(',').map(p => p.trim()).filter(p => p) : [];
+        relationships.prereqs.push(...prereqs);
+    }
+    
+    if (depMatch) {
+        const deps = depMatch[1] ? depMatch[1].split(',').map(p => p.trim()).filter(p => p) : [];
+        relationships.dependents.push(...deps);
+    }
+}
