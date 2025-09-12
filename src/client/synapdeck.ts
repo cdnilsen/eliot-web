@@ -535,7 +535,7 @@ if (textRadio) {
             // Show the card format dropdown
             cardFormatDropdownDiv.style.display = "block";
             
-            // Show the text input section (this was likely missing)
+            // Show the text input section
             const textInputSection = document.getElementById("textInputSection");
             if (textInputSection) {
                 textInputSection.style.display = "block";
@@ -547,7 +547,13 @@ if (textRadio) {
                 cardTextInput.style.display = "block";
                 if (cardTextInput.parentElement) {
                     cardTextInput.parentElement.style.display = "block";
-                } // Show parent container too
+                }
+            }
+            
+            // HIDE FILE INPUT SECTION
+            const fileInputSection = document.getElementById("fileInputSection"); // or whatever the ID is
+            if (fileInputSection) {
+                fileInputSection.style.display = "none";
             }
             
             // Create special characters panel when switching to text mode
@@ -580,13 +586,18 @@ if (fileRadio) {
             const cardTextInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
             if (cardTextInput) {
                 cardTextInput.style.display = "none";
-                // Don't hide parent container as it might contain file input
             }
             
             // Hide special characters panel when switching to file mode
             const specialCharsPanel = document.getElementById("specialCharsPanel");
             if (specialCharsPanel) {
                 specialCharsPanel.style.display = "none";
+            }
+            
+            // SHOW FILE INPUT SECTION
+            const fileInputSection = document.getElementById("fileInputSection"); // or whatever the ID is
+            if (fileInputSection) {
+                fileInputSection.style.display = "block";
             }
         }
     });
