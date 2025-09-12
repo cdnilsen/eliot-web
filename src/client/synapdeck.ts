@@ -773,12 +773,12 @@ uploadSubmitButton.addEventListener('click', async () => {
                 thisNoteDataList.push(thisDatum);
             }
             if (thisNoteProcessList.length != thisNoteDataList.length) {
-    const maxLength = Math.max(thisNoteProcessList.length, thisNoteDataList.length);
-    
-    // Extend processing list if needed
-    while (thisNoteProcessList.length < maxLength) {
-        thisNoteProcessList.push("");
-    }
+                const maxLength = Math.max(thisNoteProcessList.length, thisNoteDataList.length);
+                
+                // Extend processing list if needed
+                while (thisNoteProcessList.length < maxLength) {
+                    thisNoteProcessList.push("");
+                }
     
                 // Smart extension for data list
                 while (thisNoteDataList.length < maxLength) {
