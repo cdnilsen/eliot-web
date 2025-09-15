@@ -13,6 +13,8 @@ let deckNameList: string[] = [
     "Ge'ez",
     "Gothic",
     "Hebrew",
+    "Hittite",
+    "Russian",
     "Sanskrit",
     "Tocharian B"
 ]
@@ -27,6 +29,7 @@ let specialCharSetsDict: charSetsType = {
     "Ge'ez": geezSpecialChars,
     "Gothic": ["þ", "ē", "ō", "ƕ"],
     "Hebrew": hebrewSpecialChars,
+    "Hittite": ["ḫ", "š", "ā", "ē", "ī", "ū"],
     "Sanskrit": ["ā", "ī", "ū", "ṭ", "ḍ", "ṇ", "ṣ", "ś", "ñ", "ṅ", "ṛ", "ḷ", "ṝ", "ḹ", "ṃ", "ḥ", "◌́", "◌̀"],
     "Tocharian B": ["ā", "ä", "ṃ", "ñ", "ṅ", "ṣ", "ś"]
 }
