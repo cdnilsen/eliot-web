@@ -4,8 +4,10 @@ import {SanskritDiacriticify} from './transcribe_sanskrit.js';
 import {AkkadianDiacriticify, akkadianSpecialChars} from './transcribe_akkadian.js';
 import {OneWayCard, TwoWayCard, CardRelationships, ProcessedCard, processCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
 import {postProcessSanskrit} from './transcribe_sanskrit.js';
-import {hebrewSpecialChars, transliterateHebrew} from './transcribe_hebrew.js'
-
+import {hebrewSpecialChars, transliterateHebrew} from './transcribe_hebrew.js';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { createCardRelationshipGraph, CardNode, RelationshipLink } from './CardRelationshipGraph';
 
 let deckNameList: string[] = [
     "Akkadian",

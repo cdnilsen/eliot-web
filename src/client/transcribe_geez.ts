@@ -657,7 +657,7 @@ type S2SDict = {
     [key: string]: string
 }
 
-function preprocessLatin(str: string): string {
+function preprocessLatin(str: string, markGeminates: boolean): string {
     str = str.replaceAll("ṣ́", "ḍ").replaceAll("ś", "š").replaceAll("x", "ḫ")
     str = str.toLowerCase()
     const alts: S2SDict = {
@@ -681,17 +681,18 @@ function preprocessLatin(str: string): string {
         str = str.replaceAll(allKeys[i], alts[allKeys[i]]);
     }
 
-    // Ge'ez writing doesn't do geminates
-    let allConsonants = ["h", "l", "ḥ", "m", "ś", "r", "s", "q", "t", "ḫ", "n", "ʾ", "k", "w", "ʿ", "z", "y", "d", "g", "ṭ", "ṗ", "ṣ", "ḍ", "f", "p"];
-    for (let i=0; i < allConsonants.length; i++) {
-        let C = allConsonants[i];
-        str = str.replaceAll((C + C), C);
+    if (!markGeminates) {
+        let allConsonants = ["h", "l", "ḥ", "m", "ś", "r", "s", "q", "t", "ḫ", "n", "ʾ", "k", "w", "ʿ", "z", "y", "d", "g", "ṭ", "ṗ", "ṣ", "ḍ", "f", "p"];
+        for (let i=0; i < allConsonants.length; i++) {
+            let C = allConsonants[i];
+            str = str.replaceAll((C + C), C);
+        }
     }
     return str
 }
 
 export function transliterateGeez(str: string, markGeminates: boolean): string {
-    str = preprocessLatin(str);
+    str = preprocessLatin(str, markGeminates);
     const tokens = maximumMunchTokenizeGeez(str, markGeminates);
     return tokens.map(token => renderGeez(token, markGeminates)).join("");
 }
