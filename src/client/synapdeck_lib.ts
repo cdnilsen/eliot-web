@@ -36,7 +36,7 @@ export function TwoWayCard(values: string[], processing: string[]): any[] {
     console.log(values);
     console.log(processing);
     
-    while (values.length < 4) {
+    while (values.length < 5) {
         values.push("");
         processing.push("");
     }
