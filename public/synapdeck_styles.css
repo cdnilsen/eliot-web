@@ -133,6 +133,14 @@ input[type="file"]:hover {
     font-style: italic;
 }
 
+.answer-key,
+.answer-table,
+.qa-cell,
+.answer-row,
+.header-row {
+    font-family: 'GentiumPlus', 'Gentium Plus', serif;
+}
+
 .answer-key {
     margin-top: 20px;
 }
