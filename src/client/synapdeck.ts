@@ -793,45 +793,45 @@ uploadSubmitButton.addEventListener('click', async () => {
         }
         
         let cardData: ProcessedCard = processCard(line);
-        let thisNoteDataList: string[] = cardData.fields; // Use the processed fields directly
+        let thisNoteDataList: string[] = cardData.fields;
         
-        if (thisNoteProcessList.length != thisNoteDataList.length) {
-            const maxLength = Math.max(thisNoteProcessList.length, thisNoteDataList.length);
+        // CREATE A FRESH COPY for each card - don't modify the shared array!
+        let thisCardProcessList: string[] = [...thisNoteProcessList];
+        
+        if (thisCardProcessList.length != thisNoteDataList.length) {
+            const maxLength = Math.max(thisCardProcessList.length, thisNoteDataList.length);
             
             // Extend processing list if needed
-            while (thisNoteProcessList.length < maxLength) {
-                thisNoteProcessList.push("");
+            while (thisCardProcessList.length < maxLength) {
+                thisCardProcessList.push("");
             }
-
+    
             // Smart extension for data list
             while (thisNoteDataList.length < maxLength) {
-                // Special case for two-way cards: if we have 3 fields and need 4,
-                // duplicate the second field (native language) into the fourth position
                 if (currentNoteType === "Two-Way" && thisNoteDataList.length === 3 && maxLength === 4) {
-                    thisNoteDataList.push(thisNoteDataList[1]); // Copy field 2 to field 4
+                    thisNoteDataList.push(thisNoteDataList[1]);
                 } else {
-                    thisNoteDataList.push(""); // Default behavior
+                    thisNoteDataList.push("");
                 }
             }
         }
-
+    
         if (currentDeck == "Sanskrit") {
-            for (let j = 0; j < thisNoteDataList.length; j++) { // Changed variable name to avoid collision
-                if (thisNoteProcessList[j] == "Sanskrit") {
+            for (let j = 0; j < thisNoteDataList.length; j++) {
+                if (thisCardProcessList[j] == "Sanskrit") {
                     thisNoteDataList[j] = postProcessSanskrit(thisNoteDataList[j]);
                 }
             }
         }
         
-        // Add to collection instead of sending immediately
         notesToProcess.push({
             deck: currentDeck,
             noteType: currentNoteType,
             dataList: thisNoteDataList,
-            processList: thisNoteProcessList,
-            relationships: cardData.relationships // Add the relationships
+            processList: thisCardProcessList,  // Use the card-specific copy
+            relationships: cardData.relationships
         });
-    }
+    }    
     
     // Now process notes sequentially with delays to avoid deadlocks
     console.log(`Processing ${notesToProcess.length} notes sequentially...`);
@@ -2425,7 +2425,7 @@ function generateAnswerKey(cards: CardDue[]): string {
     `;
 
     cards.forEach((card, index) => {
-        console.log(`Processing card ${index + 1}: ID ${card.card_id}`);
+        //console.log(`Processing card ${index + 1}: ID ${card.card_id}`);
         
         const questionText = generateCardFrontLine(card);
         
