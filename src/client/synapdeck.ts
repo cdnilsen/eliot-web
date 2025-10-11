@@ -778,7 +778,7 @@ if (cardFormatDropdown) {
 
 // Modified submit button event listener
 uploadSubmitButton.addEventListener('click', async () => {
-        let currentNoteType = "";
+    let currentNoteType = "";
     const lines = currentFileContent.split('\n');
 
     let thisNoteProcessList: string[] = [];
@@ -809,7 +809,18 @@ uploadSubmitButton.addEventListener('click', async () => {
         
         // CREATE A FRESH COPY for each card - don't modify the shared array!
         let thisCardProcessList: string[] = [...thisNoteProcessList];
-        
+
+        if (currentNoteType === "One-Way") {
+            // One way cards should have exactly 2 fields
+            if (thisNoteDataList.length > 2) {
+                console.warn(`One-Way card has ${thisNoteDataList.length} fields, truncating to 2`);
+                thisNoteDataList = thisNoteDataList.slice(0, 2);
+            }
+            if (thisCardProcessList.length > 2) {
+                thisCardProcessList = thisCardProcessList.slice(0, 2);
+            }
+        }
+
         if (thisCardProcessList.length != thisNoteDataList.length) {
             const maxLength = Math.max(thisCardProcessList.length, thisNoteDataList.length);
             
@@ -1794,10 +1805,16 @@ function generateCardFrontLine(card: CardDue): string {
     let allFields = card.field_values;
     let allProcessing = card.field_processing;
 
-    if (allFields.length != allProcessing.length) {
-        console.log("Field/processing array mismatch");
-        console.log(card);
-        return "ERROR";
+    // More lenient handling
+    if (!allFields || allFields.length === 0) {
+        console.error("Card has no fields:", card);
+        return "ERROR: No fields";
+    }
+    
+    const maxIndex = Math.min(allFields.length, allProcessing.length);
+    if (maxIndex === 0) {
+        console.error("Card has processing/field mismatch:", card);
+        return "ERROR: Mismatch";
     }
 
     let targetIndex = 0;
@@ -1805,16 +1822,28 @@ function generateCardFrontLine(card: CardDue): string {
     if (card.card_format == "Native to Target") {
         targetIndex = 1; 
     } else if (card.card_format == "One Way") {
-        // For One Way cards, the QUESTION is the field WITHOUT processing
-        // Find which field has processing
-        for (let i = 0; i < allProcessing.length; i++) {
-            if (allProcessing[i] && allProcessing[i].trim() !== "") {
-                // This field has processing (it's the answer)
-                // So the question is the OTHER field
-                targetIndex = (i === 0) ? 1 : 0;
+        // For One Way cards, find the field WITHOUT processing (that's the question)
+        let foundQuestion = false;
+        for (let i = 0; i < maxIndex; i++) {
+            const processing = allProcessing[i];
+            // Question is the field WITHOUT processing or with empty/null processing
+            if (!processing || (typeof processing === 'string' && processing.trim() === "")) {
+                targetIndex = i;
+                foundQuestion = true;
                 break;
             }
         }
+        
+        // If all fields have processing (shouldn't happen), use first field
+        if (!foundQuestion) {
+            console.warn("One Way card has processing on all fields, using field 0:", card);
+            targetIndex = 0;
+        }
+    }
+    
+    // Safety check
+    if (targetIndex >= maxIndex) {
+        targetIndex = 0;
     }
 
     let processedField = cleanFieldDatum(card, targetIndex, false);
@@ -1823,28 +1852,62 @@ function generateCardFrontLine(card: CardDue): string {
 
 // Generate the back side of a card
 function generateCardBackLine(card: CardDue): string {
+    if (!card.field_values || card.field_values.length === 0) {
+        return "(no content)";
+    }
+    
+    const maxIndex = Math.min(
+        card.field_values.length, 
+        card.field_processing ? card.field_processing.length : 0
+    );
+    
+    if (maxIndex === 0) {
+        return "(no content)";
+    }
+    
     let targetIndex = 0;
     
     if (card.card_format === "One Way") {
         // For One Way cards, the ANSWER is the field WITH processing
-        for (let i = 0; i < card.field_processing.length; i++) {
-            if (card.field_processing[i] && card.field_processing[i].trim() !== "") {
+        let foundAnswer = false;
+        for (let i = 0; i < maxIndex; i++) {
+            const processing = card.field_processing[i];
+            // Check for truthy processing value (not null, not empty string)
+            if (processing && typeof processing === 'string' && processing.trim() !== "") {
                 targetIndex = i;
+                foundAnswer = true;
                 break;
             }
         }
+        
+        // If no field has processing, use the field that's NOT used in front
+        if (!foundAnswer) {
+            console.warn("One Way card has no processing, guessing field 1:", card);
+            targetIndex = Math.min(1, maxIndex - 1);
+        }
     } else {
-        // Original logic for Two-Way cards with null safety added
-        if (card.field_values.length >= 3 && card.field_values[2] && card.field_values[2].trim() != "") {
-            targetIndex = 2;
+        // Original logic for Two-Way cards with ENHANCED null safety
+        if (card.field_values.length >= 3) {
+            const field2 = card.field_values[2];
+            if (field2 && typeof field2 === 'string' && field2.trim() !== "") {
+                targetIndex = 2;
+            }
         }
         
         if (card.card_format === "Target to Native") {
             targetIndex = 1; 
-            if (card.field_values.length >= 4 && card.field_values[3] && card.field_values[3].trim() != "") {
-                targetIndex = 3;
+            if (card.field_values.length >= 4) {
+                const field3 = card.field_values[3];
+                if (field3 && typeof field3 === 'string' && field3.trim() !== "") {
+                    targetIndex = 3;
+                }
             }
         }
+    }
+    
+    // Safety check
+    if (targetIndex >= maxIndex) {
+        targetIndex = maxIndex - 1;
     }
     
     let processedField = cleanFieldDatum(card, targetIndex, true);
