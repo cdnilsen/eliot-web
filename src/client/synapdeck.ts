@@ -641,12 +641,17 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
     
     // Add bounds checking
     if (targetIndex >= card.field_values.length || targetIndex >= card.field_processing.length) {
-        console.error(`Index ${targetIndex} out of bounds for card ${card.card_id}`);
-        return "";
+        console.error(`Index ${targetIndex} out of bounds for card ${card.card_id}. Fields: ${card.field_values.length}, Processing: ${card.field_processing.length}`);
+        return "(empty)";
     }
     
     let datum = card.field_values[targetIndex];
     let process = card.field_processing[targetIndex];
+
+    // Handle null/undefined values
+    if (!datum) {
+        datum = "";
+    }
 
     let output: string = datum;
     switch (process) {
@@ -1796,12 +1801,53 @@ function generateCardFrontLine(card: CardDue): string {
     }
 
     let targetIndex = 0;
-    //Change the name of this
+    
     if (card.card_format == "Native to Target") {
         targetIndex = 1; 
+    } else if (card.card_format == "One Way") {
+        // For One Way cards, the QUESTION is the field WITHOUT processing
+        // Find which field has processing
+        for (let i = 0; i < allProcessing.length; i++) {
+            if (allProcessing[i] && allProcessing[i].trim() !== "") {
+                // This field has processing (it's the answer)
+                // So the question is the OTHER field
+                targetIndex = (i === 0) ? 1 : 0;
+                break;
+            }
+        }
     }
 
     let processedField = cleanFieldDatum(card, targetIndex, false);
+    return processedField;
+}
+
+// Generate the back side of a card
+function generateCardBackLine(card: CardDue): string {
+    let targetIndex = 0;
+    
+    if (card.card_format === "One Way") {
+        // For One Way cards, the ANSWER is the field WITH processing
+        for (let i = 0; i < card.field_processing.length; i++) {
+            if (card.field_processing[i] && card.field_processing[i].trim() !== "") {
+                targetIndex = i;
+                break;
+            }
+        }
+    } else {
+        // Original logic for Two-Way cards with null safety added
+        if (card.field_values.length >= 3 && card.field_values[2] && card.field_values[2].trim() != "") {
+            targetIndex = 2;
+        }
+        
+        if (card.card_format === "Target to Native") {
+            targetIndex = 1; 
+            if (card.field_values.length >= 4 && card.field_values[3] && card.field_values[3].trim() != "") {
+                targetIndex = 3;
+            }
+        }
+    }
+    
+    let processedField = cleanFieldDatum(card, targetIndex, true);
     return processedField;
 }
 
@@ -3751,24 +3797,7 @@ if (document.readyState === 'loading') {
     addIntervalAdjustmentControls();
 }
 
-// Generate the back side of a card
-function generateCardBackLine(card: CardDue): string {
-    let targetIndex = 0;
-    if (card.field_values.length >= 3 && card.field_values[2].trim() != "") {
-            targetIndex = 2;
-        }
-    
-    // Flip the index for back side
-    if (card.card_format === "Target to Native") {
-        targetIndex = 1; 
-        if (card.field_values.length >= 4 && card.field_values[3].trim() != "") {
-            targetIndex = 3;
-        }
-    }
-    
-    let processedField = cleanFieldDatum(card, targetIndex, true);
-    return processedField;
-}
+
 
 // Setup action buttons for each card
 
