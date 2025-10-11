@@ -2431,6 +2431,7 @@ function generateAnswerKey(cards: CardDue[]): string {
         
         let answerText = '';
         let answerIndex: number;
+        let targetBackText = ''; // For Target to Native cards
 
         if (card.card_format === "Native to Target") {
             // If question shows native (index 1), answer is target (index 0 or 2)
@@ -2448,6 +2449,15 @@ function generateAnswerKey(cards: CardDue[]): string {
             } else {
                 answerIndex = 1;
             }
+            
+            // For Target to Native, get the target back field
+            let targetBackIndex: number;
+            if (card.field_values.length > 2 && card.field_values[2] && card.field_values[2].trim() !== '') {
+                targetBackIndex = 2;
+            } else {
+                targetBackIndex = 0;
+            }
+            targetBackText = cleanFieldDatum(card, targetBackIndex, true);
         }
 
         // Call cleanFieldDatum with the correct signature
@@ -2456,12 +2466,17 @@ function generateAnswerKey(cards: CardDue[]): string {
         // Process HTML in both question and answer
         const processedQuestion = processHTMLContent(questionText);
         const processedAnswer = processHTMLContent(answerText);
+        const processedTargetBack = targetBackText ? processHTMLContent(targetBackText) : '';
 
         console.log(`Card ${card.card_id}: Q="${processedQuestion}" A="${processedAnswer}"`);
-        let questionNum = index + 1
+        let questionNum = index + 1;
+        
         html += `
             <div class="answer-row" data-card-id="${card.card_id}">
-                <div class="qa-cell">${questionNum}. ${processedQuestion} → ${processedAnswer}</div>
+                <div class="qa-cell">
+                    ${questionNum}. ${processedQuestion} → ${processedAnswer}
+                    ${processedTargetBack ? `<br><span style="background-color:#00FF00">${processedTargetBack}</span>` : ''}
+                </div>
                 <div class="radio-cell">
                     <input type="radio" name="card_${card.card_id}" value="pass" checked>
                 </div>
