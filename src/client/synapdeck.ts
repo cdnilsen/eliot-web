@@ -638,6 +638,13 @@ let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButt
 
 function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boolean) {
     let cardFormat = card.card_format;
+    
+    // Add bounds checking
+    if (targetIndex >= card.field_values.length || targetIndex >= card.field_processing.length) {
+        console.error(`Index ${targetIndex} out of bounds for card ${card.card_id}`);
+        return "";
+    }
+    
     let datum = card.field_values[targetIndex];
     let process = card.field_processing[targetIndex];
 
@@ -653,7 +660,7 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
             output = datum;
     }
     if (isBackOfCard) {
-        output = checkColorCoding(card.field_values, targetIndex, cardFormat, output)  // Pass the processed output
+        output = checkColorCoding(card.field_values, targetIndex, cardFormat, output)
     }
     return output;
 }
