@@ -1779,8 +1779,6 @@ async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
 }
 
 function generateCardFrontLine(card: CardDue): string {
-    let outputString = ""
-
     let allFields = card.field_values;
     let allProcessing = card.field_processing;
 
@@ -2442,7 +2440,7 @@ function generateAnswerKey(cards: CardDue[]): string {
                 answerIndex = 0;
             }
         } else {
-            // If question shows target (index 0 or 2), answer is native (index 1 or 3)
+            // Target to Native: question shows target (index 0 or 2), answer is native (index 1 or 3)
             // Check if index 3 has content, otherwise use index 1
             if (card.field_values.length > 3 && card.field_values[3] && card.field_values[3].trim() !== '') {
                 answerIndex = 3;
@@ -2450,13 +2448,14 @@ function generateAnswerKey(cards: CardDue[]): string {
                 answerIndex = 1;
             }
             
-            // For Target to Native, get the target back field
+            // For Target to Native, get the target back field (same logic as answer for Native to Target)
             let targetBackIndex: number;
             if (card.field_values.length > 2 && card.field_values[2] && card.field_values[2].trim() !== '') {
                 targetBackIndex = 2;
             } else {
                 targetBackIndex = 0;
             }
+            // Use back processing (true) to get proper color-coding
             targetBackText = cleanFieldDatum(card, targetBackIndex, true);
         }
 
@@ -2475,7 +2474,7 @@ function generateAnswerKey(cards: CardDue[]): string {
             <div class="answer-row" data-card-id="${card.card_id}">
                 <div class="qa-cell">
                     ${questionNum}. ${processedQuestion} → ${processedAnswer}
-                    ${processedTargetBack ? `<br><span style="background-color:#00FF00">${processedTargetBack}</span>` : ''}
+                    ${processedTargetBack ? `<br>${processedTargetBack}` : ''}
                 </div>
                 <div class="radio-cell">
                     <input type="radio" name="card_${card.card_id}" value="pass" checked>
