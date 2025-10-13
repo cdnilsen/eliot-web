@@ -13,9 +13,11 @@ let deckNameList: string[] = [
     "Akkadian",
     "Ancient Greek",
     "Ge'ez",
+    "German",
     "Gothic",
     "Hebrew",
     "Hittite",
+    "Latin",
     "Russian",
     "Sanskrit",
     "Tocharian B"
