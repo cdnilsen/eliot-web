@@ -110,12 +110,16 @@ function genericEventListener(target: HTMLElement, condition: boolean, trueOutco
 
 function applyColorCoding(output: string, code: string): string {
     switch (code) {
+        case "mn":
+            return `<span style="background-color: #00ffff;">${output}</span>`
         case "m" :
             return `<span style="color: #0000ff;">${output}</span>`;
         case "f":
             return `<span style="color: #ff0000;">${output}</span>`;
         case "n":
             return `<span style="background-color: #00ff00;">${output}</span>`;
+        case "e":
+            return `<span style="color: #ff00ff;">${output}</span>`
         default:
             return output;
     }
