@@ -12,12 +12,15 @@ import { createCardRelationshipGraph, CardNode, RelationshipLink } from './CardR
 let deckNameList: string[] = [
     "Akkadian",
     "Ancient Greek",
+    "Coptic",
+    "Finnish",
     "Ge'ez",
     "German",
     "Gothic",
     "Hebrew",
     "Hittite",
     "Latin",
+    "Lithuanian",
     "Russian",
     "Sanskrit",
     "Tocharian B"
