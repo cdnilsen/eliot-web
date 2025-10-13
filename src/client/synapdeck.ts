@@ -537,7 +537,7 @@ if (textRadio) {
     textRadio.addEventListener('change', function() {
         if (this.checked) {
             console.log('Text input mode selected');
-            document.getElementById("upload_dropdownMenu")!.style.display = "none";
+            document.getElementById("fileUploadSection")!.style.display = "none";
             
             // Show the card format dropdown
             cardFormatDropdownDiv.style.display = "block";
@@ -579,7 +579,7 @@ if (fileRadio) {
     fileRadio.addEventListener('change', function() {
         if (this.checked) {
             console.log('File input mode selected');
-            document.getElementById("upload_dropdownMenu")!.style.display = "block";
+            document.getElementById("fileUploadSection")!.style.display = "block";
             
             // Hide the card format dropdown
             cardFormatDropdownDiv.style.display = "none";
