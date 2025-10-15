@@ -2718,12 +2718,6 @@ function setupShuffleCardsTab(): void {
                     </label>
                     <select id="shuffleDeckSelect" class="form-control">
                         <option value="">Choose a deck...</option>
-                        <option value="Ge'ez">Ge'ez</option>
-                        <option value="Ancient Greek">Ancient Greek</option>
-                        <option value="Sanskrit">Sanskrit</option>
-                        <option value="Akkadian">Akkadian</option>
-                        <option value="Hebrew">Hebrew</option>
-                        <option value="Tocharian B">Tocharian B</option>
                     </select>
                 </div>
                 
@@ -2783,6 +2777,18 @@ function setupShuffleCardsTab(): void {
             </div>
         </div>
     `;
+    
+    // Dynamically populate deck options
+    const deckSelect = document.getElementById('shuffleDeckSelect') as HTMLSelectElement;
+    if (deckSelect) {
+        deckNameList.forEach(deckName => {
+            const option = document.createElement('option');
+            option.value = deckName;
+            option.textContent = deckName;
+            deckSelect.appendChild(option);
+        });
+    }
+    
     // Add event listeners
     setupDateShuffleEventListeners();
 }
