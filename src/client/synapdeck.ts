@@ -135,9 +135,11 @@ function applyColorCoding(output: string, code: string): string {
 
 function checkColorCoding(fieldValues: string[], targetIndex: number, cardFormat: string, processedText?: string): string {
     let colorCodingIndex = 4;
+    /*
     if (cardFormat == "Target to Native") {
         colorCodingIndex = 2;
     }
+    */
 
     let output = processedText || fieldValues[targetIndex];  // Use processed text if provided
     if (fieldValues.length < (colorCodingIndex - 1)) {
