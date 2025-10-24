@@ -802,6 +802,8 @@ uploadSubmitButton.addEventListener('click', async () => {
     let currentNoteType = "";
     const lines = currentFileContent.split('\n');
 
+    console.log(currentDeck);
+
     let thisNoteProcessList: string[] = [];
     if (cardFormatDropdown && (currentDeck != "")) {
         console.log(cardFormatDropdown.value);
