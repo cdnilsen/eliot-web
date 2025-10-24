@@ -143,7 +143,7 @@ function checkColorCoding(fieldValues: string[], targetIndex: number, cardFormat
     */
 
     let output = processedText || fieldValues[targetIndex];  // Use processed text if provided
-    if (fieldValues.length < (colorCodingIndex - 1)) {
+    if (fieldValues.length < (colorCodingIndex - 1) || targetIndex == 2) {
         return output;
     } else {
         let colorCoding = fieldValues[colorCodingIndex];
