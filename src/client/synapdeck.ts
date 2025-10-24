@@ -676,6 +676,7 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
     switch (process) {
         case "Coptic":
             output = transliterateCoptic(datum);
+            break;
         case "Ge'ez":
             output = transliterateGeez(datum, isBackOfCard);
             break;
