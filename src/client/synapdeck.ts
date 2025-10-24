@@ -1,5 +1,6 @@
 import {transliterateGeez, GeezDiacriticify, geezSpecialChars} from './transcribe_geez.js';
 import {transliterateGreek} from './transcribe_ancient_greek.js';
+import {transliterateCoptic} from './transcribe_coptic.js';
 import {SanskritDiacriticify} from './transcribe_sanskrit.js';
 import {AkkadianDiacriticify, akkadianSpecialChars} from './transcribe_akkadian.js';
 import {OneWayCard, TwoWayCard, CardRelationships, ProcessedCard, processCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
@@ -33,7 +34,7 @@ type charSetsType = {
 let specialCharSetsDict: charSetsType = {
     "Akkadian": akkadianSpecialChars,
     "Ancient Greek": [],
-    "Coptic": [],
+    "Coptic": ["ē", "ō", "š", "ḫ"],
     "Finnish": ["ä", "ö", "Ä", "Ö"],
     "Ge'ez": geezSpecialChars,
     "German": ["ä", "ö", "ü", "ß", "Ä", "Ö", "Ü"],
@@ -673,6 +674,8 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
 
     let output: string = datum;
     switch (process) {
+        case "Coptic":
+            output = transliterateCoptic(datum);
         case "Ge'ez":
             output = transliterateGeez(datum, isBackOfCard);
             break;
