@@ -718,7 +718,7 @@ if (cardTextInput) {
     });
 }
 
-function transcribe(str: string, process: string, optionalBoolean: boolean = true): string {
+function transcribe(str: string, process: string = "", optionalBoolean: boolean = true): string {
     let rawSegments: TextSegment[] = parseTaggedText(str);
     
     // Dictionary of processors - all have signature (text: string) => string
@@ -963,6 +963,8 @@ uploadSubmitButton.addEventListener('click', async () => {
             for (let j = 0; j < thisNoteDataList.length; j++) {
                 if (thisCardProcessList[j] == "Ancient Greek") {
                     thisNoteDataList[j] = transcribe(thisNoteDataList[j], "Ancient Greek");
+                } else {
+                    thisNoteDataList[j] = transcribe(thisNoteDataList[j]);
                 }
             }
         }
