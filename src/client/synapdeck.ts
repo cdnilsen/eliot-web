@@ -109,9 +109,10 @@ const DECK_COLORS = [
 type TextSegment = {
     text: string;
     shouldTranscribe: boolean;
+    process: string;
   };
   
-function parseTaggedText(input: string): TextSegment[] {
+function parseTaggedText(input: string, otherProcess: string): TextSegment[] {
     const segments: TextSegment[] = [];
     let currentIndex = 0;
 
@@ -134,7 +135,7 @@ function parseTaggedText(input: string): TextSegment[] {
         if (textBefore) {
             // Text outside tags or inside current tag context
             const shouldTranscribe = insideRom ? false : true;
-            segments.push({ text: textBefore, shouldTranscribe });
+            segments.push({ text: textBefore, shouldTranscribe: shouldTranscribe, process: otherProcess });
         }
         }
         
@@ -163,7 +164,7 @@ function parseTaggedText(input: string): TextSegment[] {
         const textAfter = input.substring(lastIndex);
         if (textAfter) {
         const shouldTranscribe = insideRom ? false : true;
-        segments.push({ text: textAfter, shouldTranscribe });
+        segments.push({ text: textAfter, shouldTranscribe: shouldTranscribe, process: otherProcess });
         }
     }
 
@@ -718,8 +719,8 @@ if (cardTextInput) {
     });
 }
 
-function transcribe(str: string, process: string = "", optionalBoolean: boolean = true): string {
-    let rawSegments: TextSegment[] = parseTaggedText(str);
+function transcribe(str: string, process: string = "", otherProcess: string = "", optionalBoolean: boolean = true): string {
+    let rawSegments: TextSegment[] = parseTaggedText(str, otherProcess);
     
     // Dictionary of processors - all have signature (text: string) => string
     const processors: Record<string, (text: string) => string> = {
@@ -737,9 +738,13 @@ function transcribe(str: string, process: string = "", optionalBoolean: boolean 
     for (let i = 0; i < rawSegments.length; i++) {
         let segment = rawSegments[i];
         let outputSegment: string = segment.text;
+        let otherProcess = segment.process;
         
         if (segment.shouldTranscribe) {
             outputSegment = processor(outputSegment);
+        } else {
+            let otherProcessor = processors[otherProcess] || ((text: string) => text);
+            outputSegment = otherProcessor(outputSegment);
         }
         
         outputSegments.push(outputSegment);
@@ -770,7 +775,7 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
     let notAncientGreek = (process != "Ancient Greek");
     let output: string = datum;
     if (notAncientGreek) {
-        output = transcribe(datum, process, isBackOfCard);
+        output = transcribe(datum, process, card.deck, isBackOfCard);
     }
     
     if (isBackOfCard) {
@@ -964,7 +969,7 @@ uploadSubmitButton.addEventListener('click', async () => {
                 if (thisCardProcessList[j] == "Ancient Greek") {
                     thisNoteDataList[j] = transcribe(thisNoteDataList[j], "Ancient Greek");
                 } else {
-                    thisNoteDataList[j] = transcribe(thisNoteDataList[j]);
+                    thisNoteDataList[j] = transcribe(thisNoteDataList[j], "", "Ancient Greek");
                 }
             }
         }
