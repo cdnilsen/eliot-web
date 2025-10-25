@@ -745,7 +745,7 @@ function transcribe(str: string, process: string = "", optionalBoolean: boolean 
         outputSegments.push(outputSegment);
     }
     
-    return outputSegments.join(" ");
+    return outputSegments.join("");
 }
 
 let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
@@ -771,8 +771,6 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
     let output: string = datum;
     if (notAncientGreek) {
         output = transcribe(datum, process, isBackOfCard);
-    } else {
-        output = transcribe(datum, "")
     }
     
     if (isBackOfCard) {
