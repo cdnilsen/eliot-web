@@ -771,6 +771,8 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
     let output: string = datum;
     if (notAncientGreek) {
         output = transcribe(datum, process, isBackOfCard);
+    } else {
+        output = transcribe(datum, "")
     }
     
     if (isBackOfCard) {
