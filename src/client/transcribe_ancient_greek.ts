@@ -345,41 +345,57 @@ function syllabify(tokens: TokenOrUnparseable<Token>[], flags: SyllabifyFlags): 
     let diaeresis: DiaeresisToken | null = null;
 
     // Collect initial consonants
-    while (i < tokens.length && tokens[i]!.kind === "token" && isConsonantToken(tokens[i]!.token)) {
-      consonants.push(tokens[i]!.token as ConsonantToken);
-      i++;
+    while (i < tokens.length) {
+      const currentToken = tokens[i]!;
+      if (currentToken.kind === "token" && isConsonantToken(currentToken.token)) {
+        consonants.push(currentToken.token as ConsonantToken);
+        i++;
+      } else {
+        break;
+      }
     }
 
     // Check for breathing mark (for word-initial vowels or explicit marking)
-    if (i < tokens.length && tokens[i]!.kind === "token" && isBreathingToken(tokens[i]!.token)) {
-      breathing = tokens[i]!.token as BreathingToken;
-      i++;
-    }
-
-    // Get vowel or diphthong
-    if (i < tokens.length && tokens[i]!.kind === "token") {
-      const tok = tokens[i]!.token;
-      if (isDiphthongToken(tok)) {
-        vowelOrDiphthong = tok;
-        i++;
-      } else if (isVowelToken(tok)) {
-        vowelOrDiphthong = tok;
+    if (i < tokens.length) {
+      const currentToken = tokens[i]!;
+      if (currentToken.kind === "token" && isBreathingToken(currentToken.token)) {
+        breathing = currentToken.token as BreathingToken;
         i++;
       }
     }
 
+    // Get vowel or diphthong
+    if (i < tokens.length) {
+      const currentToken = tokens[i]!;
+      if (currentToken.kind === "token") {
+        const tok = currentToken.token;
+        if (isDiphthongToken(tok)) {
+          vowelOrDiphthong = tok;
+          i++;
+        } else if (isVowelToken(tok)) {
+          vowelOrDiphthong = tok;
+          i++;
+        }
+      }
+    }
+
     // Get diacritics (accent, subscript, diaeresis) in any order
-    while (i < tokens.length && tokens[i]!.kind === "token") {
-      const tok = tokens[i]!.token;
-      if (isAccentToken(tok) && accent === null) {
-        accent = tok;
-        i++;
-      } else if (isSubscriptToken(tok) && subscript === null) {
-        subscript = tok;
-        i++;
-      } else if (isDiaeresisToken(tok) && diaeresis === null) {
-        diaeresis = tok;
-        i++;
+    while (i < tokens.length) {
+      const currentToken = tokens[i]!;
+      if (currentToken.kind === "token") {
+        const tok = currentToken.token;
+        if (isAccentToken(tok) && accent === null) {
+          accent = tok;
+          i++;
+        } else if (isSubscriptToken(tok) && subscript === null) {
+          subscript = tok;
+          i++;
+        } else if (isDiaeresisToken(tok) && diaeresis === null) {
+          diaeresis = tok;
+          i++;
+        } else {
+          break;
+        }
       } else {
         break;
       }
