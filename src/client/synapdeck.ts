@@ -105,6 +105,71 @@ const DECK_COLORS = [
     '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'
 ];
 
+
+type TextSegment = {
+    text: string;
+    shouldTranscribe: boolean;
+  };
+  
+function parseTaggedText(input: string): TextSegment[] {
+    const segments: TextSegment[] = [];
+    let currentIndex = 0;
+
+    // Regex to find <lang>, </lang>, <rom>, </rom> tags
+    const tagRegex = /<(lang|rom)>|<\/(lang|rom)>/g;
+
+    let match;
+    let insideLang = false;
+    let insideRom = false;
+    let lastIndex = 0;
+
+    while ((match = tagRegex.exec(input)) !== null) {
+        const matchedText = match[0];
+        const tagName = match[1] || match[2];
+        const isClosing = matchedText.startsWith('</');
+        
+        // Add text before this tag
+        if (match.index > lastIndex) {
+        const textBefore = input.substring(lastIndex, match.index);
+        if (textBefore) {
+            // Text outside tags or inside current tag context
+            const shouldTranscribe = insideRom ? false : true;
+            segments.push({ text: textBefore, shouldTranscribe });
+        }
+        }
+        
+        // Update state based on tag
+        if (!isClosing) {
+        if (tagName === 'lang') {
+            insideLang = true;
+            insideRom = false;
+        } else if (tagName === 'rom') {
+            insideRom = true;
+            insideLang = false;
+        }
+        } else {
+        if (tagName === 'lang') {
+            insideLang = false;
+        } else if (tagName === 'rom') {
+            insideRom = false;
+        }
+        }
+        
+        lastIndex = match.index + matchedText.length;
+    }
+
+    // Add remaining text after last tag
+    if (lastIndex < input.length) {
+        const textAfter = input.substring(lastIndex);
+        if (textAfter) {
+        const shouldTranscribe = insideRom ? false : true;
+        segments.push({ text: textAfter, shouldTranscribe });
+        }
+    }
+
+    return segments;
+}
+
 function genericEventListener(target: HTMLElement, condition: boolean, trueOutcome: any, falseOutcome: any = "") {
     if (target) {
         target.addEventListener('change', async () => {
@@ -653,8 +718,37 @@ if (cardTextInput) {
     });
 }
 
-let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
+function transcribe(str: string, process: string, optionalBoolean: boolean = true): string {
+    let rawSegments: TextSegment[] = parseTaggedText(str);
+    
+    // Dictionary of processors - all have signature (text: string) => string
+    const processors: Record<string, (text: string) => string> = {
+        "Coptic": (text) => transliterateCoptic(text),
+        "Ge'ez": (text) => transliterateGeez(text, optionalBoolean),
+        "Ancient Greek": (text) => transliterateGreek(text),
+        "Hebrew": (text) => transliterateHebrew(text, optionalBoolean),
+    };
+    
+    // Get the processor function, or default to identity function
+    const processor = processors[process] || ((text: string) => text);
+    
+    // Process all segments
+    let outputSegments: string[] = [];
+    for (let i = 0; i < rawSegments.length; i++) {
+        let segment = rawSegments[i];
+        let outputSegment: string = segment.text;
+        
+        if (segment.shouldTranscribe) {
+            outputSegment = processor(outputSegment);
+        }
+        
+        outputSegments.push(outputSegment);
+    }
+    
+    return outputSegments.join(" ");
+}
 
+let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
 function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boolean) {
     let cardFormat = card.card_format;
     
@@ -672,27 +766,13 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
         datum = "";
     }
 
+    
+    let notAncientGreek = (process != "Ancient Greek");
     let output: string = datum;
-    switch (process) {
-        case "Coptic":
-            output = transliterateCoptic(datum);
-            break;
-        case "Ge'ez":
-            output = transliterateGeez(datum, isBackOfCard);
-            break;
-
-        // This is commented out because it kills diacritics on Greek already uploaded, and there are so many Greek cards that I'd have to go through and fix several hundred of them. Better to grandfather them in and preprocess the stuff.
-        /*
-        case "Ancient Greek":
-            output = transliterateGreek(datum);
-            break;
-        */
-        case "Hebrew":
-            output = transliterateHebrew(datum, true);
-            break;
-        default:
-            output = datum;
+    if (notAncientGreek) {
+        output = transcribe(datum, process, isBackOfCard);
     }
+    
     if (isBackOfCard) {
         output = checkColorCoding(card.field_values, targetIndex, cardFormat, output)
     }
@@ -882,7 +962,7 @@ uploadSubmitButton.addEventListener('click', async () => {
         if (currentDeck == "Ancient Greek") {
             for (let j = 0; j < thisNoteDataList.length; j++) {
                 if (thisCardProcessList[j] == "Ancient Greek") {
-                    thisNoteDataList[j] = transliterateGreek(thisNoteDataList[j]);
+                    thisNoteDataList[j] = transcribe(thisNoteDataList[j], "Ancient Greek");
                 }
             }
         }
