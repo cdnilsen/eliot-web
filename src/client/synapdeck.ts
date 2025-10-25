@@ -680,6 +680,8 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
         case "Ge'ez":
             output = transliterateGeez(datum, isBackOfCard);
             break;
+
+        // This is commented out because it kills diacritics on Greek already uploaded, and there are so many Greek cards that I'd have to go through and fix several hundred of them. Better to grandfather them in and preprocess the stuff.
         /*
         case "Ancient Greek":
             output = transliterateGreek(datum);
@@ -875,7 +877,8 @@ uploadSubmitButton.addEventListener('click', async () => {
                 }
             }
         }
-
+        
+        // Done here, not in cleanFieldDatum, to grandfather in existing Greek cards. (Upon inspection, can confirm that this actually works.)
         if (currentDeck == "Ancient Greek") {
             for (let j = 0; j < thisNoteDataList.length; j++) {
                 if (thisCardProcessList[j] == "Ancient Greek") {
