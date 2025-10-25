@@ -808,7 +808,7 @@ uploadSubmitButton.addEventListener('click', async () => {
     let currentNoteType = "";
     const lines = currentFileContent.split('\n');
 
-    console.log(currentDeck);
+    //console.log(currentDeck);
 
     let thisNoteProcessList: string[] = [];
     if (cardFormatDropdown && (currentDeck != "")) {
@@ -872,6 +872,14 @@ uploadSubmitButton.addEventListener('click', async () => {
             for (let j = 0; j < thisNoteDataList.length; j++) {
                 if (thisCardProcessList[j] == "Sanskrit") {
                     thisNoteDataList[j] = postProcessSanskrit(thisNoteDataList[j]);
+                }
+            }
+        }
+
+        if (currentDeck == "Ancient Greek") {
+            for (let j = 0; j < thisNoteDataList.length; j++) {
+                if (thisCardProcessList[j] == "Ancient Greek") {
+                    thisNoteDataList[j] = transliterateGreek(thisNoteDataList[j]);
                 }
             }
         }
