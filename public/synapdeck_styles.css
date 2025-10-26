@@ -295,9 +295,10 @@ input[type="file"]:hover {
 .answer-row {
     display: grid;
     grid-template-columns: 1fr 80px 80px 80px;
-    padding: 12px;
+    padding: 16px 12px;
+    min-height: 65px;  /* Ensure room for 2-3 lines */
     border-bottom: 1px solid #dee2e6;
-    align-items: center;
+    align-items: flex-start;  /* Align to top instead of center */
 }
 
 .answer-row:last-child {
@@ -311,10 +312,8 @@ input[type="file"]:hover {
 .qa-cell {
     padding-left: 8px;
     font-size: 14px;
-    line-height: 1.5;
-    display: flex;
-    flex-direction: column;  /* Stack content vertically */
-    gap: 4px;  /* Space between lines */
+    line-height: 1.6;
+    /* DO NOT add flex-direction: column */
 }
 
 .radio-cell {
