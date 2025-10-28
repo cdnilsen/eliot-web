@@ -41,6 +41,7 @@ const romanizations: Record<string, string[]> = {
   ϫ: ["j", "d_"],
   ϭ: ["č", "t_", "c"],
   ϯ: ["ti"],
+  "=": ["="],
 };
 
 const uppercaseRomanizations: Record<string, string[]> = {};
