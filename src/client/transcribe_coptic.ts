@@ -135,8 +135,18 @@ export function transliterateCoptic(s: string) {
     }
   }
 
+  // Post-process: replace = with combining macron on previous character
+  const final = [];
+  for (let i = 0; i < out.length; i++) {
+    if (out[i] === "=") {
+      // Add combining macron to previous character
+      if (final.length > 0) {
+        final[final.length - 1] = final[final.length - 1] + "\u0304";
+      }
+    } else {
+      final.push(out[i]);
+    }
+  }
   
-  let joinedOut =  out.join("");
-
-  return joinedOut.replaceAll("=", "\u0304")
+  return final.join("");
 }
