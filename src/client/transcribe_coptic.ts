@@ -89,23 +89,6 @@ export function transliterateCoptic(s: string) {
       cursor += 2;
       continue;
     }
-    // Handle combining macron: if we see =, add U+0304 to previous character
-    if (c === "=") {
-      if (out.length > 0) {
-        const prev: string = out[out.length - 1];
-        // Check if previous char is a vowel that should get a macron
-        if (/[aeiouAEIOU]/.test(prev)) {
-          out[out.length - 1] = prev + "\u0304"; // combining macron
-        } else {
-          // If not a vowel, just add = literally
-          out.push("=");
-        }
-      } else {
-        out.push("=");
-      }
-      cursor += 1;
-      continue;
-    }
     // Special case: preserve periods at end of word or if next character is space.
     // If next character is e, then transliterate as Ⲏ (long e).
     // If next character is o, then transliterate as Ⲱ (long o).
@@ -150,5 +133,9 @@ export function transliterateCoptic(s: string) {
       cursor += longestMatchString.length;
     }
   }
-  return out.join("");
+
+  
+  let joinedOut =  out.join("");
+
+  return joinedOut.replaceAll("=", "\u0304")
 }
