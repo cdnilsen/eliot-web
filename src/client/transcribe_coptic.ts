@@ -89,6 +89,23 @@ export function transliterateCoptic(s: string) {
       cursor += 2;
       continue;
     }
+    // Handle combining macron: if we see =, add U+0304 to previous character
+    if (c === "=") {
+      if (out.length > 0) {
+        const prev: string = out[out.length - 1];
+        // Check if previous char is a vowel that should get a macron
+        if (/[aeiouAEIOU]/.test(prev)) {
+          out[out.length - 1] = prev + "\u0304"; // combining macron
+        } else {
+          // If not a vowel, just add = literally
+          out.push("=");
+        }
+      } else {
+        out.push("=");
+      }
+      cursor += 1;
+      continue;
+    }
     // Special case: preserve periods at end of word or if next character is space.
     // If next character is e, then transliterate as Ⲏ (long e).
     // If next character is o, then transliterate as Ⲱ (long o).
@@ -97,6 +114,15 @@ export function transliterateCoptic(s: string) {
       if (cursor === s.length - 1 || s[cursor + 1] === " ") {
         out.push(".");
         cursor += 1;
+      }
+      // Check for .e or .o to add macron
+      else if (cursor < s.length - 1 && (s[cursor + 1] === "e" || s[cursor + 1] === "E")) {
+        out.push(s[cursor + 1] + "\u0304"); // e with combining macron
+        cursor += 2; // skip both . and e
+      }
+      else if (cursor < s.length - 1 && (s[cursor + 1] === "o" || s[cursor + 1] === "O")) {
+        out.push(s[cursor + 1] + "\u0304"); // o with combining macron
+        cursor += 2; // skip both . and o
       }
       else {
         cursor += 1; // ignore - it's a digraph separator
