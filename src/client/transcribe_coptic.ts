@@ -136,7 +136,7 @@ export function transliterateCoptic(s: string) {
   }
 
   // Post-process: replace = with combining macron on previous character
-  const final = [];
+  const final: string[] = [];
   for (let i = 0; i < out.length; i++) {
     if (out[i] === "=") {
       // Add combining macron to previous character
