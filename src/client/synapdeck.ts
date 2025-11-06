@@ -64,8 +64,8 @@ declare global {
         performCardSearch: (page: number) => Promise<void>;
     }
 }
-window.createReviewForecastChart = createReviewForecastChart;
 
+window.createReviewForecastChart = createReviewForecastChart;
 
 interface ShuffleDueDatesRequest {
     deck: string;

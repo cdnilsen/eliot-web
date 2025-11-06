@@ -73,10 +73,6 @@ interface ChartDataset {
 function createReviewForecastChart(data: ReviewForecastData[], decks: string[], chartData: ReviewForecastOptions) {
     const ctx = document.getElementById('reviewForecastChart') as HTMLCanvasElement;
 
-    let forecastChart = chartData.reviewForecastChart;
-    let selectedDecks = chartData.selectedDecks;
-    let availableDecks = chartData.availableDecks;
-
     if (!ctx) {
         console.error('Canvas element not found');
         return;
@@ -85,7 +81,7 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[], 
     const Chart = window.Chart;
     if (!Chart) {
         console.log('Chart.js not ready, waiting...');
-        setTimeout(() => createReviewForecastChart(data, decks, forecastChart), 100);
+        setTimeout(() => createReviewForecastChart(data, decks, chartData), 100);
         return;
     }
 
@@ -102,8 +98,10 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[], 
         Chart._registered = true;
     }
 
-    if (forecastChart) {
-        forecastChart.destroy();
+    // Destroy existing chart if it exists
+    if (chartData.reviewForecastChart) {
+        chartData.reviewForecastChart.destroy();
+        chartData.reviewForecastChart = null;  // Clear the reference
     }
 
     // Get today's date for comparison
@@ -136,7 +134,7 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[], 
     });
 
     // Prepare datasets (one for each selected deck)
-    const datasets: ChartDataset[] = selectedDecks.map((deck, index) => ({
+    const datasets: ChartDataset[] = chartData.selectedDecks.map((deck, index) => ({
         label: deck,
         data: data.map(item => item[deck] as number || 0),
         backgroundColor: DECK_COLORS[index % DECK_COLORS.length],
@@ -145,7 +143,7 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[], 
     }));;
 
     // Create the chart
-    forecastChart = new Chart(ctx, {
+    chartData.reviewForecastChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
