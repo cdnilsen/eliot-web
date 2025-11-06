@@ -58,11 +58,13 @@ declare global {
         Chart: any;
         loadReviewForecast: (chartData: ReviewForecastOptions) => Promise<void>;
         setupReviewForecastTab: () => void;
+        createReviewForecastChart: (data: ReviewForecastData[], decks: string[], chartData: ReviewForecastOptions) => void;
         closeEditModal: () => void;
         saveAllFields: (cardId: number) => Promise<void>;
         performCardSearch: (page: number) => Promise<void>;
     }
 }
+window.createReviewForecastChart = createReviewForecastChart;
 
 
 interface ShuffleDueDatesRequest {
