@@ -21,7 +21,6 @@
   },
   "homepage": "https://github.com/cdnilsen/eliotweb#readme",
   "dependencies": {
-    "@types/chart.js": "^2.9.41",
     "@types/multer": "^2.0.0",
     "bcrypt": "^5.1.1",
     "chart.js": "^4.5.0",
@@ -42,6 +41,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/chart.js": "^2.9.41",
     "@types/cron": "^2.0.1",
     "@types/d3": "^7.4.3",
     "@types/express": "^4.17.21",

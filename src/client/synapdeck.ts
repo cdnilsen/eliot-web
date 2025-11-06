@@ -1,11 +1,11 @@
-import {transliterateGeez, GeezDiacriticify, geezSpecialChars} from './transcribe_geez.js';
-import {transliterateGreek} from './transcribe_ancient_greek.js';
-import {transliterateCoptic} from './transcribe_coptic.js';
-import {SanskritDiacriticify} from './transcribe_sanskrit.js';
-import {AkkadianDiacriticify, akkadianSpecialChars} from './transcribe_akkadian.js';
-import {OneWayCard, TwoWayCard, CardRelationships, ProcessedCard, processCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_lib.js'
-import {postProcessSanskrit} from './transcribe_sanskrit.js';
-import {hebrewSpecialChars, transliterateHebrew} from './transcribe_hebrew.js';
+import {transliterateGeez, GeezDiacriticify, geezSpecialChars} from './synapdeck_files/transcribe_geez.js';
+import {transliterateGreek} from './synapdeck_files/transcribe_ancient_greek.js';
+import {transliterateCoptic} from './synapdeck_files/transcribe_coptic.js';
+import {SanskritDiacriticify} from './synapdeck_files/transcribe_sanskrit.js';
+import {AkkadianDiacriticify, akkadianSpecialChars} from './synapdeck_files/transcribe_akkadian.js';
+import {OneWayCard, TwoWayCard, CardRelationships, ProcessedCard, processCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_files/synapdeck_lib.js'
+import {postProcessSanskrit} from './synapdeck_files/transcribe_sanskrit.js';
+import {hebrewSpecialChars, transliterateHebrew} from './synapdeck_files/transcribe_hebrew.js';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createCardRelationshipGraph, CardNode, RelationshipLink } from './CardRelationshipGraph';
@@ -2963,9 +2963,10 @@ async function handlePreviewShuffle(): Promise<void> {
         }
 
         showPreviewModal(cardsToShuffle, params);
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Error previewing shuffle:', error);
-        showShuffleMessage('Error loading preview: ' + error.message, 'error');
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        showShuffleMessage('Error loading preview: ' + message, 'error');
     }
 }
 
@@ -4204,10 +4205,11 @@ async function showCardRelationshipModal(cardId: number): Promise<void> {
         // Create the relationship modal
         showRelationshipModal(cardId, cardDetails.card);
         
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Error loading card relationships:', error);
         closeRelationshipModal();
-        showToast(`Failed to load relationships for card ${cardId}: ${error.message}`, 'error');
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        showToast(`Failed to load relationships for card ${cardId}: ${message}`, 'error');
     } finally {
         // Reset the flag
         (window as any).relationshipModalOpening = false;
@@ -4514,11 +4516,11 @@ function displaySearchResults(cards: CardDue[], currentCardId: number): void {
     // Add click handlers to search results
     searchResults.querySelectorAll('.search-result-item').forEach((item, index) => {
         item.addEventListener('mouseenter', function() {
-            (this as HTMLElement).style.background = '#f0f8ff';
+            (item as HTMLElement).style.background = '#f0f8ff';
         });
         
         item.addEventListener('mouseleave', function() {
-            (this as HTMLElement).style.background = 'white';
+            (item as HTMLElement).style.background = 'white';
         });
         
         item.addEventListener('click', function() {
@@ -4637,7 +4639,8 @@ function setupRelationshipModalEventListeners(cardId: number): void {
                     }
                 } catch (error) {
                     console.error('Error creating relationship:', error);
-                    showToast(`Failed to create relationship: ${error.message}`, 'error');
+                    const message = error instanceof Error ? error.message : 'Unknown error';
+                    showToast(`Failed to create relationship: ${message}`, 'error');
                 } finally {
                     createBtn.textContent = 'Create Relationship';
                 }
@@ -4756,6 +4759,7 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
     } catch (error) {
         console.error('Error loading relationships:', error);
         if (relationshipsList) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
             relationshipsList.innerHTML = `
                 <div style="
                     padding: 16px;
@@ -4764,7 +4768,7 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
                     border: 1px solid #f5c6cb;
                     border-radius: 6px;
                 ">
-                    Error: ${error.message}
+                    Error: ${message}
                 </div>
             `;
         }
@@ -4824,7 +4828,8 @@ function setupRemoveRelationshipListeners(cardId: number): void {
                 
             } catch (error) {
                 console.error('Error removing relationship:', error);
-                showToast(`Failed to remove relationship: ${error.message}`, 'error');
+                const message = error instanceof Error ? error.message : 'Unknown error';
+                showToast(`Failed to remove relationship: ${message}`, 'error');
                 
                 // Reset button state on error
                 target.textContent = originalText;
@@ -4943,7 +4948,8 @@ function addRemoveAllRelationshipsButton(cardId: number): void {
             
         } catch (error) {
             console.error('Error removing all relationships:', error);
-            showToast(`Failed to remove relationships: ${error.message}`, 'error');
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            showToast(`Failed to remove relationships: ${message}`, 'error');
         } finally {
             removeAllBtn.textContent = '🗑️ Remove All Relationships';
             removeAllBtn.disabled = false;
@@ -5160,8 +5166,9 @@ async function editCard(cardId: number): Promise<void> {
 
     } catch (error) {
         console.error('Error loading card for editing:', error);
+        const message = error instanceof Error ? error.message : 'Unknown error';
         closeEditModal();
-        showToast(`Failed to load card ${cardId}: ${error.message}`, 'error');
+        showToast(`Failed to load card ${cardId}: ${message}`, 'error');
     }
 }
 
@@ -5398,8 +5405,8 @@ async function saveIndividualField(cardId: number, fieldIndex: number, textarea:
             saveBtn.textContent = '💾 Save Field';
             saveBtn.style.background = '#28a745';
         }, 3000);
-
-        showToast(`Failed to save field: ${error.message}`, 'error');
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        showToast(`Failed to save field: ${message}`, 'error');
     }
 }
 
@@ -5790,7 +5797,7 @@ async function getCardFields(cardId: number): Promise<any> {
     }
 }
 
-let reviewForecastChart: Chart | null = null;
+let reviewForecastChart: any = null;
 let availableDecks: string[] = [];
 let selectedDecks: string[] = [];
 // Function to fetch forecast data from backend
@@ -6269,8 +6276,9 @@ async function loadReviewForecast() {
     } catch (error) {
         console.error('Error loading review forecast:', error);
         if (errorEl) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
             errorEl.style.display = 'block';
-            errorEl.textContent = `Error: ${error.message}`;
+            errorEl.textContent = `Error: ${message}`;
         }
     } finally {
         if (loadingEl) loadingEl.style.display = 'none';
@@ -6397,7 +6405,8 @@ async function saveAllFields(cardId: number): Promise<void> {
 
     } catch (error) {
         console.error('Error bulk saving fields:', error);
-        showToast(`Failed to save fields: ${error.message}`, 'error');
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        showToast(`Failed to save fields: ${message}`, 'error');
     } finally {
         // Reset button
         saveAllBtn.textContent = originalText;

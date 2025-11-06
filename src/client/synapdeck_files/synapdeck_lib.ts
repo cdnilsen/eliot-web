@@ -137,8 +137,8 @@ export async function loadGentiumForCanvas(): Promise<boolean> {
     }
 }
 
-export // Function to render text to canvas and get image data
-async function renderTextToCanvas(text: string, fontSize: number = 14): Promise<{dataUrl: string, width: number, height: number} | null> {
+// Function to render text to canvas and get image data
+export async function renderTextToCanvas(text: string, fontSize: number = 14): Promise<{dataUrl: string, width: number, height: number} | null> {
     try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
