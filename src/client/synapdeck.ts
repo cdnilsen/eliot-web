@@ -38,7 +38,7 @@ let specialCharSetsDict: charSetsType = {
     "Finnish": ["ä", "ö", "Ä", "Ö"],
     "Ge'ez": geezSpecialChars,
     "German": ["ä", "ö", "ü", "ß", "Ä", "Ö", "Ü"],
-    "Gothic": ["þ", "ē", "ō", "ƕ"],
+    "Gothic": ["þ", "ē", "ō", "ƕ", "á", "í", "ú", "ⁿ", "ⁱ"],
     "Hebrew": hebrewSpecialChars,
     "Hittite": ["ḫ", "š", "ā", "ē", "ī", "ū"],
     "Latin": ["ā", "ē", "ī", "ō", "ū", "Ā", "Ē", "Ī", "Ō", "Ū"],
@@ -529,25 +529,25 @@ function initializeTabSwitching() {
             tabContents.forEach(content => content.classList.remove('active'));
             
             // Add active class to clicked button
-            this.classList.add('active');
+            button.classList.add('active');
             
             // Show corresponding content
-            const targetId = this.id.replace('_cards', '_mainDiv').replace('check_work', 'check_mainDiv');
+            const targetId = button.id.replace('_cards', '_mainDiv').replace('check_work', 'check_mainDiv');
             const targetDiv = document.getElementById(targetId);
             if (targetDiv) {
                 targetDiv.classList.add('active');
                 console.log("Loaded " + button.id);
 
                 // Initialize specific tabs when they become active
-                if (this.id === 'browse_cards') {
+                if (button.id === 'browse_cards') {
                     setupBrowseCardsTab();
-                } else if (this.id === 'shuffle_cards') {
+                } else if (button.id === 'shuffle_cards') {
                     setupShuffleCardsTab();
-                } else if (this.id === 'review_cards') {
+                } else if (button.id === 'review_cards') {
                     populateDropdownForTab('review_dropdownMenu');
-                } else if (this.id === 'check_work') {
+                } else if (button.id === 'check_work') {
                     populateDropdownForTab('check_dropdownMenu');
-                } else if (this.id === 'forecast_cards') {
+                } else if (button.id === 'forecast_cards') {
                     // Clean setup for forecast tab
                     setupReviewForecastTab();
                 }
