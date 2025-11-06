@@ -451,12 +451,10 @@ export async function loadReviewForecast(chartData: ReviewForecastOptions): Prom
         
         if (result.status === 'success' && result.forecast_data && result.decks) {
             console.log(`Successfully loaded forecast data for ${daysAhead} days:`, result);
-            
-            if (availableDecks.length === 0) {
-                availableDecks = result.decks;
-                selectedDecks = result.decks;
-                createDeckCheckboxes(chartData);
-            }
+
+            availableDecks = result.decks;
+            selectedDecks = result.decks;
+            createDeckCheckboxes(chartData);
             
             createReviewForecastChart(result.forecast_data, result.decks, chartData);
             updateForecastStats(result.forecast_data, result.total_reviews || 0, result.decks);
