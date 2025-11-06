@@ -416,19 +416,14 @@ function createDeckCheckboxes(chartData: ReviewForecastOptions) {
 
 // Enhanced loadReviewForecast function with better error handling
 export async function loadReviewForecast(chartData: ReviewForecastOptions): Promise<void> {
-    let reviewForecastChart = chartData.reviewForecastChart;
-    let selectedDecks = chartData.selectedDecks;
-    let availableDecks = chartData.availableDecks;
-
     const loadingEl = document.getElementById('forecastLoading');
     const errorEl = document.getElementById('forecastError');
     
     if (loadingEl) loadingEl.style.display = 'block';
     if (errorEl) errorEl.style.display = 'none';
     
-    // Simple, reliable way to get the days value
     const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
-    let daysAhead = 14; // default
+    let daysAhead = 14;
     
     if (daysSelect && daysSelect.value) {
         const parsedDays = parseInt(daysSelect.value);
@@ -444,7 +439,7 @@ export async function loadReviewForecast(chartData: ReviewForecastOptions): Prom
         const localMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
         
         const result = await fetchReviewForecast(
-            selectedDecks.length > 0 ? selectedDecks : undefined, 
+            chartData.selectedDecks.length > 0 ? chartData.selectedDecks : undefined, 
             daysAhead,
             localMidnight.toISOString()
         );
@@ -452,10 +447,11 @@ export async function loadReviewForecast(chartData: ReviewForecastOptions): Prom
         if (result.status === 'success' && result.forecast_data && result.decks) {
             console.log(`Successfully loaded forecast data for ${daysAhead} days:`, result);
 
-            availableDecks = result.decks;
-            selectedDecks = result.decks;
-            createDeckCheckboxes(chartData);
+            // Update chartData directly, not local variables
+            chartData.availableDecks = result.decks;
+            chartData.selectedDecks = result.decks;
             
+            createDeckCheckboxes(chartData);
             createReviewForecastChart(result.forecast_data, result.decks, chartData);
             updateForecastStats(result.forecast_data, result.total_reviews || 0, result.decks);
             
