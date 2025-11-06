@@ -10,6 +10,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createCardRelationshipGraph, CardNode, RelationshipLink } from './CardRelationshipGraph';
 
+import { ReviewForecastOptions, updateDeckSelection, loadReviewForecast, setupReviewForecastTab } from './synapdeck_files/review_chart.js';
+
+window.loadReviewForecast = loadReviewForecast;
+window.setupReviewForecastTab = setupReviewForecastTab;
+
 let deckNameList: string[] = [
     "Akkadian",
     "Ancient Greek",
@@ -47,9 +52,15 @@ let specialCharSetsDict: charSetsType = {
     "Tocharian B": ["ā", "ä", "ṃ", "ñ", "ṅ", "ṣ", "ś"]
 }
 
+// Consolidate all global declarations
 declare global {
     interface Window {
         Chart: any;
+        loadReviewForecast: (chartData: ReviewForecastOptions) => Promise<void>;
+        setupReviewForecastTab: () => void;
+        closeEditModal: () => void;
+        saveAllFields: (cardId: number) => Promise<void>;
+        performCardSearch: (page: number) => Promise<void>;
     }
 }
 
@@ -171,17 +182,6 @@ function parseTaggedText(input: string, otherProcess: string): TextSegment[] {
     return segments;
 }
 
-function genericEventListener(target: HTMLElement, condition: boolean, trueOutcome: any, falseOutcome: any = "") {
-    if (target) {
-        target.addEventListener('change', async () => {
-            if (condition) {
-                trueOutcome;
-            } else if (falseOutcome != "") {
-                falseOutcome
-            }
-        })
-    }
-}
 
 function applyColorCoding(output: string, code: string): string {
     switch (code) {
@@ -302,11 +302,6 @@ interface AdjustIntervalsResponse {
     details?: string;
 }
 
-declare global {
-    interface Window {
-        jsPDF: any;
-    }
-}
 
 // Enhanced createSpecialCharactersPanel function
 function createSpecialCharactersPanel(): void {
@@ -5829,7 +5824,6 @@ async function fetchReviewForecast(decks?: string[], daysAhead: number = 14, sta
 }
 
 // Function to create/update the chart with proper overdue detection
-// Function to create/update the chart with proper overdue detection
 function createReviewForecastChart(data: ReviewForecastData[], decks: string[]) {
     const ctx = document.getElementById('reviewForecastChart') as HTMLCanvasElement;
     if (!ctx) {
@@ -6067,223 +6061,6 @@ function updateForecastStats(forecastData: ReviewForecastData[], totalReviews: n
     statsEl.innerHTML = statsHTML;
 }
 
-// Function to update deck selection
-async function updateDeckSelection() {
-    const checkboxes = document.querySelectorAll('#deckSelection input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
-    selectedDecks = [];
-    
-    checkboxes.forEach(checkbox => {
-        if (checkbox.checked) {
-            selectedDecks.push(checkbox.value);
-        }
-    });
-    
-    // Always include overdue cards if any deck is selected
-    // (You might want to make this configurable)
-    
-    await loadReviewForecast();
-}
-
-// Function to create deck selection checkboxes
-function createDeckCheckboxes() {
-    const container = document.getElementById('deckSelection');
-    if (!container) return;
-    
-    container.innerHTML = ''; // Clear existing checkboxes
-    
-    // Add select all/none buttons
-    const controlsDiv = document.createElement('div');
-    controlsDiv.style.marginBottom = '10px';
-    
-    const selectAllBtn = document.createElement('button');
-    selectAllBtn.textContent = 'Select All';
-    selectAllBtn.className = 'btn btn-small';
-    selectAllBtn.addEventListener('click', () => {
-        const checkboxes = container.querySelectorAll('input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
-        checkboxes.forEach(cb => cb.checked = true);
-        updateDeckSelection();
-    });
-    
-    const selectNoneBtn = document.createElement('button');
-    selectNoneBtn.textContent = 'Select None';
-    selectNoneBtn.className = 'btn btn-small';
-    selectNoneBtn.style.marginLeft = '10px';
-    selectNoneBtn.addEventListener('click', () => {
-        const checkboxes = container.querySelectorAll('input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
-        checkboxes.forEach(cb => cb.checked = false);
-        updateDeckSelection();
-    });
-    
-    controlsDiv.appendChild(selectAllBtn);
-    controlsDiv.appendChild(selectNoneBtn);
-    container.appendChild(controlsDiv);
-    
-    // Add checkboxes for each deck
-    const checkboxContainer = document.createElement('div');
-    checkboxContainer.style.display = 'flex';
-    checkboxContainer.style.flexWrap = 'wrap';
-    checkboxContainer.style.gap = '15px';
-    
-    availableDecks.forEach((deck, index) => {
-        const label = document.createElement('label');
-        label.style.display = 'flex';
-        label.style.alignItems = 'center';
-        label.style.cursor = 'pointer';
-        label.style.fontSize = '14px';
-        
-        // Special styling for overdue
-        if (deck === 'Overdue') {
-            label.style.fontWeight = 'bold';
-            label.style.color = '#ff4444';
-        }
-        
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.value = deck;
-        checkbox.checked = true; // All selected by default
-        checkbox.style.marginRight = '8px';
-        checkbox.addEventListener('change', updateDeckSelection);
-        
-        const colorBox = document.createElement('span');
-        colorBox.style.display = 'inline-block';
-        colorBox.style.width = '12px';
-        colorBox.style.height = '12px';
-        colorBox.style.backgroundColor = DECK_COLORS[index % DECK_COLORS.length];
-        colorBox.style.marginRight = '6px';
-        colorBox.style.borderRadius = '2px';
-        
-        // Special styling for overdue color box
-        if (deck === 'Overdue') {
-            colorBox.style.border = '2px solid #cc0000';
-        }
-        
-        const text = document.createElement('span');
-        text.textContent = deck;
-        
-        label.appendChild(checkbox);
-        label.appendChild(colorBox);
-        label.appendChild(text);
-        checkboxContainer.appendChild(label);
-    });
-    
-    container.appendChild(checkboxContainer);
-}
-
-// Add this near the end of your TypeScript file, after the loadReviewForecast function is defined
-// Make loadReviewForecast globally accessible
-declare global {
-    interface Window {
-        loadReviewForecast: () => Promise<void>;
-        setupReviewForecastTab: () => void;
-    }
-}
-
-window.loadReviewForecast = loadReviewForecast;
-window.setupReviewForecastTab = setupReviewForecastTab;
-
-// Updated setupReviewForecastTab with direct function reference
-function setupReviewForecastTab(): void {
-    console.log('Setting up review forecast tab...');
-    
-    // Only set up once - check if already initialized
-    const forecastDays = document.getElementById('forecastDays') as HTMLSelectElement;
-    if (!forecastDays) {
-        console.error('forecastDays dropdown not found!');
-        return;
-    }
-    
-    // Remove any existing event listeners by checking if already set up
-    if (forecastDays.dataset.initialized === 'true') {
-        console.log('Forecast tab already initialized, skipping...');
-        return;
-    }
-    
-    // Mark as initialized
-    forecastDays.dataset.initialized = 'true';
-    
-    // Add clean event listener
-    forecastDays.addEventListener('change', function(event) {
-        const target = event.target as HTMLSelectElement;
-        console.log(`Forecast period changed to: ${target.value} days`);
-        loadReviewForecast();
-    });
-    
-    // Set up deck selection if it exists
-    const deckSelection = document.getElementById('deckSelection');
-    if (deckSelection && !deckSelection.dataset.initialized) {
-        deckSelection.dataset.initialized = 'true';
-        deckSelection.addEventListener('change', function(event) {
-            const target = event.target as HTMLInputElement;
-            if (target.type === 'checkbox') {
-                console.log('Forecast deck selection changed');
-                updateDeckSelection();
-            }
-        });
-    }
-    
-    console.log('Forecast event listeners set up successfully');
-    
-    // Load initial data
-    loadReviewForecast();
-}
-
-// Enhanced loadReviewForecast function with better error handling
-async function loadReviewForecast() {
-    const loadingEl = document.getElementById('forecastLoading');
-    const errorEl = document.getElementById('forecastError');
-    
-    if (loadingEl) loadingEl.style.display = 'block';
-    if (errorEl) errorEl.style.display = 'none';
-    
-    // Simple, reliable way to get the days value
-    const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
-    let daysAhead = 14; // default
-    
-    if (daysSelect && daysSelect.value) {
-        const parsedDays = parseInt(daysSelect.value);
-        if (!isNaN(parsedDays) && parsedDays > 0) {
-            daysAhead = parsedDays;
-        }
-    }
-    
-    console.log(`Loading forecast for ${daysAhead} days ahead (dropdown value: "${daysSelect?.value}")`);
-    
-    try {
-        const today = new Date();
-        const localMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-        
-        const result = await fetchReviewForecast(
-            selectedDecks.length > 0 ? selectedDecks : undefined, 
-            daysAhead,
-            localMidnight.toISOString()
-        );
-        
-        if (result.status === 'success' && result.forecast_data && result.decks) {
-            console.log(`Successfully loaded forecast data for ${daysAhead} days:`, result);
-            
-            if (availableDecks.length === 0) {
-                availableDecks = result.decks;
-                selectedDecks = result.decks;
-                createDeckCheckboxes();
-            }
-            
-            createReviewForecastChart(result.forecast_data, result.decks);
-            updateForecastStats(result.forecast_data, result.total_reviews || 0, result.decks);
-            
-        } else {
-            throw new Error(result.error || 'Failed to load forecast data');
-        }
-    } catch (error) {
-        console.error('Error loading review forecast:', error);
-        if (errorEl) {
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            errorEl.style.display = 'block';
-            errorEl.textContent = `Error: ${message}`;
-        }
-    } finally {
-        if (loadingEl) loadingEl.style.display = 'none';
-    }
-}
 
 // API function to update a specific field
 async function updateCardField(cardId: number, fieldIndex: number, newValue: string): Promise<any> {
@@ -6419,14 +6196,6 @@ function escapeHtml(text: string): string {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-// Make functions globally available
-declare global {
-    interface Window {
-        closeEditModal: () => void;
-        saveAllFields: (cardId: number) => Promise<void>;
-    }
 }
 
 window.closeEditModal = closeEditModal;
