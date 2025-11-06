@@ -70,7 +70,7 @@ interface ChartDataset {
     borderWidth: number
 }
 
-function createReviewForecastChart(data: ReviewForecastData[], decks: string[], chartData: ReviewForecastOptions) {
+export function createReviewForecastChart(data: ReviewForecastData[], decks: string[], chartData: ReviewForecastOptions) {
     const ctx = document.getElementById('reviewForecastChart') as HTMLCanvasElement;
 
     if (!ctx) {
