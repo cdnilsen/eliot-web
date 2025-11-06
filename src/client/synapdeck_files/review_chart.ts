@@ -62,6 +62,14 @@ async function fetchReviewForecast(decks?: string[], daysAhead: number = 14, sta
     }
 }
 
+interface ChartDataset {
+    label: string,
+    data: number[],
+    backgroundColor: string,
+    borderColor: string,
+    borderWidth: number
+}
+
 function createReviewForecastChart(data: ReviewForecastData[], decks: string[], chartData: ReviewForecastOptions) {
     const ctx = document.getElementById('reviewForecastChart') as HTMLCanvasElement;
 
@@ -128,13 +136,13 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[], 
     });
 
     // Prepare datasets (one for each selected deck)
-    const datasets = selectedDecks.map((deck, index) => ({
+    const datasets: ChartDataset[] = selectedDecks.map((deck, index) => ({
         label: deck,
         data: data.map(item => item[deck] as number || 0),
         backgroundColor: DECK_COLORS[index % DECK_COLORS.length],
         borderColor: DECK_COLORS[index % DECK_COLORS.length],
         borderWidth: 1
-    }));
+    }));;
 
     // Create the chart
     forecastChart = new Chart(ctx, {
@@ -204,6 +212,7 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[], 
             },
             scales: {
                 x: {
+                    stacked: true,  // ADD THIS
                     title: {
                         display: true,
                         text: 'Date'
@@ -234,6 +243,7 @@ function createReviewForecastChart(data: ReviewForecastData[], decks: string[], 
                     }
                 },
                 y: {
+                    stacked: true,  // ADD THIS
                     beginAtZero: true,
                     title: {
                         display: true,
