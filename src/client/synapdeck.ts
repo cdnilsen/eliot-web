@@ -186,20 +186,29 @@ function parseTaggedText(input: string, otherProcess: string): TextSegment[] {
 }
 
 
+let colorCodingDictionary: Record<string, string[]> = {
+    "mn": ["#00ffff"],
+    "m": ["#0000ff"],
+    "f": ["#ff0000"],
+    "n": ["#000000", "#00ff00"],
+    "e": ["#ff00ff"],
+    "1": ["#ffffff", "#ff0000"],
+    "2": ["#000000", "#ffff00"],
+    "3": ["#000000", "#00ff00"],
+    "4": ["#ffffff", "#0000ff"]
+}
+
 function applyColorCoding(output: string, code: string): string {
-    switch (code) {
-        case "mn":
-            return `<span style="background-color: #00ffff;">${output}</span>`
-        case "m" :
-            return `<span style="color: #0000ff;">${output}</span>`;
-        case "f":
-            return `<span style="color: #ff0000;">${output}</span>`;
-        case "n":
-            return `<span style="background-color: #00ff00;">${output}</span>`;
-        case "e":
-            return `<span style="color: #ff00ff;">${output}</span>`
-        default:
-            return output;
+    if (code in colorCodingDictionary) {
+        let colorList = colorCodingDictionary[code];
+        let spanString = `<span style="color: ` + colorList[0] + ";";
+        if (colorList.length > 1) {
+            spanString += ` background-color: ` + colorList[1] + ";";
+        }
+        spanString += `">${output}</span>`
+        return spanString;
+    } else {
+        return output;
     }
 }
 
@@ -1241,8 +1250,6 @@ async function createReviewSession(deckName: string, cardIds: number[], maxCards
         };
     }
 }
-
-
 
 // Function to group cards by due date with configurable precision
 function groupCardsByDueDate(cards: CardDue[], groupByDateOnly = false) {
