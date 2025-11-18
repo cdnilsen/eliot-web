@@ -206,8 +206,8 @@ function applyColorCoding(output: string, code: string): string {
         if (colorList.length > 1) {
             spanString += ` background-color: ` + colorList[1] + ";";
         }
-        spanString += `">${output}</span>`
-        return spanString;
+        spanString += `">`;
+        return spanString + output + "</span>";
     } else {
         return output;
     }
