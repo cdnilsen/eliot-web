@@ -199,7 +199,7 @@ let colorCodingDictionary: Record<string, string[]> = {
 }
 
 function applyColorCoding(output: string, code: string): string {
-    code = code.trim();
+    //code = code.trim();
     if (code in colorCodingDictionary) {
         let colorList = colorCodingDictionary[code];
         let spanString = `<span style="color: ` + colorList[0] + ";";
