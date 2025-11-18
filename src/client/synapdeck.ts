@@ -200,20 +200,27 @@ let colorCodingDictionary: Record<string, string[]> = {
 
 function applyColorCoding(output: string, code: string): string {
     // Don't wrap empty strings
-    if (!output) {
-        return output;
-    }
-    
-    if (code in colorCodingDictionary) {
-        let colorList = colorCodingDictionary[code];
-        let spanString = `<span style="color: ` + colorList[0] + ";";
-        if (colorList.length > 1) {
-            spanString += ` background-color: ` + colorList[1] + ";";
-        }
-        spanString += `">${output}</span>`
-        return spanString;
-    } else {
-        return output;
+    switch (code) {
+        case "mn":
+            return `<span style="background-color: #00ffff;">${output}</span>`
+        case "m" :
+            return `<span style="color: #0000ff;">${output}</span>`;
+        case "f":
+            return `<span style="color: #ff0000;">${output}</span>`;
+        case "n":
+            return `<span style="background-color: #00ff00;">${output}</span>`;
+        case "e":
+            return `<span style="color: #ff00ff;">${output}</span>`
+        case "1":
+            return `<span style="color: #ffffff; background-color: #ff0000;>${output}</span>`
+        case "2":
+            return `<span style="color: #background-color: #ffff00;">${output}</span>`;
+        case "3":
+            return `<span style="color: #background-color: #00ff00;">${output}</span>`;
+        case "4":
+            return `<span style="color: #ffffff; background-color: #0000ff;>${output}</span>`
+        default:
+            return output;
     }
 }
 
