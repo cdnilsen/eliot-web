@@ -200,7 +200,7 @@ let colorCodingDictionary: Record<string, string[]> = {
 
 function applyColorCoding(output: string, code: string): string {
     // Don't wrap empty strings
-    code = code.toString();
+    //code = code.toString();
     switch (code) {
         case "mn":
             return `<span style="background-color: #00ffff;">${output}</span>`
