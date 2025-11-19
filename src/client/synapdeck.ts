@@ -212,6 +212,7 @@ function applyColorCoding(output: string, code: string): string {
             return `<span style="background-color: #00ff00;">${output}</span>`;
         case "e":
             return `<span style="color: #ff00ff;">${output}</span>`
+        /*
         case "1":
             return `<span style="color: #ffffff; background-color: #ff0000;>${output}</span>`
         case "2":
@@ -220,6 +221,7 @@ function applyColorCoding(output: string, code: string): string {
             return `<span style="color: #background-color: #00ff00;">${output}</span>`;
         case "4":
             return `<span style="color: #ffffff; background-color: #0000ff;>${output}</span>`
+            */
         default:
             return output;
     }
