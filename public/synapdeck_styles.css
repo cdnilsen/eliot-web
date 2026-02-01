@@ -826,8 +826,7 @@ input[type="file"]:hover {
 
 .qa-cell {
     padding: 12px 16px;
-    display: flex;
-    align-items: center;
+    display: block;
     background: white;
     border-right: 1px solid #eee;
     line-height: 1.4;
