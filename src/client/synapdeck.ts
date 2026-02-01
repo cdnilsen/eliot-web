@@ -2699,6 +2699,8 @@ function generateAnswerKey(cards: CardDue[]): string {
             // Check if index 2 has content, otherwise use index 0
             if (card.field_values.length > 2 && card.field_values[2] && card.field_values[2].trim() !== '') {
                 answerIndex = 2;
+                // Show the base target form (field 0) below the answer
+                targetBackText = cleanFieldDatum(card, 0, true);
             } else {
                 answerIndex = 0;
             }
