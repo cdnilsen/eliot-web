@@ -33,8 +33,11 @@ function createPieChart(stats) {
         pieChart.destroy();
         pieChart = null;
     }
-    const labels = stats.map(s => s.deck);
-    const data = stats.map(s => s.total_cards);
+    // Sort by total_cards descending
+    const sortedStats = [...stats].sort((a, b) => b.total_cards - a.total_cards);
+    console.log('Sorted deck stats:', sortedStats.map(s => `${s.deck}: ${s.total_cards}`));
+    const labels = sortedStats.map(s => s.deck);
+    const data = sortedStats.map(s => s.total_cards);
     const total = data.reduce((a, b) => a + b, 0);
     pieChart = new Chart(ctx, {
         type: 'pie',
@@ -50,10 +53,14 @@ function createPieChart(stats) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
+            rotation: -90, // Start at 12 o'clock
             plugins: {
                 legend: {
                     position: 'right',
-                    labels: { font: { size: 13 } }
+                    labels: {
+                        font: { size: 13 },
+                        sort: (a, b) => a.index - b.index // Preserve data order (descending by card count)
+                    }
                 },
                 tooltip: {
                     callbacks: {
