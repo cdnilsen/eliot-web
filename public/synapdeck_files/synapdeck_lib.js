@@ -1,0 +1,197 @@
+export function TwoWayCard(values, processing) {
+    console.log("Values and processing before the Two Way Card function");
+    console.log(values);
+    console.log(processing);
+    while (values.length < 5) {
+        values.push("");
+        processing.push("");
+    }
+    console.log("Values and processing *after* the Two Way Card function");
+    console.log(values);
+    console.log(processing);
+    return [
+        {
+            card_format: "Target to Native",
+            field_names: ["Target", "Native", "Target_Back", "Native_Back", "Coloring"],
+            field_values: values,
+            field_processing: processing
+        },
+        {
+            card_format: "Native to Target",
+            field_names: ["Target", "Native", "Target_Back", "Native_Back", "Coloring"],
+            field_values: values,
+            field_processing: processing
+        }
+    ];
+}
+export function OneWayCard(values, processing) {
+    return [
+        {
+            card_format: "One Way",
+            field_names: ["Front", "Back", "Coloring"],
+            field_values: [values[0], values[1], values[2]],
+            field_processing: processing
+        }
+    ];
+}
+// Helper function to convert ArrayBuffer to base64 without stack overflow
+export function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 32768; // Process in 32KB chunks to avoid stack overflow
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.slice(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    return btoa(binary);
+}
+// Add this helper function to properly handle Ge'ez text in jsPDF
+export function prepareTextForPDF(text) {
+    // Method 1: Ensure proper Unicode normalization
+    let normalizedText = text.normalize('NFC');
+    // Method 2: Replace any problematic HTML entities or tags
+    normalizedText = normalizedText
+        .replace(/<[^>]*>/g, '') // Remove any HTML tags
+        .replace(/&[^;]+;/g, ''); // Remove HTML entities
+    return normalizedText;
+}
+// Add this function to test if characters will render properly
+export function testCharacterRendering(doc, text) {
+    try {
+        // Try to measure the text - if it fails, the characters aren't supported
+        const dimensions = doc.getTextDimensions(text);
+        return dimensions.w > 0; // If width is 0, characters aren't rendering
+    }
+    catch (error) {
+        console.warn('Character rendering test failed:', error);
+        return false;
+    }
+}
+export async function loadGentiumForCanvas() {
+    try {
+        // Check if font is already loaded
+        if (document.fonts.check('16px GentiumPlus')) {
+            console.log('✅ GentiumPlus already loaded');
+            return true;
+        }
+        const fontFace = new FontFace('GentiumPlus', 'url(/Gentium/GentiumPlus-Regular.ttf)');
+        await fontFace.load();
+        document.fonts.add(fontFace);
+        // Verify font is loaded
+        const isLoaded = document.fonts.check('16px GentiumPlus');
+        console.log('✅ GentiumPlus font loaded for canvas:', isLoaded);
+        return isLoaded;
+    }
+    catch (error) {
+        console.error('❌ Failed to load GentiumPlus for canvas:', error);
+        return false;
+    }
+}
+// Function to render text to canvas and get image data
+export async function renderTextToCanvas(text, fontSize = 14) {
+    try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx)
+            return null;
+        // Set up the font - try GentiumPlus first, then fallback
+        const fontFamily = document.fonts.check('16px GentiumPlus')
+            ? 'GentiumPlus, "Gentium Plus", serif'
+            : 'serif';
+        ctx.font = `${fontSize}px ${fontFamily}`;
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = 'black';
+        // Measure the text to size canvas appropriately
+        const metrics = ctx.measureText(text);
+        const textWidth = Math.ceil(metrics.width || text.length * fontSize * 0.6);
+        const textHeight = Math.ceil(fontSize * 1.4); // Add padding
+        // Set canvas size
+        canvas.width = Math.max(textWidth + 8, 50); // Minimum width
+        canvas.height = textHeight + 8;
+        // Re-apply styling after canvas resize (resets context)
+        ctx.font = `${fontSize}px ${fontFamily}`;
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = 'black';
+        // Fill background white
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Draw text
+        ctx.fillStyle = 'black';
+        ctx.fillText(text, 4, 4);
+        return {
+            dataUrl: canvas.toDataURL('image/png'),
+            width: canvas.width / 72, // Convert pixels to inches (assuming 72 DPI)
+            height: canvas.height / 72
+        };
+    }
+    catch (error) {
+        console.error('Error rendering text to canvas:', error);
+        return null;
+    }
+}
+export function processCard(rawCard) {
+    const line = rawCard.trim();
+    console.log('Raw input:', line);
+    // Split card fields from relationship metadata
+    const parts = line.split(' // ');
+    console.log('Split parts:', parts);
+    const cardFieldsRaw = parts[0];
+    const relationshipData = parts.slice(1).join(' // ');
+    console.log('Card fields raw:', cardFieldsRaw);
+    console.log('Relationship data:', relationshipData);
+    // Process card fields normally
+    const fields = cardFieldsRaw.split(' / ').map(field => field.trim());
+    console.log('Processed fields:', fields);
+    // Parse relationships
+    const relationships = parseRelationships(relationshipData);
+    console.log('Parsed relationships:', relationships);
+    return {
+        fields,
+        relationships
+    };
+}
+function parseRelationships(relationshipData) {
+    const relationships = {
+        peers: [],
+        prereqs: [],
+        dependents: []
+    };
+    if (!relationshipData)
+        return relationships;
+    // Split by commas but be careful of commas inside brackets
+    const sections = relationshipData.split(',');
+    let currentSection = '';
+    for (const section of sections) {
+        currentSection += section;
+        // If we have matching brackets, process this section
+        const openBrackets = (currentSection.match(/\[/g) || []).length;
+        const closeBrackets = (currentSection.match(/\]/g) || []).length;
+        if (openBrackets === closeBrackets) {
+            processRelationshipSection(currentSection.trim(), relationships);
+            currentSection = '';
+        }
+        else {
+            currentSection += ','; // Add back the comma we split on
+        }
+    }
+    return relationships;
+}
+function processRelationshipSection(section, relationships) {
+    // Match patterns like "PEERS: [σκάπτω]" or "PREREQS: []"
+    const peerMatch = section.match(/PEERS\s*:\s*\[([^\]]*)\]/i);
+    const prereqMatch = section.match(/PREREQS\s*:\s*\[([^\]]*)\]/i);
+    const depMatch = section.match(/DEPENDENTS\s*:\s*\[([^\]]*)\]/i);
+    if (peerMatch) {
+        const peers = peerMatch[1] ? peerMatch[1].split(',').map(p => p.trim()).filter(p => p) : [];
+        relationships.peers.push(...peers);
+    }
+    if (prereqMatch) {
+        const prereqs = prereqMatch[1] ? prereqMatch[1].split(',').map(p => p.trim()).filter(p => p) : [];
+        relationships.prereqs.push(...prereqs);
+    }
+    if (depMatch) {
+        const deps = depMatch[1] ? depMatch[1].split(',').map(p => p.trim()).filter(p => p) : [];
+        relationships.dependents.push(...deps);
+    }
+}
+//# sourceMappingURL=synapdeck_lib.js.map

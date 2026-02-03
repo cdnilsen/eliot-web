@@ -17,6 +17,7 @@
             <button type="button" id="review_cards">Do Reviews</button>
             <button type="button" id="check_work">Check Your Work</button>
             <button type="button" id="forecast_cards">Review Forecast</button>
+            <button type="button" id="stats_cards">Stats</button>
         </div>
 
         <div id="upload_mainDiv" class="tab-content active">
@@ -214,6 +215,23 @@
                 <button id="check_submitBtn" class="btn">Show Answer Key</button>
             </div>
             <div id="check_output"></div>
+        </div>
+
+        <div id="stats_mainDiv" class="tab-content">
+            <h2>Stats</h2>
+            <div class="stats-section">
+                <h3>Cards by Deck</h3>
+                <div class="pie-chart-container">
+                    <canvas id="deckPieChart" width="400" height="400"></canvas>
+                </div>
+            </div>
+            <div class="stats-section">
+                <h3>Review Activity</h3>
+                <div id="heatmapContainer" class="heatmap-container">
+                    <!-- Heatmap will be rendered by JavaScript -->
+                </div>
+                <div id="heatmapTooltip" class="heatmap-tooltip" style="display:none;"></div>
+            </div>
         </div>
 
         <div id="browse_mainDiv" class="tab-content">

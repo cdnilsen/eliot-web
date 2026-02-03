@@ -12,6 +12,7 @@ import { createCardRelationshipGraph, CardNode, RelationshipLink } from './CardR
 
 import { ReviewForecastOptions, updateDeckSelection, loadReviewForecast, createReviewForecastChart, setupReviewForecastTab } from './synapdeck_files/review_chart.js';
 import { addRetrievabilityManagementSection } from './synapdeck_files/retrievability.js';
+import { setupStatsTab } from './synapdeck_files/stats_tab.js';
 
 window.loadReviewForecast = loadReviewForecast;
 window.setupReviewForecastTab = setupReviewForecastTab;
@@ -50,7 +51,7 @@ let specialCharSetsDict: charSetsType = {
     "Hittite": ["ḫ", "š", "ā", "ē", "ī", "ū"],
     "Latin": ["ā", "ē", "ī", "ō", "ū", "Ā", "Ē", "Ī", "Ō", "Ū"],
     "Lithuanian": ["à", "á", "ã", "ą", "ą́", "ą̃", "č", "è", "é", "ẽ", "ę", "ę̃", "ę́", "ė", "ė̃", "ė́", "ì", "í", "ĩ", "į", "į́", "į̃", "l̃", "ó", "õ", "r̃", "ù", "ū", "ū̃", "ū́", "ų", "ų̃", "ų́", "š", "ỹ", "ý", "ž"],
-    "Proto-Algonquian": ["θ", "č", "š", "·", "ʔ"],
+    "Proto-Algonquian": ["θ", "č", "š", "·", "ʔ", "ẅ"],
     "Sanskrit": ["ā", "ī", "ū", "ṭ", "ḍ", "ṇ", "ṣ", "ś", "ñ", "ṅ", "ṛ", "ḷ", "ṝ", "ḹ", "ṃ", "ḥ", "◌́", "◌̀"],
     "Tocharian B": ["ā", "ä", "ṃ", "ñ", "ṅ", "ṣ", "ś"]
 }
@@ -574,6 +575,8 @@ function initializeTabSwitching() {
                 } else if (button.id === 'forecast_cards') {
                     // Clean setup for forecast tab
                     setupReviewForecastTab();
+                } else if (button.id === 'stats_cards') {
+                    setupStatsTab();
                 }
             }
         });

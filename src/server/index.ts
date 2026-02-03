@@ -5065,3 +5065,59 @@ app.get('/todays_cards_summary', wrapAsync(async (req, res) => {
         });
     }
 }));
+
+// Get review activity by date for heatmap (past reviews + future due dates)
+app.get('/review_heatmap', wrapAsync(async (req, res) => {
+    try {
+        // Past review activity from review_sessions (completed sessions grouped by date)
+        const pastQuery = await client.query(`
+            SELECT
+                DATE(completed_at) as review_date,
+                SUM(cards_completed) as cards_reviewed
+            FROM review_sessions
+            WHERE completed_at IS NOT NULL
+              AND session_status = 'completed'
+            GROUP BY DATE(completed_at)
+            ORDER BY review_date
+        `);
+
+        // Future cards due by date
+        const futureQuery = await client.query(`
+            SELECT
+                DATE(time_due) as due_date,
+                COUNT(*) as cards_due
+            FROM cards
+            WHERE time_due >= CURRENT_DATE
+              AND time_due < CURRENT_DATE + INTERVAL '365 days'
+            GROUP BY DATE(time_due)
+            ORDER BY due_date
+        `);
+
+        // Today's due cards
+        const todayQuery = await client.query(`
+            SELECT COUNT(*) as cards_due_today
+            FROM cards
+            WHERE DATE(time_due) <= CURRENT_DATE
+        `);
+
+        res.json({
+            status: 'success',
+            past_reviews: pastQuery.rows.map(row => ({
+                date: row.review_date,
+                count: parseInt(row.cards_reviewed)
+            })),
+            future_due: futureQuery.rows.map(row => ({
+                date: row.due_date,
+                count: parseInt(row.cards_due)
+            })),
+            today_due: parseInt(todayQuery.rows[0].cards_due_today)
+        });
+    } catch (err) {
+        console.error('Error fetching heatmap data:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error fetching heatmap data',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));

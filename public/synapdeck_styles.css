@@ -2233,3 +2233,77 @@ input[type="file"]:hover {
     border-radius: 4px;
     border: 1px solid #f5c6cb;
 }
+
+/* Stats Tab */
+.stats-section {
+    margin-bottom: 32px;
+}
+
+.pie-chart-container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.heatmap-container {
+    position: relative;
+}
+
+.heatmap-scroll {
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.heatmap-svg {
+    display: block;
+}
+
+.heatmap-cell {
+    cursor: pointer;
+    stroke: #fff;
+    stroke-width: 1;
+}
+
+.heatmap-cell:hover {
+    stroke: #333;
+    stroke-width: 2;
+}
+
+.heatmap-day-label,
+.heatmap-month-label {
+    font-size: 11px;
+    fill: #666;
+    font-family: 'Jost', sans-serif;
+}
+
+.heatmap-tooltip {
+    position: absolute;
+    background: #24292e;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #666;
+}
+
+.heatmap-legend-label {
+    font-family: 'Jost', sans-serif;
+}
+
+.heatmap-legend-cell {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}

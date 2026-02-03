@@ -1,0 +1,58 @@
+export function SanskritDiacriticify(str, isASCII) {
+    if (isASCII) {
+        let ASCII2DiacriticDict = {
+            "A": "ā",
+            "I": "ī",
+            "U": "ū",
+            "n~": "ñ",
+            "R": "ṛ",
+            "L": "ḷ",
+            "T": "ṭ",
+            "D": "ḍ",
+            "S": "ṣ",
+            "N": "ṇ",
+            "z": "ç",
+            "n*": "ṅ",
+            "M": "ṃ",
+            "H": "ḥ",
+            "A'": "ā́",
+            "a'": "á",
+            "ā'": "ā́",
+            "I'": "ī́",
+            "i'": "í",
+            "ī'": "ī́",
+            "U'": "ū́",
+            "u'": "ú",
+            "R'": "ṛ́",
+            "e'": "é",
+            "o'": "ó",
+            "L'": "ḷ́",
+            "RR": "ṝ",
+            "RR'": "ṝ́",
+            "LL": "ḹ",
+            "LL'": "ḹ́"
+        };
+        let allASCII = Object.keys(ASCII2DiacriticDict);
+        allASCII.sort((a, b) => b.length - a.length);
+        for (let i = 0; i < allASCII.length; i++) {
+            let c = allASCII[i];
+            str = str.replaceAll(c, ASCII2DiacriticDict[c]);
+        }
+    }
+    return str;
+}
+export let sanskritChars = [
+    "á", "í", "ú", "ā", "ā́"
+];
+export function postProcessSanskrit(datum) {
+    let acuteTargets = ["á", "é", "í", "ó", "ú"];
+    let acuteVowels = ["á", "é", "í", "ó", "ú"];
+    let graveTargets = ["à", "è", "ì", "ò", "ù"];
+    let graveVowels = ["à", "è", "ì", "ò", "ù"];
+    for (let i = 0; i < acuteTargets.length; i++) {
+        datum = datum.replaceAll(acuteTargets[i], acuteVowels[i]);
+        datum = datum.replaceAll(graveTargets[i], graveVowels[i]);
+    }
+    return datum;
+}
+//# sourceMappingURL=transcribe_sanskrit.js.map
