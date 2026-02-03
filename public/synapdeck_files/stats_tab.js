@@ -1,8 +1,23 @@
 let pieChart = null;
 let statsInitialized = false;
+// Colors ordered to maximize contrast between adjacent slices
 const PIE_COLORS = [
-    '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00ff7f', '#ff6b6b',
-    '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'
+    '#4a90d9', // blue
+    '#f0932b', // orange
+    '#30a14e', // green
+    '#e74c3c', // red
+    '#9b59b6', // purple
+    '#f9ca24', // yellow
+    '#4ecdc4', // teal
+    '#ff6b9d', // pink
+    '#2c3e50', // dark blue-gray
+    '#1abc9c', // turquoise
+    '#d35400', // burnt orange
+    '#8e44ad', // violet
+    '#27ae60', // emerald
+    '#c0392b', // dark red
+    '#3498db', // light blue
+    '#f39c12', // gold
 ];
 async function fetchDeckStatistics() {
     const response = await fetch('/deck_statistics');
