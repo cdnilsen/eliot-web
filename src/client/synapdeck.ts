@@ -754,7 +754,7 @@ function transcribe(str: string, process: string = "", otherProcess: string = ""
         "Coptic": (text) => transliterateCoptic(text),
         "Ge'ez": (text) => transliterateGeez(text, optionalBoolean),
         "Ancient Greek": (text) => transliterateGreek(text),
-        "Hebrew": (text) => transliterateHebrew(text, optionalBoolean),
+        "Hebrew": (text) => transliterateHebrew(text, true),  // Always include niqqud
     };
     
     // Get the processor function, or default to identity function
