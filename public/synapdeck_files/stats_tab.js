@@ -53,7 +53,7 @@ function createPieChart(stats) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            rotation: -90, // Start at 12 o'clock
+            rotation: 0, // Start at 12 o'clock (top)
             plugins: {
                 legend: {
                     position: 'right',
