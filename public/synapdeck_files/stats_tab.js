@@ -99,10 +99,15 @@ function createHeatmap(pastReviews, futureDue, todayDue) {
     const endDate = new Date(now.getFullYear(), now.getMonth() + 6, 0);
     // Align to Saturday
     endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
-    // Find max count for color scaling
-    let maxCount = 1;
-    dateMap.forEach(v => { if (v.count > maxCount)
-        maxCount = v.count; });
+    // Find max count for color scaling (separate for past and future for better contrast)
+    let maxPastCount = 1;
+    let maxFutureCount = 1;
+    dateMap.forEach(v => {
+        if (v.type === 'past' && v.count > maxPastCount)
+            maxPastCount = v.count;
+        if (v.type === 'future' && v.count > maxFutureCount)
+            maxFutureCount = v.count;
+    });
     // Build weeks
     const weeks = [];
     let currentWeek = [];
@@ -161,6 +166,7 @@ function createHeatmap(pastReviews, futureDue, todayDue) {
             const cell = weeks[w][d];
             const x = labelWidth + w * (cellSize + cellGap);
             const y = headerHeight + d * (cellSize + cellGap);
+            const maxCount = cell.type === 'future' ? maxFutureCount : maxPastCount;
             const color = getCellColor(cell.count, maxCount, cell.type, cell.dateStr === todayStr);
             html += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" rx="2" ry="2" `
                 + `fill="${color}" class="heatmap-cell" `
@@ -170,17 +176,18 @@ function createHeatmap(pastReviews, futureDue, todayDue) {
     html += `</svg></div>`;
     // Legend
     html += `<div class="heatmap-legend">
-        <span class="heatmap-legend-label">Less</span>
-        <span class="heatmap-legend-cell" style="background:${getCellColor(0, maxCount, 'past', false)}"></span>
-        <span class="heatmap-legend-cell" style="background:${getCellColor(maxCount * 0.25, maxCount, 'past', false)}"></span>
-        <span class="heatmap-legend-cell" style="background:${getCellColor(maxCount * 0.5, maxCount, 'past', false)}"></span>
-        <span class="heatmap-legend-cell" style="background:${getCellColor(maxCount * 0.75, maxCount, 'past', false)}"></span>
-        <span class="heatmap-legend-cell" style="background:${getCellColor(maxCount, maxCount, 'past', false)}"></span>
-        <span class="heatmap-legend-label">More</span>
-        <span style="margin-left:16px" class="heatmap-legend-label">Past reviews</span>
-        <span class="heatmap-legend-cell" style="background:#9be9a8"></span>
-        <span class="heatmap-legend-label">Future due</span>
-        <span class="heatmap-legend-cell" style="background:#79b8f8"></span>
+        <span class="heatmap-legend-label">Past:</span>
+        <span class="heatmap-legend-cell" style="background:${getCellColor(0, maxPastCount, 'past', false)}"></span>
+        <span class="heatmap-legend-cell" style="background:${getCellColor(maxPastCount * 0.25, maxPastCount, 'past', false)}"></span>
+        <span class="heatmap-legend-cell" style="background:${getCellColor(maxPastCount * 0.5, maxPastCount, 'past', false)}"></span>
+        <span class="heatmap-legend-cell" style="background:${getCellColor(maxPastCount, maxPastCount, 'past', false)}"></span>
+        <span style="margin-left:12px" class="heatmap-legend-label">Future:</span>
+        <span class="heatmap-legend-cell" style="background:${getCellColor(0, maxFutureCount, 'future', false)}"></span>
+        <span class="heatmap-legend-cell" style="background:${getCellColor(maxFutureCount * 0.25, maxFutureCount, 'future', false)}"></span>
+        <span class="heatmap-legend-cell" style="background:${getCellColor(maxFutureCount * 0.5, maxFutureCount, 'future', false)}"></span>
+        <span class="heatmap-legend-cell" style="background:${getCellColor(maxFutureCount, maxFutureCount, 'future', false)}"></span>
+        <span style="margin-left:12px" class="heatmap-legend-label">Today:</span>
+        <span class="heatmap-legend-cell" style="background:#ffc658"></span>
     </div>`;
     container.innerHTML = html;
     // Attach tooltip events
