@@ -32,6 +32,7 @@ let deckNameList: string[] = [
     "Proto-Algonquian",
     "Russian",
     "Sanskrit",
+    "Syriac",
     "Tocharian B"
 ]
 
