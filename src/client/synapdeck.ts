@@ -1681,7 +1681,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
                     }
                     
                     @page {
-                        margin: 0;
+                        margin: 0.4in;
                         orphans: 3;
                         widows: 3;
                     }
