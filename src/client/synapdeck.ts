@@ -1468,7 +1468,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                 body {
                     font-family: 'GentiumPlus', 'Gentium Plus', serif;
                     font-size: 14px;
-                    line-height: 1.75;
+                    line-height: 1.4;
                     color: #000;
                     background: white;
                     max-width: 8.5in;
@@ -1593,7 +1593,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                     /* Reset to single column for print */
                     body {
                         font-size: 11pt !important;
-                        line-height: 1.3 !important;
+                        line-height: 1.6 !important;
                         max-width: none;
                         margin: 0;
                         padding: 0.4in !important;
