@@ -1605,7 +1605,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
                         line-height: 2 !important;
                         max-width: none;
                         margin: 0;
-                        padding: 0.4in !important;
+                        padding: 0 0.4in 0.4in 0.4in !important;
                     }
 
                     .header {
