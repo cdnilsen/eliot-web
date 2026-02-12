@@ -1452,7 +1452,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${selectedReviewDeck} Review Sheet - ${today}</title>
+            <title></title>
             <style>
                 @font-face {
                     font-family: 'GentiumPlus';
@@ -1605,7 +1605,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
                         line-height: 2 !important;
                         max-width: none;
                         margin: 0;
-                        padding: 0 0.4in 0.4in 0.4in !important;
+                        padding: 0.4in !important;
                     }
 
                     .header {
@@ -1681,7 +1681,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
                     }
                     
                     @page {
-                        margin: 0.4in;
+                        margin: 0;
                         orphans: 3;
                         widows: 3;
                     }
