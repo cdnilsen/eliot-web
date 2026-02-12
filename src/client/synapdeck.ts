@@ -1522,7 +1522,6 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
                     column-count: 2;
                     column-gap: 30px;
                     column-rule: 1px solid #ccc;
-                    min-height: calc(100vh - 200px);
                 }
                 
                 .card-item {
