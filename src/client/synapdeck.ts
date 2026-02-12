@@ -1440,8 +1440,11 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
 }
 
 // Replace your existing generateReviewSheetHTML function with this improved version
-function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, leftColumnWidth: string = "40%"): string {
-    const today = new Date().toLocaleDateString();
+function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, sessionId: number | null = null, leftColumnWidth: string = "40%"): string {
+    const now = new Date();
+    const today = now.toLocaleDateString();
+    const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const sessionStr = sessionId ? `Session ${sessionId}` : '';
     
     return `
         <!DOCTYPE html>
@@ -1477,24 +1480,32 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                 }
                 
                 .header {
-                    text-align: center;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
                     margin-bottom: 30px;
                     border-bottom: 2px solid #333;
                     padding-bottom: 20px;
                 }
-                
+
+                .header-left, .header-right {
+                    font-size: 11px;
+                    color: #666;
+                    flex-shrink: 0;
+                    padding-top: 6px;
+                }
+
+                .header-center {
+                    text-align: center;
+                    flex-grow: 1;
+                }
+
                 .title {
                     font-size: 24px;
                     font-weight: bold;
-                    margin-bottom: 8px;
+                    margin-bottom: 4px;
                 }
-                
-                .date {
-                    font-size: 12px;
-                    color: #666;
-                    margin-bottom: 15px;
-                }
-                
+
                 .summary {
                     font-size: 14px;
                     font-weight: bold;
@@ -1611,11 +1622,6 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                         margin-bottom: 4px !important;
                     }
                     
-                    .date {
-                        font-size: 10px !important;
-                        margin-bottom: 8px !important;
-                    }
-                    
                     .summary {
                         font-size: 12px !important;
                     }
@@ -1674,9 +1680,9 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                         break-inside: auto !important;
                     }
                     
-                    /* Ensure page margins are respected */
+                    /* Remove browser header/footer (date, URL, title) by zeroing @page margin */
                     @page {
-                        margin: 0.4in;
+                        margin: 0;
                         orphans: 3;
                         widows: 3;
                     }
@@ -1714,8 +1720,12 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
             </div>
             
             <div class="header">
-                <div class="title">${selectedReviewDeck} Review Sheet (${today})</div>
-                <div class="summary">Total Cards: ${cards.length}</div>
+                <div class="header-left">${sessionStr}</div>
+                <div class="header-center">
+                    <div class="title">${selectedReviewDeck} Review Sheet (${today})</div>
+                    <div class="summary">Total Cards: ${cards.length}</div>
+                </div>
+                <div class="header-right">${timeStr}</div>
             </div>
                         
             <div class="two-column-container">
@@ -1883,7 +1893,7 @@ async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
 
     try {
         // Generate the HTML (rest of your existing code)
-        const htmlContent = generateReviewSheetHTML(cards, selectedReviewDeck);
+        const htmlContent = generateReviewSheetHTML(cards, selectedReviewDeck, currentSessionId);
         
         // Create blob and URL
         const blob = new Blob([htmlContent], { type: 'text/html' });
