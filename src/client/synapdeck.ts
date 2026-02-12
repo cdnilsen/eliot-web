@@ -1600,19 +1600,18 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
                         display: none !important;
                     }
                     
-                    /* Reset to single column for print */
                     body {
                         font-size: 11pt !important;
                         line-height: 2 !important;
                         max-width: none;
                         margin: 0;
-                        padding: 0.4in !important;
+                        padding: 0 0.4in 0.4in 0.4in !important;
                     }
-                    
-                    /* Compact header with page break control */
+
                     .header {
-                        margin-bottom: 15px !important;
-                        padding-bottom: 10px !important;
+                        margin-top: 0 !important;
+                        margin-bottom: 10px !important;
+                        padding-bottom: 8px !important;
                         page-break-after: avoid;
                     }
                     
@@ -1681,9 +1680,8 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
                         break-inside: auto !important;
                     }
                     
-                    /* Remove browser header/footer (date, URL, title) by zeroing @page margin */
                     @page {
-                        margin: 0;
+                        margin: 0.4in;
                         orphans: 3;
                         widows: 3;
                     }
