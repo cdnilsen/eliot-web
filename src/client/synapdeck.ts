@@ -1638,7 +1638,9 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
                         column-count: 2 !important;
                         column-gap: 60px !important;
                         column-rule: 1px solid #ccc !important;
-                        min-height: auto;
+                        min-height: auto !important;
+                        break-before: avoid;
+                        page-break-before: avoid;
                     }
                     
                     /* Critical: Improved card item page break handling */
