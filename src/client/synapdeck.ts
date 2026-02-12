@@ -1593,7 +1593,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                     /* Reset to single column for print */
                     body {
                         font-size: 11pt !important;
-                        line-height: 1.6 !important;
+                        line-height: 2 !important;
                         max-width: none;
                         margin: 0;
                         padding: 0.4in !important;
@@ -1630,7 +1630,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                     /* Keep two-column flowing layout for print */
                     .two-column-container {
                         column-count: 2 !important;
-                        column-gap: 30px !important;
+                        column-gap: 60px !important;
                         column-rule: 1px solid #ccc !important;
                         min-height: auto;
                     }
