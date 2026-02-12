@@ -1637,21 +1637,26 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                         page-break-before: avoid;
                     }
                     
-                    /* Keep two-column layout for print */
+                    /* Keep two-column layout for print using table layout (more reliable than flex) */
                     .two-column-container {
-                        display: flex !important;
+                        display: table !important;
+                        width: 100% !important;
+                        table-layout: fixed;
                         min-height: auto;
-                        gap: 20px;
                     }
 
                     .left-column {
+                        display: table-cell !important;
                         width: ${leftColumnWidth} !important;
                         padding-right: 10px !important;
+                        vertical-align: top;
                     }
 
                     .right-column {
+                        display: table-cell !important;
                         width: ${rightColumnWidth} !important;
                         padding-left: 10px !important;
+                        vertical-align: top;
                         border-left: 1px solid #ccc;
                     }
                     
