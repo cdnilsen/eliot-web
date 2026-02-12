@@ -1442,7 +1442,6 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
 // Replace your existing generateReviewSheetHTML function with this improved version
 function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, leftColumnWidth: string = "40%"): string {
     const today = new Date().toLocaleDateString();
-    const rightColumnWidth = `calc(100% - ${leftColumnWidth})`;
     
     return `
         <!DOCTYPE html>
@@ -1469,7 +1468,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                 body {
                     font-family: 'GentiumPlus', 'Gentium Plus', serif;
                     font-size: 14px;
-                    line-height: 1.4;
+                    line-height: 1.75;
                     color: #000;
                     background: white;
                     max-width: 8.5in;
@@ -1509,19 +1508,10 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                 }
                 
                 .two-column-container {
-                    display: flex;
+                    column-count: 2;
+                    column-gap: 30px;
+                    column-rule: 1px solid #ccc;
                     min-height: calc(100vh - 200px);
-                    gap: 20px;
-                }
-                
-                .left-column {
-                    width: ${leftColumnWidth};
-                    padding-right: 10px;
-                }
-                
-                .right-column {
-                    width: ${rightColumnWidth};
-                    padding-left: 10px;
                 }
                 
                 .card-item {
@@ -1637,27 +1627,12 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                         page-break-before: avoid;
                     }
                     
-                    /* Keep two-column layout for print using table layout (more reliable than flex) */
+                    /* Keep two-column flowing layout for print */
                     .two-column-container {
-                        display: table !important;
-                        width: 100% !important;
-                        table-layout: fixed;
+                        column-count: 2 !important;
+                        column-gap: 30px !important;
+                        column-rule: 1px solid #ccc !important;
                         min-height: auto;
-                    }
-
-                    .left-column {
-                        display: table-cell !important;
-                        width: ${leftColumnWidth} !important;
-                        padding-right: 10px !important;
-                        vertical-align: top;
-                    }
-
-                    .right-column {
-                        display: table-cell !important;
-                        width: ${rightColumnWidth} !important;
-                        padding-left: 10px !important;
-                        vertical-align: top;
-                        border-left: 1px solid #ccc;
                     }
                     
                     /* Critical: Improved card item page break handling */
@@ -1716,16 +1691,10 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
                 /* Responsive design for smaller screens */
                 @media (max-width: 768px) {
                     .two-column-container {
-                        flex-direction: column;
+                        column-count: 1;
                     }
-                    
-                    .left-column, .right-column {
-                        width: 100% !important;
-                        padding: 0;
-                    }
-                    
+
                     .card-item {
-                        justify-content: flex-start;
                         text-align: left;
                     }
                 }
@@ -1750,12 +1719,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, l
             </div>
                         
             <div class="two-column-container">
-                <div class="left-column">
-                    ${cards.map((card, index) => generateCardHTML(card, index + 1)).join('')}
-                </div>
-                <div class="right-column">
-                    <!-- Empty space for answers -->
-                </div>
+                ${cards.map((card, index) => generateCardHTML(card, index + 1)).join('')}
             </div>
             
             <script>
@@ -2101,10 +2065,13 @@ if (reviewDeckDropdown) {
                 //Man this is repetitive
                 const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
 
-            
-                let numCards = parseInt(reviewAheadNumCards.value)
                 cachedCardResults = await checkAvailableCardsWithOptions(selectedReviewDeck);
                 lastCheckedDeck = selectedReviewDeck;
+
+                // Default to reviewing all due cards
+                const totalDue = cachedCardResults.cards?.length || 0;
+                setReviewNumCardsToTotal(totalDue);
+                let numCards = totalDue;
 
                 if (reviewAheadNumCards) {
                     reviewAheadNumCards.addEventListener('change', function(e) {
@@ -2158,25 +2125,27 @@ if (reviewDeckDropdown) {
 async function refreshCardCache(): Promise<void> {
     if (!selectedReviewDeck) return;
     
-    const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
-
     console.log('Refreshing card cache due to setting change...');
-    let numCards = parseInt(reviewAheadNumCards.value)
     const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
     if (submitButton) {
         submitButton.textContent = 'Updating...';
         submitButton.disabled = true;
     }
-    
+
     try {
         cachedCardResults = await checkAvailableCardsWithOptions(selectedReviewDeck);
         lastCheckedDeck = selectedReviewDeck;
-        
+
+        // Default to reviewing all due cards
+        const totalDue = cachedCardResults.cards?.length || 0;
+        setReviewNumCardsToTotal(totalDue);
+        let numCards = totalDue;
+
         const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
         const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
         const currentReviewAhead = reviewAheadCheckbox?.checked || false;
         const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
-        
+
         if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
             updateSubmitButtonText(numCards, cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
         } else {
@@ -2225,6 +2194,15 @@ function setupReviewAheadUI(): void {
 let cachedCardResults: CheckCardsResponse | null = null;
 let lastCheckedDeck: string = "";
 let reviewSubmitButton = document.getElementById("review_submitBtn");
+
+/** Set the review_numCards input to the total number of due cards. */
+function setReviewNumCardsToTotal(totalCardCount: number): void {
+    const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
+    if (reviewAheadNumCards) {
+        reviewAheadNumCards.value = String(totalCardCount);
+        reviewAheadNumCards.max = String(totalCardCount);
+    }
+}
 
 function updateSubmitButtonText(numCards: number, totalCardCount: number, reviewAhead: boolean, daysAhead: number): void {
     const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
