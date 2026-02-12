@@ -1909,12 +1909,6 @@ async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
                 }, 1500);
             });
             
-            // Update the tab title
-            pdfTab.addEventListener('load', () => {
-                if (pdfTab.document) {
-                    pdfTab.document.title = `Card Review Sheet - ${new Date().toLocaleDateString()} (Session ${currentSessionId || 'N/A'})`;
-                }
-            });
         }
         
         // Clean up blob URL after a delay
