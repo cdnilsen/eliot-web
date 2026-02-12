@@ -1440,7 +1440,7 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
 }
 
 // Replace your existing generateReviewSheetHTML function with this improved version
-function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40%"): string {
+function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, leftColumnWidth: string = "40%"): string {
     const today = new Date().toLocaleDateString();
     const rightColumnWidth = `calc(100% - ${leftColumnWidth})`;
     
@@ -1450,7 +1450,7 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Card Review Sheet - ${today}</title>
+            <title>${selectedReviewDeck} Review Sheet - ${today}</title>
             <style>
                 @font-face {
                     font-family: 'GentiumPlus';
@@ -1637,20 +1637,22 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                         page-break-before: avoid;
                     }
                     
-                    /* Switch to single column for print */
+                    /* Keep two-column layout for print */
                     .two-column-container {
-                        display: block !important;
+                        display: flex !important;
                         min-height: auto;
-                        gap: 0 !important;
+                        gap: 20px;
                     }
-                    
+
                     .left-column {
-                        width: 100% !important;
-                        padding: 0 !important;
+                        width: ${leftColumnWidth} !important;
+                        padding-right: 10px !important;
                     }
-                    
+
                     .right-column {
-                        display: none !important; /* Hide empty answer column in print */
+                        width: ${rightColumnWidth} !important;
+                        padding-left: 10px !important;
+                        border-left: 1px solid #ccc;
                     }
                     
                     /* Critical: Improved card item page break handling */
@@ -1738,13 +1740,10 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
             </div>
             
             <div class="header">
-                <div class="title">Card Review Sheet</div>
-                <div class="date">Generated: ${today}</div>
+                <div class="title">${selectedReviewDeck} Review Sheet (${today})</div>
                 <div class="summary">Total Cards: ${cards.length}</div>
             </div>
-            
-            <div class="section-title">Cards Due for Review:</div>
-            
+                        
             <div class="two-column-container">
                 <div class="left-column">
                     ${cards.map((card, index) => generateCardHTML(card, index + 1)).join('')}
@@ -1874,7 +1873,6 @@ function generateCardHTML(card: CardDue, cardNumber: number): string {
     `;
 }
 
-
 // Update your produceCardReviewSheetPDFViewer function to create a session
 async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
     // Mark cards as under review in database
@@ -1916,7 +1914,7 @@ async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
 
     try {
         // Generate the HTML (rest of your existing code)
-        const htmlContent = generateReviewSheetHTML(cards);
+        const htmlContent = generateReviewSheetHTML(cards, selectedReviewDeck);
         
         // Create blob and URL
         const blob = new Blob([htmlContent], { type: 'text/html' });
