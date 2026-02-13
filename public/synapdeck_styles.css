@@ -1073,6 +1073,7 @@ input[type="file"]:hover {
     max-height: 60px;
     overflow: hidden;
     position: relative;
+    font-family: 'GentiumPlus', 'Gentium Plus', serif;
 }
 
 .front-cell .content-preview {
