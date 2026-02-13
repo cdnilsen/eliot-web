@@ -90,6 +90,12 @@ function createPieChart(stats: DeckStatistic[]): void {
     const data = sortedStats.map(s => s.total_cards);
     const total = data.reduce((a, b) => a + b, 0);
 
+    // Update the heading to include total card count
+    const titleEl = document.getElementById('cardsByDeckTitle');
+    if (titleEl) {
+        titleEl.textContent = `${total} Cards by Deck`;
+    }
+
     pieChart = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -110,7 +116,22 @@ function createPieChart(stats: DeckStatistic[]): void {
                     position: 'right',
                     labels: {
                         font: { size: 13 },
-                        sort: (a: any, b: any) => a.index - b.index  // Preserve data order (descending by card count)
+                        sort: (a: any, b: any) => a.index - b.index,  // Preserve data order (descending by card count)
+                        generateLabels: function(chart: any) {
+                            const dataset = chart.data.datasets[0];
+                            return chart.data.labels.map((label: string, i: number) => {
+                                const count = dataset.data[i];
+                                const pct = ((count / total) * 100).toFixed(1);
+                                return {
+                                    text: `${label}: ${count} cards (${pct}%)`,
+                                    fillStyle: dataset.backgroundColor[i],
+                                    strokeStyle: dataset.borderColor,
+                                    lineWidth: dataset.borderWidth,
+                                    hidden: !chart.getDataVisibility(i),
+                                    index: i
+                                };
+                            });
+                        }
                     }
                 },
                 tooltip: {

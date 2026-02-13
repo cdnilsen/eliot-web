@@ -1638,7 +1638,8 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
                         column-count: 2 !important;
                         column-gap: 60px !important;
                         column-rule: 1px solid #ccc !important;
-                        column-fill: auto !important;
+                        column-fill: balance !important;
+                        height: auto !important;
                         min-height: auto !important;
                         break-before: avoid;
                         page-break-before: avoid;
