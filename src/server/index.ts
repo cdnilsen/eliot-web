@@ -1837,10 +1837,82 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
                 console.log(`⚠️ Failed to update card ${scheduledCard.card_id}`);
             }
         }
-        
+
+        // Boost intervals for same-note peers of passed cards
+        const passedCardIds = validResults
+            .filter(r => r.result === 'pass')
+            .map(r => r.cardId);
+
+        if (passedCardIds.length > 0) {
+            console.log(`📈 Checking same-note peers for ${passedCardIds.length} passed cards`);
+
+            // Get note_id and peers for passed cards
+            const passedCardsInfo = await transactionClient.query(
+                `SELECT card_id, note_id, peers FROM cards WHERE card_id = ANY($1::int[])`,
+                [passedCardIds]
+            );
+
+            // Collect candidate (peerId, requiredNoteId) pairs, excluding cards in this review
+            const reviewedCardIdSet = new Set(cardIds);
+            const candidatePairs: Array<{peerId: number, noteId: number}> = [];
+
+            for (const card of passedCardsInfo.rows) {
+                if (!card.peers || !Array.isArray(card.peers)) continue;
+                for (const peerId of card.peers) {
+                    if (!reviewedCardIdSet.has(peerId)) {
+                        candidatePairs.push({ peerId, noteId: card.note_id });
+                    }
+                }
+            }
+
+            const uniquePeerIds = [...new Set(candidatePairs.map(p => p.peerId))];
+
+            if (uniquePeerIds.length > 0) {
+                // Get actual note_id, interval, time_due for candidate peers
+                const peerInfoQuery = await transactionClient.query(
+                    `SELECT card_id, note_id, interval, time_due FROM cards WHERE card_id = ANY($1::int[])`,
+                    [uniquePeerIds]
+                );
+
+                const peerInfoMap = new Map<number, any>(
+                    peerInfoQuery.rows.map((r: any) => [r.card_id, r])
+                );
+
+                // Keep only peers whose note_id matches the passed card's note_id
+                const peersToBoostIds = new Set<number>();
+                for (const { peerId, noteId } of candidatePairs) {
+                    const peerInfo = peerInfoMap.get(peerId);
+                    if (peerInfo && peerInfo.note_id === noteId) {
+                        peersToBoostIds.add(peerId);
+                    }
+                }
+
+                // Apply boosts
+                for (const peerId of peersToBoostIds) {
+                    const peer = peerInfoMap.get(peerId)!;
+                    const currentInterval = peer.interval || 1;
+                    const fivePercent = Math.floor(currentInterval * 0.05);
+                    const boost = Math.max(fivePercent, 1);
+                    const newInterval = currentInterval + boost;
+                    const newTimeDue = new Date(new Date(peer.time_due).getTime() + boost * 24 * 60 * 60 * 1000);
+
+                    await transactionClient.query(
+                        `UPDATE cards SET interval = $1, time_due = $2 WHERE card_id = $3`,
+                        [newInterval, newTimeDue, peer.card_id]
+                    );
+
+                    console.log(`📈 Boosted peer card ${peerId}: interval ${currentInterval}d → ${newInterval}d (+${boost}d)`);
+                }
+
+                if (peersToBoostIds.size > 0) {
+                    console.log(`📈 Boosted ${peersToBoostIds.size} same-note peers of passed cards`);
+                }
+            }
+        }
+
         // Update session tracking if session_id provided
         let finalSessionId = session_id;
-        
+
         if (session_id) {
             console.log(`📊 Updating session ${session_id}`);
             
