@@ -183,10 +183,23 @@ export async function rescheduleCards(
             
             // Calculate new interval
             const newIntervalMs = updateInterval(stability, settings);
-            const newIntervalDays = Math.max(1, Math.ceil(newIntervalMs / (24 * 60 * 60 * 1000))); // At least 1 day
-            
+            let newIntervalDays = Math.max(1, Math.ceil(newIntervalMs / (24 * 60 * 60 * 1000))); // At least 1 day
+
             // Calculate new due date
-            const newTimeDue = new Date(reviewTimestamp.getTime() + newIntervalMs);
+            let newTimeDue = new Date(reviewTimestamp.getTime() + newIntervalMs);
+
+            // New cards graded hard: push to start of next day so they don't reappear today
+            if (isFirstReview && card.grade === 'hard') {
+                const nextDay = new Date(reviewTimestamp);
+                nextDay.setDate(nextDay.getDate() + 1);
+                nextDay.setHours(0, 0, 0, 0);
+
+                if (newTimeDue < nextDay) {
+                    newTimeDue = nextDay;
+                    newIntervalDays = Math.max(newIntervalDays, 1);
+                    console.log(`⏭️ New card ${card.card_id} graded hard — pushed to next day: ${newTimeDue.toISOString()}`);
+                }
+            }
             
             // Reset retrievability to 1 since card was just reviewed
             const newRetrievability = 1;
