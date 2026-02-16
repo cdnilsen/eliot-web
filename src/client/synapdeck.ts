@@ -3591,6 +3591,9 @@ function displayBrowseResults(cards: CardDue[], totalCount: number): void {
                         <button class="btn btn-small relationship-btn" data-card-id="${card.card_id}" title="Manage relationships">
                             🔗
                         </button>
+                        <button class="btn btn-small history-btn" data-card-id="${card.card_id}" title="View history">
+                            📜
+                        </button>
                         <button class="btn btn-small delete-card-btn" data-card-id="${card.card_id}" title="Delete card">
                             🗑️
                         </button>
@@ -4083,6 +4086,28 @@ function setupCardActionButtons(): void {
                 });
             } else {
                 console.error('No card ID found for relationship button');
+            }
+        }
+
+        else if (target.classList.contains('history-btn') || target.closest('.history-btn')) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const button = target.classList.contains('history-btn') ? target : target.closest('.history-btn') as HTMLElement;
+            const cardId = button?.getAttribute('data-card-id');
+
+            if (button?.dataset.processing === 'true') {
+                return;
+            }
+
+            if (cardId) {
+                button.dataset.processing = 'true';
+
+                showCardHistoryModal(parseInt(cardId)).finally(() => {
+                    setTimeout(() => {
+                        button.dataset.processing = 'false';
+                    }, 1000);
+                });
             }
         }
     });
@@ -4996,6 +5021,201 @@ function closeRelationshipModal(): void {
     (window as any).relationshipModalOpening = false;
     
     console.log('Modal cleanup complete');
+}
+
+
+// Show card history modal with creation date and review timeline
+async function showCardHistoryModal(cardId: number): Promise<void> {
+    // Clean up any existing history modal
+    const existingModal = document.getElementById('cardHistoryModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    const existingLoadingModal = document.getElementById('cardEditModal');
+    if (existingLoadingModal) {
+        existingLoadingModal.remove();
+    }
+
+    if ((window as any).historyModalOpening) {
+        return;
+    }
+    (window as any).historyModalOpening = true;
+
+    try {
+        showLoadingModal(`Loading history for card ${cardId}...`);
+
+        const response = await fetch(`/card/${cardId}/history`);
+        const data = await response.json();
+
+        if (data.status !== 'success') {
+            throw new Error(data.error || 'Failed to load card history');
+        }
+
+        // Remove loading modal
+        const loadingModal = document.getElementById('cardEditModal');
+        if (loadingModal) {
+            loadingModal.remove();
+        }
+
+        // Build review rows
+        const reviews = data.reviews || [];
+        let reviewsHtml = '';
+        let passCount = 0, hardCount = 0, failCount = 0;
+
+        if (reviews.length === 0) {
+            reviewsHtml = `<tr><td colspan="4" style="text-align: center; color: #888; padding: 20px;">No reviews yet</td></tr>`;
+        } else {
+            reviews.forEach((review: any, index: number) => {
+                const grade = review.grade || '—';
+                let gradeColor = '#888';
+                let gradeLabel = grade;
+                if (grade === 'pass') { gradeColor = '#28a745'; passCount++; }
+                else if (grade === 'hard') { gradeColor = '#f0ad4e'; hardCount++; }
+                else if (grade === 'fail') { gradeColor = '#dc3545'; failCount++; }
+
+                const reviewDate = review.reviewed_at ? new Date(review.reviewed_at) : null;
+                const dateStr = reviewDate
+                    ? `${reviewDate.toLocaleDateString()} ${reviewDate.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`
+                    : '—';
+
+                const intervalBefore = review.interval_before != null ? `${review.interval_before}d` : '—';
+                const intervalAfter = review.interval_after != null ? `${review.interval_after}d` : '—';
+
+                reviewsHtml += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px 10px; color: #555;">${index + 1}</td>
+                        <td style="padding: 8px 10px;">${dateStr}</td>
+                        <td style="padding: 8px 10px;">
+                            <span style="color: ${gradeColor}; font-weight: 600; text-transform: capitalize;">${gradeLabel}</span>
+                        </td>
+                        <td style="padding: 8px 10px; color: #555;">${intervalBefore} → ${intervalAfter}</td>
+                    </tr>`;
+            });
+        }
+
+        // Summary line
+        const totalReviews = passCount + hardCount + failCount;
+        const summaryHtml = totalReviews > 0
+            ? `<span style="color:#28a745; font-weight:600;">${passCount} pass</span> · <span style="color:#f0ad4e; font-weight:600;">${hardCount} hard</span> · <span style="color:#dc3545; font-weight:600;">${failCount} fail</span>`
+            : 'No reviews';
+
+        // Card info
+        const createdDate = data.created ? new Date(data.created) : null;
+        const createdStr = createdDate ? createdDate.toLocaleDateString() : '—';
+        const stats = data.current_stats || {};
+        const lastReviewed = stats.last_reviewed ? new Date(stats.last_reviewed).toLocaleDateString() : 'Never';
+        const retrievPct = stats.retrievability != null ? `${(stats.retrievability * 100).toFixed(1)}%` : '—';
+
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'cardHistoryModal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center;
+            align-items: center; z-index: 10000; animation: fadeIn 0.2s ease-out;
+        `;
+
+        modal.innerHTML = `
+            <div style="
+                background: white; border-radius: 12px; width: 90%; max-width: 600px;
+                max-height: 80vh; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+                animation: slideIn 0.3s ease-out; display: flex; flex-direction: column;
+            ">
+                <!-- Header -->
+                <div style="
+                    display: flex; justify-content: space-between; align-items: center;
+                    padding: 20px 24px; border-bottom: 1px solid #e1e5e9; background: #f8f9fa;
+                ">
+                    <h2 style="margin: 0; color: #333; font-size: 20px; font-weight: 600;">
+                        📜 Card History - Card ${cardId}
+                    </h2>
+                    <button id="closeHistoryModal_${cardId}" style="
+                        background: none; border: none; font-size: 28px; cursor: pointer;
+                        color: #666; width: 40px; height: 40px; display: flex;
+                        align-items: center; justify-content: center; border-radius: 6px;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='none'">×</button>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 20px 24px; overflow-y: auto; flex: 1;">
+                    <!-- Card Info -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 12px; color: #888; margin-bottom: 4px;">Created</div>
+                            <div style="font-weight: 600; color: #333;">${createdStr}</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 12px; color: #888; margin-bottom: 4px;">Last Reviewed</div>
+                            <div style="font-weight: 600; color: #333;">${lastReviewed}</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 12px; color: #888; margin-bottom: 4px;">Interval</div>
+                            <div style="font-weight: 600; color: #333;">${stats.interval != null ? stats.interval + 'd' : '—'}</div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 12px; color: #888; margin-bottom: 4px;">Retrievability</div>
+                            <div style="font-weight: 600; color: #333;">${retrievPct}</div>
+                        </div>
+                    </div>
+
+                    <!-- Deck & Format -->
+                    <div style="font-size: 13px; color: #666; margin-bottom: 16px;">
+                        <strong>Deck:</strong> ${data.deck || '—'} &nbsp;·&nbsp; <strong>Format:</strong> ${data.card_format || '—'}
+                    </div>
+
+                    <!-- Summary -->
+                    <div style="margin-bottom: 16px; padding: 10px 14px; background: #f0f4f8; border-radius: 8px; font-size: 14px;">
+                        <strong>${totalReviews} review${totalReviews !== 1 ? 's' : ''}</strong> &nbsp;—&nbsp; ${summaryHtml}
+                    </div>
+
+                    <!-- Reviews Table -->
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #dee2e6;">
+                                <th style="padding: 8px 10px; text-align: left; color: #555; font-weight: 600;">#</th>
+                                <th style="padding: 8px 10px; text-align: left; color: #555; font-weight: 600;">Date</th>
+                                <th style="padding: 8px 10px; text-align: left; color: #555; font-weight: 600;">Grade</th>
+                                <th style="padding: 8px 10px; text-align: left; color: #555; font-weight: 600;">Interval</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${reviewsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Close button handler
+        const closeBtn = document.getElementById(`closeHistoryModal_${cardId}`);
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                modal.style.animation = 'fadeOut 0.2s ease-in';
+                setTimeout(() => modal.remove(), 200);
+            });
+        }
+
+        // Click backdrop to close
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.animation = 'fadeOut 0.2s ease-in';
+                setTimeout(() => modal.remove(), 200);
+            }
+        });
+
+    } catch (error: unknown) {
+        console.error('Error loading card history:', error);
+        const loadingModal = document.getElementById('cardEditModal');
+        if (loadingModal) loadingModal.remove();
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        showToast(`Failed to load history for card ${cardId}: ${message}`, 'error');
+    } finally {
+        (window as any).historyModalOpening = false;
+    }
 }
 
 

@@ -3610,6 +3610,71 @@ app.get('/card/:cardId/edit_history', wrapAsync(async (req, res) => {
     }
 }));
 
+// Get detailed history for a card (creation date + all reviews)
+app.get('/card/:cardId/history', wrapAsync(async (req, res) => {
+    const { cardId } = req.params;
+    const cardIdNum = parseInt(cardId);
+
+    if (isNaN(cardIdNum)) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid card ID'
+        });
+    }
+
+    try {
+        // Get card basics
+        const cardQuery = await client.query(
+            `SELECT card_id, created, last_reviewed, deck, card_format,
+                    interval, retrievability, stability, difficulty
+             FROM cards WHERE card_id = $1`,
+            [cardIdNum]
+        );
+
+        if (cardQuery.rows.length === 0) {
+            return res.status(404).json({
+                status: 'error',
+                error: `Card ${cardIdNum} not found`
+            });
+        }
+
+        const card = cardQuery.rows[0];
+
+        // Get all reviews from session_card_reviews
+        const reviewsQuery = await client.query(
+            `SELECT scr.reviewed_at, scr.grade, scr.interval_before, scr.interval_after,
+                    scr.retrievability_before, scr.retrievability_after, scr.session_id
+             FROM session_card_reviews scr
+             WHERE scr.card_id = $1 AND scr.reviewed_at IS NOT NULL
+             ORDER BY scr.reviewed_at ASC`,
+            [cardIdNum]
+        );
+
+        res.json({
+            status: 'success',
+            card_id: cardIdNum,
+            created: card.created,
+            deck: card.deck,
+            card_format: card.card_format,
+            current_stats: {
+                interval: card.interval,
+                retrievability: card.retrievability,
+                stability: card.stability,
+                difficulty: card.difficulty,
+                last_reviewed: card.last_reviewed
+            },
+            reviews: reviewsQuery.rows
+        });
+
+    } catch (error) {
+        console.error('Error getting card history:', error);
+        res.status(500).json({
+            status: 'error',
+            error: `Database error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        });
+    }
+}));
+
 // Add these interfaces near your other type definitions in index.ts
 interface BulkIntervalUpdateRequest {
     interval_multiplier: number;
