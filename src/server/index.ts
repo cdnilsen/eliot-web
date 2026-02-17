@@ -1763,8 +1763,8 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
         console.log('🔍 Fetching card data for FSRS scheduling:', cardIds);
         
         const currentCardsQuery = await transactionClient.query(
-            `SELECT card_id, time_due, interval, retrievability, stability, difficulty, deck
-             FROM cards 
+            `SELECT card_id, time_due, interval, retrievability, stability, difficulty, deck, last_reviewed
+             FROM cards
              WHERE deck = $1 AND card_id = ANY($2::int[])`,
             [deck, cardIds]
         );
@@ -1792,6 +1792,7 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
                 current_retrievability: dbCard.retrievability,
                 current_stability: dbCard.stability,
                 current_difficulty: dbCard.difficulty,
+                last_reviewed: dbCard.last_reviewed,
                 grade: reviewResult.result as 'pass' | 'hard' | 'fail', // Type assertion since we validated above
                 reviewed_at: reviewTimestamp
             };
