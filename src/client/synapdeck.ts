@@ -3394,6 +3394,7 @@ function setupBrowseCardsTab(): void {
                             <option value="">All Formats</option>
                             <option value="Target to Native">Target to Native</option>
                             <option value="Native to Target">Native to Target</option>
+                            <option value="One Way">One Way"</option>
                         </select>
                     </div>
                     
