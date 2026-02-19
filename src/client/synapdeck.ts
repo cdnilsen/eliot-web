@@ -931,13 +931,9 @@ uploadSubmitButton.addEventListener('click', async () => {
 
     let thisNoteProcessList: string[] = [];
     if (cardFormatDropdown && (currentDeck != "")) {
-        console.log(cardFormatDropdown.value);
         if (cardFormatDropdown.value == "two-way") {
             currentNoteType = "Two-Way";
             thisNoteProcessList = [currentDeck, "", currentDeck, ""];
-        } else if (cardFormatDropdown.value == "one-way-T2N") {
-            currentNoteType = "One-Way";
-            thisNoteProcessList = [currentDeck, ""];
         } else if (cardFormatDropdown.value == "one-way-N2T") {
             currentNoteType = "One-Way";
             thisNoteProcessList = ["", currentDeck];
@@ -3394,7 +3390,7 @@ function setupBrowseCardsTab(): void {
                             <option value="">All Formats</option>
                             <option value="Target to Native">Target to Native</option>
                             <option value="Native to Target">Native to Target</option>
-                            <option value="One Way">One Way"</option>
+                            <option value="One Way">One Way</option>
                         </select>
                     </div>
                     
