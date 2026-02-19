@@ -37,6 +37,13 @@ let deckNameList: string[] = [
     "Tocharian B"
 ]
 
+const printFontSizes: { [key: string]: string } = {
+    "Hebrew": "18px",
+    "Syriac": "18px",
+    "Cuneiform": "18px",
+    "Ge'ez": "14px",
+};
+
 type charSetsType = {
     [key: string]: string[]
 }
@@ -1442,7 +1449,8 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
     const today = now.toLocaleDateString();
     const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const sessionStr = sessionId ? `Session ${sessionId}` : '';
-    
+    const cardFontSize = printFontSizes[selectedReviewDeck] ?? "11pt";
+
     return `
         <!DOCTYPE html>
         <html lang="en">
@@ -1532,7 +1540,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
                 }
                 
                 .card-question {
-                    font-size: 14px;
+                    font-size: ${cardFontSize};
                     font-weight: normal;
                     line-height: 1.4;
                     max-width: 100%;
@@ -1665,7 +1673,7 @@ function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, s
                     }
                     
                     .card-question {
-                        font-size: 11pt !important;
+                        font-size: ${cardFontSize} !important;
                         line-height: 1.3 !important;
                         /* Ensure text flows properly */
                         text-align: left !important;
@@ -2548,7 +2556,7 @@ function displayAnswerKey(cards: CardDue[], deckName: string): void {
         }
     }
     
-    const answerKeyHTML = generateAnswerKey(cards);
+    const answerKeyHTML = generateAnswerKey(cards, deckName);
     
     outputDiv.innerHTML = `
         <div class="check-work-header">
@@ -2656,15 +2664,18 @@ async function submitReviewResults(results: { cardId: number, result: string }[]
     }
 }
 
-function generateAnswerKey(cards: CardDue[]): string {
+function generateAnswerKey(cards: CardDue[], deckName: string): string {
     console.log(`generateAnswerKey called with ${cards.length} cards`);
     
     if (cards.length === 0) {
         return '<p class="no-cards">No cards are currently under review for this deck.</p>';
     }
 
+    const answerFontSize = printFontSizes[deckName];
+    const answerFontStyle = answerFontSize ? ` style="font-size: ${answerFontSize}"` : "";
+
     let html = `
-        <div class="answer-key">
+        <div class="answer-key"${answerFontStyle}>
             <h3>Answer Key (${cards.length} cards)</h3>
             <form id="reviewResultsForm">
                 <div class="answer-table">
