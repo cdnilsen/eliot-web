@@ -38,6 +38,7 @@ let deckNameList: string[] = [
 ]
 
 const printFontSizes: { [key: string]: string } = {
+    "Ancient Greek": "16px",
     "Hebrew": "18px",
     "Syriac": "18px",
     "Cuneiform": "18px",

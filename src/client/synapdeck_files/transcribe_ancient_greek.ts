@@ -652,6 +652,13 @@ function transliterateGreekWithFlags(str: string, flags: SyllabifyFlags): string
   return applyCapitalization(output.normalize("NFC"), capitalPositions);
 }
 
+function isAlreadyGreek(str: string): boolean {
+  return /[\u0370-\u03FF\u1F00-\u1FFF]/.test(str);
+}
+
 export function transliterateGreek(str: string): string {
+  if (isAlreadyGreek(str)) {
+    return str.normalize("NFC");
+  }
   return transliterateGreekWithFlags(str, { preserveWordBreaks: false });
 }
