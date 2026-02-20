@@ -3546,13 +3546,13 @@ function displayBrowseResults(cards: CardDue[], totalCount: number): void {
                     <span class="deck-badge">${card.deck}</span>
                 </td>
                 <td class="content-cell front-cell">
-                    <div class="content-preview" title="${escapeHtml(frontText)}">
-                        ${truncateText(processHTMLContent(frontText), 50)}
+                    <div class="content-preview" title="${escapeHtml(stripHtml(frontText))}">
+                        ${truncateText(stripHtml(frontText), 50)}
                     </div>
                 </td>
                 <td class="content-cell back-cell">
-                    <div class="content-preview" title="${escapeHtml(backText)}">
-                        ${truncateText(processHTMLContent(backText), 50)}
+                    <div class="content-preview" title="${escapeHtml(stripHtml(backText))}">
+                        ${truncateText(stripHtml(backText), 50)}
                     </div>
                 </td>
                 <td class="format-cell">
@@ -3634,6 +3634,12 @@ function getFormatAbbreviation(format: string): string {
         case 'Native to Target': return 'N→T';
         default: return format.substring(0, 3);
     }
+}
+
+function stripHtml(html: string): string {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || '';
 }
 
 function truncateText(text: string, maxLength: number): string {
