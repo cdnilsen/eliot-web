@@ -199,7 +199,7 @@ function parseTaggedText(input: string, otherProcess: string): TextSegment[] {
 
 
 let colorCodingDictionary: Record<string, string[]> = {
-    "mn": ["#00ffff"],
+    "mn": ["#000000", "#00ffff"],
     "m": ["#0000ff"],
     "f": ["#ff0000"],
     "n": ["#000000", "#00ff00"],
@@ -211,32 +211,15 @@ let colorCodingDictionary: Record<string, string[]> = {
 }
 
 function applyColorCoding(output: string, code: string): string {
-    // Don't wrap empty strings
-    //code = code.toString();
-    switch (code) {
-        case "mn":
-            return `<span style="background-color: #00ffff;">${output}</span>`
-        case "m" :
-            return `<span style="color: #0000ff;">${output}</span>`;
-        case "f":
-            return `<span style="color: #ff0000;">${output}</span>`;
-        case "n":
-            return `<span style="background-color: #00ff00;">${output}</span>`;
-        case "e":
-            return `<span style="color: #ff00ff;">${output}</span>`
-        /*
-        case "1":
-            return `<span style="color: #ffffff; background-color: #ff0000;>${output}</span>`
-        case "2":
-            return `<span style="color: #background-color: #ffff00;">${output}</span>`;
-        case "3":
-            return `<span style="color: #background-color: #00ff00;">${output}</span>`;
-        case "4":
-            return `<span style="color: #ffffff; background-color: #0000ff;>${output}</span>`
-            */
-        default:
-            return output;
-    }
+    const colors = colorCodingDictionary[code];
+    if (!colors) return output;
+    const textColor = colors[0];
+    const bgColor = colors[1];
+    const style = [
+        textColor ? `color: ${textColor};` : '',
+        bgColor ? `background-color: ${bgColor};` : ''
+    ].join(' ').trim();
+    return `<span style="${style}">${output}</span>`;
 }
 
 function checkColorCoding(fieldValues: string[], targetIndex: number, cardFormat: string, processedText?: string): string {
