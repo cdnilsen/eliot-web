@@ -792,7 +792,7 @@ function transcribe(str: string, process: string = "", otherProcess: string = ""
 
 let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
 function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boolean) {
-    console.log("🐦 CANARY - cleanFieldDatum v2");
+    //console.log("🐦 CANARY - cleanFieldDatum v2");
     let cardFormat = card.card_format;
 
     if (targetIndex >= card.field_values.length || targetIndex >= card.field_processing.length) {
