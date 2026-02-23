@@ -796,6 +796,13 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
 
     let datum = card.field_values[targetIndex] ?? "";
     let process = card.field_processing[targetIndex];
+    // Log the raw codepoints of the incoming string
+    if (process === "Ancient Greek") {
+        console.log("Raw datum:", datum);
+        console.log("Codepoints:", [...datum].map(c => 
+            `${c} U+${c.codePointAt(0)!.toString(16).padStart(4, '0')}`
+        ).join(' '));
+    }
 
     // Process all languages uniformly — transliterateGreek handles already-Greek
     // text by normalizing to NFC, which fixes diacritic stripping on paste
