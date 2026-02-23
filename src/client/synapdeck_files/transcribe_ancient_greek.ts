@@ -657,7 +657,10 @@ function isAlreadyGreek(str: string): boolean {
 }
 
 export function transliterateGreek(str: string): string {
-  if (isAlreadyGreek(str)) {
+  const alreadyGreek = isAlreadyGreek(str);
+  console.log(`transliterateGreek: "${str}", isAlreadyGreek=${alreadyGreek}, codepoints:`, [...str].map(c => c.codePointAt(0)!.toString(16)));
+  
+  if (alreadyGreek) {
     return str.normalize("NFC");
   }
   return transliterateGreekWithFlags(str, { preserveWordBreaks: false });
