@@ -803,7 +803,7 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
             `${c} U+${c.codePointAt(0)!.toString(16).padStart(4, '0')}`
         ).join(' '));
     }
-
+    // ἄφρων / senseless, crazed / ἄφρων/ον (-ονος)
     // Process all languages uniformly — transliterateGreek handles already-Greek
     // text by normalizing to NFC, which fixes diacritic stripping on paste
     let output = transcribe(datum, process, card.deck, isBackOfCard);
@@ -995,11 +995,12 @@ uploadSubmitButton.addEventListener('click', async () => {
         // Done here, not in cleanFieldDatum, to grandfather in existing Greek cards. (Upon inspection, can confirm that this actually works.)
         if (currentDeck == "Ancient Greek") {
             for (let j = 0; j < thisNoteDataList.length; j++) {
+                console.log(`Before transcribe [${j}]:`, thisNoteDataList[j], 
+                    [...thisNoteDataList[j]].map(c => c.codePointAt(0)!.toString(16)));
                 if (thisCardProcessList[j] == "Ancient Greek") {
                     thisNoteDataList[j] = transcribe(thisNoteDataList[j], "Ancient Greek");
-                } else {
-                    thisNoteDataList[j] = transcribe(thisNoteDataList[j], "", "Ancient Greek");
                 }
+                console.log(`After transcribe [${j}]:`, thisNoteDataList[j]);
             }
         }
         
