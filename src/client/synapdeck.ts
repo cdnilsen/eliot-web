@@ -996,7 +996,7 @@ uploadSubmitButton.addEventListener('click', async () => {
         if (currentDeck == "Ancient Greek") {
             for (let j = 0; j < thisNoteDataList.length; j++) {
                 if (thisCardProcessList[j] == "Ancient Greek") {
-                    thisNoteDataList[j] = thisNoteDataList[j].normalize("NFC");
+                    //thisNoteDataList[j] = thisNoteDataList[j].normalize("NFC");
                 }
                 // Non-Greek fields (English glosses etc.) need no processing here at all
             }
