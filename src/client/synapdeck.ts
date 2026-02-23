@@ -754,29 +754,34 @@ if (cardTextInput) {
 function transcribe(str: string, process: string = "", otherProcess: string = "", optionalBoolean: boolean = true): string {
     let rawSegments: TextSegment[] = parseTaggedText(str, otherProcess);
     
-    // Dictionary of processors - all have signature (text: string) => string
     const processors: Record<string, (text: string) => string> = {
         "Coptic": (text) => transliterateCoptic(text),
         "Ge'ez": (text) => transliterateGeez(text, optionalBoolean),
         "Ancient Greek": (text) => transliterateGreek(text),
-        "Hebrew": (text) => transliterateHebrew(text, true),  // Always include niqqud
+        "Hebrew": (text) => transliterateHebrew(text, true),
     };
     
-    // Get the processor function, or default to identity function
     const processor = processors[process] || ((text: string) => text);
     
-    // Process all segments
     let outputSegments: string[] = [];
     for (let i = 0; i < rawSegments.length; i++) {
         let segment = rawSegments[i];
         let outputSegment: string = segment.text;
-        let otherProcess = segment.process;
+        let segmentOtherProcess = segment.process;
+        
+        if (process === "Ancient Greek") {
+            console.log(`Segment ${i}: shouldTranscribe=${segment.shouldTranscribe}, process="${segmentOtherProcess}", text="${segment.text}"`);
+        }
         
         if (segment.shouldTranscribe) {
             outputSegment = processor(outputSegment);
         } else {
-            let otherProcessor = processors[otherProcess] || ((text: string) => text);
+            let otherProcessor = processors[segmentOtherProcess] || ((text: string) => text);
             outputSegment = otherProcessor(outputSegment);
+        }
+        
+        if (process === "Ancient Greek") {
+            console.log(`Segment ${i} output: "${outputSegment}"`);
         }
         
         outputSegments.push(outputSegment);
