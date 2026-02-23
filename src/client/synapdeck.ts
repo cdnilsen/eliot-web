@@ -788,30 +788,21 @@ function transcribe(str: string, process: string = "", otherProcess: string = ""
 let uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
 function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boolean) {
     let cardFormat = card.card_format;
-    
-    // Add bounds checking
+
     if (targetIndex >= card.field_values.length || targetIndex >= card.field_processing.length) {
-        console.error(`Index ${targetIndex} out of bounds for card ${card.card_id}. Fields: ${card.field_values.length}, Processing: ${card.field_processing.length}`);
+        console.error(`Index ${targetIndex} out of bounds for card ${card.card_id}.`);
         return "(empty)";
     }
-    
-    let datum = card.field_values[targetIndex];
+
+    let datum = card.field_values[targetIndex] ?? "";
     let process = card.field_processing[targetIndex];
 
-    // Handle null/undefined values
-    if (!datum) {
-        datum = "";
-    }
+    // Process all languages uniformly — transliterateGreek handles already-Greek
+    // text by normalizing to NFC, which fixes diacritic stripping on paste
+    let output = transcribe(datum, process, card.deck, isBackOfCard);
 
-    
-    let notAncientGreek = (process != "Ancient Greek");
-    let output: string = datum;
-    if (notAncientGreek) {
-        output = transcribe(datum, process, card.deck, isBackOfCard);
-    }
-    
     if (isBackOfCard) {
-        output = checkColorCoding(card.field_values, targetIndex, cardFormat, output)
+        output = checkColorCoding(card.field_values, targetIndex, cardFormat, output);
     }
     return output;
 }
