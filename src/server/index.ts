@@ -1951,6 +1951,17 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
             }
         }
 
+        // Bury all reviewed cards for the rest of today so they can't reappear in a
+        // later same-day session (peers are already buried by mark_cards_under_review).
+        await transactionClient.query(
+            `UPDATE cards
+             SET is_buried = true,
+                 is_only_buried_today = true
+             WHERE card_id = ANY($1::int[])`,
+            [cardIds]
+        );
+        console.log(`🪦 Buried ${cardIds.length} reviewed card(s) for the rest of today`);
+
         // Update session tracking if session_id provided
         let finalSessionId = session_id;
 

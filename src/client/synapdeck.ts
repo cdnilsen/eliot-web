@@ -2578,6 +2578,10 @@ function displayAnswerKey(cards: CardDue[], deckName: string): void {
                     // Clear the localStorage after successful submission
                     localStorage.removeItem(`reviewOrder_${deckName}`);
                     currentSessionId = null;
+                    // Invalidate the card cache so a subsequent same-day session
+                    // always fetches a fresh list (reflecting burials from this session).
+                    cachedCardResults = null;
+                    lastCheckedDeck = "";
                     
                     // Clear the output after successful submission
                     outputDiv.innerHTML = `
