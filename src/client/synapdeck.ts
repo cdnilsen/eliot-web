@@ -1,5 +1,5 @@
 import {transliterateGeez, GeezDiacriticify, geezSpecialChars} from './synapdeck_files/transcribe_geez.js';
-import {transliterateGreek} from './synapdeck_files/transcribe_ancient_greek.js';
+import {transliterateGreek} from './synapdeck_files/transcribe_ancient_greek';
 import {transliterateCoptic} from './synapdeck_files/transcribe_coptic.js';
 import {SanskritDiacriticify} from './synapdeck_files/transcribe_sanskrit.js';
 import {AkkadianDiacriticify, akkadianSpecialChars} from './synapdeck_files/transcribe_akkadian.js';
