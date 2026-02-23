@@ -2308,3 +2308,44 @@ input[type="file"]:hover {
     height: 12px;
     border-radius: 2px;
 }
+
+.difficult-cards-container {
+    margin-top: 16px;
+}
+
+.difficult-cards-container h3 {
+    margin-bottom: 12px;
+}
+
+.difficult-card-group {
+    margin-bottom: 20px;
+}
+
+.difficult-group-label {
+    font-size: 0.95em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.difficult-card-row {
+    display: flex;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+    align-items: baseline;
+}
+
+.difficult-card-front {
+    flex: 1;
+}
+
+.difficult-card-sep {
+    color: #aaa;
+    flex-shrink: 0;
+}
+
+.difficult-card-back {
+    flex: 1;
+}

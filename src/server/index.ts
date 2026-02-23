@@ -5310,3 +5310,48 @@ app.get('/review_heatmap', wrapAsync(async (req, res) => {
         });
     }
 }));
+
+app.get('/todays_hard_fail', wrapAsync(async (req, res) => {
+    const deck = req.query.deck as string;
+
+    if (!deck) {
+        return res.status(400).json({ status: 'error', error: 'Deck name is required' });
+    }
+
+    try {
+        const query = await client.query(
+            `SELECT
+                c.card_id,
+                c.note_id,
+                c.deck,
+                c.card_format,
+                c.field_names,
+                c.field_values,
+                c.field_processing,
+                scr.grade,
+                scr.reviewed_at,
+                scr.session_id
+             FROM session_card_reviews scr
+             JOIN cards c ON c.card_id = scr.card_id
+             WHERE c.deck = $1
+               AND scr.grade IN ('hard', 'fail')
+               AND DATE(scr.reviewed_at AT TIME ZONE $2) = (CURRENT_TIMESTAMP AT TIME ZONE $2)::date
+               AND scr.reviewed_at IS NOT NULL
+             ORDER BY scr.grade, scr.reviewed_at`,
+            [deck, Intl.DateTimeFormat().resolvedOptions().timeZone]
+        );
+
+        res.json({
+            status: 'success',
+            cards: query.rows,
+            count: query.rows.length
+        });
+    } catch (err) {
+        console.error('Error fetching today\'s hard/fail cards:', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error fetching today\'s hard/fail cards',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));

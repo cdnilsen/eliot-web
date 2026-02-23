@@ -537,44 +537,56 @@ if (document.readyState === 'loading') {
 function initializeTabSwitching() {
     const buttons = document.querySelectorAll('.button-row button');
     const tabContents = document.querySelectorAll('.tab-content');
-    
+
+    const validTabIds = new Set(Array.from(buttons).map(b => b.id));
+    const defaultTab = 'upload_cards';
+
+    function activateTab(buttonId: string) {
+        const btn = document.getElementById(buttonId);
+        if (!btn) return;
+
+        buttons.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+
+        btn.classList.add('active');
+
+        const targetId = buttonId.replace('_cards', '_mainDiv').replace('check_work', 'check_mainDiv');
+        const targetDiv = document.getElementById(targetId);
+        if (targetDiv) {
+            targetDiv.classList.add('active');
+            console.log("Loaded " + buttonId);
+
+            if (buttonId === 'browse_cards') {
+                setupBrowseCardsTab();
+            } else if (buttonId === 'shuffle_cards') {
+                setupShuffleCardsTab();
+            } else if (buttonId === 'review_cards') {
+                populateDropdownForTab('review_dropdownMenu');
+            } else if (buttonId === 'check_work') {
+                populateDropdownForTab('check_dropdownMenu');
+            } else if (buttonId === 'forecast_cards') {
+                setupReviewForecastTab();
+            } else if (buttonId === 'stats_cards') {
+                setupStatsTab();
+            }
+        }
+    }
+
     buttons.forEach(button => {
         button.addEventListener('click', function() {
-            // Remove active class from all buttons
-            buttons.forEach(btn => btn.classList.remove('active'));
-            
-            // Hide all tab contents
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            // Add active class to clicked button
-            button.classList.add('active');
-            
-            // Show corresponding content
-            const targetId = button.id.replace('_cards', '_mainDiv').replace('check_work', 'check_mainDiv');
-            const targetDiv = document.getElementById(targetId);
-            if (targetDiv) {
-                targetDiv.classList.add('active');
-                console.log("Loaded " + button.id);
-
-                // Initialize specific tabs when they become active
-                if (button.id === 'browse_cards') {
-                    setupBrowseCardsTab();
-                } else if (button.id === 'shuffle_cards') {
-                    setupShuffleCardsTab();
-                } else if (button.id === 'review_cards') {
-                    populateDropdownForTab('review_dropdownMenu');
-                } else if (button.id === 'check_work') {
-                    populateDropdownForTab('check_dropdownMenu');
-                } else if (button.id === 'forecast_cards') {
-                    // Clean setup for forecast tab
-                    setupReviewForecastTab();
-                } else if (button.id === 'stats_cards') {
-                    setupStatsTab();
-                }
-            }
+            window.location.hash = button.id;
         });
     });
-    
+
+    window.addEventListener('hashchange', () => {
+        const id = window.location.hash.slice(1);
+        activateTab(validTabIds.has(id) ? id : defaultTab);
+    });
+
+    // Activate on initial load
+    const initialId = window.location.hash.slice(1);
+    activateTab(validTabIds.has(initialId) ? initialId : defaultTab);
+
     setupCheckYourWorkTab();
 }
 
@@ -2333,6 +2345,66 @@ if (reviewSubmitButton) {
             if (outputDiv) {
                 outputDiv.innerHTML = `<p class="error">Network error occurred</p>`;
             }
+        }
+    });
+}
+
+async function fetchTodaysHardFail(deck: string): Promise<{status: string, cards: (CardDue & {grade: string, reviewed_at: string})[], count: number, error?: string}> {
+    const response = await fetch(`/todays_hard_fail?deck=${encodeURIComponent(deck)}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return response.json();
+}
+
+function renderTodaysHardFail(cards: (CardDue & {grade: string})[], deckName: string): string {
+    if (cards.length === 0) {
+        return `<p>No hard or failed cards today for "${deckName}".</p>`;
+    }
+
+    const failCards = cards.filter(c => c.grade === 'fail');
+    const hardCards = cards.filter(c => c.grade === 'hard');
+
+    function renderGroup(groupCards: (CardDue & {grade: string})[], label: string): string {
+        if (groupCards.length === 0) return '';
+        const rows = groupCards.map(card => {
+            const front = generateCardFrontLine(card);
+            const back = generateCardBackLine(card);
+            return `<div class="difficult-card-row">
+                <span class="difficult-card-front">${front}</span>
+                <span class="difficult-card-sep">→</span>
+                <span class="difficult-card-back">${back}</span>
+            </div>`;
+        }).join('');
+        return `<div class="difficult-card-group">
+            <h4 class="difficult-group-label">${label} (${groupCards.length})</h4>
+            ${rows}
+        </div>`;
+    }
+
+    return `<div class="difficult-cards-container">
+        <h3>Today's Difficult Cards — ${deckName}</h3>
+        ${renderGroup(failCards, 'Failed')}
+        ${renderGroup(hardCards, 'Hard')}
+    </div>`;
+}
+
+const reviewDifficultBtn = document.getElementById('reviewDifficultBtn');
+if (reviewDifficultBtn) {
+    reviewDifficultBtn.addEventListener('click', async () => {
+        const outputDiv = document.getElementById('review_output') as HTMLDivElement;
+        if (!selectedReviewDeck) {
+            if (outputDiv) outputDiv.innerHTML = `<p class="error">Please select a deck first.</p>`;
+            return;
+        }
+        if (outputDiv) outputDiv.innerHTML = `<p>Loading...</p>`;
+        try {
+            const result = await fetchTodaysHardFail(selectedReviewDeck);
+            if (result.status === 'success') {
+                if (outputDiv) outputDiv.innerHTML = renderTodaysHardFail(result.cards, selectedReviewDeck);
+            } else {
+                if (outputDiv) outputDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+            }
+        } catch (err) {
+            if (outputDiv) outputDiv.innerHTML = `<p class="error">Network error loading difficult cards.</p>`;
         }
     });
 }
