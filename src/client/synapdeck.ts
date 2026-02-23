@@ -995,12 +995,10 @@ uploadSubmitButton.addEventListener('click', async () => {
         // Done here, not in cleanFieldDatum, to grandfather in existing Greek cards. (Upon inspection, can confirm that this actually works.)
         if (currentDeck == "Ancient Greek") {
             for (let j = 0; j < thisNoteDataList.length; j++) {
-                console.log(`Before transcribe [${j}]:`, thisNoteDataList[j], 
-                    [...thisNoteDataList[j]].map(c => c.codePointAt(0)!.toString(16)));
                 if (thisCardProcessList[j] == "Ancient Greek") {
-                    thisNoteDataList[j] = transcribe(thisNoteDataList[j], "Ancient Greek");
+                    thisNoteDataList[j] = thisNoteDataList[j].normalize("NFC");
                 }
-                console.log(`After transcribe [${j}]:`, thisNoteDataList[j]);
+                // Non-Greek fields (English glosses etc.) need no processing here at all
             }
         }
         
