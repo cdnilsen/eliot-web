@@ -993,15 +993,7 @@ uploadSubmitButton.addEventListener('click', async () => {
         }
         
         // Done here, not in cleanFieldDatum, to grandfather in existing Greek cards. (Upon inspection, can confirm that this actually works.)
-        if (currentDeck == "Ancient Greek") {
-            for (let j = 0; j < thisNoteDataList.length; j++) {
-                if (thisCardProcessList[j] == "Ancient Greek") {
-                    //thisNoteDataList[j] = thisNoteDataList[j].normalize("NFC");
-                }
-                // Non-Greek fields (English glosses etc.) need no processing here at all
-            }
-        }
-        
+
         notesToProcess.push({
             deck: currentDeck,
             noteType: currentNoteType,
