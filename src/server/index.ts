@@ -1911,6 +1911,46 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
             }
         }
 
+        // For new cards graded hard/fail: bump peer due dates so they don't appear
+        // in an earlier date group than the reviewed card on the next session.
+        // (Peers are buried today, but at midnight they're unburied with their original
+        // time_due still set to today, making them "overdue" and causing them to be
+        // selected before the hard/fail card in the next session's date grouping.)
+        const hardFailNewCards = scheduledCards.filter(sc => {
+            const original = cardsForScheduler.find(c => c.card_id === sc.card_id);
+            return original && original.current_stability == null &&
+                   (original.grade === 'hard' || original.grade === 'fail');
+        });
+
+        if (hardFailNewCards.length > 0) {
+            console.log(`⏭️ Bumping peer due dates for ${hardFailNewCards.length} hard/fail new card(s)`);
+
+            const hardFailIds = hardFailNewCards.map(sc => sc.card_id);
+            const reviewedSet = new Set(cardIds);
+
+            const hardFailInfo = await transactionClient.query(
+                `SELECT card_id, peers FROM cards WHERE card_id = ANY($1::int[])`,
+                [hardFailIds]
+            );
+
+            for (const row of hardFailInfo.rows) {
+                if (!row.peers || !Array.isArray(row.peers)) continue;
+                const scheduled = hardFailNewCards.find(sc => sc.card_id === row.card_id)!;
+
+                for (const peerId of row.peers) {
+                    if (reviewedSet.has(peerId)) continue;
+
+                    const result = await transactionClient.query(
+                        `UPDATE cards SET time_due = $1 WHERE card_id = $2 AND time_due < $1`,
+                        [scheduled.new_time_due, peerId]
+                    );
+                    if (result.rowCount && result.rowCount > 0) {
+                        console.log(`⏭️ Bumped peer ${peerId} time_due to ${scheduled.new_time_due.toISOString()} (matches hard/fail new card ${row.card_id})`);
+                    }
+                }
+            }
+        }
+
         // Update session tracking if session_id provided
         let finalSessionId = session_id;
 
