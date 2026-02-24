@@ -34,6 +34,10 @@
                         <input type="radio" name="inputMethod" value="text" id="textInputRadio">
                         Type cards directly
                     </label>
+                    <label>
+                        <input type="radio" name="inputMethod" value="spreadsheet" id="spreadsheetInputRadio">
+                        Enter cards in spreadsheet
+                    </label>
                 </div>
             </div>
 
@@ -61,6 +65,15 @@
                 <label for="cardTextInput">Type your cards (follow the format examples above):</label>
                 <textarea id="cardTextInput" rows="10" cols="50" placeholder="Enter your cards here following the format:&#10;näbärä / to sit / näbärä&#10;hägär / city / hägär"></textarea>
                 <!-- Special characters panel will be inserted here dynamically by JavaScript -->
+            </div>
+
+            <!-- Spreadsheet input section -->
+            <div class="spreadsheet_input-group" id="spreadsheetSection" style="display: none;">
+                <div id="cardSpreadsheet" class="card-spreadsheet-container">
+                    <!-- Table built dynamically by JavaScript -->
+                </div>
+                <button type="button" id="addSpreadsheetRow">+ Add Row</button>
+                <!-- Special characters panel will be appended here by JavaScript when this mode is active -->
             </div>
             
             <div class="button-group">

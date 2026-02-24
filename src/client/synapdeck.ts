@@ -66,6 +66,12 @@ let specialCharSetsDict: charSetsType = {
     "Syriac": ["ā", "ē", "ê", "ḥ", "ṣ", "š", "ṭ", "ʾ", "ʿ"],    "Tocharian B": ["ā", "ä", "ṃ", "ñ", "ṅ", "ṣ", "ś"]
 }
 
+const SPREADSHEET_COLS: Record<string, string[]> = {
+    'two-way': ['Target', 'Native', 'Target Back'],
+    'one-way-N2T': ['Front', 'Back']
+};
+let focusedSpreadsheetCell: HTMLTextAreaElement | null = null;
+
 // Consolidate all global declarations
 declare global {
     interface Window {
@@ -433,6 +439,151 @@ function updateSpecialCharacters(deckName: string): void {
     });
 }
 
+// ── Spreadsheet functions ──────────────────────────────────────────────────
+
+function buildSpreadsheet(cardType: string): void {
+    const container = document.getElementById('cardSpreadsheet');
+    if (!container) return;
+
+    const cols = SPREADSHEET_COLS[cardType] ?? SPREADSHEET_COLS['two-way'];
+
+    container.innerHTML = '';
+
+    const table = document.createElement('table');
+    table.className = 'card-spreadsheet';
+    table.id = 'spreadsheetTable';
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    const thNum = document.createElement('th');
+    thNum.className = 'row-number-header';
+    thNum.textContent = '#';
+    headerRow.appendChild(thNum);
+
+    cols.forEach(col => {
+        const th = document.createElement('th');
+        th.textContent = col;
+        headerRow.appendChild(th);
+    });
+
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    tbody.id = 'spreadsheetBody';
+    table.appendChild(tbody);
+
+    container.appendChild(table);
+
+    for (let i = 0; i < 5; i++) {
+        addSpreadsheetRow();
+    }
+}
+
+function addSpreadsheetRow(): void {
+    const tbody = document.getElementById('spreadsheetBody');
+    if (!tbody) return;
+
+    const cardFormatEl = document.getElementById('card_format_dropdown') as HTMLSelectElement;
+    const cardType = cardFormatEl?.value ?? 'two-way';
+    const cols = SPREADSHEET_COLS[cardType] ?? SPREADSHEET_COLS['two-way'];
+
+    const rowNum = tbody.children.length + 1;
+    const tr = document.createElement('tr');
+
+    const tdNum = document.createElement('td');
+    tdNum.className = 'row-number-cell';
+    tdNum.textContent = String(rowNum);
+    tr.appendChild(tdNum);
+
+    cols.forEach(() => {
+        const td = document.createElement('td');
+        const textarea = document.createElement('textarea');
+        textarea.rows = 2;
+        textarea.addEventListener('focus', () => {
+            focusedSpreadsheetCell = textarea;
+        });
+        textarea.addEventListener('input', () => {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        });
+        td.appendChild(textarea);
+        tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+}
+
+function getNotesFromSpreadsheet(): NoteToProcess[] {
+    const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+    if (!tbody) return [];
+
+    const cardFormatEl = document.getElementById('card_format_dropdown') as HTMLSelectElement;
+    const cardType = cardFormatEl?.value ?? 'two-way';
+
+    let noteType = '';
+    let baseProcessList: string[] = [];
+    if (cardType === 'two-way') {
+        noteType = 'Two-Way';
+        baseProcessList = [currentDeck, '', currentDeck, ''];
+    } else if (cardType === 'one-way-N2T') {
+        noteType = 'One-Way';
+        baseProcessList = ['', currentDeck];
+    }
+
+    const notes: NoteToProcess[] = [];
+
+    Array.from(tbody.rows).forEach(row => {
+        const cells = Array.from(row.cells).slice(1); // skip row-number cell
+        const fieldValues = cells.map(td => {
+            const ta = td.querySelector('textarea');
+            return ta ? ta.value.trim() : '';
+        });
+
+        if (fieldValues.every(v => v === '')) return;
+
+        let dataList = [...fieldValues];
+        let processList = [...baseProcessList];
+
+        if (noteType === 'Two-Way') {
+            // Pad to 4: Target, Native, Target_Back, Native_Back
+            while (dataList.length < 4) {
+                if (dataList.length === 2) {
+                    dataList.push(dataList[0]); // Target_Back = Target
+                } else if (dataList.length === 3) {
+                    dataList.push(dataList[1]); // Native_Back = Native
+                } else {
+                    dataList.push('');
+                }
+            }
+        } else if (noteType === 'One-Way') {
+            dataList = dataList.slice(0, 2);
+            processList = processList.slice(0, 2);
+        }
+
+        if (currentDeck === 'Sanskrit') {
+            for (let j = 0; j < dataList.length; j++) {
+                if (processList[j] === 'Sanskrit') {
+                    dataList[j] = postProcessSanskrit(dataList[j]);
+                }
+            }
+        }
+
+        notes.push({
+            deck: currentDeck,
+            noteType,
+            dataList,
+            processList,
+            relationships: { peers: [], prereqs: [], dependents: [] }
+        });
+    });
+
+    return notes;
+}
+
+// ── End spreadsheet functions ──────────────────────────────────────────────
+
 // Add this function to insert character at cursor position in textarea
 function insertCharacterAtCursor(character: string): void {
     if (character == "◌́") {
@@ -441,25 +592,29 @@ function insertCharacterAtCursor(character: string): void {
         character = "\u0300";
     }
 
-    const textarea = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+    const spreadsheetRadio = document.getElementById('spreadsheetInputRadio') as HTMLInputElement;
+    const isSpreadsheet = spreadsheetRadio?.checked;
+    const textarea: HTMLTextAreaElement | null = isSpreadsheet
+        ? focusedSpreadsheetCell
+        : document.getElementById("cardTextInput") as HTMLTextAreaElement;
     if (!textarea) return;
 
     const startPos = textarea.selectionStart;
     const endPos = textarea.selectionEnd;
     const textBefore = textarea.value.substring(0, startPos);
     const textAfter = textarea.value.substring(endPos);
-    
+
     // Insert the character
     textarea.value = textBefore + character + textAfter;
-    
+
     // Move cursor to after the inserted character
     const newCursorPos = startPos + character.length;
     textarea.setSelectionRange(newCursorPos, newCursorPos);
-    
-    // Focus back on textarea
+
+    // Focus back on the target
     textarea.focus();
-    
-    // Trigger input event to update currentFileContent
+
+    // Trigger input event (updates currentFileContent in text mode; auto-grows in spreadsheet mode)
     const inputEvent = new Event('input', { bubbles: true });
     textarea.dispatchEvent(inputEvent);
 }
@@ -653,16 +808,16 @@ if (textRadio) {
         if (this.checked) {
             console.log('Text input mode selected');
             document.getElementById("fileUploadSection")!.style.display = "none";
-            
+
             // Show the card format dropdown
             cardFormatDropdownDiv.style.display = "block";
-            
+
             // Show the text input section
             const textInputSection = document.getElementById("textInputSection");
             if (textInputSection) {
                 textInputSection.style.display = "block";
             }
-            
+
             // Show the textarea specifically
             const cardTextInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
             if (cardTextInput) {
@@ -671,16 +826,22 @@ if (textRadio) {
                     cardTextInput.parentElement.style.display = "block";
                 }
             }
-            
+
             // HIDE FILE INPUT SECTION
-            const fileInputSection = document.getElementById("fileInputSection"); // or whatever the ID is
+            const fileInputSection = document.getElementById("fileInputSection");
             if (fileInputSection) {
                 fileInputSection.style.display = "none";
             }
-            
+
+            // Hide spreadsheet section
+            const spreadsheetSection = document.getElementById("spreadsheetSection");
+            if (spreadsheetSection) {
+                spreadsheetSection.style.display = "none";
+            }
+
             // Create special characters panel when switching to text mode
             createSpecialCharactersPanel();
-            
+
             // Update special characters if a deck is already selected
             if (currentDeck) {
                 console.log(`Updating special characters for already selected deck: ${currentDeck}`);
@@ -695,34 +856,80 @@ if (fileRadio) {
         if (this.checked) {
             console.log('File input mode selected');
             document.getElementById("fileUploadSection")!.style.display = "block";
-            
+
             // Hide the card format dropdown
             cardFormatDropdownDiv.style.display = "none";
-            
+
             // Hide the text input section
             const textInputSection = document.getElementById("textInputSection");
             if (textInputSection) {
                 textInputSection.style.display = "none";
             }
-            
-            // Hide the textarea specifically  
+
+            // Hide the textarea specifically
             const cardTextInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
             if (cardTextInput) {
                 cardTextInput.style.display = "none";
             }
-            
+
             // Hide special characters panel when switching to file mode
             const specialCharsPanel = document.getElementById("specialCharsPanel");
             if (specialCharsPanel) {
                 specialCharsPanel.style.display = "none";
             }
-            
+
+            // Hide spreadsheet section
+            const spreadsheetSection = document.getElementById("spreadsheetSection");
+            if (spreadsheetSection) {
+                spreadsheetSection.style.display = "none";
+            }
+
             // SHOW FILE INPUT SECTION
-            const fileInputSection = document.getElementById("fileInputSection"); // or whatever the ID is
+            const fileInputSection = document.getElementById("fileInputSection");
             if (fileInputSection) {
                 fileInputSection.style.display = "block";
             }
         }
+    });
+}
+
+const spreadsheetInputRadio = document.getElementById('spreadsheetInputRadio') as HTMLInputElement;
+if (spreadsheetInputRadio) {
+    spreadsheetInputRadio.addEventListener('change', function() {
+        if (this.checked) {
+            console.log('Spreadsheet input mode selected');
+
+            // Hide other sections
+            document.getElementById("fileUploadSection")!.style.display = "none";
+            const textInputSection = document.getElementById("textInputSection");
+            if (textInputSection) textInputSection.style.display = "none";
+            const cardTextInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+            if (cardTextInput) cardTextInput.style.display = "none";
+
+            // Show card format dropdown and spreadsheet section
+            cardFormatDropdownDiv.style.display = "block";
+            const spreadsheetSection = document.getElementById("spreadsheetSection");
+            if (spreadsheetSection) spreadsheetSection.style.display = "block";
+
+            // Build the spreadsheet if not already built
+            const tbody = document.getElementById('spreadsheetBody');
+            if (!tbody) {
+                buildSpreadsheet(cardFormatDropdown?.value ?? 'two-way');
+            }
+
+            // Move special chars panel into the spreadsheet section and update
+            createSpecialCharactersPanel();
+            if (currentDeck) {
+                updateSpecialCharacters(currentDeck);
+            }
+        }
+    });
+}
+
+const addSpreadsheetRowBtn = document.getElementById('addSpreadsheetRow');
+if (addSpreadsheetRowBtn) {
+    addSpreadsheetRowBtn.addEventListener('click', () => {
+        addSpreadsheetRow();
     });
 }
 
@@ -925,7 +1132,14 @@ if (wipeDatabaseButton) {
 
 if (cardFormatDropdown) {
     cardFormatDropdown.addEventListener('change', (event) => {
-        console.log('Card format changed:', (event.target as HTMLSelectElement).value);
+        const newType = (event.target as HTMLSelectElement).value;
+        console.log('Card format changed:', newType);
+
+        // Rebuild the spreadsheet when card type changes and spreadsheet mode is active
+        const spreadsheetRadio = document.getElementById('spreadsheetInputRadio') as HTMLInputElement;
+        if (spreadsheetRadio?.checked) {
+            buildSpreadsheet(newType);
+        }
     });
 }
 
@@ -947,67 +1161,73 @@ uploadSubmitButton.addEventListener('click', async () => {
         }
     }
     
-    // Collect all notes first
-    const notesToProcess: NoteToProcess[] = [];
-    for (let i = 0; i < lines.length; i++) {
-        let line = lines[i].trim();
-        if (line.length == 0 || !line.includes(" / ")) {
-            continue;
-        }
-        
-        let cardData: ProcessedCard = processCard(line);
-        let thisNoteDataList: string[] = cardData.fields;
-        
-        // CREATE A FRESH COPY for each card - don't modify the shared array!
-        let thisCardProcessList: string[] = [...thisNoteProcessList];
+    // Collect all notes — branch on input mode
+    const isSpreadsheetMode = (document.getElementById('spreadsheetInputRadio') as HTMLInputElement)?.checked;
+    let notesToProcess: NoteToProcess[];
 
-        if (currentNoteType === "One-Way") {
-            // One way cards should have exactly 2 fields
-            if (thisNoteDataList.length > 2) {
-                console.warn(`One-Way card has ${thisNoteDataList.length} fields, truncating to 2`);
-                thisNoteDataList = thisNoteDataList.slice(0, 2);
+    if (isSpreadsheetMode) {
+        notesToProcess = getNotesFromSpreadsheet();
+    } else {
+        notesToProcess = [];
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+            if (line.length == 0 || !line.includes(" / ")) {
+                continue;
             }
-            if (thisCardProcessList.length > 2) {
-                thisCardProcessList = thisCardProcessList.slice(0, 2);
-            }
-        }
 
-        if (thisCardProcessList.length != thisNoteDataList.length) {
-            const maxLength = Math.max(thisCardProcessList.length, thisNoteDataList.length);
-            
-            // Extend processing list if needed
-            while (thisCardProcessList.length < maxLength) {
-                thisCardProcessList.push("");
-            }
-    
-            // Smart extension for data list
-            while (thisNoteDataList.length < maxLength) {
-                if (currentNoteType === "Two-Way" && thisNoteDataList.length === 3 && maxLength === 4) {
-                    thisNoteDataList.push(thisNoteDataList[1]);
-                } else {
-                    thisNoteDataList.push("");
+            let cardData: ProcessedCard = processCard(line);
+            let thisNoteDataList: string[] = cardData.fields;
+
+            // CREATE A FRESH COPY for each card - don't modify the shared array!
+            let thisCardProcessList: string[] = [...thisNoteProcessList];
+
+            if (currentNoteType === "One-Way") {
+                // One way cards should have exactly 2 fields
+                if (thisNoteDataList.length > 2) {
+                    console.warn(`One-Way card has ${thisNoteDataList.length} fields, truncating to 2`);
+                    thisNoteDataList = thisNoteDataList.slice(0, 2);
+                }
+                if (thisCardProcessList.length > 2) {
+                    thisCardProcessList = thisCardProcessList.slice(0, 2);
                 }
             }
-        }
-    
-        if (currentDeck == "Sanskrit") {
-            for (let j = 0; j < thisNoteDataList.length; j++) {
-                if (thisCardProcessList[j] == "Sanskrit") {
-                    thisNoteDataList[j] = postProcessSanskrit(thisNoteDataList[j]);
+
+            if (thisCardProcessList.length != thisNoteDataList.length) {
+                const maxLength = Math.max(thisCardProcessList.length, thisNoteDataList.length);
+
+                // Extend processing list if needed
+                while (thisCardProcessList.length < maxLength) {
+                    thisCardProcessList.push("");
+                }
+
+                // Smart extension for data list
+                while (thisNoteDataList.length < maxLength) {
+                    if (currentNoteType === "Two-Way" && thisNoteDataList.length === 3 && maxLength === 4) {
+                        thisNoteDataList.push(thisNoteDataList[1]);
+                    } else {
+                        thisNoteDataList.push("");
+                    }
                 }
             }
-        }
-        
-        // Done here, not in cleanFieldDatum, to grandfather in existing Greek cards. (Upon inspection, can confirm that this actually works.)
 
-        notesToProcess.push({
-            deck: currentDeck,
-            noteType: currentNoteType,
-            dataList: thisNoteDataList,
-            processList: thisCardProcessList,  // Use the card-specific copy
-            relationships: cardData.relationships
-        });
-    }    
+            if (currentDeck == "Sanskrit") {
+                for (let j = 0; j < thisNoteDataList.length; j++) {
+                    if (thisCardProcessList[j] == "Sanskrit") {
+                        thisNoteDataList[j] = postProcessSanskrit(thisNoteDataList[j]);
+                    }
+                }
+            }
+
+            // Done here, not in cleanFieldDatum, to grandfather in existing Greek cards.
+            notesToProcess.push({
+                deck: currentDeck,
+                noteType: currentNoteType,
+                dataList: thisNoteDataList,
+                processList: thisCardProcessList,  // Use the card-specific copy
+                relationships: cardData.relationships
+            });
+        }
+    }
     
     // Now process notes sequentially with delays to avoid deadlocks
     console.log(`Processing ${notesToProcess.length} notes sequentially...`);
@@ -1068,11 +1288,15 @@ uploadSubmitButton.addEventListener('click', async () => {
         await processAllRelationships(cardsWithRelationships);
     }
 
-    const textInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
-    if (textInput) {
-        textInput.value = "";
+    if (isSpreadsheetMode) {
+        buildSpreadsheet(cardFormatDropdown?.value ?? 'two-way');
+    } else {
+        const textInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
+        if (textInput) {
+            textInput.value = "";
+        }
+        currentFileContent = "";
     }
-    currentFileContent = "";
     console.log('All notes processed!');
 });
 

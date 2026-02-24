@@ -2349,3 +2349,86 @@ input[type="file"]:hover {
 .difficult-card-back {
     flex: 1;
 }
+
+/* ── Spreadsheet card-entry grid ── */
+.card-spreadsheet-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.card-spreadsheet {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.card-spreadsheet th {
+    background-color: #f0f2f5;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: #555;
+    border-bottom: 2px solid #e1e5e9;
+    border-right: 1px solid #e1e5e9;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.card-spreadsheet th.row-number-header {
+    width: 36px;
+}
+
+.card-spreadsheet td {
+    border-bottom: 1px solid #e1e5e9;
+    border-right: 1px solid #e1e5e9;
+    padding: 4px;
+    vertical-align: top;
+}
+
+.card-spreadsheet td.row-number-cell {
+    width: 36px;
+    text-align: center;
+    color: #aaa;
+    font-size: 12px;
+    padding: 8px 4px;
+}
+
+.card-spreadsheet textarea {
+    width: 100%;
+    min-height: 38px;
+    border: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 4px;
+    box-sizing: border-box;
+    background: transparent;
+    overflow: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.card-spreadsheet textarea:focus {
+    outline: 2px solid #4285f4;
+    border-radius: 2px;
+    background: #fafcff;
+}
+
+#addSpreadsheetRow {
+    margin-top: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    border: 1px dashed #999;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#addSpreadsheetRow:hover {
+    background: #f0f2f5;
+}
