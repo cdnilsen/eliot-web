@@ -5336,34 +5336,60 @@ app.get('/review_heatmap', wrapAsync(async (req, res) => {
 }));
 
 app.get('/todays_hard_fail', wrapAsync(async (req, res) => {
-    const deck = req.query.deck as string;
-
-    if (!deck) {
-        return res.status(400).json({ status: 'error', error: 'Deck name is required' });
-    }
+    const deck = req.query.deck as string | undefined;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     try {
-        const query = await client.query(
-            `SELECT
-                c.card_id,
-                c.note_id,
-                c.deck,
-                c.card_format,
-                c.field_names,
-                c.field_values,
-                c.field_processing,
-                scr.grade,
-                scr.reviewed_at,
-                scr.session_id
-             FROM session_card_reviews scr
-             JOIN cards c ON c.card_id = scr.card_id
-             WHERE c.deck = $1
-               AND scr.grade IN ('hard', 'fail')
-               AND DATE(scr.reviewed_at AT TIME ZONE $2) = (CURRENT_TIMESTAMP AT TIME ZONE $2)::date
-               AND scr.reviewed_at IS NOT NULL
-             ORDER BY scr.grade, scr.reviewed_at`,
-            [deck, Intl.DateTimeFormat().resolvedOptions().timeZone]
-        );
+        const query = deck
+            ? await client.query(
+                `SELECT
+                    c.card_id,
+                    c.note_id,
+                    c.deck,
+                    c.card_format,
+                    c.field_names,
+                    c.field_values,
+                    c.field_processing,
+                    c.time_due,
+                    c.interval,
+                    c.retrievability,
+                    c.peers,
+                    scr.grade,
+                    scr.reviewed_at,
+                    scr.session_id
+                 FROM session_card_reviews scr
+                 JOIN cards c ON c.card_id = scr.card_id
+                 WHERE c.deck = $1
+                   AND scr.grade IN ('hard', 'fail')
+                   AND DATE(scr.reviewed_at AT TIME ZONE $2) = (CURRENT_TIMESTAMP AT TIME ZONE $2)::date
+                   AND scr.reviewed_at IS NOT NULL
+                 ORDER BY c.deck, scr.grade, scr.reviewed_at`,
+                [deck, tz]
+              )
+            : await client.query(
+                `SELECT
+                    c.card_id,
+                    c.note_id,
+                    c.deck,
+                    c.card_format,
+                    c.field_names,
+                    c.field_values,
+                    c.field_processing,
+                    c.time_due,
+                    c.interval,
+                    c.retrievability,
+                    c.peers,
+                    scr.grade,
+                    scr.reviewed_at,
+                    scr.session_id
+                 FROM session_card_reviews scr
+                 JOIN cards c ON c.card_id = scr.card_id
+                 WHERE scr.grade IN ('hard', 'fail')
+                   AND DATE(scr.reviewed_at AT TIME ZONE $1) = (CURRENT_TIMESTAMP AT TIME ZONE $1)::date
+                   AND scr.reviewed_at IS NOT NULL
+                 ORDER BY c.deck, scr.grade, scr.reviewed_at`,
+                [tz]
+              );
 
         res.json({
             status: 'success',

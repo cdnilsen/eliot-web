@@ -1479,7 +1479,6 @@ function generateCardHTML(card: CardDue, cardNumber: number): string {
     }
     
     const processedText = processHTMLContent(frontSideLine);
-    
     return `
         <div class="card-item">
             <div class="card-question">
@@ -1983,8 +1982,9 @@ if (reviewSubmitButton) {
     });
 }
 
-async function fetchTodaysHardFail(deck: string): Promise<{status: string, cards: (CardDue & {grade: string, reviewed_at: string})[], count: number, error?: string}> {
-    const response = await fetch(`/todays_hard_fail?deck=${encodeURIComponent(deck)}`);
+async function fetchTodaysHardFail(deck?: string): Promise<{status: string, cards: (CardDue & {grade: string, reviewed_at: string})[], count: number, error?: string}> {
+    const url = deck ? `/todays_hard_fail?deck=${encodeURIComponent(deck)}` : '/todays_hard_fail';
+    const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();
 }
@@ -1994,35 +1994,44 @@ const reviewDifficultBtn = document.getElementById('reviewDifficultBtn');
 if (reviewDifficultBtn) {
     reviewDifficultBtn.addEventListener('click', async () => {
         const outputDiv = document.getElementById('review_output') as HTMLDivElement;
-        if (!selectedReviewDeck) {
-            if (outputDiv) outputDiv.innerHTML = `<p class="error">Please select a deck first.</p>`;
-            return;
-        }
         if (outputDiv) outputDiv.innerHTML = `<p>Loading...</p>`;
         try {
-            const result = await fetchTodaysHardFail(selectedReviewDeck);
-            if (result.status === 'success') {
-                if (result.cards.length === 0) {
-                    if (outputDiv) outputDiv.innerHTML = `<p>No hard or failed cards today for "${selectedReviewDeck}".</p>`;
-                    return;
-                }
-                // Store cards in localStorage for the Check Your Work tab
-                localStorage.setItem(`difficultReview_${selectedReviewDeck}`, JSON.stringify({
-                    cards: result.cards,
-                    timestamp: new Date().toISOString()
-                }));
-                // Open review sheet in new tab (same format as regular reviews, no session)
-                const deckData: { name: string, cards: CardDue[], sessionId: number | null }[] = [{ name: selectedReviewDeck, cards: result.cards as CardDue[], sessionId: null }];
-                const htmlContent = generateMultiDeckReviewSheetHTML(deckData);
-                const blob = new Blob([htmlContent], { type: 'text/html' });
-                const blobUrl = URL.createObjectURL(blob);
-                window.open(blobUrl, '_blank');
-                setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-                if (outputDiv) outputDiv.innerHTML = `<p>Review sheet opened in new tab (${result.cards.length} cards). Use the Check Your Work tab to grade them.</p>`;
-                populateCheckWorkDropdown();
-            } else {
+            const result = await fetchTodaysHardFail();
+            if (result.status !== 'success') {
                 if (outputDiv) outputDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+                return;
             }
+            if (result.cards.length === 0) {
+                if (outputDiv) outputDiv.innerHTML = `<p>No hard or failed cards today across any deck.</p>`;
+                return;
+            }
+
+            // Group cards by deck
+            const byDeck = new Map<string, (CardDue & {grade: string, reviewed_at: string})[]>();
+            for (const card of result.cards) {
+                if (!byDeck.has(card.deck)) byDeck.set(card.deck, []);
+                byDeck.get(card.deck)!.push(card);
+            }
+
+            // Store each deck's cards in localStorage for the Check Your Work tab
+            const timestamp = new Date().toISOString();
+            for (const [deckName, cards] of byDeck) {
+                localStorage.setItem(`difficultReview_${deckName}`, JSON.stringify({ cards, timestamp }));
+            }
+
+            // Build multi-deck review sheet
+            const deckData: { name: string, cards: CardDue[], sessionId: number | null }[] =
+                Array.from(byDeck.entries()).map(([name, cards]) => ({ name, cards: cards as CardDue[], sessionId: null }));
+
+            const htmlContent = generateMultiDeckReviewSheetHTML(deckData);
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+            const deckSummary = Array.from(byDeck.entries()).map(([n, c]) => `${n} (${c.length})`).join(', ');
+            if (outputDiv) outputDiv.innerHTML = `<p>Review sheet opened in new tab — ${result.cards.length} cards across: ${deckSummary}. Use the Check Your Work tab to grade them.</p>`;
+            populateCheckWorkDropdown();
         } catch (err) {
             if (outputDiv) outputDiv.innerHTML = `<p class="error">Network error loading difficult cards.</p>`;
         }
