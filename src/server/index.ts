@@ -3179,29 +3179,25 @@ app.put('/card/:cardId/field/:fieldIndex', express.json(), wrapAsync(async (req,
         // Update the field value
         fieldValues[fieldIndexNum] = new_value;
 
-        // Update the card in database
+        // Update all cards belonging to this note
         await transactionClient.query(
-            `UPDATE cards 
+            `UPDATE cards
              SET field_values = $1
-             WHERE card_id = $2`,
-            [fieldValues, cardIdNum]
+             WHERE note_id = $2`,
+            [fieldValues, noteId]
         );
 
-        // Also update the note if it exists
-        try {
-            await transactionClient.query(
-                `UPDATE notes 
-                 SET field_values = $1
-                 WHERE note_id = $2`,
-                [fieldValues, noteId]
-            );
-        } catch (noteUpdateError) {
-            console.log(`Note ${noteId} might not exist, continuing...`);
-        }
+        // Update the note itself
+        await transactionClient.query(
+            `UPDATE notes
+             SET field_values = $1
+             WHERE note_id = $2`,
+            [fieldValues, noteId]
+        );
 
         await transactionClient.query('COMMIT');
 
-        console.log(`✅ Updated card ${cardIdNum}, field ${fieldIndexNum}: '${oldValue}' → '${new_value}'`);
+        console.log(`✅ Updated note ${noteId} (via card ${cardIdNum}), field ${fieldIndexNum}: '${oldValue}' → '${new_value}'`);
 
         res.json({
             status: 'success',
@@ -3298,29 +3294,25 @@ app.put('/card/:cardId/fields/bulk', express.json(), wrapAsync(async (req, res) 
             });
         }
 
-        // Update database
+        // Update all cards belonging to this note
         await transactionClient.query(
-            `UPDATE cards 
+            `UPDATE cards
              SET field_values = $1
-             WHERE card_id = $2`,
-            [fieldValues, cardIdNum]
+             WHERE note_id = $2`,
+            [fieldValues, noteId]
         );
 
-        // Also update the note
-        try {
-            await transactionClient.query(
-                `UPDATE notes 
-                 SET field_values = $1
-                 WHERE note_id = $2`,
-                [fieldValues, noteId]
-            );
-        } catch (noteUpdateError) {
-            console.log(`Note ${noteId} might not exist, continuing...`);
-        }
+        // Update the note itself
+        await transactionClient.query(
+            `UPDATE notes
+             SET field_values = $1
+             WHERE note_id = $2`,
+            [fieldValues, noteId]
+        );
 
         await transactionClient.query('COMMIT');
 
-        console.log(`✅ Bulk updated card ${cardIdNum}: ${updatedFields.length} fields`);
+        console.log(`✅ Bulk updated note ${noteId} (via card ${cardIdNum}): ${updatedFields.length} fields`);
 
         res.json({
             status: 'success',

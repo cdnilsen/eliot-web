@@ -3340,7 +3340,7 @@ function displayBrowseResults(cards: CardDue[], totalCount: number): void {
                 </td>
                 <td class="actions-cell">
                     <div class="action-buttons">
-                        <button class="btn btn-small edit-card-btn" data-card-id="${card.card_id}" title="Edit card">
+                        <button class="btn btn-small edit-card-btn" data-card-id="${card.card_id}" title="Edit note">
                             ✏️
                         </button>
                         <button class="btn btn-small relationship-btn" data-card-id="${card.card_id}" title="Manage relationships">
@@ -5458,7 +5458,7 @@ function showCardEditModal(cardId: number, cardData: any): void {
     `;
     
     const title = document.createElement('h2');
-    title.textContent = `Edit Card ${cardId}`;
+    title.textContent = `Edit Note`;
     title.style.cssText = `
         margin: 0;
         color: #333;
@@ -5521,12 +5521,13 @@ function showCardEditModal(cardId: number, cardData: any): void {
         margin-bottom: 20px;
     `;
     infoSection.innerHTML = `
-        <div style="font-weight: 600; color: #0c5460; margin-bottom: 8px;">Card Information</div>
+        <div style="font-weight: 600; color: #0c5460; margin-bottom: 8px;">Note Information</div>
         <div style="font-size: 14px; color: #495057;">
             <strong>Deck:</strong> ${cardData.deck || 'Unknown'}<br>
-            <strong>Format:</strong> ${cardData.card_format || 'Unknown'}<br>
+            <strong>Note ID:</strong> ${cardData.note_id ?? 'Unknown'}<br>
             <strong>Card ID:</strong> ${cardId}
         </div>
+        <div style="font-size: 12px; color: #6c757d; margin-top: 6px;">Changes will be saved to all cards from this note.</div>
     `;
     fieldsContainer.appendChild(infoSection);
 
