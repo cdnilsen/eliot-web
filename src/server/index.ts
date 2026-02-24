@@ -1402,27 +1402,49 @@ app.get('/cards_under_review/:deckName', wrapAsync(async (req, res) => {
     }
     
     console.log(`🔍 Getting cards under review for deck: ${deckName}`);
-    
+
+    const sessionId = req.query.session_id ? parseInt(req.query.session_id as string) : null;
+
     try {
-        const query = await client.query(
-            `SELECT 
-                card_id,
-                note_id,
-                deck,
-                card_format,
-                field_names,
-                field_values,
-                field_processing,
-                time_due,
-                interval,
-                retrievability,
-                peers,
-                created
-            FROM cards 
-            WHERE deck = $1 AND under_review = true
-            ORDER BY card_id ASC`,
-            [deckName]
-        );
+        const query = sessionId
+            ? await client.query(
+                `SELECT
+                    cards.card_id,
+                    cards.note_id,
+                    cards.deck,
+                    cards.card_format,
+                    cards.field_names,
+                    cards.field_values,
+                    cards.field_processing,
+                    cards.time_due,
+                    cards.interval,
+                    cards.retrievability,
+                    cards.peers,
+                    cards.created
+                FROM cards
+                JOIN session_card_reviews scr
+                  ON cards.card_id = scr.card_id AND scr.session_id = $2
+                WHERE cards.deck = $1 AND cards.under_review = true
+                ORDER BY scr.position ASC`,
+                [deckName, sessionId])
+            : await client.query(
+                `SELECT
+                    card_id,
+                    note_id,
+                    deck,
+                    card_format,
+                    field_names,
+                    field_values,
+                    field_processing,
+                    time_due,
+                    interval,
+                    retrievability,
+                    peers,
+                    created
+                FROM cards
+                WHERE deck = $1 AND under_review = true
+                ORDER BY card_id ASC`,
+                [deckName]);
         
         console.log(`Found ${query.rows.length} cards under review in deck "${deckName}"`);
         
@@ -1675,18 +1697,20 @@ app.post('/create_review_session', express.json(), wrapAsync(async (req, res) =>
         
         // Get current card data and insert session_card_reviews records
         if (card_ids.length > 0) {
+            const positionMap = new Map(card_ids.map((id: number, i: number) => [id, i]));
             const placeholders = card_ids.map((_, index) => `$${index + 1}`).join(',');
             const cardsData = await transactionClient.query(
-                `SELECT card_id, interval, retrievability FROM cards WHERE card_id IN (${placeholders})`,
+                `SELECT card_id, interval, retrievability, deck FROM cards WHERE card_id IN (${placeholders})`,
                 card_ids
             );
-            
+
             // Insert a record for each card presented
             for (const cardData of cardsData.rows) {
                 await transactionClient.query(
-                    `INSERT INTO session_card_reviews (session_id, card_id, interval_before, retrievability_before)
-                     VALUES ($1, $2, $3, $4)`,
-                    [sessionId, cardData.card_id, cardData.interval, cardData.retrievability]
+                    `INSERT INTO session_card_reviews (session_id, card_id, interval_before, retrievability_before, deck, position)
+                     VALUES ($1, $2, $3, $4, $5, $6)`,
+                    [sessionId, cardData.card_id, cardData.interval, cardData.retrievability,
+                     cardData.deck, positionMap.get(cardData.card_id)]
                 );
             }
             

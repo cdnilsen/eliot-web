@@ -170,18 +170,10 @@
         <div id="review_mainDiv" class="tab-content">
             <h2>Do Reviews</h2>
             <div class="review-controls">
-                <div class="input-group">
-                    <label for="review_dropdownMenu">Select Deck:</label>
-                    <select id="review_dropdownMenu" name="review_dropdownMenu">
-                        <option value="" disabled selected>Select a deck</option>
-                    </select>
+                <div id="review_deck_list">
+                    <!-- populated by buildReviewDeckList() -->
                 </div>
-                
-                <div class="input-group">
-                    <label for="review_numCards">Number of Cards:</label>
-                    <input type="number" id="review_numCards" min="1" value="20">
-                </div>
-                
+
                 <div class="review-ahead-section">
                     <label>
                         <input type="checkbox" id="reviewAheadCheckbox">

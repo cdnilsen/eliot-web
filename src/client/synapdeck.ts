@@ -484,8 +484,8 @@ interface SubmitReviewResultsResponse {
     details?: string;
 }
 
-// Add this variable to track the current session
-let currentSessionId: number | null = null;
+// Track session IDs per deck (deck name → session ID)
+const currentSessionIds = new Map<string, number>();
 
 
 // Add type definitions at the top of your file
@@ -561,9 +561,9 @@ function initializeTabSwitching() {
             } else if (buttonId === 'shuffle_cards') {
                 setupShuffleCardsTab();
             } else if (buttonId === 'review_cards') {
-                populateDropdownForTab('review_dropdownMenu');
+                buildReviewDeckList();
             } else if (buttonId === 'check_work') {
-                populateDropdownForTab('check_dropdownMenu');
+                populateCheckWorkDropdown();
             } else if (buttonId === 'forecast_cards') {
                 setupReviewForecastTab();
             } else if (buttonId === 'stats_cards') {
@@ -1434,368 +1434,6 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
     return shuffledFinalList;
 }
 
-// Replace your existing generateReviewSheetHTML function with this improved version
-function generateReviewSheetHTML(cards: CardDue[], selectedReviewDeck: string, sessionId: number | null = null, leftColumnWidth: string = "40%"): string {
-    const now = new Date();
-    const today = now.toLocaleDateString();
-    const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    const sessionStr = sessionId ? `Session ${sessionId}` : '';
-    const cardFontSize = printFontSizes[selectedReviewDeck] ?? "11pt";
-
-    return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title></title>
-            <style>
-                @font-face {
-                    font-family: 'GentiumPlus';
-                    src: url('/Gentium/GentiumPlus-Regular.ttf') format('truetype');
-                    font-weight: normal;
-                    font-style: normal;
-                    font-display: swap;
-                }
-                
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
-                
-                body {
-                    font-family: 'GentiumPlus', 'Gentium Plus', serif;
-                    font-size: 14px;
-                    line-height: 1.4;
-                    color: #000;
-                    background: white;
-                    max-width: 8.5in;
-                    margin: 0 auto;
-                    padding: 0.5in;
-                }
-                
-                .header {
-                    display: flex;
-                    align-items: flex-start;
-                    justify-content: space-between;
-                    margin-bottom: 30px;
-                    border-bottom: 2px solid #333;
-                    padding-bottom: 20px;
-                }
-
-                .header-left, .header-right {
-                    font-size: 11px;
-                    color: #666;
-                    flex-shrink: 0;
-                    padding-top: 6px;
-                }
-
-                .header-center {
-                    text-align: center;
-                    flex-grow: 1;
-                }
-
-                .title {
-                    font-size: 24px;
-                    font-weight: bold;
-                    margin-bottom: 4px;
-                }
-
-                .summary {
-                    font-size: 14px;
-                    font-weight: bold;
-                }
-                
-                .section-title {
-                    font-size: 16px;
-                    font-weight: bold;
-                    margin: 20px 0 15px 0;
-                    color: #333;
-                }
-                
-                .two-column-container {
-                    column-count: 2;
-                    column-gap: 60px;
-                    column-rule: 1px solid #ccc;
-                    column-fill: auto;
-                    height: 100vh;
-                }
-                
-                .card-item {
-                    margin-bottom: 15px;
-                    display: flex;
-                    align-items: flex-start;
-                    justify-content: flex-end;
-                    text-align: right;
-                }
-                
-                .card-question {
-                    font-size: ${cardFontSize};
-                    font-weight: normal;
-                    line-height: 1.4;
-                    max-width: 100%;
-                }
-                
-                .card-question strong {
-                    font-weight: bold;
-                }
-                
-                .controls {
-                    position: fixed;
-                    top: 10px;
-                    right: 10px;
-                    background: rgba(255, 255, 255, 0.95);
-                    padding: 10px;
-                    border-radius: 5px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                    border: 1px solid #ddd;
-                    z-index: 1000;
-                }
-                
-                .btn {
-                    background: #007cba;
-                    color: white;
-                    border: none;
-                    padding: 8px 16px;
-                    margin: 0 5px;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 12px;
-                }
-                
-                .btn:hover {
-                    background: #005a87;
-                }
-                
-                .width-controls {
-                    position: fixed;
-                    top: 60px;
-                    right: 10px;
-                    background: rgba(255, 255, 255, 0.95);
-                    padding: 10px;
-                    border-radius: 5px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                    border: 1px solid #ddd;
-                    z-index: 1000;
-                    font-size: 12px;
-                }
-                
-                .width-controls label {
-                    display: block;
-                    margin-bottom: 5px;
-                }
-                
-                .width-controls input {
-                    width: 60px;
-                    padding: 2px 4px;
-                    margin-left: 5px;
-                }
-                
-                @media print {
-                    /* Hide controls */
-                    .controls, .width-controls {
-                        display: none !important;
-                    }
-                    
-                    body {
-                        font-size: 11pt !important;
-                        line-height: 1.4 !important;
-                        max-width: none;
-                        margin: 0;
-                        padding: 0 0.4in 0.4in 0.4in !important;
-                    }
-
-                    .header {
-                        margin-top: 0 !important;
-                        margin-bottom: 10px !important;
-                        padding-bottom: 8px !important;
-                        page-break-after: avoid;
-                    }
-                    
-                    .title {
-                        font-size: 18px !important;
-                        margin-bottom: 4px !important;
-                    }
-                    
-                    .summary {
-                        font-size: 12px !important;
-                    }
-                    
-                    .section-title {
-                        font-size: 14px !important;
-                        margin: 12px 0 8px 0 !important;
-                        page-break-after: avoid;
-                        page-break-before: avoid;
-                    }
-                    
-                    /* Keep two-column flowing layout for print */
-                    .two-column-container {
-                        column-count: 2 !important;
-                        column-gap: 60px !important;
-                        column-rule: 1px solid #ccc !important;
-                        column-fill: balance !important;
-                        height: auto !important;
-                        min-height: auto !important;
-                        break-before: avoid;
-                        page-break-before: avoid;
-                    }
-                    
-                    /* Critical: Improved card item page break handling */
-                    .card-item {
-                        margin-bottom: 16px !important;
-                        display: block !important;
-                        text-align: left !important;
-                        /* Try to keep together, but allow breaking if too long */
-                        page-break-inside: avoid;
-                        break-inside: avoid;
-                        /* Ensure minimum lines stay together */
-                        orphans: 3;
-                        widows: 3;
-                        /* Add some space before if breaking */
-                        page-break-before: auto;
-                    }
-                    
-                    /* If a card item must break, ensure number stays with some content */
-                    .card-item:before {
-                        content: "";
-                        display: inline;
-                        page-break-after: avoid;
-                    }
-                    
-                    .card-question {
-                        font-size: ${cardFontSize} !important;
-                        line-height: 1.3 !important;
-                        /* Ensure text flows properly */
-                        text-align: left !important;
-                        display: inline !important;
-                        /* Keep at least 2 lines together */
-                        orphans: 2;
-                        widows: 2;
-                    }
-                    
-                    /* Special handling for very long items */
-                    .card-item.long-item {
-                        page-break-inside: auto !important;
-                        break-inside: auto !important;
-                    }
-                    
-                    @page {
-                        margin: 0.4in;
-                        orphans: 3;
-                        widows: 3;
-                    }
-                    
-                    /* Fallback: if content is too long, allow breaking but with padding */
-                    .card-item[data-long="true"] {
-                        page-break-inside: auto;
-                        padding-top: 2pt;
-                    }
-                }
-                
-                /* Responsive design for smaller screens */
-                @media (max-width: 768px) {
-                    .two-column-container {
-                        column-count: 1;
-                    }
-
-                    .card-item {
-                        text-align: left;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="controls">
-                <button class="btn" onclick="window.print()">📄 Save as PDF</button>
-                <button class="btn" onclick="window.close()">✕ Close</button>
-            </div>
-            
-            <div class="width-controls">
-                <label>Left Column Width:
-                    <input type="text" id="leftWidthInput" value="${leftColumnWidth}" onchange="updateColumnWidths()">
-                </label>
-                <small>e.g., 40%, 300px, 3in</small>
-            </div>
-            
-            <div class="header">
-                <div class="header-left">${sessionStr}</div>
-                <div class="header-center">
-                    <div class="title">${selectedReviewDeck} Review Sheet (${today})</div>
-                    <div class="summary">Total Cards: ${cards.length}</div>
-                </div>
-                <div class="header-right">${timeStr}</div>
-            </div>
-                        
-            <div class="two-column-container">
-                ${cards.map((card, index) => generateCardHTML(card, index + 1)).join('')}
-            </div>
-            
-            <script>
-                // Ensure fonts are loaded before any operations
-                document.fonts.ready.then(() => {
-                    console.log('✅ All fonts loaded');
-                });
-                
-                // Function to update column widths dynamically
-                function updateColumnWidths() {
-                    const leftWidthInput = document.getElementById('leftWidthInput');
-                    const newLeftWidth = leftWidthInput.value;
-                    const newRightWidth = \`calc(100% - \${newLeftWidth})\`;
-                    
-                    const leftColumn = document.querySelector('.left-column');
-                    const rightColumn = document.querySelector('.right-column');
-                    
-                    if (leftColumn && rightColumn) {
-                        leftColumn.style.width = newLeftWidth;
-                        rightColumn.style.width = newRightWidth;
-                    }
-                }
-                
-                // Enhanced print optimization
-                window.addEventListener('beforeprint', () => {
-                    console.log('🖨️ Preparing for print...');
-                    
-                    // Mark potentially long items for special handling
-                    const cardItems = document.querySelectorAll('.card-item');
-                    cardItems.forEach((item, index) => {
-                        const height = item.offsetHeight;
-                        // If item is taller than ~1.5 inches (108pt), mark as long
-                        if (height > 108) {
-                            item.classList.add('long-item');
-                            item.setAttribute('data-long', 'true');
-                        }
-                    });
-                });
-                
-                window.addEventListener('afterprint', () => {
-                    console.log('🖨️ Print completed');
-                    
-                    // Clean up print-specific classes
-                    const longItems = document.querySelectorAll('.long-item');
-                    longItems.forEach(item => {
-                        item.classList.remove('long-item');
-                        item.removeAttribute('data-long');
-                    });
-                });
-                
-                // Optional: Auto-focus for keyboard shortcuts
-                window.addEventListener('load', () => {
-                    window.focus();
-                });
-                
-                // Keyboard shortcut for print
-                document.addEventListener('keydown', (e) => {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                        e.preventDefault();
-                        window.print();
-                    }
-                });
-            </script>
-        </body>
-        </html>`;
-}
-
 // Updated generateCardHTML function to work with the two-column layout
 function generateCardHTML(card: CardDue, cardNumber: number): string {
     const frontSideLine = generateCardFrontLine(card);
@@ -1851,78 +1489,244 @@ function generateCardHTML(card: CardDue, cardNumber: number): string {
     `;
 }
 
-// Update your produceCardReviewSheetPDFViewer function to create a session
-async function produceCardReviewSheetPDFViewer(cards: CardDue[]) {
-    // Mark cards as under review in database
-    const cardIds = cards.map(card => card.card_id);
-    await markCardsUnderReview(cardIds);
-    
-    // Create a review session
+// --- Multi-deck review functions ---
+
+async function buildReviewDeckList(): Promise<void> {
+    const container = document.getElementById('review_deck_list');
+    if (!container) return;
+
+    container.innerHTML = '<p>Loading card counts...</p>';
+
+    const results = await Promise.all(
+        deckNameList.map(async (deckName) => {
+            const result = await checkAvailableCardsWithOptions(deckName);
+            deckCardCache.set(deckName, result);
+            return { deckName, result };
+        })
+    );
+
+    const anyDue = results.some(({ result }) => (result.cards?.length || 0) > 0);
+
+    const rows = results.map(({ deckName, result }) => {
+        const dueCount = result.cards?.length || 0;
+        const disabled = dueCount === 0 ? 'disabled' : '';
+        const checked = dueCount > 0 ? 'checked' : '';
+        return `
+            <div class="deck-review-row" data-deck="${deckName}">
+                <input type="checkbox" class="deck-review-check" ${checked} ${disabled}>
+                <span class="deck-name">${deckName}</span>
+                <input type="number" class="deck-card-count" value="${dueCount}" min="1" max="${dueCount}" ${disabled}>
+                <span class="deck-due-label">/ ${dueCount} cards due</span>
+            </div>`;
+    }).join('');
+
+    container.innerHTML = anyDue ? rows : '<p>No cards due across all decks.</p>';
+
+    const submitButton = document.getElementById('review_submitBtn') as HTMLButtonElement;
+    if (submitButton) {
+        submitButton.textContent = anyDue ? 'Start Review' : 'No Cards Due';
+        submitButton.disabled = !anyDue;
+    }
+}
+
+async function produceMultiDeckReviewSheet(selections: { deckName: string, cards: CardDue[] }[]): Promise<void> {
     const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
     const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
-    const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
-    
-    const maxCards = parseInt(reviewAheadNumCards.value);
     const hoursAhead = reviewAheadCheckbox?.checked ? parseInt(reviewAheadHours?.value || '24') : 0;
-    
-    console.log('🎯 Creating review session...');
-    const sessionResult = await createReviewSession(selectedReviewDeck, cardIds, maxCards, hoursAhead);
-    
-    if (sessionResult.status === 'success' && sessionResult.session_id) {
-        currentSessionId = sessionResult.session_id;
-        console.log(`✅ Created session ${currentSessionId} for ${cardIds.length} cards`);
-    } else {
-        console.error('❌ Failed to create session:', sessionResult.error);
-        // Continue anyway, but without session tracking
-        currentSessionId = null;
+
+    const deckData: { name: string, cards: CardDue[], sessionId: number | null }[] = [];
+
+    for (const { deckName, cards } of selections) {
+        const cardIds = cards.map(c => c.card_id);
+        await markCardsUnderReview(cardIds);
+
+        const sessionResult = await createReviewSession(deckName, cardIds, cards.length, hoursAhead);
+        let sessionId: number | null = null;
+        if (sessionResult.status === 'success' && sessionResult.session_id) {
+            sessionId = sessionResult.session_id;
+            currentSessionIds.set(deckName, sessionId);
+            localStorage.setItem(`reviewSession_${deckName}`, JSON.stringify({
+                sessionId,
+                timestamp: new Date().toISOString()
+            }));
+            console.log(`✅ Created session ${sessionId} for deck "${deckName}" (${cardIds.length} cards)`);
+        } else {
+            console.error(`❌ Failed to create session for deck "${deckName}":`, sessionResult.error);
+        }
+        deckData.push({ name: deckName, cards, sessionId });
     }
-    
-    // Store the order locally (with session info)
-    const reviewOrder = cards.map((card, index) => ({
-        cardId: card.card_id,
-        questionNumber: index + 1,
-        questionText: generateCardFrontLine(card)
-    }));
-    
-    localStorage.setItem(`reviewOrder_${selectedReviewDeck}`, JSON.stringify({
-        order: reviewOrder,
-        timestamp: new Date().toISOString(),
-        sessionId: currentSessionId // Store session ID
-    }));
+
+    // Shuffle deck order for the PDF (cards within each deck stay in their order)
+    for (let i = deckData.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deckData[i], deckData[j]] = [deckData[j], deckData[i]];
+    }
 
     try {
-        // Generate the HTML (rest of your existing code)
-        const htmlContent = generateReviewSheetHTML(cards, selectedReviewDeck, currentSessionId);
-        
-        // Create blob and URL
+        const htmlContent = generateMultiDeckReviewSheetHTML(deckData);
         const blob = new Blob([htmlContent], { type: 'text/html' });
         const blobUrl = URL.createObjectURL(blob);
-        
-        // Open in new tab
         const pdfTab = window.open(blobUrl, '_blank');
-        
         if (pdfTab) {
-            // Add event listener to handle PDF generation when ready
-            pdfTab.addEventListener('load', () => {
-                setTimeout(() => {
-                    pdfTab.focus();
-                }, 1500);
-            });
-            
+            pdfTab.addEventListener('load', () => setTimeout(() => pdfTab.focus(), 1500));
         }
-        
-        // Clean up blob URL after a delay
-        setTimeout(() => {
-            URL.revokeObjectURL(blobUrl);
-        }, 10000);
-        
-        console.log('✅ PDF view opened in new tab');
-        
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+        console.log('✅ Multi-deck PDF view opened in new tab');
     } catch (error) {
         console.error('Error opening PDF view:', error);
         alert('Failed to open PDF view');
     }
 }
+
+function generateMultiDeckReviewSheetHTML(
+    decks: { name: string, cards: CardDue[], sessionId: number | null }[]
+): string {
+    const now = new Date();
+    const today = now.toLocaleDateString();
+    const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const totalCards = decks.reduce((sum, d) => sum + d.cards.length, 0);
+    const deckSummary = decks.map(d => `${d.name} (${d.cards.length})`).join(', ');
+
+    // Build per-deck font-size CSS overrides
+    const fontOverrides = decks.map(d => {
+        const fontSize = printFontSizes[d.name] ?? '11pt';
+        return `.deck-section[data-deck="${d.name}"] .card-question { font-size: ${fontSize} !important; }`;
+    }).join('\n');
+
+    const deckSections = decks.map(d => `
+        <div class="deck-section" data-deck="${d.name}">
+            <div class="deck-section-header">
+                <span class="deck-section-name">${d.name}</span>
+                <span class="deck-section-count">${d.cards.length} cards${d.sessionId ? ` · Session ${d.sessionId}` : ''}</span>
+            </div>
+            <div class="two-column-container">
+                ${d.cards.map((card, i) => generateCardHTML(card, i + 1)).join('')}
+            </div>
+        </div>`).join('');
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Sheet</title>
+    <style>
+        @font-face {
+            font-family: 'GentiumPlus';
+            src: url('/Gentium/GentiumPlus-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'GentiumPlus', 'Gentium Plus', serif;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #000;
+            background: white;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 0.5in;
+        }
+        .header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+        }
+        .header-left, .header-right { font-size: 11px; color: #666; flex-shrink: 0; padding-top: 6px; }
+        .header-center { text-align: center; flex-grow: 1; }
+        .title { font-size: 22px; font-weight: bold; margin-bottom: 4px; }
+        .summary { font-size: 13px; font-weight: bold; }
+        .deck-list { font-size: 11px; color: #555; margin-top: 3px; }
+        .deck-section { margin-top: 24px; }
+        .deck-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1px solid #999;
+            margin-bottom: 10px;
+            padding-bottom: 4px;
+        }
+        .deck-section-name { font-size: 16px; font-weight: bold; }
+        .deck-section-count { font-size: 11px; color: #666; }
+        .two-column-container {
+            column-count: 2;
+            column-gap: 60px;
+            column-rule: 1px solid #ccc;
+            column-fill: balance;
+        }
+        .card-item {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end;
+            text-align: right;
+        }
+        .card-question { font-size: 11pt; font-weight: normal; line-height: 1.4; max-width: 100%; }
+        .card-question strong { font-weight: bold; }
+        ${fontOverrides}
+        .controls {
+            position: fixed; top: 10px; right: 10px;
+            background: rgba(255,255,255,0.95); padding: 10px;
+            border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #ddd; z-index: 1000;
+        }
+        .btn {
+            background: #007cba; color: white; border: none;
+            padding: 8px 16px; margin: 0 5px; border-radius: 4px;
+            cursor: pointer; font-size: 12px;
+        }
+        .btn:hover { background: #005a87; }
+        @media print {
+            .controls { display: none !important; }
+            body { font-size: 11pt !important; max-width: none; margin: 0; padding: 0 0.4in 0.4in 0.4in !important; }
+            .header { margin-bottom: 10px !important; padding-bottom: 8px !important; page-break-after: avoid; }
+            .deck-section { margin-top: 16px; }
+            .deck-section-header { page-break-after: avoid; }
+            .two-column-container {
+                column-count: 2 !important; column-gap: 60px !important;
+                column-rule: 1px solid #ccc !important; column-fill: balance !important;
+                height: auto !important;
+            }
+            .card-item { margin-bottom: 16px !important; display: block !important; text-align: left !important; page-break-inside: avoid; break-inside: avoid; }
+            .card-question { line-height: 1.3 !important; text-align: left !important; display: inline !important; }
+            @page { margin: 0.4in; }
+        }
+        @media (max-width: 768px) {
+            .two-column-container { column-count: 1; }
+            .card-item { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button class="btn" onclick="window.print()">📄 Save as PDF</button>
+        <button class="btn" onclick="window.close()">✕ Close</button>
+    </div>
+    <div class="header">
+        <div class="header-left">${today}</div>
+        <div class="header-center">
+            <div class="title">Review Sheet</div>
+            <div class="summary">${totalCards} cards total</div>
+            <div class="deck-list">${deckSummary}</div>
+        </div>
+        <div class="header-right">${timeStr}</div>
+    </div>
+    ${deckSections}
+    <script>
+        document.fonts.ready.then(() => console.log('✅ All fonts loaded'));
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') { e.preventDefault(); window.print(); }
+        });
+    <\/script>
+</body>
+</html>`;
+}
+
 
 function generateCardFrontLine(card: CardDue): string {
     let allFields = card.field_values;
@@ -2037,130 +1841,15 @@ function generateCardBackLine(card: CardDue): string {
     return processedField;
 }
 
-let reviewDeckDropdown = document.getElementById("review_dropdownMenu") as HTMLSelectElement;
+// selectedReviewDeck is kept only for the "Review Difficult Cards" button.
 let selectedReviewDeck: string = "";
 
+// Per-deck card cache used by the multi-deck checklist.
+const deckCardCache = new Map<string, CheckCardsResponse>();
 
-// Updated dropdown event listener that caches but doesn't display
-if (reviewDeckDropdown) {
-    reviewDeckDropdown.addEventListener('change', async (event) => {
-        const selectedValue = (event.target as HTMLSelectElement).value;
-        selectedReviewDeck = selectedValue;
-        
-        // Clear the output div when deck changes
-        const outputDiv = document.getElementById("check_output") as HTMLDivElement;
-        if (outputDiv) {
-            outputDiv.innerHTML = '';
-        }
-        
-        if (selectedReviewDeck) {
-            console.log(`Deck selected: ${selectedReviewDeck}, pre-loading card data...`);
-            
-            // Show brief loading indicator on submit button
-            const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
-            if (submitButton) {
-                submitButton.textContent = 'Checking cards...';
-                submitButton.disabled = true;
-            }
-            
-            try {
-                // Pre-load the card data silently
-                //Man this is repetitive
-                const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
-
-                cachedCardResults = await checkAvailableCardsWithOptions(selectedReviewDeck);
-                lastCheckedDeck = selectedReviewDeck;
-
-                // Default to reviewing all due cards
-                const totalDue = cachedCardResults.cards?.length || 0;
-                setReviewNumCardsToTotal(totalDue);
-                let numCards = totalDue;
-
-                if (reviewAheadNumCards) {
-                    reviewAheadNumCards.addEventListener('change', function(e) {
-                        if (cachedCardResults && cachedCardResults.status === 'success' && cachedCardResults.cards) {
-                            const numCards = parseInt(reviewAheadNumCards.value);
-                            const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
-                            const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
-                            const currentReviewAhead = reviewAheadCheckbox?.checked || false;
-                            const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
-                            
-                            updateSubmitButtonText(numCards, cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
-                        }
-                    });
-                }
-
-                
-                // Update submit button text based on results
-                const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
-                const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
-                const currentReviewAhead = reviewAheadCheckbox?.checked || false;
-                const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
-                
-                if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
-                    updateSubmitButtonText(numCards, cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
-                } else {
-                    updateSubmitButtonText(numCards, 0, currentReviewAhead, currentHoursAhead);
-                }
-                
-                console.log(`Pre-loaded ${cachedCardResults.cards?.length || 0} cards for ${selectedReviewDeck}`);
-            } catch (error) {
-                console.error('Error pre-loading cards:', error);
-                if (submitButton) {
-                    submitButton.textContent = 'Error Loading Cards';
-                    submitButton.disabled = true;
-                }
-            }
-        } else {
-            // Reset if no deck selected
-            const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
-            if (submitButton) {
-                submitButton.textContent = 'Select Deck';
-                submitButton.disabled = true;
-            }
-            cachedCardResults = null;
-            lastCheckedDeck = "";
-        }
-    });
-}
-
-// Helper function to refresh the card cache
+// Helper function to refresh card counts when review-ahead settings change.
 async function refreshCardCache(): Promise<void> {
-    if (!selectedReviewDeck) return;
-    
-    console.log('Refreshing card cache due to setting change...');
-    const submitButton = document.getElementById("review_submitBtn") as HTMLButtonElement;
-    if (submitButton) {
-        submitButton.textContent = 'Updating...';
-        submitButton.disabled = true;
-    }
-
-    try {
-        cachedCardResults = await checkAvailableCardsWithOptions(selectedReviewDeck);
-        lastCheckedDeck = selectedReviewDeck;
-
-        // Default to reviewing all due cards
-        const totalDue = cachedCardResults.cards?.length || 0;
-        setReviewNumCardsToTotal(totalDue);
-        let numCards = totalDue;
-
-        const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
-        const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
-        const currentReviewAhead = reviewAheadCheckbox?.checked || false;
-        const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
-
-        if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
-            updateSubmitButtonText(numCards, cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
-        } else {
-            updateSubmitButtonText(numCards, 0, currentReviewAhead, currentHoursAhead);
-        }
-    } catch (error) {
-        console.error('Error refreshing card cache:', error);
-        if (submitButton) {
-            submitButton.textContent = 'Error';
-            submitButton.disabled = true;
-        }
-    }
+    await buildReviewDeckList();
 }
 
 function setupReviewAheadUI(): void {
@@ -2263,84 +1952,34 @@ async function markCardsUnderReview(cardIds: number[]): Promise<boolean> {
 }
 
 
-let reviewSubmitButtonClicked: boolean = false;
 if (reviewSubmitButton) {
     reviewSubmitButton.addEventListener('click', async () => {
-        if (!selectedReviewDeck) {
-            const outputDiv = document.getElementById("check_output") as HTMLDivElement;
-            if (outputDiv) {
-                outputDiv.innerHTML = `<p class="error">Please select a deck first.</p>`;
+        const deckRows = document.querySelectorAll<HTMLDivElement>('.deck-review-row');
+        const selections: { deckName: string, cards: CardDue[] }[] = [];
+
+        for (const row of deckRows) {
+            const checkbox = row.querySelector<HTMLInputElement>('.deck-review-check');
+            if (!checkbox?.checked) continue;
+
+            const deckName = row.dataset.deck!;
+            const countInput = row.querySelector<HTMLInputElement>('.deck-card-count');
+            const numCards = parseInt(countInput?.value || '0');
+
+            const cached = deckCardCache.get(deckName);
+            if (!cached?.cards || cached.cards.length === 0) continue;
+
+            const cards = produceFinalCardList(cached.cards, numCards);
+            if (cards.length > 0) {
+                selections.push({ deckName, cards });
             }
+        }
+
+        if (selections.length === 0) {
+            alert('No decks selected with due cards.');
             return;
         }
 
-        if (reviewSubmitButtonClicked) {
-            return;
-        }
-
-        console.log(`Review submit clicked for deck: ${selectedReviewDeck}`);
-        
-        // Show loading state
-        const outputDiv = document.getElementById("check_output") as HTMLDivElement;
-        if (outputDiv) {
-            outputDiv.innerHTML = `<p>Loading cards for ${selectedReviewDeck}...</p>`;
-        }
-
-        try {
-
-            // Check if we need to refresh the cache (deck changed or review options changed)
-            const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
-            const reviewAheadHours = document.getElementById('reviewAheadHours') as HTMLSelectElement;
-            const reviewAheadNumCards = document.getElementById("review_numCards") as HTMLInputElement;
-
-            let numCards = parseInt(reviewAheadNumCards.value)
-            
-            const currentReviewAhead = reviewAheadCheckbox?.checked || false;
-            const currentHoursAhead = currentReviewAhead ? parseInt(reviewAheadHours?.value || '24') : 0;
-            
-            // Generate a cache key to check if settings changed
-            const cacheKey = `${selectedReviewDeck}-${currentReviewAhead}-${currentHoursAhead}`;
-            const lastCacheKey = `${lastCheckedDeck}-${cachedCardResults?.review_ahead || false}-${cachedCardResults?.hours_ahead || 0}`;
-            
-            // Fetch fresh data if cache is invalid
-            if (!cachedCardResults || cacheKey !== lastCacheKey) {
-                console.log('Cache miss or settings changed, fetching fresh data...');
-                cachedCardResults = await checkAvailableCardsWithOptions(selectedReviewDeck);
-                lastCheckedDeck = selectedReviewDeck;
-            } else {
-                console.log('Using cached card data');
-            }
-
-            // Display the results
-            if (cachedCardResults.status === 'success' && cachedCardResults.cards) {
-                console.log("Should be showing review sheet...")
-                let cardsToReview: CardDue[] = produceFinalCardList(cachedCardResults.cards, numCards);
-                console.log(cardsToReview[0]);
-
-                let doc = produceCardReviewSheetPDFViewer(cardsToReview);
-                
-                let idsUnderReview: number[] = []
-                for (let i=0; i < cardsToReview.length; i++) {
-                    let thisCardID = cardsToReview[i].card_id;
-                    idsUnderReview.push(thisCardID);
-                }
-                markCardsUnderReview(idsUnderReview)
-
-                // Update submit button text to show count
-                updateSubmitButtonText(numCards, cachedCardResults.cards.length, currentReviewAhead, currentHoursAhead);
-            } else {
-                if (outputDiv) {
-                    outputDiv.innerHTML = `<p class="error">Error: ${cachedCardResults.error}</p>`;
-                }
-                updateSubmitButtonText(numCards, 0, currentReviewAhead, currentHoursAhead);
-            }
-            reviewSubmitButtonClicked = true;
-        } catch (error) {
-            console.error('Error in review submit:', error);
-            if (outputDiv) {
-                outputDiv.innerHTML = `<p class="error">Network error occurred</p>`;
-            }
-        }
+        await produceMultiDeckReviewSheet(selections);
     });
 }
 
@@ -2350,37 +1989,6 @@ async function fetchTodaysHardFail(deck: string): Promise<{status: string, cards
     return response.json();
 }
 
-function renderTodaysHardFail(cards: (CardDue & {grade: string})[], deckName: string): string {
-    if (cards.length === 0) {
-        return `<p>No hard or failed cards today for "${deckName}".</p>`;
-    }
-
-    const failCards = cards.filter(c => c.grade === 'fail');
-    const hardCards = cards.filter(c => c.grade === 'hard');
-
-    function renderGroup(groupCards: (CardDue & {grade: string})[], label: string): string {
-        if (groupCards.length === 0) return '';
-        const rows = groupCards.map(card => {
-            const front = generateCardFrontLine(card);
-            const back = generateCardBackLine(card);
-            return `<div class="difficult-card-row">
-                <span class="difficult-card-front">${front}</span>
-                <span class="difficult-card-sep">→</span>
-                <span class="difficult-card-back">${back}</span>
-            </div>`;
-        }).join('');
-        return `<div class="difficult-card-group">
-            <h4 class="difficult-group-label">${label} (${groupCards.length})</h4>
-            ${rows}
-        </div>`;
-    }
-
-    return `<div class="difficult-cards-container">
-        <h3>Today's Difficult Cards — ${deckName}</h3>
-        ${renderGroup(failCards, 'Failed')}
-        ${renderGroup(hardCards, 'Hard')}
-    </div>`;
-}
 
 const reviewDifficultBtn = document.getElementById('reviewDifficultBtn');
 if (reviewDifficultBtn) {
@@ -2394,7 +2002,24 @@ if (reviewDifficultBtn) {
         try {
             const result = await fetchTodaysHardFail(selectedReviewDeck);
             if (result.status === 'success') {
-                if (outputDiv) outputDiv.innerHTML = renderTodaysHardFail(result.cards, selectedReviewDeck);
+                if (result.cards.length === 0) {
+                    if (outputDiv) outputDiv.innerHTML = `<p>No hard or failed cards today for "${selectedReviewDeck}".</p>`;
+                    return;
+                }
+                // Store cards in localStorage for the Check Your Work tab
+                localStorage.setItem(`difficultReview_${selectedReviewDeck}`, JSON.stringify({
+                    cards: result.cards,
+                    timestamp: new Date().toISOString()
+                }));
+                // Open review sheet in new tab (same format as regular reviews, no session)
+                const deckData: { name: string, cards: CardDue[], sessionId: number | null }[] = [{ name: selectedReviewDeck, cards: result.cards as CardDue[], sessionId: null }];
+                const htmlContent = generateMultiDeckReviewSheetHTML(deckData);
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const blobUrl = URL.createObjectURL(blob);
+                window.open(blobUrl, '_blank');
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+                if (outputDiv) outputDiv.innerHTML = `<p>Review sheet opened in new tab (${result.cards.length} cards). Use the Check Your Work tab to grade them.</p>`;
+                populateCheckWorkDropdown();
             } else {
                 if (outputDiv) outputDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
             }
@@ -2479,9 +2104,11 @@ interface CardsUnderReviewResponse {
 
 
 // Function to fetch cards under review for a deck
-async function getCardsUnderReview(deckName: string): Promise<CardsUnderReviewResponse> {
+async function getCardsUnderReview(deckName: string, sessionId?: number | null): Promise<CardsUnderReviewResponse> {
     try {
-        const response = await fetch(`/cards_under_review/${encodeURIComponent(deckName)}`, {
+        const url = `/cards_under_review/${encodeURIComponent(deckName)}`
+                  + (sessionId ? `?session_id=${sessionId}` : '');
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -2508,28 +2135,19 @@ async function getCardsUnderReview(deckName: string): Promise<CardsUnderReviewRe
 
 // In check your work - get cards in the exact review order
 async function getCardsUnderReviewInOrder(deckName: string): Promise<CardDue[]> {
-    // Get the saved order
-    const orderData = localStorage.getItem(`reviewOrder_${deckName}`);
-    if (!orderData) {
-        // Fallback: just get cards under review (no guaranteed order)
-        const result = await getCardsUnderReview(deckName);
-        return result.status === 'success' ? result.cards?.map(convertToCardDue) || [] : [];
+    // Get session ID from localStorage
+    const sessionData = localStorage.getItem(`reviewSession_${deckName}`);
+    let sessionId: number | null = null;
+    if (sessionData) {
+        try {
+            sessionId = JSON.parse(sessionData).sessionId ?? null;
+        } catch (e) {
+            console.warn('Could not parse reviewSession data');
+        }
     }
-    
-    const { order } = JSON.parse(orderData);
-    
-    // Get all cards under review from database
-    const result = await getCardsUnderReview(deckName);
-    if (result.status !== 'success' || !result.cards) {
-        return [];
-    }
-    
-    const dbCards = result.cards.map(convertToCardDue);
-    
-    // Return cards in the exact order they were drawn
-    return order.map((orderItem: any) => 
-        dbCards.find(card => card.card_id === orderItem.cardId)
-    ).filter(Boolean) as CardDue[];
+    // Fetch cards from DB; server orders by position when sessionId is provided
+    const result = await getCardsUnderReview(deckName, sessionId);
+    return result.status === 'success' ? result.cards?.map(convertToCardDue) || [] : [];
 }
 
 
@@ -2588,94 +2206,108 @@ function getReviewResults(): { cardId: number, result: string }[] {
 
 
 // Update your displayAnswerKey function to use the session ID
-function displayAnswerKey(cards: CardDue[], deckName: string): void {
+function displayAnswerKey(cards: CardDue[], deckName: string, isDifficult: boolean = false): void {
     const outputDiv = document.getElementById("check_output") as HTMLDivElement;
     if (!outputDiv) return;
 
     console.log(`Displaying answer key for ${cards.length} cards`);
-    
-    // Get session ID from localStorage if available
-    const orderData = localStorage.getItem(`reviewOrder_${deckName}`);
+
+    // Get session ID from localStorage if available (not used for difficult reviews)
     let sessionId: number | null = null;
-    
-    if (orderData) {
-        try {
-            const parsed = JSON.parse(orderData);
-            sessionId = parsed.sessionId || null;
-        } catch (e) {
-            console.warn('Could not parse review order data');
+    if (!isDifficult) {
+        const sessionData = localStorage.getItem(`reviewSession_${deckName}`);
+        if (sessionData) {
+            try {
+                sessionId = JSON.parse(sessionData).sessionId ?? null;
+            } catch (e) {
+                console.warn('Could not parse reviewSession data');
+            }
         }
     }
-    
+
     const answerKeyHTML = generateAnswerKey(cards, deckName);
-    
+
     outputDiv.innerHTML = `
         <div class="check-work-header">
-            <h2>Answer Key for "${deckName}"</h2>
-            <p class="deck-info">Review your answers and select pass/hard/fail for each card</p>
+            <h2>Answer Key for "${deckName}"${isDifficult ? ' <em>(Difficult Cards — practice only)</em>' : ''}</h2>
+            <p class="deck-info">Review your answers and select pass/hard/fail for each card${isDifficult ? ' — grades will not be recorded' : ''}</p>
             ${sessionId ? `<p class="session-info">Session ID: ${sessionId}</p>` : ''}
         </div>
         ${answerKeyHTML}
     `;
-    
+
     // Add event listener to the submit button
     const completeReviewButton = document.getElementById('submitReviewResults');
     if (completeReviewButton) {
-        console.log('Adding event listener to submit button');
-        completeReviewButton.addEventListener('click', async () => {
-            const results = getReviewResults();
-            
-            if (results.length === 0) {
-                alert('No review results to submit. Please grade at least one card.');
-                return;
-            }
-            
-            // Show loading state
-            completeReviewButton.textContent = 'Submitting...';
-            (completeReviewButton as HTMLButtonElement).disabled = true;
-            
-            try {
-                // Submit the results to the backend WITH session ID
-                const submitResult = await submitReviewResults(results, deckName, sessionId || undefined);
-                
-                if (submitResult.status === 'success') {
-                    console.log(`✅ Successfully submitted ${submitResult.processed_count} review results`);
-                    alert(`Review complete! Updated ${submitResult.processed_count} cards.`);
-                    
-                    // Clear the localStorage after successful submission
-                    localStorage.removeItem(`reviewOrder_${deckName}`);
-                    currentSessionId = null;
-                    // Invalidate the card cache so a subsequent same-day session
-                    // always fetches a fresh list (reflecting burials from this session).
-                    cachedCardResults = null;
-                    lastCheckedDeck = "";
-                    
-                    // Clear the output after successful submission
-                    outputDiv.innerHTML = `
-                        <div class="success-message">
-                            <h3>✅ Review Submitted Successfully!</h3>
-                            <p>Updated ${submitResult.processed_count} cards in deck "${deckName}"</p>
-                            <p>Session: ${sessionId || 'N/A'}</p>
-                            <p>Review completed at: ${new Date(submitResult.review_timestamp || '').toLocaleString()}</p>
-                        </div>
-                    `;
-                } else {
-                    console.error('❌ Failed to submit review results:', submitResult.error);
-                    alert(`Failed to submit review: ${submitResult.error}`);
-                    
+        if (isDifficult) {
+            completeReviewButton.textContent = 'Done (grades not recorded)';
+            completeReviewButton.addEventListener('click', () => {
+                localStorage.removeItem(`difficultReview_${deckName}`);
+                populateCheckWorkDropdown();
+                outputDiv.innerHTML = `
+                    <div class="success-message">
+                        <h3>✓ Done reviewing difficult cards for "${deckName}"</h3>
+                        <p>No interval changes were made.</p>
+                    </div>
+                `;
+            });
+        } else {
+            console.log('Adding event listener to submit button');
+            completeReviewButton.addEventListener('click', async () => {
+                const results = getReviewResults();
+
+                if (results.length === 0) {
+                    alert('No review results to submit. Please grade at least one card.');
+                    return;
+                }
+
+                // Show loading state
+                completeReviewButton.textContent = 'Submitting...';
+                (completeReviewButton as HTMLButtonElement).disabled = true;
+
+                try {
+                    // Submit the results to the backend WITH session ID
+                    const submitResult = await submitReviewResults(results, deckName, sessionId || undefined);
+
+                    if (submitResult.status === 'success') {
+                        console.log(`✅ Successfully submitted ${submitResult.processed_count} review results`);
+                        alert(`Review complete! Updated ${submitResult.processed_count} cards.`);
+
+                        // Clear the localStorage after successful submission
+                        localStorage.removeItem(`reviewSession_${deckName}`);
+                        currentSessionIds.delete(deckName);
+                        // Invalidate the card cache so a subsequent same-day session
+                        // always fetches a fresh list (reflecting burials from this session).
+                        cachedCardResults = null;
+                        lastCheckedDeck = "";
+
+                        // Clear the output after successful submission
+                        outputDiv.innerHTML = `
+                            <div class="success-message">
+                                <h3>✅ Review Submitted Successfully!</h3>
+                                <p>Updated ${submitResult.processed_count} cards in deck "${deckName}"</p>
+                                <p>Session: ${sessionId || 'N/A'}</p>
+                                <p>Review completed at: ${new Date(submitResult.review_timestamp || '').toLocaleString()}</p>
+                            </div>
+                        `;
+                    } else {
+                        console.error('❌ Failed to submit review results:', submitResult.error);
+                        alert(`Failed to submit review: ${submitResult.error}`);
+
+                        // Re-enable button on error
+                        completeReviewButton.textContent = 'Submit Review Results';
+                        (completeReviewButton as HTMLButtonElement).disabled = false;
+                    }
+                } catch (error) {
+                    console.error('❌ Error submitting review results:', error);
+                    alert('Network error occurred while submitting review');
+
                     // Re-enable button on error
                     completeReviewButton.textContent = 'Submit Review Results';
                     (completeReviewButton as HTMLButtonElement).disabled = false;
                 }
-            } catch (error) {
-                console.error('❌ Error submitting review results:', error);
-                alert('Network error occurred while submitting review');
-                
-                // Re-enable button on error
-                completeReviewButton.textContent = 'Submit Review Results';
-                (completeReviewButton as HTMLButtonElement).disabled = false;
-            }
-        });
+            });
+        }
     } else {
         console.error('Submit button not found after adding to DOM');
     }
@@ -3297,15 +2929,55 @@ async function handleBulkReduction(): Promise<void> {
     }
 }
 
+// Populate the check-work dropdown with decks that have an active reviewSession in localStorage,
+// plus any difficult-card review sessions.
+function populateCheckWorkDropdown(): void {
+    const dropdown = document.getElementById('check_dropdownMenu') as HTMLSelectElement;
+    if (!dropdown) return;
+
+    const regularDecks: string[] = [];
+    const difficultDecks: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('reviewSession_')) {
+            regularDecks.push(key.slice('reviewSession_'.length));
+        } else if (key?.startsWith('difficultReview_')) {
+            difficultDecks.push(key.slice('difficultReview_'.length));
+        }
+    }
+
+    dropdown.innerHTML = '<option value="" disabled selected>Select a deck</option>';
+    const anyActive = regularDecks.length > 0 || difficultDecks.length > 0;
+    if (!anyActive) {
+        const opt = document.createElement('option');
+        opt.disabled = true;
+        opt.textContent = '(No active review sessions)';
+        dropdown.appendChild(opt);
+    } else {
+        regularDecks.sort().forEach(deckName => {
+            const opt = document.createElement('option');
+            opt.value = deckName;
+            opt.textContent = deckName;
+            dropdown.appendChild(opt);
+        });
+        difficultDecks.sort().forEach(deckName => {
+            const opt = document.createElement('option');
+            opt.value = `difficult:${deckName}`;
+            opt.textContent = `${deckName} (Difficult)`;
+            dropdown.appendChild(opt);
+        });
+    }
+}
+
 // Set up the Check Your Work tab functionality
 function setupCheckYourWorkTab(): void {
     const checkDeckDropdown = document.getElementById("check_dropdownMenu") as HTMLSelectElement;
     const checkSubmitButton = document.getElementById("check_submitBtn") as HTMLButtonElement;
-    
+
     if (checkSubmitButton && checkDeckDropdown) {
         checkSubmitButton.addEventListener('click', async () => {
-            const selectedDeck = checkDeckDropdown.value;
-            if (!selectedDeck) {
+            const selectedValue = checkDeckDropdown.value;
+            if (!selectedValue) {
                 const outputDiv = document.getElementById("check_output") as HTMLDivElement;
                 if (outputDiv) {
                     outputDiv.innerHTML = `<p class="error">Please select a deck first.</p>`;
@@ -3313,24 +2985,34 @@ function setupCheckYourWorkTab(): void {
                 return;
             }
 
-            console.log(`Check your work for deck: ${selectedDeck}`);
-            
-            // Show loading state
+            const isDifficult = selectedValue.startsWith('difficult:');
+            const selectedDeck = isDifficult ? selectedValue.slice('difficult:'.length) : selectedValue;
+
+            console.log(`Check your work for deck: ${selectedDeck} (difficult: ${isDifficult})`);
+
             const outputDiv = document.getElementById("check_output") as HTMLDivElement;
             if (outputDiv) {
                 outputDiv.innerHTML = `<p>Loading answer key for ${selectedDeck}...</p>`;
             }
 
             try {
-                // Get cards in the correct order
-                const cards = await getCardsUnderReviewInOrder(selectedDeck);
-                
-                console.log(`Found ${cards.length} cards under review for ${selectedDeck}`);
-                
+                let cards: CardDue[];
+
+                if (isDifficult) {
+                    const stored = localStorage.getItem(`difficultReview_${selectedDeck}`);
+                    if (!stored) {
+                        if (outputDiv) outputDiv.innerHTML = `<p class="no-cards">No difficult review found for "${selectedDeck}".</p>`;
+                        return;
+                    }
+                    cards = (JSON.parse(stored).cards as any[]).map(convertToCardDue);
+                } else {
+                    cards = await getCardsUnderReviewInOrder(selectedDeck);
+                }
+
+                console.log(`Found ${cards.length} cards for ${selectedDeck}`);
+
                 if (cards.length > 0) {
-                    // DON'T reset cards here - we want to show them!
-                    // resetDeckCardsUnderReview(selectedDeck); // REMOVED THIS LINE
-                    displayAnswerKey(cards, selectedDeck);
+                    displayAnswerKey(cards, selectedDeck, isDifficult);
                 } else {
                     if (outputDiv) {
                         outputDiv.innerHTML = `<p class="no-cards">No cards are currently under review for "${selectedDeck}". Complete a review session first.</p>`;
