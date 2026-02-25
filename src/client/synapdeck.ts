@@ -497,7 +497,7 @@ function addSpreadsheetRow(): void {
     tdNum.textContent = String(rowNum);
     tr.appendChild(tdNum);
 
-    cols.forEach(() => {
+    cols.forEach((_col, colIdx) => {
         const td = document.createElement('td');
         const textarea = document.createElement('textarea');
         textarea.rows = 2;
@@ -507,6 +507,21 @@ function addSpreadsheetRow(): void {
         textarea.addEventListener('input', () => {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
+        });
+        textarea.addEventListener('keydown', (e) => {
+            const text = textarea.value;
+            const pos = textarea.selectionStart ?? 0;
+            if (e.key === 'ArrowUp') {
+                const isFirstLine = text.lastIndexOf('\n', pos - 1) === -1;
+                if (isFirstLine) { e.preventDefault(); moveSpreadsheetFocusVertical(tr, colIdx, -1); }
+            } else if (e.key === 'ArrowDown') {
+                const isLastLine = text.indexOf('\n', pos) === -1;
+                if (isLastLine) { e.preventDefault(); moveSpreadsheetFocusVertical(tr, colIdx, 1); }
+            } else if (e.key === 'ArrowLeft') {
+                if (pos === 0 && textarea.selectionEnd === 0) { e.preventDefault(); moveSpreadsheetFocusHorizontal(tr, colIdx, -1); }
+            } else if (e.key === 'ArrowRight') {
+                if (pos === text.length && textarea.selectionEnd === text.length) { e.preventDefault(); moveSpreadsheetFocusHorizontal(tr, colIdx, 1); }
+            }
         });
         td.appendChild(textarea);
         tr.appendChild(td);
@@ -580,6 +595,54 @@ function getNotesFromSpreadsheet(): NoteToProcess[] {
     });
 
     return notes;
+}
+
+function getSpreadsheetCellTextarea(row: HTMLTableRowElement, dataColIdx: number): HTMLTextAreaElement | null {
+    const cell = row.cells[dataColIdx + 1]; // +1 to skip row-number cell
+    return cell ? (cell.querySelector('textarea') as HTMLTextAreaElement | null) : null;
+}
+
+function moveSpreadsheetFocusVertical(currentRow: HTMLTableRowElement, dataColIdx: number, dir: -1 | 1): void {
+    const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+    if (!tbody) return;
+    const rows = Array.from(tbody.rows) as HTMLTableRowElement[];
+    const rowIdx = rows.indexOf(currentRow);
+    const targetRow = rows[rowIdx + dir];
+    if (!targetRow) return;
+    const target = getSpreadsheetCellTextarea(targetRow, dataColIdx);
+    if (!target) return;
+    target.focus();
+    const pos = dir === 1 ? 0 : target.value.length;
+    target.setSelectionRange(pos, pos);
+}
+
+function moveSpreadsheetFocusHorizontal(currentRow: HTMLTableRowElement, dataColIdx: number, dir: -1 | 1): void {
+    const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+    if (!tbody) return;
+    const rows = Array.from(tbody.rows) as HTMLTableRowElement[];
+    const cardFormatEl = document.getElementById('card_format_dropdown') as HTMLSelectElement;
+    const cardType = cardFormatEl?.value ?? 'two-way';
+    const numCols = (SPREADSHEET_COLS[cardType] ?? SPREADSHEET_COLS['two-way']).length;
+    const rowIdx = rows.indexOf(currentRow);
+
+    let targetRow = currentRow;
+    let targetColIdx = dataColIdx + dir;
+
+    if (targetColIdx < 0) {
+        if (rowIdx <= 0) return;
+        targetRow = rows[rowIdx - 1];
+        targetColIdx = numCols - 1;
+    } else if (targetColIdx >= numCols) {
+        if (rowIdx >= rows.length - 1) return;
+        targetRow = rows[rowIdx + 1];
+        targetColIdx = 0;
+    }
+
+    const target = getSpreadsheetCellTextarea(targetRow, targetColIdx);
+    if (!target) return;
+    target.focus();
+    const pos = dir === -1 ? target.value.length : 0;
+    target.setSelectionRange(pos, pos);
 }
 
 // ── End spreadsheet functions ──────────────────────────────────────────────
