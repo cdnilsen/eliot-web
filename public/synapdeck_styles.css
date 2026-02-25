@@ -2464,3 +2464,38 @@ input[type="file"]:hover {
 #addSpreadsheetRow:hover {
     background: #f0f2f5;
 }
+
+/* ── Conflict detection ──────────────────────────────────────────────────── */
+
+.card-spreadsheet td.cell-conflict textarea {
+    background-color: #ffe8e8;
+}
+
+.conflict-header {
+    width: 28px;
+    border-right: none !important;
+    background-color: #f0f2f5;
+}
+
+.conflict-cell {
+    width: 28px;
+    text-align: center;
+    padding: 2px;
+    vertical-align: middle;
+    border-right: none !important;
+}
+
+.conflict-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: #e53935;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    border-radius: 3px;
+    cursor: help;
+    user-select: none;
+}

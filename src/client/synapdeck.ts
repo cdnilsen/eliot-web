@@ -78,6 +78,81 @@ const SPREADSHEET_COL_WIDTHS: Record<string, number[]> = {
 };
 let focusedSpreadsheetCell: HTMLTextAreaElement | null = null;
 
+// --- Conflict detection for the spreadsheet card editor ---
+interface ConflictCardInfo { card_id: number; note_id: number; field_values: string[]; }
+// deckFrontsCache[i] maps trimmed-lowercase field_values[i] → matching cards
+let deckFrontsCache: Map<string, ConflictCardInfo[]>[] = [];
+
+async function loadDeckFronts(deck: string): Promise<void> {
+    deckFrontsCache = [];
+    if (!deck) return;
+    try {
+        const response = await fetch(`/deck_fronts?deck=${encodeURIComponent(deck)}`);
+        const data = await response.json();
+        if (data.status !== 'success') return;
+        const maps: Map<string, ConflictCardInfo[]>[] = [new Map(), new Map()];
+        for (const card of data.cards as ConflictCardInfo[]) {
+            for (const i of [0, 1] as const) {
+                const v = ((card.field_values[i] as string) ?? '').trim().toLowerCase();
+                if (!v) continue;
+                if (!maps[i].has(v)) maps[i].set(v, []);
+                maps[i].get(v)!.push(card);
+            }
+        }
+        deckFrontsCache = maps;
+        revalidateSpreadsheetConflicts();
+    } catch (e) {
+        console.error('Error loading deck fronts:', e);
+    }
+}
+
+function revalidateSpreadsheetConflicts(): void {
+    const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+    if (!tbody) return;
+    Array.from(tbody.rows).forEach(row => checkRowConflicts(row as HTMLTableRowElement));
+}
+
+function checkRowConflicts(row: HTMLTableRowElement): void {
+    const cardFormatEl = document.getElementById('card_format_dropdown') as HTMLSelectElement;
+    const cardType = cardFormatEl?.value ?? 'two-way';
+    const frontIndices: number[] = cardType === 'two-way' ? [0, 1] : [0];
+
+    let rowHasConflict = false;
+    const conflictMessages: string[] = [];
+
+    for (const fieldIdx of frontIndices) {
+        const ta = getSpreadsheetCellTextarea(row, fieldIdx);
+        if (!ta) continue;
+        const value = ta.value.trim();
+        const td = ta.closest('td') as HTMLTableCellElement;
+        td.classList.remove('cell-conflict');
+        if (!value || deckFrontsCache.length === 0) continue;
+        const matches = deckFrontsCache[fieldIdx]?.get(value.toLowerCase());
+        if (matches && matches.length > 0) {
+            td.classList.add('cell-conflict');
+            rowHasConflict = true;
+            for (const m of matches) {
+                const fv = m.field_values;
+                const front = ((fv[fieldIdx] as string) ?? '').trim();
+                const back = ((fv[fieldIdx === 0 ? 1 : 0] as string) ?? '').trim();
+                conflictMessages.push(`Card #${m.card_id}: "${front}" / "${back}"`);
+            }
+        }
+    }
+
+    const conflictTd = row.querySelector('.conflict-cell') as HTMLTableCellElement | null;
+    if (!conflictTd) return;
+    conflictTd.innerHTML = '';
+    if (rowHasConflict) {
+        const btn = document.createElement('span');
+        btn.className = 'conflict-btn';
+        btn.textContent = '!';
+        btn.title = conflictMessages.join('\n');
+        conflictTd.appendChild(btn);
+    }
+}
+// --- End conflict detection ---
+
 // Consolidate all global declarations
 declare global {
     interface Window {
@@ -461,6 +536,10 @@ function buildSpreadsheet(cardType: string): void {
         col.style.width = w + 'px';
         colgroup.appendChild(col);
     });
+    // Conflict indicator column
+    const colConflict = document.createElement('col');
+    colConflict.style.width = '28px';
+    colgroup.appendChild(colConflict);
     table.appendChild(colgroup);
 
     const thead = document.createElement('thead');
@@ -476,6 +555,10 @@ function buildSpreadsheet(cardType: string): void {
         th.textContent = col;
         headerRow.appendChild(th);
     });
+
+    const thConflict = document.createElement('th');
+    thConflict.className = 'conflict-header';
+    headerRow.appendChild(thConflict);
 
     thead.appendChild(headerRow);
     table.appendChild(thead);
@@ -507,6 +590,8 @@ function addSpreadsheetRow(): void {
     tdNum.textContent = String(rowNum);
     tr.appendChild(tdNum);
 
+    const frontIndices: number[] = cardType === 'two-way' ? [0, 1] : [0];
+
     cols.forEach((_col, colIdx) => {
         const td = document.createElement('td');
         const textarea = document.createElement('textarea');
@@ -533,9 +618,20 @@ function addSpreadsheetRow(): void {
                 if (pos === text.length && textarea.selectionEnd === text.length) { e.preventDefault(); moveSpreadsheetFocusHorizontal(tr, colIdx, 1); }
             }
         });
+        if (frontIndices.includes(colIdx)) {
+            textarea.addEventListener('blur', () => {
+                const trimmed = textarea.value.trim();
+                if (textarea.value !== trimmed) textarea.value = trimmed;
+                checkRowConflicts(tr);
+            });
+        }
         td.appendChild(textarea);
         tr.appendChild(td);
     });
+
+    const conflictTd = document.createElement('td');
+    conflictTd.className = 'conflict-cell';
+    tr.appendChild(conflictTd);
 
     tbody.appendChild(tr);
 }
@@ -560,7 +656,7 @@ function getNotesFromSpreadsheet(): NoteToProcess[] {
     const notes: NoteToProcess[] = [];
 
     Array.from(tbody.rows).forEach(row => {
-        const cells = Array.from(row.cells).slice(1); // skip row-number cell
+        const cells = Array.from(row.cells).slice(1).filter(td => !td.classList.contains('conflict-cell')); // skip row-number and conflict-indicator cells
         const fieldValues = cells.map(td => {
             const ta = td.querySelector('textarea');
             return ta ? ta.value.trim() : '';
@@ -843,6 +939,8 @@ if (uploadDeckDropdown) {
         if (isUploadTabActive) {
             updateSpecialCharacters(currentDeck);
         }
+
+        loadDeckFronts(currentDeck);
     });
 }
 
@@ -861,6 +959,7 @@ function initializeSpreadsheet(): void {
     const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
     if (uploadDropdown && uploadDropdown.value) {
         updateSpecialCharacters(uploadDropdown.value);
+        loadDeckFronts(uploadDropdown.value);
     }
 }
 

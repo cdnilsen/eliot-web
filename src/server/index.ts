@@ -1008,6 +1008,18 @@ app.post('/find_card_by_primary_field', express.json(), wrapAsync(async (req, re
     }
 }));
 
+// Return one row per unique note in a deck (deduped by note_id) for conflict detection
+app.get('/deck_fronts', wrapAsync(async (req, res) => {
+    const deck = ((req.query.deck as string) || '').trim();
+    if (!deck) return res.json({ status: 'error', error: 'deck is required' });
+    const result = await client.query(`
+        SELECT DISTINCT ON (note_id) card_id, note_id, card_format, field_values
+        FROM cards WHERE deck = $1
+        ORDER BY note_id, card_id
+    `, [deck]);
+    res.json({ status: 'success', cards: result.rows });
+}));
+
 // Add a separate endpoint for wiping the database during debugging
 app.post('/wipe_synapdeck_database', express.json(), wrapAsync(async (req, res) => {
     console.log('🧹 WIPING SYNAPDECK DATABASE FOR DEBUG...');
