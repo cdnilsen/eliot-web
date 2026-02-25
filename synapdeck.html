@@ -22,25 +22,6 @@
 
         <div id="upload_mainDiv" class="tab-content active">
             <h2>Upload Cards</h2>
-            <!-- Radio button selection for input method -->
-            <div class="input-method-selection">
-                <h3>Choose input method:</h3>
-                <div class="radio-buttons-row">
-                    <label>
-                        <input type="radio" name="inputMethod" value="file" id="fileInputRadio" checked>
-                        Upload from file
-                    </label>
-                    <label>
-                        <input type="radio" name="inputMethod" value="text" id="textInputRadio">
-                        Type cards directly
-                    </label>
-                    <label>
-                        <input type="radio" name="inputMethod" value="spreadsheet" id="spreadsheetInputRadio">
-                        Enter cards in spreadsheet
-                    </label>
-                </div>
-            </div>
-
             <label for="upload_dropdownMenu">Choose a deck:</label>
             <select id="upload_dropdownMenu" name="upload_dropdownMenu">
                 <option value="" disabled selected>(None)</option>
@@ -54,21 +35,8 @@
                 </select>
             </div>
             
-            <!-- File upload section -->
-            <div class="upload_input-group" id="fileUploadSection">
-                <label for="uploadTextFile">Upload Text File:</label>
-                <input type="file" id="uploadTextFile" accept=".txt">
-            </div>
-
-            <!-- Text input section -->
-            <div class="text_input-group" id="textInputSection" style="display: none;">
-                <label for="cardTextInput">Type your cards (follow the format examples above):</label>
-                <textarea id="cardTextInput" rows="10" cols="50" placeholder="Enter your cards here following the format:&#10;näbärä / to sit / näbärä&#10;hägär / city / hägär"></textarea>
-                <!-- Special characters panel will be inserted here dynamically by JavaScript -->
-            </div>
-
             <!-- Spreadsheet input section -->
-            <div class="spreadsheet_input-group" id="spreadsheetSection" style="display: none;">
+            <div class="spreadsheet_input-group" id="spreadsheetSection">
                 <div id="cardSpreadsheet" class="card-spreadsheet-container">
                     <!-- Table built dynamically by JavaScript -->
                 </div>

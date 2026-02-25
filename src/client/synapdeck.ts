@@ -341,12 +341,6 @@ interface AdjustIntervalsResponse {
 // Enhanced createSpecialCharactersPanel function
 function createSpecialCharactersPanel(): void {
     console.log("Creating special characters panel...");
-    
-    const textInputSection = document.getElementById("textInputSection");
-    if (!textInputSection) {
-        console.error("textInputSection not found");
-        return;
-    }
 
     // Check if panel already exists
     let existingPanel = document.getElementById("specialCharsPanel");
@@ -363,40 +357,29 @@ function createSpecialCharactersPanel(): void {
     panel.style.border = "1px solid #ddd";
     panel.style.borderRadius = "5px";
     panel.style.backgroundColor = "#f8f9fa";
-    
+
     const panelTitle = document.createElement("h4");
     panelTitle.textContent = "Special Characters";
     panelTitle.className = "special-chars-title";
     panelTitle.style.margin = "0 0 10px 0";
     panelTitle.style.fontSize = "14px";
     panelTitle.style.fontWeight = "bold";
-    
+
     const charGrid = document.createElement("div");
     charGrid.id = "specialCharsGrid";
     charGrid.className = "special-chars-grid";
     charGrid.style.display = "flex";
     charGrid.style.flexWrap = "wrap";
     charGrid.style.gap = "4px";
-    
+
     panel.appendChild(panelTitle);
     panel.appendChild(charGrid);
-    
-    // Insert into whichever input section is currently active
-    const spreadsheetRadio = document.getElementById('spreadsheetInputRadio') as HTMLInputElement;
-    if (spreadsheetRadio?.checked) {
-        const spreadsheetSection = document.getElementById('spreadsheetSection');
-        if (spreadsheetSection) {
-            spreadsheetSection.appendChild(panel);
-            console.log("Panel appended to spreadsheetSection");
-        }
-    } else {
-        const textarea = document.getElementById("cardTextInput");
-        if (textarea && textarea.parentNode) {
-            textarea.parentNode.insertBefore(panel, textarea.nextSibling);
-            console.log("Panel inserted after textarea");
-        } else {
-            textInputSection.appendChild(panel);
-        }
+
+    // Insert into spreadsheet section
+    const spreadsheetSection = document.getElementById('spreadsheetSection');
+    if (spreadsheetSection) {
+        spreadsheetSection.appendChild(panel);
+        console.log("Panel appended to spreadsheetSection");
     }
 }
 
@@ -677,11 +660,7 @@ function insertCharacterAtCursor(character: string): void {
         character = "\u0300";
     }
 
-    const spreadsheetRadio = document.getElementById('spreadsheetInputRadio') as HTMLInputElement;
-    const isSpreadsheet = spreadsheetRadio?.checked;
-    const textarea: HTMLTextAreaElement | null = isSpreadsheet
-        ? focusedSpreadsheetCell
-        : document.getElementById("cardTextInput") as HTMLTextAreaElement;
+    const textarea: HTMLTextAreaElement | null = focusedSpreadsheetCell;
     if (!textarea) return;
 
     const startPos = textarea.selectionStart;
@@ -699,7 +678,7 @@ function insertCharacterAtCursor(character: string): void {
     // Focus back on the target
     textarea.focus();
 
-    // Trigger input event (updates currentFileContent in text mode; auto-grows in spreadsheet mode)
+    // Trigger input event (auto-grows cell in spreadsheet mode)
     const inputEvent = new Event('input', { bubbles: true });
     textarea.dispatchEvent(inputEvent);
 }
@@ -830,20 +809,10 @@ function initializeTabSwitching() {
     setupCheckYourWorkTab();
 }
 
-let currentFileContent: string = "";
 let currentDeck: string = "";
-let uploadDeckDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;// Optional: Also handle when radio buttons change to reset the content
-
-// Also fix the text radio button event listener to be more explicit
-const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
-const fileRadio = document.getElementById('fileInputRadio') as HTMLInputElement;
+let uploadDeckDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
 const cardFormatDropdownDiv = document.getElementById("cardFormatSection") as HTMLDivElement;
 const cardFormatDropdown = document.getElementById("card_format_dropdown") as HTMLSelectElement;
-
-// Initialize visibility on page load
-if (fileRadio.checked) {
-    cardFormatDropdownDiv.style.display = "none";
-}
 
 // Enhanced deck dropdown event listener with better debugging
 
@@ -854,159 +823,25 @@ if (uploadDeckDropdown) {
     if (uploadDeckDropdown.parentNode) {
         uploadDeckDropdown.parentNode.replaceChild(newUploadDropdown, uploadDeckDropdown);
     }
-    
+
     console.log("Upload deck dropdown event listener setup...");
-    
+
     // Add the corrected event listener
     newUploadDropdown.addEventListener('change', (event) => {
         // Prevent this event from bubbling up and triggering other listeners
         event.stopPropagation();
         event.preventDefault();
-        
+
         const selectedValue = (event.target as HTMLSelectElement).value;
         currentDeck = selectedValue;
 
         console.log(`UPLOAD TAB: Deck changed to: "${currentDeck}"`);
-        
-        // Only update special characters if we're in text input mode
-        const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
+
         const uploadTab = document.getElementById('upload_mainDiv');
         const isUploadTabActive = uploadTab?.classList.contains('active');
-        
-        console.log(`Upload tab active: ${isUploadTabActive}, Text radio checked: ${textRadio?.checked}`);
-        
-        if (textRadio && textRadio.checked && isUploadTabActive) {
-            console.log("Conditions met - updating special characters...");
+
+        if (isUploadTabActive) {
             updateSpecialCharacters(currentDeck);
-        } else {
-            console.log("Conditions not met - skipping special characters update");
-            console.log(`  Upload tab active: ${isUploadTabActive}`);
-            console.log(`  Text radio checked: ${textRadio?.checked}`);
-        }
-    });
-}
-
-// Enhanced radio button event listeners with proper text input area management
-
-if (textRadio) {
-    textRadio.addEventListener('change', function() {
-        if (this.checked) {
-            console.log('Text input mode selected');
-            document.getElementById("fileUploadSection")!.style.display = "none";
-
-            // Show the card format dropdown
-            cardFormatDropdownDiv.style.display = "block";
-
-            // Show the text input section
-            const textInputSection = document.getElementById("textInputSection");
-            if (textInputSection) {
-                textInputSection.style.display = "block";
-            }
-
-            // Show the textarea specifically
-            const cardTextInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
-            if (cardTextInput) {
-                cardTextInput.style.display = "block";
-                if (cardTextInput.parentElement) {
-                    cardTextInput.parentElement.style.display = "block";
-                }
-            }
-
-            // HIDE FILE INPUT SECTION
-            const fileInputSection = document.getElementById("fileInputSection");
-            if (fileInputSection) {
-                fileInputSection.style.display = "none";
-            }
-
-            // Hide spreadsheet section
-            const spreadsheetSection = document.getElementById("spreadsheetSection");
-            if (spreadsheetSection) {
-                spreadsheetSection.style.display = "none";
-            }
-
-            // Create special characters panel when switching to text mode
-            createSpecialCharactersPanel();
-
-            // Update special characters if a deck is already selected
-            if (currentDeck) {
-                console.log(`Updating special characters for already selected deck: ${currentDeck}`);
-                updateSpecialCharacters(currentDeck);
-            }
-        }
-    });
-}
-
-if (fileRadio) {
-    fileRadio.addEventListener('change', function() {
-        if (this.checked) {
-            console.log('File input mode selected');
-            document.getElementById("fileUploadSection")!.style.display = "block";
-
-            // Hide the card format dropdown
-            cardFormatDropdownDiv.style.display = "none";
-
-            // Hide the text input section
-            const textInputSection = document.getElementById("textInputSection");
-            if (textInputSection) {
-                textInputSection.style.display = "none";
-            }
-
-            // Hide the textarea specifically
-            const cardTextInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
-            if (cardTextInput) {
-                cardTextInput.style.display = "none";
-            }
-
-            // Hide special characters panel when switching to file mode
-            const specialCharsPanel = document.getElementById("specialCharsPanel");
-            if (specialCharsPanel) {
-                specialCharsPanel.style.display = "none";
-            }
-
-            // Hide spreadsheet section
-            const spreadsheetSection = document.getElementById("spreadsheetSection");
-            if (spreadsheetSection) {
-                spreadsheetSection.style.display = "none";
-            }
-
-            // SHOW FILE INPUT SECTION
-            const fileInputSection = document.getElementById("fileInputSection");
-            if (fileInputSection) {
-                fileInputSection.style.display = "block";
-            }
-        }
-    });
-}
-
-const spreadsheetInputRadio = document.getElementById('spreadsheetInputRadio') as HTMLInputElement;
-if (spreadsheetInputRadio) {
-    spreadsheetInputRadio.addEventListener('change', function() {
-        if (this.checked) {
-            console.log('Spreadsheet input mode selected');
-
-            // Hide other sections
-            document.getElementById("fileUploadSection")!.style.display = "none";
-            const textInputSection = document.getElementById("textInputSection");
-            if (textInputSection) textInputSection.style.display = "none";
-            const cardTextInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
-            if (cardTextInput) cardTextInput.style.display = "none";
-
-            // Show card format dropdown and spreadsheet section
-            cardFormatDropdownDiv.style.display = "block";
-            const spreadsheetSection = document.getElementById("spreadsheetSection");
-            if (spreadsheetSection) spreadsheetSection.style.display = "block";
-
-            // Build the spreadsheet if not already built
-            const tbody = document.getElementById('spreadsheetBody');
-            if (!tbody) {
-                buildSpreadsheet(cardFormatDropdown?.value ?? 'two-way');
-            }
-
-            // Move special chars panel into the spreadsheet section and update
-            createSpecialCharactersPanel();
-            if (currentDeck) {
-                updateSpecialCharacters(currentDeck);
-            }
         }
     });
 }
@@ -1018,30 +853,16 @@ if (addSpreadsheetRowBtn) {
     });
 }
 
-// Initialize special characters panel on page load if text mode is selected
+// Initialize spreadsheet on page load
 document.addEventListener('DOMContentLoaded', function() {
-    const textRadio = document.getElementById('textInputRadio') as HTMLInputElement;
-    
-    if (textRadio && textRadio.checked) {
-        console.log('Page loaded with text input mode - creating special characters panel');
-        createSpecialCharactersPanel();
-        
-        // If a deck is pre-selected, update the characters
-        const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
-        if (uploadDropdown && uploadDropdown.value) {
-            console.log(`Page loaded with pre-selected deck: ${uploadDropdown.value}`);
-            updateSpecialCharacters(uploadDropdown.value);
-        }
+    buildSpreadsheet(cardFormatDropdown?.value ?? 'two-way');
+    createSpecialCharactersPanel();
+
+    const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
+    if (uploadDropdown && uploadDropdown.value) {
+        updateSpecialCharacters(uploadDropdown.value);
     }
 });
-
-// Also add this to the text input event listener to keep the panel updated
-const cardTextInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
-if (cardTextInput) {
-    cardTextInput.addEventListener('input', function() {
-        currentFileContent = this.value;
-    });
-}
 
 function transcribe(str: string, process: string = "", otherProcess: string = "", optionalBoolean: boolean = true): string {
     let rawSegments: TextSegment[] = parseTaggedText(str, otherProcess);
@@ -1220,99 +1041,14 @@ if (cardFormatDropdown) {
         const newType = (event.target as HTMLSelectElement).value;
         console.log('Card format changed:', newType);
 
-        // Rebuild the spreadsheet when card type changes and spreadsheet mode is active
-        const spreadsheetRadio = document.getElementById('spreadsheetInputRadio') as HTMLInputElement;
-        if (spreadsheetRadio?.checked) {
-            buildSpreadsheet(newType);
-        }
+        buildSpreadsheet(newType);
     });
 }
 
 // Modified submit button event listener
 uploadSubmitButton.addEventListener('click', async () => {
-    let currentNoteType = "";
-    const lines = currentFileContent.split('\n');
-
-    //console.log(currentDeck);
-
-    let thisNoteProcessList: string[] = [];
-    if (cardFormatDropdown && (currentDeck != "")) {
-        if (cardFormatDropdown.value == "two-way") {
-            currentNoteType = "Two-Way";
-            thisNoteProcessList = [currentDeck, "", currentDeck, ""];
-        } else if (cardFormatDropdown.value == "one-way-N2T") {
-            currentNoteType = "One-Way";
-            thisNoteProcessList = ["", currentDeck];
-        }
-    }
-    
-    // Collect all notes — branch on input mode
-    const isSpreadsheetMode = (document.getElementById('spreadsheetInputRadio') as HTMLInputElement)?.checked;
-    let notesToProcess: NoteToProcess[];
-
-    if (isSpreadsheetMode) {
-        notesToProcess = getNotesFromSpreadsheet();
-    } else {
-        notesToProcess = [];
-        for (let i = 0; i < lines.length; i++) {
-            let line = lines[i].trim();
-            if (line.length == 0 || !line.includes(" / ")) {
-                continue;
-            }
-
-            let cardData: ProcessedCard = processCard(line);
-            let thisNoteDataList: string[] = cardData.fields;
-
-            // CREATE A FRESH COPY for each card - don't modify the shared array!
-            let thisCardProcessList: string[] = [...thisNoteProcessList];
-
-            if (currentNoteType === "One-Way") {
-                // One way cards should have exactly 2 fields
-                if (thisNoteDataList.length > 2) {
-                    console.warn(`One-Way card has ${thisNoteDataList.length} fields, truncating to 2`);
-                    thisNoteDataList = thisNoteDataList.slice(0, 2);
-                }
-                if (thisCardProcessList.length > 2) {
-                    thisCardProcessList = thisCardProcessList.slice(0, 2);
-                }
-            }
-
-            if (thisCardProcessList.length != thisNoteDataList.length) {
-                const maxLength = Math.max(thisCardProcessList.length, thisNoteDataList.length);
-
-                // Extend processing list if needed
-                while (thisCardProcessList.length < maxLength) {
-                    thisCardProcessList.push("");
-                }
-
-                // Smart extension for data list
-                while (thisNoteDataList.length < maxLength) {
-                    if (currentNoteType === "Two-Way" && thisNoteDataList.length === 3 && maxLength === 4) {
-                        thisNoteDataList.push(thisNoteDataList[1]);
-                    } else {
-                        thisNoteDataList.push("");
-                    }
-                }
-            }
-
-            if (currentDeck == "Sanskrit") {
-                for (let j = 0; j < thisNoteDataList.length; j++) {
-                    if (thisCardProcessList[j] == "Sanskrit") {
-                        thisNoteDataList[j] = postProcessSanskrit(thisNoteDataList[j]);
-                    }
-                }
-            }
-
-            // Done here, not in cleanFieldDatum, to grandfather in existing Greek cards.
-            notesToProcess.push({
-                deck: currentDeck,
-                noteType: currentNoteType,
-                dataList: thisNoteDataList,
-                processList: thisCardProcessList,  // Use the card-specific copy
-                relationships: cardData.relationships
-            });
-        }
-    }
+    // Collect all notes from spreadsheet
+    const notesToProcess: NoteToProcess[] = getNotesFromSpreadsheet();
     
     // Now process notes sequentially with delays to avoid deadlocks
     console.log(`Processing ${notesToProcess.length} notes sequentially...`);
@@ -1373,15 +1109,7 @@ uploadSubmitButton.addEventListener('click', async () => {
         await processAllRelationships(cardsWithRelationships);
     }
 
-    if (isSpreadsheetMode) {
-        buildSpreadsheet(cardFormatDropdown?.value ?? 'two-way');
-    } else {
-        const textInput = document.getElementById("cardTextInput") as HTMLTextAreaElement;
-        if (textInput) {
-            textInput.value = "";
-        }
-        currentFileContent = "";
-    }
+    buildSpreadsheet(cardFormatDropdown?.value ?? 'two-way');
     console.log('All notes processed!');
 });
 
