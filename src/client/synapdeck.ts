@@ -67,8 +67,14 @@ let specialCharSetsDict: charSetsType = {
 }
 
 const SPREADSHEET_COLS: Record<string, string[]> = {
-    'two-way': ['Target', 'Native', 'Target Back'],
-    'one-way-N2T': ['Front', 'Back']
+    'two-way': ['Target', 'Native', 'Target Back', 'Native Back', 'Coloring'],
+    'one-way-N2T': ['Front', 'Back', 'Coloring']
+};
+
+// Pixel widths for each data column (excluding the row-number column)
+const SPREADSHEET_COL_WIDTHS: Record<string, number[]> = {
+    'two-way': [160, 160, 130, 130, 70],
+    'one-way-N2T': [200, 200, 70]
 };
 let focusedSpreadsheetCell: HTMLTextAreaElement | null = null;
 
@@ -375,14 +381,22 @@ function createSpecialCharactersPanel(): void {
     panel.appendChild(panelTitle);
     panel.appendChild(charGrid);
     
-    // Insert the panel after the textarea
-    const textarea = document.getElementById("cardTextInput");
-    if (textarea && textarea.parentNode) {
-        textarea.parentNode.insertBefore(panel, textarea.nextSibling);
-        console.log("Panel inserted after textarea");
+    // Insert into whichever input section is currently active
+    const spreadsheetRadio = document.getElementById('spreadsheetInputRadio') as HTMLInputElement;
+    if (spreadsheetRadio?.checked) {
+        const spreadsheetSection = document.getElementById('spreadsheetSection');
+        if (spreadsheetSection) {
+            spreadsheetSection.appendChild(panel);
+            console.log("Panel appended to spreadsheetSection");
+        }
     } else {
-        // Fallback: append to textInputSection
-        textInputSection.appendChild(panel);
+        const textarea = document.getElementById("cardTextInput");
+        if (textarea && textarea.parentNode) {
+            textarea.parentNode.insertBefore(panel, textarea.nextSibling);
+            console.log("Panel inserted after textarea");
+        } else {
+            textInputSection.appendChild(panel);
+        }
     }
 }
 
@@ -453,6 +467,19 @@ function buildSpreadsheet(cardType: string): void {
     table.className = 'card-spreadsheet';
     table.id = 'spreadsheetTable';
 
+    // Explicit column widths so the table doesn't stretch to fill the page
+    const colWidths = SPREADSHEET_COL_WIDTHS[cardType] ?? SPREADSHEET_COL_WIDTHS['two-way'];
+    const colgroup = document.createElement('colgroup');
+    const colNum = document.createElement('col');
+    colNum.style.width = '36px';
+    colgroup.appendChild(colNum);
+    colWidths.forEach(w => {
+        const col = document.createElement('col');
+        col.style.width = w + 'px';
+        colgroup.appendChild(col);
+    });
+    table.appendChild(colgroup);
+
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
 
@@ -500,7 +527,7 @@ function addSpreadsheetRow(): void {
     cols.forEach((_col, colIdx) => {
         const td = document.createElement('td');
         const textarea = document.createElement('textarea');
-        textarea.rows = 2;
+        textarea.rows = 1;
         textarea.addEventListener('focus', () => {
             focusedSpreadsheetCell = textarea;
         });
@@ -541,10 +568,10 @@ function getNotesFromSpreadsheet(): NoteToProcess[] {
     let baseProcessList: string[] = [];
     if (cardType === 'two-way') {
         noteType = 'Two-Way';
-        baseProcessList = [currentDeck, '', currentDeck, ''];
+        baseProcessList = [currentDeck, '', currentDeck, '', ''];
     } else if (cardType === 'one-way-N2T') {
         noteType = 'One-Way';
-        baseProcessList = ['', currentDeck];
+        baseProcessList = ['', currentDeck, ''];
     }
 
     const notes: NoteToProcess[] = [];
@@ -562,19 +589,14 @@ function getNotesFromSpreadsheet(): NoteToProcess[] {
         let processList = [...baseProcessList];
 
         if (noteType === 'Two-Way') {
-            // Pad to 4: Target, Native, Target_Back, Native_Back
-            while (dataList.length < 4) {
-                if (dataList.length === 2) {
-                    dataList.push(dataList[0]); // Target_Back = Target
-                } else if (dataList.length === 3) {
-                    dataList.push(dataList[1]); // Native_Back = Native
-                } else {
-                    dataList.push('');
-                }
-            }
+            // Ensure exactly 5 fields: Target, Native, Target_Back, Native_Back, Coloring
+            while (dataList.length < 5) { dataList.push(''); }
+            // Auto-fill Target_Back and Native_Back if left blank
+            if (dataList[2] === '') dataList[2] = dataList[0];
+            if (dataList[3] === '') dataList[3] = dataList[1];
         } else if (noteType === 'One-Way') {
-            dataList = dataList.slice(0, 2);
-            processList = processList.slice(0, 2);
+            // Ensure exactly 3 fields: Front, Back, Coloring
+            while (dataList.length < 3) { dataList.push(''); }
         }
 
         if (currentDeck === 'Sanskrit') {

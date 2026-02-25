@@ -2353,24 +2353,24 @@ input[type="file"]:hover {
 /* ── Spreadsheet card-entry grid ── */
 .card-spreadsheet-container {
     max-height: 400px;
-    overflow-y: auto;
+    overflow: auto;
     border: 1px solid #e1e5e9;
     border-radius: 8px;
     margin-bottom: 10px;
 }
 
 .card-spreadsheet {
-    width: 100%;
+    width: auto;
     border-collapse: collapse;
     table-layout: fixed;
 }
 
 .card-spreadsheet th {
     background-color: #f0f2f5;
-    padding: 8px 12px;
+    padding: 5px 8px;
     text-align: left;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 12px;
     color: #555;
     border-bottom: 2px solid #e1e5e9;
     border-right: 1px solid #e1e5e9;
@@ -2386,7 +2386,7 @@ input[type="file"]:hover {
 .card-spreadsheet td {
     border-bottom: 1px solid #e1e5e9;
     border-right: 1px solid #e1e5e9;
-    padding: 4px;
+    padding: 2px;
     vertical-align: top;
 }
 
@@ -2400,12 +2400,12 @@ input[type="file"]:hover {
 
 .card-spreadsheet textarea {
     width: 100%;
-    min-height: 38px;
+    min-height: 24px;
     border: none;
     resize: none;
     font-family: inherit;
-    font-size: 14px;
-    padding: 4px;
+    font-size: 12px;
+    padding: 2px 4px;
     box-sizing: border-box;
     background: transparent;
     overflow: hidden;
