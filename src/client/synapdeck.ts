@@ -854,7 +854,7 @@ if (addSpreadsheetRowBtn) {
 }
 
 // Initialize spreadsheet on page load
-document.addEventListener('DOMContentLoaded', function() {
+function initializeSpreadsheet(): void {
     buildSpreadsheet(cardFormatDropdown?.value ?? 'two-way');
     createSpecialCharactersPanel();
 
@@ -862,7 +862,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (uploadDropdown && uploadDropdown.value) {
         updateSpecialCharacters(uploadDropdown.value);
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSpreadsheet);
+} else {
+    initializeSpreadsheet();
+}
 
 function transcribe(str: string, process: string = "", otherProcess: string = "", optionalBoolean: boolean = true): string {
     let rawSegments: TextSegment[] = parseTaggedText(str, otherProcess);
