@@ -104,20 +104,25 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
         chartData.reviewForecastChart = null;  // Clear the reference
     }
 
-    // Get today's date for comparison
+    // Get today's date for comparison (local midnight)
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset to midnight for accurate comparison
+    today.setHours(0, 0, 0, 0);
+
+    // Parse a YYYY-MM-DD string as local midnight (not UTC midnight).
+    // new Date('2026-02-26') would give Feb 25 18:00 CST due to UTC parsing rules,
+    // shifting every bar one day back. Using date parts avoids this.
+    function parseDateLocal(dateStr: string): Date {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    }
 
     // Create labels and determine which dates are overdue
     const labels = data.map(item => {
         if (item.date === 'Overdue') {
             return 'OVERDUE';
         } else {
-            const itemDate = new Date(item.date);
-            itemDate.setHours(0, 0, 0, 0);
-            
+            const itemDate = parseDateLocal(item.date);
             if (itemDate < today) {
-                // This date is overdue
                 return `${itemDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (OVERDUE)`;
             } else {
                 return itemDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -128,9 +133,7 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
     // Check if each data point is overdue
     const isOverdueArray = data.map(item => {
         if (item.date === 'Overdue') return true;
-        const itemDate = new Date(item.date);
-        itemDate.setHours(0, 0, 0, 0);
-        return itemDate < today;
+        return parseDateLocal(item.date) < today;
     });
 
     // Prepare datasets (one for each selected deck)
@@ -174,8 +177,7 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
                             if (originalDate === 'Overdue' || isOverdueArray[dataIndex]) {
                                 return 'OVERDUE CARDS';
                             } else {
-                                const date = new Date(originalDate);
-                                return date.toLocaleDateString('en-US', {
+                                return parseDateLocal(originalDate).toLocaleDateString('en-US', {
                                     weekday: 'long',
                                     year: 'numeric',
                                     month: 'long',
