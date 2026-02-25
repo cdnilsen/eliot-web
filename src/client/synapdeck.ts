@@ -3329,8 +3329,9 @@ function displayBrowseResults(cards: CardDue[], totalCount: number): void {
     cards.forEach((card) => {
         const dueDate = new Date(card.time_due);
         const now = new Date();
+        const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
         const isOverdue = dueDate < now;
-        const dueDateClass = isOverdue ? 'overdue' : (dueDate <= new Date(now.getTime() + 24 * 60 * 60 * 1000) ? 'due-soon' : 'upcoming');
+        const dueDateClass = isOverdue ? 'overdue' : (dueDate <= endOfToday ? 'due-soon' : 'upcoming');
 
         // Generate preview of both sides of the card
         const frontText = generateCardFrontLine(card);
