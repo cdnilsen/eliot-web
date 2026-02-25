@@ -824,8 +824,9 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
             for (let i = 0; i < card_configs.length; i++) {
                 const config = card_configs[i];
                 
-                // Each card can have its own interval, or inherit from the note
-                const cardDueDate = new Date(baseTime);
+                // Use current server time (not the client's page-load timestamp) so that
+                // "next day" is always relative to when the card is actually submitted.
+                const cardDueDate = new Date();
                 cardDueDate.setDate(cardDueDate.getDate() + 1);
                 cardDueDate.setHours(6, 0, 0, 0);
 
@@ -1066,9 +1067,11 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
         checkTime = new Date(target_date);
         checkTime.setHours(23, 59, 59, 999); // End of target day
     } else if (current_time) {
-        // If specific time provided, use it but ensure it's end of that day
+        // The client already serialised "end of today in local time" as a UTC ISO string.
+        // Do NOT call setHours here — that would re-apply local-timezone math on the
+        // server and push the window forward by up to 24 hours, causing next-day cards
+        // to appear immediately due.
         checkTime = new Date(current_time);
-        checkTime.setHours(23, 59, 59, 999);
     } else {
         // Default: cards due by end of today
         checkTime = new Date();
