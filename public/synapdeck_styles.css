@@ -2465,6 +2465,10 @@ input[type="file"]:hover {
     background: #f0f2f5;
 }
 
+.hidden {
+    display: none !important;
+}
+
 /* ── Conflict detection ──────────────────────────────────────────────────── */
 
 .card-spreadsheet td.cell-conflict textarea {

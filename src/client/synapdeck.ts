@@ -941,13 +941,15 @@ if (uploadDeckDropdown) {
         }
 
         loadDeckFronts(currentDeck);
+
+        if (uploadSubmitButton) uploadSubmitButton.classList.remove('hidden');
     });
 }
 
 const addSpreadsheetRowBtn = document.getElementById('addSpreadsheetRow');
 if (addSpreadsheetRowBtn) {
     addSpreadsheetRowBtn.addEventListener('click', () => {
-        addSpreadsheetRow();
+        for (let i = 0; i < 5; i++) addSpreadsheetRow();
     });
 }
 
@@ -960,6 +962,8 @@ function initializeSpreadsheet(): void {
     if (uploadDropdown && uploadDropdown.value) {
         updateSpecialCharacters(uploadDropdown.value);
         loadDeckFronts(uploadDropdown.value);
+        const submitBtn = document.getElementById('upload_submitBtn') as HTMLButtonElement | null;
+        if (submitBtn) submitBtn.classList.remove('hidden');
     }
 }
 

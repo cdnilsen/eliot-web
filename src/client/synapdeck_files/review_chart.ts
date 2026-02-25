@@ -442,12 +442,12 @@ export async function loadReviewForecast(chartData: ReviewForecastOptions): Prom
     
     try {
         const today = new Date();
-        const localMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-        
+        const todayDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
         const result = await fetchReviewForecast(
-            chartData.selectedDecks.length > 0 ? chartData.selectedDecks : undefined, 
+            chartData.selectedDecks.length > 0 ? chartData.selectedDecks : undefined,
             daysAhead,
-            localMidnight.toISOString()
+            todayDateStr
         );
         
         if (result.status === 'success' && result.forecast_data && result.decks) {
