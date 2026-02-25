@@ -199,11 +199,15 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
                         afterLabel: function(context: any) {
                             const dataIndex = context.dataIndex;
                             const isThisOverdue = data[dataIndex].date === 'Overdue' || isOverdueArray[dataIndex];
-                            
+
                             if (isThisOverdue && context.raw > 0) {
                                 return 'These cards are past due and ready for review';
                             }
                             return '';
+                        },
+                        footer: function(tooltipItems: any[]) {
+                            const total = tooltipItems.reduce((sum: number, item: any) => sum + (Number(item.raw) || 0), 0);
+                            return `Total: ${total} card${total !== 1 ? 's' : ''}`;
                         }
                     }
                 }

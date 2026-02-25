@@ -2247,6 +2247,9 @@ input[type="file"]:hover {
 
 .heatmap-container {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .heatmap-scroll {
