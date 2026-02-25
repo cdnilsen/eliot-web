@@ -721,14 +721,15 @@ app.get('/search_kjv', wrapAsync(async (req, res) => {
 }));
 
 app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
-    const { 
-        deck, 
-        note_type, 
-        field_names, 
-        field_values, 
-        field_processing, 
+    const {
+        deck,
+        note_type,
+        field_names,
+        field_values,
+        field_processing,
         card_configs,
         timeCreated,
+        timezone_offset_minutes = 360, // Default to CST (UTC-6) if not provided
         initial_interval_ms = 86400000, // Default to 24 hours (1 day) if not provided
         wipe_database = false // Add flag to control database wiping
     } = req.body;
@@ -826,9 +827,12 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                 
                 // Use current server time (not the client's page-load timestamp) so that
                 // "next day" is always relative to when the card is actually submitted.
-                const cardDueDate = new Date();
-                cardDueDate.setDate(cardDueDate.getDate() + 1);
-                cardDueDate.setHours(6, 0, 0, 0);
+                // Compute "tomorrow at 2 AM" in the client's local timezone.
+                // timezone_offset_minutes = minutes that local time is BEHIND UTC (e.g. CST = 360).
+                const nowUtcMs = Date.now();
+                const localMidnightTodayUtcMs = Math.floor((nowUtcMs - timezone_offset_minutes * 60000) / 86400000) * 86400000;
+                const local2amTomorrowUtcMs = localMidnightTodayUtcMs + 86400000 + 2 * 3600000 + timezone_offset_minutes * 60000;
+                const cardDueDate = new Date(local2amTomorrowUtcMs);
 
                 // Keep the interval calculation for database storage
                 const cardIntervalDays = 1; // All new cards start with 1-day interval

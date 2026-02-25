@@ -983,7 +983,8 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         field_values: field_values,
         field_processing: field_processing,
         card_configs: card_configs,
-        timeCreated: createdTimestamp
+        timeCreated: createdTimestamp,
+        timezone_offset_minutes: new Date().getTimezoneOffset()
         // Don't include relationships here
     };
     
