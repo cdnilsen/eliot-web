@@ -1854,14 +1854,15 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
         
         for (const scheduledCard of scheduledCards) {
             const updateResult = await transactionClient.query(
-                `UPDATE cards 
-                 SET time_due = $1, 
-                     interval = $2, 
+                `UPDATE cards
+                 SET time_due = $1,
+                     interval = $2,
                      retrievability = $3,
                      stability = $4,
                      difficulty = $5,
                      under_review = false,
-                     last_reviewed = $6
+                     last_reviewed = $6,
+                     reviewed_today = true
                  WHERE card_id = $7`,
                 [
                     scheduledCard.new_time_due,
@@ -2847,6 +2848,7 @@ const midnightRetrievabilityJob = new CronJob(
         try {
             await updateAllCardRetrievabilities();
             await unburyDailyBuriedCards();
+            await shiftReviewedFlags();
             
             // Show stats after update (optional - comment out if too verbose)
             // await getRetrievabilityStats();
@@ -4045,7 +4047,7 @@ async function unburyDailyBuriedCards(): Promise<void> {
         
         await transactionClient.query('COMMIT');
         console.log('🌅 Midnight unbury process completed successfully');
-        
+
     } catch (error) {
         await transactionClient.query('ROLLBACK');
         console.error('❌ Error during midnight unbury process:', error);
@@ -4053,6 +4055,16 @@ async function unburyDailyBuriedCards(): Promise<void> {
     } finally {
         transactionClient.release();
     }
+}
+
+async function shiftReviewedFlags(): Promise<void> {
+    const result = await pool.query(
+        `UPDATE cards
+         SET reviewed_yesterday = reviewed_today,
+             reviewed_today = false
+         WHERE reviewed_today = true OR reviewed_yesterday = true`
+    );
+    console.log(`🔄 Shifted reviewed flags for ${result.rowCount} cards`);
 }
 
 // Add these interfaces near your other type definitions
