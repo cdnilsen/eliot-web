@@ -4935,7 +4935,7 @@ function showCardEditModal(cardId: number, cardData: any): void {
         // Text area
         const textarea = document.createElement('textarea') as HTMLTextAreaElement;
         textarea.value = value || '';
-        const fieldFontFamily = cardData.deck === 'Cuneiform' ? "'Ungkam', serif" : "'GentiumPlus', 'Gentium Plus', Georgia, serif";
+        const fieldFontFamily = cardData.deck === 'Cuneiform' ? "'Santakku', serif" : "'GentiumPlus', 'Gentium Plus', Georgia, serif";
         textarea.style.cssText = `
             width: 100%;
             min-height: 80px;
