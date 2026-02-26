@@ -910,6 +910,7 @@ function generateMultiDeckReviewSheetHTML(
     const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const totalCards = decks.reduce((sum, d) => sum + d.cards.length, 0);
     const deckSummary = decks.map(d => `${d.name} (${d.cards.length})`).join(', ');
+    const origin = window.location.origin;
 
     // Build per-deck font-size CSS overrides
     const fontOverrides = decks.map(d => {
@@ -937,21 +938,21 @@ function generateMultiDeckReviewSheetHTML(
     <style>
         @font-face {
             font-family: 'GentiumPlus';
-            src: url('/Gentium/GentiumPlus-Regular.ttf') format('truetype');
+            src: url('${origin}/Gentium/GentiumPlus-Regular.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
             font-display: swap;
         }
         @font-face {
             font-family: 'GentiumPlus';
-            src: url('/Santakku/Santakku.ttf') format('truetype');
+            src: url('${origin}/Santakku/Santakku.ttf') format('truetype');
             unicode-range: U+12000-1254F;
             font-display: swap;
         }
         @font-face {
             font-family: 'GentiumPlus';
             font-style: italic;
-            src: url('/Santakku/Santakku.ttf') format('truetype');
+            src: url('${origin}/Santakku/Santakku.ttf') format('truetype');
             unicode-range: U+12000-1254F;
             font-display: swap;
         }
