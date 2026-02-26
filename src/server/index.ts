@@ -4058,7 +4058,7 @@ async function unburyDailyBuriedCards(): Promise<void> {
 }
 
 async function shiftReviewedFlags(): Promise<void> {
-    const result = await pool.query(
+    const result = await client.query(
         `UPDATE cards
          SET reviewed_yesterday = reviewed_today,
              reviewed_today = false
