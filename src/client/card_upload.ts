@@ -18,6 +18,7 @@ interface NoteToProcess {
     dataList: string[];
     processList: string[];
     relationships: CardRelationships;
+    initialIntervalDays: number;
 }
 
 type CreateCardRelFn = (
@@ -267,6 +268,9 @@ function buildSpreadsheet(cardType: string): void {
         col.style.width = w + 'px';
         colgroup.appendChild(col);
     });
+    const colInterval = document.createElement('col');
+    colInterval.style.width = '84px';
+    colgroup.appendChild(colInterval);
     table.appendChild(colgroup);
 
     const thead = document.createElement('thead');
@@ -282,6 +286,11 @@ function buildSpreadsheet(cardType: string): void {
         th.textContent = col;
         headerRow.appendChild(th);
     });
+
+    const thInterval = document.createElement('th');
+    thInterval.textContent = 'Initial Interval';
+    thInterval.className = 'initial-interval-header';
+    headerRow.appendChild(thInterval);
 
     thead.appendChild(headerRow);
     table.appendChild(thead);
@@ -355,6 +364,20 @@ function addSpreadsheetRow(): void {
         td.appendChild(textarea);
         tr.appendChild(td);
     });
+
+    const intervalTd = document.createElement('td');
+    intervalTd.className = 'initial-interval-cell';
+    const intervalInput = document.createElement('input');
+    intervalInput.type = 'number';
+    intervalInput.min = '1';
+    intervalInput.value = '1';
+    intervalInput.className = 'initial-interval-input';
+    intervalInput.addEventListener('blur', () => {
+        const v = parseInt(intervalInput.value, 10);
+        if (isNaN(v) || v < 1) intervalInput.value = '1';
+    });
+    intervalTd.appendChild(intervalInput);
+    tr.appendChild(intervalTd);
 
     tbody.appendChild(tr);
     addConflictIndicator();
@@ -438,11 +461,15 @@ function getNotesFromSpreadsheet(): NoteToProcess[] {
     const notes: NoteToProcess[] = [];
 
     Array.from(tbody.rows).forEach(row => {
-        const cells = Array.from(row.cells).slice(1).filter(td => !td.classList.contains('conflict-cell')); // skip row-number and conflict-indicator cells
-        const fieldValues = cells.map(td => {
+        const allCells = Array.from(row.cells).slice(1); // skip row-number cell
+        const intervalCell = allCells.find(td => td.classList.contains('initial-interval-cell'));
+        const dataCells = allCells.filter(td => !td.classList.contains('initial-interval-cell'));
+        const fieldValues = dataCells.map(td => {
             const ta = td.querySelector('textarea');
             return ta ? ta.value.trim() : '';
         });
+        const intervalInputEl = intervalCell?.querySelector('input') as HTMLInputElement | null;
+        const noteInitialIntervalDays = Math.max(1, parseInt(intervalInputEl?.value ?? '1', 10) || 1);
 
         if (fieldValues.every(v => v === '')) return;
 
@@ -473,7 +500,8 @@ function getNotesFromSpreadsheet(): NoteToProcess[] {
             noteType,
             dataList,
             processList,
-            relationships: { peers: [], prereqs: [], dependents: [] }
+            relationships: { peers: [], prereqs: [], dependents: [] },
+            initialIntervalDays: noteInitialIntervalDays
         });
     });
 
@@ -795,19 +823,9 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
         */
     }
 
-    const initialIntervalInput = document.getElementById('initialIntervalInput') as HTMLInputElement | null;
-    if (initialIntervalInput) {
-        initialIntervalInput.addEventListener('change', () => {
-            const v = parseInt(initialIntervalInput.value, 10);
-            if (isNaN(v) || v < 1) initialIntervalInput.value = '1';
-        });
-    }
-
     if (uploadSubmitButton) {
         uploadSubmitButton.addEventListener('click', async () => {
             const notesToProcess: NoteToProcess[] = getNotesFromSpreadsheet();
-
-            const initialIntervalDays = Math.max(1, parseInt(initialIntervalInput?.value ?? '1', 10) || 1);
 
             console.log(`Processing ${notesToProcess.length} notes sequentially...`);
 
@@ -832,7 +850,7 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
                         note.dataList,
                         note.processList,
                         timestampCreated,
-                        initialIntervalDays
+                        note.initialIntervalDays
                     );
 
                     if (result.status === 'success') {

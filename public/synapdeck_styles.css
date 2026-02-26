@@ -2522,6 +2522,35 @@ input[type="file"]:hover {
     flex-shrink: 0;
 }
 
+.initial-interval-header {
+    text-align: center;
+    white-space: nowrap;
+    font-size: 11px;
+}
+
+.initial-interval-cell {
+    text-align: center;
+    padding: 2px 4px !important;
+    vertical-align: middle;
+}
+
+.initial-interval-input {
+    width: 56px;
+    padding: 2px 4px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 13px;
+    text-align: center;
+    background: transparent;
+}
+
+.initial-interval-input:focus {
+    outline: 2px solid #4285f4;
+    border-color: transparent;
+    border-radius: 2px;
+    background: #fafcff;
+}
+
 .conflict-btn {
     display: inline-flex;
     align-items: center;
