@@ -43,9 +43,6 @@ const printFontSizes: { [key: string]: string } = {
     "Ge'ez": "14px",
 };
 
-const printFontFamilies: { [key: string]: string } = {
-    "Cuneiform": "'Ungkam', serif",
-};
 
 
 // Consolidate all global declarations
@@ -914,12 +911,10 @@ function generateMultiDeckReviewSheetHTML(
     const totalCards = decks.reduce((sum, d) => sum + d.cards.length, 0);
     const deckSummary = decks.map(d => `${d.name} (${d.cards.length})`).join(', ');
 
-    // Build per-deck font CSS overrides
+    // Build per-deck font-size CSS overrides
     const fontOverrides = decks.map(d => {
         const fontSize = printFontSizes[d.name] ?? '11pt';
-        const fontFamily = printFontFamilies[d.name];
-        const familyRule = fontFamily ? ` font-family: ${fontFamily} !important;` : '';
-        return `.deck-section[data-deck="${d.name}"] .card-question { font-size: ${fontSize} !important;${familyRule} }`;
+        return `.deck-section[data-deck="${d.name}"] .card-question { font-size: ${fontSize} !important; }`;
     }).join('\n');
 
     const deckSections = decks.map(d => `
@@ -948,24 +943,9 @@ function generateMultiDeckReviewSheetHTML(
             font-display: swap;
         }
         @font-face {
-            font-family: 'Ungkam';
-            src: url('/UngkamBasic-ttf/UngBasR.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-            font-display: swap;
-        }
-        @font-face {
-            font-family: 'Ungkam';
-            src: url('/UngkamBasic-ttf/UngBasB.ttf') format('truetype');
-            font-weight: bold;
-            font-style: normal;
-            font-display: swap;
-        }
-        @font-face {
-            font-family: 'Ungkam';
-            src: url('/UngkamBasic-ttf/UngBasI.ttf') format('truetype');
-            font-weight: normal;
-            font-style: italic;
+            font-family: 'GentiumPlus';
+            src: url('/Santakku/Santakku.ttf') format('truetype');
+            unicode-range: U+12000-1254F;
             font-display: swap;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -4935,14 +4915,13 @@ function showCardEditModal(cardId: number, cardData: any): void {
         // Text area
         const textarea = document.createElement('textarea') as HTMLTextAreaElement;
         textarea.value = value || '';
-        const fieldFontFamily = cardData.deck === 'Cuneiform' ? "'Santakku', serif" : "'GentiumPlus', 'Gentium Plus', Georgia, serif";
         textarea.style.cssText = `
             width: 100%;
             min-height: 80px;
             padding: 12px;
             border: 1px solid #ced4da;
             border-radius: 6px;
-            font-family: ${fieldFontFamily};
+            font-family: 'GentiumPlus', 'Gentium Plus', Georgia, serif;
             font-size: 16px;
             line-height: 1.5;
             resize: vertical;
