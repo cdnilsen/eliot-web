@@ -752,6 +752,9 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
                 relationships: CardRelationships
             }> = [];
 
+            // One representative card_id per successfully created note (for peer-all)
+            const createdRepresentativeIds: number[] = [];
+
             for (let i = 0; i < notesToProcess.length; i++) {
                 const note = notesToProcess[i];
                 console.log(`Processing note ${i + 1}/${notesToProcess.length}`);
@@ -767,6 +770,10 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
 
                     if (result.status === 'success') {
                         console.log(`✓ Note ${i + 1} processed successfully`);
+
+                        if (result.card_ids?.length > 0) {
+                            createdRepresentativeIds.push(result.card_ids[0]);
+                        }
 
                         const hasRelationships = note.relationships.peers.length > 0 ||
                                             note.relationships.prereqs.length > 0 ||
@@ -798,7 +805,19 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
                 await processAllRelationships(cardsWithRelationships);
             }
 
+            // Mark all created notes as peers of each other if the checkbox is checked
+            const markAllPeersCheckbox = document.getElementById('markAllPeers') as HTMLInputElement | null;
+            if (markAllPeersCheckbox?.checked && _createCardRelationship && createdRepresentativeIds.length > 1) {
+                console.log(`Creating peer relationships across all ${createdRepresentativeIds.length} created notes...`);
+                for (let i = 0; i < createdRepresentativeIds.length; i++) {
+                    for (let j = i + 1; j < createdRepresentativeIds.length; j++) {
+                        await _createCardRelationship(createdRepresentativeIds[i], createdRepresentativeIds[j], 'peer', true);
+                    }
+                }
+            }
+
             buildSpreadsheet(cardFormatDropdown?.value ?? 'two-way');
+            if (markAllPeersCheckbox) markAllPeersCheckbox.checked = false;
             console.log('All notes processed!');
         });
     }
