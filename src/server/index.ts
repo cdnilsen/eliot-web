@@ -731,6 +731,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         timeCreated,
         timezone_offset_minutes = 360, // Default to CST (UTC-6) if not provided
         initial_interval_ms = 86400000, // Default to 24 hours (1 day) if not provided
+        initial_interval_days = 1 as number, // Stored interval for new cards
         initial_due_offsets = [] as number[], // Per-card day offsets; falls back to 1 if absent
         wipe_database = false // Add flag to control database wiping
     } = req.body;
@@ -837,8 +838,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                 const localDueUtcMs = localMidnightTodayUtcMs + daysOffset * 86400000 + 2 * 3600000 + timezone_offset_minutes * 60000;
                 const cardDueDate = new Date(localDueUtcMs);
 
-                // Keep the interval calculation for database storage
-                const cardIntervalDays = 1; // All new cards start with 1-day interval
+                const cardIntervalDays = initial_interval_days;
                 const cardResult = await transactionClient.query(
                     `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, time_due, interval, retrievability, created) 
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 

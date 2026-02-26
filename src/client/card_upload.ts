@@ -618,6 +618,7 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         card_configs: card_configs,
         timeCreated: createdTimestamp,
         timezone_offset_minutes: new Date().getTimezoneOffset(),
+        initial_interval_days: initialIntervalDays,
         initial_due_offsets: initialDueOffsets
     };
 
