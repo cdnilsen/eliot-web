@@ -731,6 +731,7 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         timeCreated,
         timezone_offset_minutes = 360, // Default to CST (UTC-6) if not provided
         initial_interval_ms = 86400000, // Default to 24 hours (1 day) if not provided
+        initial_due_offsets = [] as number[], // Per-card day offsets; falls back to 1 if absent
         wipe_database = false // Add flag to control database wiping
     } = req.body;
     
@@ -826,13 +827,15 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                 const config = card_configs[i];
                 
                 // Use current server time (not the client's page-load timestamp) so that
-                // "next day" is always relative to when the card is actually submitted.
-                // Compute "tomorrow at 2 AM" in the client's local timezone.
+                // due dates are always relative to when the card is actually submitted.
+                // Compute "N days from today at 2 AM" in the client's local timezone,
+                // where N = initial_due_offsets[i] (random in [1, initialIntervalDays]).
                 // timezone_offset_minutes = minutes that local time is BEHIND UTC (e.g. CST = 360).
+                const daysOffset: number = (initial_due_offsets[i] ?? 1);
                 const nowUtcMs = Date.now();
                 const localMidnightTodayUtcMs = Math.floor((nowUtcMs - timezone_offset_minutes * 60000) / 86400000) * 86400000;
-                const local2amTomorrowUtcMs = localMidnightTodayUtcMs + 86400000 + 2 * 3600000 + timezone_offset_minutes * 60000;
-                const cardDueDate = new Date(local2amTomorrowUtcMs);
+                const localDueUtcMs = localMidnightTodayUtcMs + daysOffset * 86400000 + 2 * 3600000 + timezone_offset_minutes * 60000;
+                const cardDueDate = new Date(localDueUtcMs);
 
                 // Keep the interval calculation for database storage
                 const cardIntervalDays = 1; // All new cards start with 1-day interval

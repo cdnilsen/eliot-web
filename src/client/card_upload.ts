@@ -603,6 +603,12 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
 
     const field_names = field_processing.map((_, index) => `field_${index + 1}`);
 
+    // For each card in the note, pick a random due-date offset in [1, initialIntervalDays].
+    // This staggers new cards in medias res without changing their stored interval.
+    const initialDueOffsets: number[] = Array.from({ length: card_configs.length }, () =>
+        Math.floor(Math.random() * initialIntervalDays) + 1
+    );
+
     const payload = {
         deck: deck,
         note_type: note_type,
@@ -612,7 +618,7 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         card_configs: card_configs,
         timeCreated: createdTimestamp,
         timezone_offset_minutes: new Date().getTimezoneOffset(),
-        initial_interval_days: initialIntervalDays
+        initial_due_offsets: initialDueOffsets
     };
 
     console.log('Sending payload:', JSON.stringify(payload, null, 2));
