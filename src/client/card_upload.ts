@@ -130,15 +130,19 @@ function checkRowConflicts(row: HTMLTableRowElement): void {
         }
     }
 
-    const conflictTd = row.querySelector('.conflict-cell') as HTMLTableCellElement | null;
-    if (!conflictTd) return;
-    conflictTd.innerHTML = '';
+    const tbody = row.closest('tbody') as HTMLTableSectionElement | null;
+    const conflictCol = document.getElementById('conflictColumn');
+    if (!tbody || !conflictCol) return;
+    const rowIdx = Array.from(tbody.rows).indexOf(row);
+    const indicator = conflictCol.children[rowIdx + 1] as HTMLElement | undefined; // +1 for header spacer
+    if (!indicator) return;
+    indicator.innerHTML = '';
     if (rowHasConflict) {
         const btn = document.createElement('span');
         btn.className = 'conflict-btn';
         btn.textContent = '!';
         btn.title = conflictMessages.join('\n');
-        conflictTd.appendChild(btn);
+        indicator.appendChild(btn);
     }
 }
 
@@ -263,10 +267,6 @@ function buildSpreadsheet(cardType: string): void {
         col.style.width = w + 'px';
         colgroup.appendChild(col);
     });
-    // Conflict indicator column
-    const colConflict = document.createElement('col');
-    colConflict.style.width = '28px';
-    colgroup.appendChild(colConflict);
     table.appendChild(colgroup);
 
     const thead = document.createElement('thead');
@@ -283,10 +283,6 @@ function buildSpreadsheet(cardType: string): void {
         headerRow.appendChild(th);
     });
 
-    const thConflict = document.createElement('th');
-    thConflict.className = 'conflict-header';
-    headerRow.appendChild(thConflict);
-
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
@@ -296,9 +292,12 @@ function buildSpreadsheet(cardType: string): void {
 
     container.appendChild(table);
 
+    initConflictColumn();
+
     for (let i = 0; i < 5; i++) {
         addSpreadsheetRow();
     }
+    syncConflictColumnHeights();
 }
 
 function addSpreadsheetRow(): void {
@@ -329,6 +328,7 @@ function addSpreadsheetRow(): void {
         textarea.addEventListener('input', () => {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
+            syncConflictColumnHeights();
         });
         textarea.addEventListener('keydown', (e) => {
             const text = textarea.value;
@@ -356,11 +356,66 @@ function addSpreadsheetRow(): void {
         tr.appendChild(td);
     });
 
-    const conflictTd = document.createElement('td');
-    conflictTd.className = 'conflict-cell';
-    tr.appendChild(conflictTd);
-
     tbody.appendChild(tr);
+    addConflictIndicator();
+}
+
+function initConflictColumn(): void {
+    const section = document.getElementById('spreadsheetSection');
+    const cardSpreadsheet = document.getElementById('cardSpreadsheet');
+    if (!section || !cardSpreadsheet) return;
+
+    let rowWrapper = document.getElementById('spreadsheetRowWrapper');
+    if (!rowWrapper) {
+        rowWrapper = document.createElement('div');
+        rowWrapper.id = 'spreadsheetRowWrapper';
+        section.insertBefore(rowWrapper, cardSpreadsheet);
+        rowWrapper.appendChild(cardSpreadsheet);
+
+        const conflictCol = document.createElement('div');
+        conflictCol.id = 'conflictColumn';
+        rowWrapper.appendChild(conflictCol);
+
+        cardSpreadsheet.addEventListener('scroll', () => {
+            conflictCol.scrollTop = cardSpreadsheet.scrollTop;
+        });
+    }
+
+    const conflictCol = document.getElementById('conflictColumn');
+    if (!conflictCol) return;
+    conflictCol.innerHTML = '';
+
+    const spacer = document.createElement('div');
+    spacer.className = 'conflict-header-spacer';
+    spacer.id = 'conflictHeaderSpacer';
+    conflictCol.appendChild(spacer);
+}
+
+function addConflictIndicator(): void {
+    const conflictCol = document.getElementById('conflictColumn');
+    if (!conflictCol) return;
+    const indicator = document.createElement('div');
+    indicator.className = 'conflict-indicator';
+    conflictCol.appendChild(indicator);
+}
+
+function syncConflictColumnHeights(): void {
+    const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+    const conflictCol = document.getElementById('conflictColumn');
+    if (!tbody || !conflictCol) return;
+
+    const table = tbody.closest('table') as HTMLTableElement | null;
+    const thead = table?.querySelector('thead') as HTMLElement | null;
+    const spacer = document.getElementById('conflictHeaderSpacer') as HTMLElement | null;
+    if (spacer && thead) {
+        spacer.style.height = thead.offsetHeight + 'px';
+    }
+
+    const rows = Array.from(tbody.rows) as HTMLTableRowElement[];
+    rows.forEach((row, i) => {
+        const indicator = conflictCol.children[i + 1] as HTMLElement | undefined;
+        if (indicator) indicator.style.height = row.offsetHeight + 'px';
+    });
 }
 
 function getNotesFromSpreadsheet(): NoteToProcess[] {
@@ -509,7 +564,7 @@ function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function sendNoteToBackend(deck: string, note_type: string, field_values: string[], field_processing: string[], createdTimestamp: string) {
+async function sendNoteToBackend(deck: string, note_type: string, field_values: string[], field_processing: string[], createdTimestamp: string, initialIntervalDays: number = 1) {
     let card_configs: any[] = [];
 
     if (note_type === "Two-Way") {
@@ -528,7 +583,8 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         field_processing: field_processing,
         card_configs: card_configs,
         timeCreated: createdTimestamp,
-        timezone_offset_minutes: new Date().getTimezoneOffset()
+        timezone_offset_minutes: new Date().getTimezoneOffset(),
+        initial_interval_days: initialIntervalDays
     };
 
     console.log('Sending payload:', JSON.stringify(payload, null, 2));
@@ -739,9 +795,19 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
         */
     }
 
+    const initialIntervalInput = document.getElementById('initialIntervalInput') as HTMLInputElement | null;
+    if (initialIntervalInput) {
+        initialIntervalInput.addEventListener('change', () => {
+            const v = parseInt(initialIntervalInput.value, 10);
+            if (isNaN(v) || v < 1) initialIntervalInput.value = '1';
+        });
+    }
+
     if (uploadSubmitButton) {
         uploadSubmitButton.addEventListener('click', async () => {
             const notesToProcess: NoteToProcess[] = getNotesFromSpreadsheet();
+
+            const initialIntervalDays = Math.max(1, parseInt(initialIntervalInput?.value ?? '1', 10) || 1);
 
             console.log(`Processing ${notesToProcess.length} notes sequentially...`);
 
@@ -765,7 +831,8 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
                         note.noteType,
                         note.dataList,
                         note.processList,
-                        timestampCreated
+                        timestampCreated,
+                        initialIntervalDays
                     );
 
                     if (result.status === 'success') {
