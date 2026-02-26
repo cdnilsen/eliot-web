@@ -43,6 +43,10 @@ const printFontSizes: { [key: string]: string } = {
     "Ge'ez": "14px",
 };
 
+const printFontFamilies: { [key: string]: string } = {
+    "Cuneiform": "'Ungkam', serif",
+};
+
 
 // Consolidate all global declarations
 declare global {
@@ -910,10 +914,12 @@ function generateMultiDeckReviewSheetHTML(
     const totalCards = decks.reduce((sum, d) => sum + d.cards.length, 0);
     const deckSummary = decks.map(d => `${d.name} (${d.cards.length})`).join(', ');
 
-    // Build per-deck font-size CSS overrides
+    // Build per-deck font CSS overrides
     const fontOverrides = decks.map(d => {
         const fontSize = printFontSizes[d.name] ?? '11pt';
-        return `.deck-section[data-deck="${d.name}"] .card-question { font-size: ${fontSize} !important; }`;
+        const fontFamily = printFontFamilies[d.name];
+        const familyRule = fontFamily ? ` font-family: ${fontFamily} !important;` : '';
+        return `.deck-section[data-deck="${d.name}"] .card-question { font-size: ${fontSize} !important;${familyRule} }`;
     }).join('\n');
 
     const deckSections = decks.map(d => `
@@ -939,6 +945,27 @@ function generateMultiDeckReviewSheetHTML(
             src: url('/Gentium/GentiumPlus-Regular.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Ungkam';
+            src: url('/UngkamBasic-ttf/UngBasR.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Ungkam';
+            src: url('/UngkamBasic-ttf/UngBasB.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Ungkam';
+            src: url('/UngkamBasic-ttf/UngBasI.ttf') format('truetype');
+            font-weight: normal;
+            font-style: italic;
             font-display: swap;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2625,7 +2652,7 @@ function displayBrowseResults(cards: CardDue[], totalCount: number): void {
         const retrievabilityClass = getRetrievabilityClass(card.retrievability);
 
         html += `
-            <tr class="card-row ${dueDateClass}" data-card-id="${card.card_id}">
+            <tr class="card-row ${dueDateClass}" data-card-id="${card.card_id}" data-deck="${card.deck}">
                 <td class="card-id-cell">
                     <span class="card-id-number">${card.card_id}</span>
                 </td>
@@ -3631,8 +3658,8 @@ function displaySearchResults(cards: CardDue[], currentCardId: number): void {
         
         return `
             <div class="search-result-item" data-card-id="${card.card_id}" style="padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 12px; transition: background 0.2s;">
-                <div style="font-weight: 600; color: #333;">Card ${card.card_id} (${card.deck})</div>
-                <div style="color: #666;">${frontText.substring(0, 60)}${frontText.length > 60 ? '...' : ''} → ${backText.substring(0, 60)}${backText.length > 60 ? '...' : ''}</div>
+                <div style="font-weight: 600; color: #333; font-family: 'Jost', sans-serif;">Card ${card.card_id} (${card.deck})</div>
+                <div style="color: #666; font-family: 'GentiumPlus', 'Gentium Plus', serif;">${frontText.substring(0, 60)}${frontText.length > 60 ? '...' : ''} → ${backText.substring(0, 60)}${backText.length > 60 ? '...' : ''}</div>
             </div>
         `;
     }).join('');
@@ -4908,13 +4935,14 @@ function showCardEditModal(cardId: number, cardData: any): void {
         // Text area
         const textarea = document.createElement('textarea') as HTMLTextAreaElement;
         textarea.value = value || '';
+        const fieldFontFamily = cardData.deck === 'Cuneiform' ? "'Ungkam', serif" : "'GentiumPlus', 'Gentium Plus', Georgia, serif";
         textarea.style.cssText = `
             width: 100%;
             min-height: 80px;
             padding: 12px;
             border: 1px solid #ced4da;
             border-radius: 6px;
-            font-family: 'Gentium Plus', Georgia, serif;
+            font-family: ${fieldFontFamily};
             font-size: 16px;
             line-height: 1.5;
             resize: vertical;
