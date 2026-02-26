@@ -1773,7 +1773,7 @@ function generateAnswerKey(cards: CardDue[], deckName: string): string {
         
         html += `
             <div class="answer-row" data-card-id="${card.card_id}">
-                <div class="qa-cell">
+                <div class="qa-cell"${answerFontStyle}>
                     ${questionNum}. ${processedQuestion} → ${processedAnswer}
                     ${processedTargetBack ? `<br>${processedTargetBack}` : ''}
                 </div>

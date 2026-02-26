@@ -75,6 +75,19 @@ function generateReviewSheetHTML(cards: CardDue[], leftColumnWidth: string = "40
                     font-style: normal;
                     font-display: swap;
                 }
+                @font-face {
+                    font-family: 'GentiumPlus';
+                    src: url('/Santakku/Santakku.ttf') format('truetype');
+                    unicode-range: U+12000-1254F;
+                    font-display: swap;
+                }
+                @font-face {
+                    font-family: 'GentiumPlus';
+                    font-style: italic;
+                    src: url('/Santakku/Santakku.ttf') format('truetype');
+                    unicode-range: U+12000-1254F;
+                    font-display: swap;
+                }
                 
                 * {
                     margin: 0;
