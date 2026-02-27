@@ -1,4 +1,4 @@
-interface ReviewForecastData {
+export interface ReviewForecastData {
     date: string;
     [deck: string]: number | string;
 }

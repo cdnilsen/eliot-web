@@ -8,7 +8,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createCardRelationshipGraph, CardNode, RelationshipLink } from './CardRelationshipGraph';
 
-import { ReviewForecastOptions, updateDeckSelection, loadReviewForecast, createReviewForecastChart, setupReviewForecastTab } from './synapdeck_files/review_chart.js';
+import { ReviewForecastData, ReviewForecastOptions, updateDeckSelection, loadReviewForecast, createReviewForecastChart, setupReviewForecastTab } from './synapdeck_files/review_chart.js';
 import { addRetrievabilityManagementSection } from './synapdeck_files/retrievability.js';
 import { setupStatsTab } from './synapdeck_files/stats_tab.js';
 
@@ -85,31 +85,6 @@ interface ShuffleDueDatesResponse {
     error?: string;
     details?: string;
 }
-
-// Register the components you need
-interface ReviewForecastData {
-    date: string;
-    [deck: string]: number | string;
-}
-
-interface ReviewForecastResponse {
-    status: 'success' | 'error';
-    forecast_data?: ReviewForecastData[];
-    decks?: string[];
-    date_range?: {
-        start_date: string;
-        end_date: string;
-    };
-    total_reviews?: number;
-    error?: string;
-}
-
-// Color palette for decks
-const DECK_COLORS = [
-    '#ff4444', // Red for overdue cards (first color)
-    '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00ff7f', '#ff6b6b',
-    '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'
-];
 
 
 type TextSegment = {
@@ -5143,94 +5118,6 @@ async function getCardFields(cardId: number): Promise<any> {
         };
     }
 }
-
-let reviewForecastChart: any = null;
-let availableDecks: string[] = [];
-let selectedDecks: string[] = [];
-// Function to fetch forecast data from backend
-async function fetchReviewForecast(decks?: string[], daysAhead: number = 14, startDate?: string): Promise<ReviewForecastResponse> {
-    try {
-        const params = new URLSearchParams();
-        if (decks && decks.length > 0) {
-            params.append('decks', decks.join(','));
-        }
-        params.append('days_ahead', daysAhead.toString());
-        if (startDate) {
-            params.append('start_date', startDate); // Add this line
-        }
-
-        const response = await fetch(`/review_forecast?${params.toString()}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result: ReviewForecastResponse = await response.json();
-        return result;
-    } catch (error) {
-        console.error('Error fetching forecast data:', error);
-        return {
-            status: 'error',
-            error: error instanceof Error ? error.message : 'Unknown error'
-        };
-    }
-}
-
-function hasOverdueData(forecastData: ReviewForecastData[]): boolean {
-    return forecastData.length > 0 && forecastData[0].date === 'Overdue';
-}
-
-// 5. Optional: Add a function to calculate overdue totals for display
-function calculateOverdueTotals(forecastData: ReviewForecastData[], decks: string[]): { [deck: string]: number } {
-    const totals: { [deck: string]: number } = {};
-    
-    if (hasOverdueData(forecastData)) {
-        const overdueData = forecastData[0];
-        decks.forEach(deck => {
-            totals[deck] = overdueData[deck] as number || 0;
-        });
-    }
-    
-    return totals;
-}
-
-// 6. Optional: Update the forecast stats display to show overdue information
-function updateForecastStats(forecastData: ReviewForecastData[], totalReviews: number, decks: string[]) {
-    const statsEl = document.getElementById('forecastStats');
-    if (!statsEl) return;
-    
-    let statsHTML = `<div class="forecast-summary">
-        <h4>Forecast Summary</h4>
-        <p><strong>Total Reviews:</strong> ${totalReviews}</p>
-    `;
-    
-    if (hasOverdueData(forecastData)) {
-        const overdueTotals = calculateOverdueTotals(forecastData, decks);
-        const totalOverdue = Object.values(overdueTotals).reduce((sum, count) => sum + count, 0);
-        
-        if (totalOverdue > 0) {
-            statsHTML += `
-                <div class="overdue-summary" style="color: #ff4444; font-weight: bold; margin-top: 10px;">
-                    <p>🔴 <strong>Overdue Cards:</strong> ${totalOverdue}</p>
-                    <div style="font-size: 12px; margin-left: 20px;">
-            `;
-            
-            Object.entries(overdueTotals).forEach(([deck, count]) => {
-                if (count > 0) {
-                    statsHTML += `<div>${deck}: ${count}</div>`;
-                }
-            });
-            
-            statsHTML += `
-                    </div>
-                </div>
-            `;
-        }
-    }
-    
-    statsHTML += `</div>`;
-    statsEl.innerHTML = statsHTML;
-}
-
 
 // API function to update a specific field
 async function updateCardField(cardId: number, fieldIndex: number, newValue: string): Promise<any> {
