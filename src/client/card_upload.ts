@@ -3,7 +3,7 @@ import {postProcessSanskrit} from './synapdeck_files/transcribe_sanskrit.js';
 import {geezSpecialChars} from './synapdeck_files/transcribe_geez.js';
 import {akkadianSpecialChars} from './synapdeck_files/transcribe_akkadian.js';
 import {hebrewSpecialChars} from './synapdeck_files/transcribe_hebrew.js';
-import {getInitialDifficulty, getInitialStability, recalculateRetrievability} from '../server/scheduler.js';
+import {getInitialDifficulty, getInitialStability, recalculateRetrievability} from './fsrs_client.js';
 
 // ── Types & interfaces ─────────────────────────────────────────────────────
 
@@ -645,8 +645,6 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         initialDifficulty: initialDifficulty
     };
 
-    console.log('Sending payload:', JSON.stringify(payload, null, 2));
-
     try {
         const response = await fetch('/add_synapdeck_note', {
             method: 'POST',
@@ -657,10 +655,8 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         });
 
         const result = await response.json();
-        console.log('Server response:', result);
 
         if (result.status === 'success') {
-            console.log(`Note ${result.note_id} with ${result.card_ids.length} cards created successfully`);
             return {
                 ...result,
                 primary_field: field_values[0],
@@ -709,15 +705,11 @@ async function processAllRelationships(cardsWithRelationships: Array<{
 
     for (const cardSet of cardsWithRelationships) {
         const { cardIds, deck, relationships } = cardSet;
-
-        console.log(`🔗 Processing relationships for ${cardIds.length} cards in deck "${deck}"`);
-
         for (const cardId of cardIds) {
             for (const peerPrimary of relationships.peers) {
                 try {
                     const peerResult = await findCardByPrimaryField(deck, peerPrimary);
                     if (peerResult && peerResult.card_id) {
-                        console.log(`Creating peer relationship: ${cardId} <-> ${peerResult.card_id}`);
                         await _createCardRelationship(cardId, peerResult.card_id, 'peer', true);
                     } else {
                         console.warn(`Peer card not found: "${peerPrimary}" in deck "${deck}"`);
@@ -732,7 +724,6 @@ async function processAllRelationships(cardsWithRelationships: Array<{
                 try {
                     const prereqResult = await findCardByPrimaryField(deck, prereqPrimary);
                     if (prereqResult && prereqResult.card_id) {
-                        console.log(`Creating prereq relationship: ${cardId} depends on ${prereqResult.card_id}`);
                         await _createCardRelationship(cardId, prereqResult.card_id, 'dependent', true);
                     } else {
                         console.warn(`Prereq card not found: "${prereqPrimary}" in deck "${deck}"`);
@@ -747,7 +738,6 @@ async function processAllRelationships(cardsWithRelationships: Array<{
                 try {
                     const depResult = await findCardByPrimaryField(deck, depPrimary);
                     if (depResult && depResult.card_id) {
-                        console.log(`Creating dependent relationship: ${depResult.card_id} depends on ${cardId}`);
                         await _createCardRelationship(depResult.card_id, cardId, 'dependent', true);
                     } else {
                         console.warn(`Dependent card not found: "${depPrimary}" in deck "${deck}"`);
@@ -759,7 +749,6 @@ async function processAllRelationships(cardsWithRelationships: Array<{
             }
         }
     }
-    console.log('✅ Finished processing all relationships');
 }
 
 // ── Initialization ─────────────────────────────────────────────────────────
@@ -796,16 +785,12 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
             uploadSubmitButton = document.getElementById("upload_submitBtn") as HTMLButtonElement;
         }
 
-        console.log("Upload deck dropdown event listener setup...");
-
         newUploadDropdown.addEventListener('change', (event) => {
             event.stopPropagation();
             event.preventDefault();
 
             const selectedValue = (event.target as HTMLSelectElement).value;
             currentDeck = selectedValue;
-
-            console.log(`UPLOAD TAB: Deck changed to: "${currentDeck}"`);
 
             const uploadTab = document.getElementById('upload_mainDiv');
             const isUploadTabActive = uploadTab?.classList.contains('active');
@@ -830,7 +815,6 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
     if (cardFormatDropdown) {
         cardFormatDropdown.addEventListener('change', (event) => {
             const newType = (event.target as HTMLSelectElement).value;
-            console.log('Card format changed:', newType);
             buildSpreadsheet(newType);
         });
     }
@@ -856,9 +840,6 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
     if (uploadSubmitButton) {
         uploadSubmitButton.addEventListener('click', async () => {
             const notesToProcess: NoteToProcess[] = getNotesFromSpreadsheet();
-
-            console.log(`Processing ${notesToProcess.length} notes sequentially...`);
-
             const cardsWithRelationships: Array<{
                 cardIds: number[],
                 deck: string,
@@ -871,8 +852,6 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
 
             for (let i = 0; i < notesToProcess.length; i++) {
                 const note = notesToProcess[i];
-                console.log(`Processing note ${i + 1}/${notesToProcess.length}`);
-
                 try {
                     const result = await sendNoteToBackend(
                         note.deck,
@@ -884,8 +863,6 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
                     );
 
                     if (result.status === 'success') {
-                        console.log(`✓ Note ${i + 1} processed successfully`);
-
                         if (result.card_ids?.length > 0) {
                             createdRepresentativeIds.push(result.card_ids[0]);
                         }
@@ -916,14 +893,12 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
             }
 
             if (cardsWithRelationships.length > 0) {
-                console.log(`Processing relationships for ${cardsWithRelationships.length} card sets...`);
                 await processAllRelationships(cardsWithRelationships);
             }
 
             // Mark all created notes as peers of each other if the checkbox is checked
             const markAllPeersCheckbox = document.getElementById('markAllPeers') as HTMLInputElement | null;
             if (markAllPeersCheckbox?.checked && _createCardRelationship && createdRepresentativeIds.length > 1) {
-                console.log(`Creating peer relationships across all ${createdRepresentativeIds.length} created notes...`);
                 for (let i = 0; i < createdRepresentativeIds.length; i++) {
                     for (let j = i + 1; j < createdRepresentativeIds.length; j++) {
                         await _createCardRelationship(createdRepresentativeIds[i], createdRepresentativeIds[j], 'peer', true);
