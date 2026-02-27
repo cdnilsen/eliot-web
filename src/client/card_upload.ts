@@ -3,6 +3,7 @@ import {postProcessSanskrit} from './synapdeck_files/transcribe_sanskrit.js';
 import {geezSpecialChars} from './synapdeck_files/transcribe_geez.js';
 import {akkadianSpecialChars} from './synapdeck_files/transcribe_akkadian.js';
 import {hebrewSpecialChars} from './synapdeck_files/transcribe_hebrew.js';
+import {getInitialDifficulty, getInitialStability, recalculateRetrievability} from '../server/scheduler.js';
 
 // ── Types & interfaces ─────────────────────────────────────────────────────
 
@@ -587,7 +588,6 @@ function insertCharacterAtCursor(character: string): void {
 
 // ── Backend functions ──────────────────────────────────────────────────────
 
-
 function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -609,6 +609,26 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         Math.floor(Math.random() * initialIntervalDays) + 1
     );
 
+    // For custom intervals, compute initial FSRS stats based on a synthetic 'review 0'.
+    // For interval = 1, leave null so the server treats cards as genuinely new.
+    let initialStability: number | null = null;
+    let initialDifficulty: number | null = null;
+    let initialRetrievability: number | number[] = 1;
+
+    if (initialIntervalDays > 1) {
+        initialStability = getInitialStability(3);
+        initialDifficulty = getInitialDifficulty(3);
+
+        const now = new Date();
+        initialRetrievability = initialDueOffsets.map(k =>
+            recalculateRetrievability(
+                new Date(now.getTime() - (initialIntervalDays - k) * 86400000),
+                now,
+                initialStability!
+            )
+        );
+    }
+
     const payload = {
         deck: deck,
         note_type: note_type,
@@ -619,7 +639,10 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
         timeCreated: createdTimestamp,
         timezone_offset_minutes: new Date().getTimezoneOffset(),
         initial_interval_days: initialIntervalDays,
-        initial_due_offsets: initialDueOffsets
+        initial_due_offsets: initialDueOffsets,
+        initialRetrievability: initialRetrievability,
+        initialStability: initialStability,
+        initialDifficulty: initialDifficulty
     };
 
     console.log('Sending payload:', JSON.stringify(payload, null, 2));

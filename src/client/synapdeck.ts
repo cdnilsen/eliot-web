@@ -342,6 +342,8 @@ interface CardDue {
     interval: number;
     retrievability: number;
     peers: number[];
+    prereqs?: number[];
+    dependents?: number[];
 }
 
 interface CheckCardsResponse {
@@ -694,16 +696,23 @@ function selectCardsFromGroup(
             continue;
         }
         
-        // Check if any peers of this card are already selected
+        // Check if any peers, prereqs, or dependents of this card are already selected
         const hasPeerConflict = card.peers && card.peers.some(peerId => alreadySelected.has(peerId));
-        
-        if (!hasPeerConflict) {
+        const hasPrereqConflict = card.prereqs && card.prereqs.some(prereqId => alreadySelected.has(prereqId));
+        const hasDependentConflict = card.dependents && card.dependents.some(depId => alreadySelected.has(depId));
+
+        if (!hasPeerConflict && !hasPrereqConflict && !hasDependentConflict) {
             // This card is safe to add
             selectedFromGroup.push(card);
             alreadySelected.add(card.card_id);
-            console.log(`✓ Added card ${card.card_id} (no peer conflicts)`);
+            console.log(`✓ Added card ${card.card_id} (no peer/prereq/dependent conflicts)`);
         } else {
-            console.log(`⚠ Skipped card ${card.card_id} (peer conflict with: ${card.peers?.filter(id => alreadySelected.has(id)) || []})`);
+            const conflictDetails = [
+                ...(card.peers?.filter(id => alreadySelected.has(id)).map(id => `peer:${id}`) || []),
+                ...(card.prereqs?.filter(id => alreadySelected.has(id)).map(id => `prereq:${id}`) || []),
+                ...(card.dependents?.filter(id => alreadySelected.has(id)).map(id => `dependent:${id}`) || []),
+            ];
+            console.log(`⚠ Skipped card ${card.card_id} (conflicts with: ${conflictDetails.join(', ')})`);
         }
     }    
     return selectedFromGroup;

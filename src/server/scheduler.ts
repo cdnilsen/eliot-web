@@ -1,7 +1,8 @@
 // scheduler.ts - Adapted from your FSRS implementation
 
 // FSRS parameters (from your original code)
-const W: number[] = [0.40255, 1.18385, 3.173, 15.69105, 7.1949, 0.5345, 1.4604, 0.0046, 1.54575, 0.1192, 1.01925, 1.9395, 0.11, 0.29605, 2.2698, 0.2315, 2.9898, 0.51655, 0.6621];
+export const W: number[] = [0.40255, 1.18385, 3.173, 15.69105, 7.1949, 0.5345, 1.4604, 0.0046, 1.54575, 0.1192, 1.01925, 1.9395, 0.11, 0.29605, 2.2698, 0.2315, 2.9898, 0.51655, 0.6621];
+
 
 type CardRating = 1 | 2 | 3 | 4; // Forgot, hard, good, easy
 type Timestamp = number;
@@ -65,8 +66,13 @@ function clamp_d(D: number): number {
     return clamp(D, 1, 10);
 }
 
-function getInitialDifficulty(G: CardRating): number {
+export function getInitialDifficulty(G: CardRating): number {
     return clamp_d(W[4] - Math.exp(W[5] * (G - 1)) + 1);
+}
+
+export function getInitialStability(G: CardRating): number {
+    // W[0], W[1], W[2], or W[3] based on rating
+    return W[G - 1];
 }
 
 function getDeltaD(G: CardRating): number {
@@ -120,7 +126,7 @@ function updateInterval(stability: number, settings: SchedulerSettings): number 
     return stability * ((settings.retention ** (1/C)) - 1) / F * 86400000; // Convert days to milliseconds
 }
 
-function recalculateRetrievability(lastReviewTime: Date, reviewedAt: Date, stability: number): number {
+export function recalculateRetrievability(lastReviewTime: Date, reviewedAt: Date, stability: number): number {
     let timeDiffMs = reviewedAt.getTime() - lastReviewTime.getTime();
     let timeDiffDays = timeDiffMs / 86400000; // Convert to days
 
@@ -158,7 +164,7 @@ export async function rescheduleCards(
 
             if (isFirstReview) {
                 // First review - use FSRS initial values
-                stability = W[rating - 1]; // W[0], W[1], W[2], or W[3] based on rating
+                stability = getInitialStability(rating);
                 difficulty = getInitialDifficulty(rating);
                 retrievability = 1; // Perfect recall at first review
 

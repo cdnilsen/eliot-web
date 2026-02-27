@@ -733,6 +733,9 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
         initial_interval_ms = 86400000, // Default to 24 hours (1 day) if not provided
         initial_interval_days = 1 as number, // Stored interval for new cards
         initial_due_offsets = [] as number[], // Per-card day offsets; falls back to 1 if absent
+        initialRetrievability = 1,
+        initialStability = null,
+        initialDifficulty = null,
         wipe_database = false // Add flag to control database wiping
     } = req.body;
     
@@ -839,9 +842,12 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                 const cardDueDate = new Date(localDueUtcMs);
 
                 const cardIntervalDays = initial_interval_days;
+                const reviewZeroDate = initial_interval_days > 1
+                    ? new Date(nowUtcMs - (initial_interval_days - daysOffset) * 86400000)
+                    : null;
                 const cardResult = await transactionClient.query(
-                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, time_due, interval, retrievability, created) 
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+                    `INSERT INTO cards (note_id, deck, card_format, field_names, field_values, field_processing, time_due, interval, retrievability, stability, difficulty, created, last_reviewed)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                      RETURNING card_id`,
                     [
                         noteId,
@@ -852,8 +858,11 @@ app.post('/add_synapdeck_note', express.json(), wrapAsync(async (req, res) => {
                         config.field_processing || null,
                         cardDueDate,
                         cardIntervalDays,
-                        null,
-                        timeCreated
+                        Array.isArray(initialRetrievability) ? initialRetrievability[i] : initialRetrievability,
+                        initialStability,
+                        initialDifficulty,
+                        timeCreated,
+                        reviewZeroDate
                     ]
                 );
                 cardIds.push(cardResult.rows[0].card_id);
@@ -1143,7 +1152,9 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
                 interval,
                 retrievability,
                 peers,
-                CASE 
+                prereqs,
+                dependents,
+                CASE
                     WHEN time_due <= $3 THEN 'due_now'
                     ELSE 'due_ahead'
                 END as due_status
