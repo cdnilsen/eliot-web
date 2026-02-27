@@ -4492,19 +4492,16 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
     try {
         // Parse parameters with better error handling
         const daysAheadNum = days_ahead ? parseInt(days_ahead as string) : 14;
-        
-        // Fix date parsing issue
-        let startDate: Date;
-        if (start_date && typeof start_date === 'string') {
-            startDate = new Date(start_date);
-            // Validate the date
-            if (isNaN(startDate.getTime())) {
-                startDate = new Date();
-            }
+
+        // Keep start_date as a plain string so PostgreSQL handles all date arithmetic
+        // in its own timezone — avoids UTC vs local midnight mismatch
+        let startDateStr: string;
+        if (start_date && typeof start_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(start_date)) {
+            startDateStr = start_date;
         } else {
-            startDate = new Date();
+            const now = new Date();
+            startDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         }
-        startDate.setHours(0, 0, 0, 0);
         
         // Parse deck list with simpler logic
         let targetDecks: string[] = [];
@@ -4523,7 +4520,7 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
         
         console.log('Processed parameters:', {
             daysAheadNum,
-            startDate: startDate.toISOString(),
+            startDateStr,
             targetDecks
         });
         
@@ -4543,12 +4540,9 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
             }
         }
         
-        const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + daysAheadNum);
-
         console.log('Date range:', {
-            start: startDate.toISOString(),
-            end: endDate.toISOString(),
+            start: startDateStr,
+            days: daysAheadNum,
             validDecks: targetDecks
         });
 
@@ -4561,58 +4555,58 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
         if (targetDecks.length > 0) {
             // With deck filter
             futureQuery = `
-                SELECT 
+                SELECT
                     DATE(time_due) as due_date,
                     deck,
                     COUNT(*) as card_count
                 FROM cards
-                WHERE time_due >= $1 
-                AND time_due < $2
+                WHERE DATE(time_due) >= $1::date
+                AND DATE(time_due) < $1::date + ($2 * INTERVAL '1 day')
                 AND deck = ANY($3::text[])
                 GROUP BY DATE(time_due), deck
                 ORDER BY due_date, deck
             `;
-            
+
             overdueQuery = `
-                SELECT 
+                SELECT
                     deck,
                     COUNT(*) as card_count
                 FROM cards
-                WHERE time_due < $1
+                WHERE DATE(time_due) < $1::date
                 AND deck = ANY($2::text[])
                 GROUP BY deck
                 ORDER BY deck
             `;
-            
-            futureParams = [startDate, endDate, targetDecks];
-            overdueParams = [startDate, targetDecks];
-            
+
+            futureParams = [startDateStr, daysAheadNum, targetDecks];
+            overdueParams = [startDateStr, targetDecks];
+
         } else {
             // No deck filter
             futureQuery = `
-                SELECT 
+                SELECT
                     DATE(time_due) as due_date,
                     deck,
                     COUNT(*) as card_count
                 FROM cards
-                WHERE time_due >= $1 
-                AND time_due < $2
+                WHERE DATE(time_due) >= $1::date
+                AND DATE(time_due) < $1::date + ($2 * INTERVAL '1 day')
                 GROUP BY DATE(time_due), deck
                 ORDER BY due_date, deck
             `;
-            
+
             overdueQuery = `
-                SELECT 
+                SELECT
                     deck,
                     COUNT(*) as card_count
                 FROM cards
-                WHERE time_due < $1
+                WHERE DATE(time_due) < $1::date
                 GROUP BY deck
                 ORDER BY deck
             `;
-            
-            futureParams = [startDate, endDate];
-            overdueParams = [startDate];
+
+            futureParams = [startDateStr, daysAheadNum];
+            overdueParams = [startDateStr];
         }
 
         console.log('Executing future query:', futureQuery);
@@ -4644,10 +4638,13 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
         const hasOverdueCards = overdueResult.rows.length > 0 && 
             overdueResult.rows.some(row => parseInt(row.card_count) > 0);
 
-        // Create date range array
+        // Build dateRange from the date string with local arithmetic — no UTC conversion,
+        // so the labels stay in sync with PostgreSQL's DATE(time_due) values
         const dateRange: string[] = [];
-        for (let d = new Date(startDate); d < endDate; d.setDate(d.getDate() + 1)) {
-            dateRange.push(d.toISOString().split('T')[0]); // YYYY-MM-DD format
+        const [sy, sm, sd] = startDateStr.split('-').map(Number);
+        for (let i = 0; i < daysAheadNum; i++) {
+            const d = new Date(sy, sm - 1, sd + i);
+            dateRange.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
         }
 
         console.log('Date range created:', dateRange.length, 'days');
@@ -4670,8 +4667,11 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
         });
 
         // Fill in actual counts from future cards query
+        // pg may return DATE as a JS Date (UTC midnight) or a string — handle both
         futureResult.rows.forEach(row => {
-            const dateStr = row.due_date.toISOString().split('T')[0];
+            const dateStr: string = row.due_date instanceof Date
+                ? `${row.due_date.getUTCFullYear()}-${String(row.due_date.getUTCMonth() + 1).padStart(2, '0')}-${String(row.due_date.getUTCDate()).padStart(2, '0')}`
+                : String(row.due_date).slice(0, 10);
             const deck = row.deck;
             const count = parseInt(row.card_count);
 
@@ -4709,8 +4709,8 @@ app.get('/review_forecast', wrapAsync(async (req, res) => {
             forecast_data: forecastData,
             decks: allDecks,
             date_range: {
-                start_date: startDate.toISOString().split('T')[0],
-                end_date: endDate.toISOString().split('T')[0]
+                start_date: dateRange[0] ?? startDateStr,
+                end_date: dateRange[dateRange.length - 1] ?? startDateStr
             },
             total_reviews: totalReviews,
             overdue_count: totalOverdueReviews,
