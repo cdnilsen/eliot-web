@@ -3423,10 +3423,10 @@ function showRelationshipModal(cardId: number, cardData: any): void {
                         <strong>Deck:</strong> ${cardData.deck || 'Unknown'}<br>
                         <strong>Format:</strong> ${cardData.card_format || 'Unknown'}<br>
                         <strong>Card ID:</strong> ${cardId}<br>
-                        <strong>Front:</strong> ${(() => {
+                        <strong>Front:</strong> <span style="font-family: 'GentiumPlus', 'Gentium Plus', serif;">${(() => {
                         const frontText = cleanFieldDatum(cardData, 0, false);
                         return frontText.substring(0, 60) + (frontText.length > 60 ? '...' : '');
-                    })() || 'No content'}
+                    })() || 'No content'}</span>
                     </div>
                 </div>
 
@@ -3801,16 +3801,45 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
         const card = result.card;
         let html = '';
 
+        // Collect all related card IDs and fetch their data in parallel
+        const allRelatedIds: number[] = [
+            ...(card.peers || []),
+            ...(card.dependents || []),
+            ...(card.prereqs || []),
+        ];
+        const uniqueIds = [...new Set(allRelatedIds)];
+
+        const relatedCardMap = new Map<number, any>();
+        if (uniqueIds.length > 0) {
+            const fetches = uniqueIds.map(id =>
+                fetch(`/card/${id}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.status === 'success') relatedCardMap.set(id, data.card);
+                    })
+                    .catch(() => {/* leave missing */})
+            );
+            await Promise.all(fetches);
+        }
+
+        const cardLabel = (relatedCardId: number): string => {
+            const rc = relatedCardMap.get(relatedCardId);
+            if (!rc) return `Card ${relatedCardId}`;
+            const front = cleanFieldDatum(rc, 0, false) || '';
+            const back = cleanFieldDatum(rc, 1, true) || '';
+            return `${front} → ${back}`;
+        };
+
         // Helper function to create relationship items with delete buttons
         const createRelationshipItems = (relationships: number[], type: 'peer' | 'dependent' | 'prereq', label: string) => {
             if (!relationships || relationships.length === 0) return '';
-            
+
             let itemsHtml = `
                 <div class="relationship-section" style="margin-bottom: 16px;">
                     <strong style="color: #333; display: block; margin-bottom: 8px;">${label}:</strong>
                     <div class="relationship-items" style="display: flex; flex-direction: column; gap: 8px;">
             `;
-            
+
             relationships.forEach(relatedCardId => {
                 itemsHtml += `
                     <div class="relationship-item" style="
@@ -3822,8 +3851,8 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
                         border: 1px solid #dee2e6;
                         border-radius: 6px;
                     ">
-                        <span style="color: #495057; font-weight: 500;">Card ${relatedCardId}</span>
-                        <button 
+                        <span style="color: #495057; font-weight: 500; font-family: 'GentiumPlus', 'Gentium Plus', serif;">${cardLabel(relatedCardId)}</span>
+                        <button
                             class="remove-relationship-btn"
                             data-card-a-id="${cardId}"
                             data-card-b-id="${relatedCardId}"
@@ -3837,6 +3866,8 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
                                 font-size: 12px;
                                 cursor: pointer;
                                 transition: all 0.2s;
+                                flex-shrink: 0;
+                                margin-left: 8px;
                             "
                             onmouseover="this.style.background='#c82333'"
                             onmouseout="this.style.background='#dc3545'"
@@ -3847,12 +3878,12 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
                     </div>
                 `;
             });
-            
+
             itemsHtml += `
                     </div>
                 </div>
             `;
-            
+
             return itemsHtml;
         };
 
