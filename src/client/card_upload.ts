@@ -702,7 +702,7 @@ async function processAllRelationships(cardsWithRelationships: Array<{
         console.error('createCardRelationship callback not set');
         return;
     }
-
+    // adding a comment here to make it redeploy
     for (const cardSet of cardsWithRelationships) {
         const { cardIds, deck, relationships } = cardSet;
         for (const cardId of cardIds) {
