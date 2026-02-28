@@ -442,7 +442,7 @@ export async function loadReviewForecast(chartData: ReviewForecastOptions): Prom
     
     try {
         const today = new Date();
-        today.setDate(today.getDate() + 1); // workaround: chart displays one day behind
+        today.setDate(today.getDate() - 1); // workaround: chart displays one day behind
         const todayDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
         const result = await fetchReviewForecast(
