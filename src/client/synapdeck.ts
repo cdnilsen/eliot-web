@@ -3374,7 +3374,7 @@ function showRelationshipModal(cardId: number, cardData: any): void {
             background: white;
             border-radius: 12px;
             width: 90%;
-            max-width: 600px;
+            max-width: 800px;
             max-height: 80vh;
             overflow: hidden;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
@@ -3519,6 +3519,7 @@ function showRelationshipModal(cardId: number, cardData: any): void {
                         border-radius: 8px;
                         border: 1px solid #dee2e6;
                         min-height: 60px;
+                        font-family: 'GentiumPlus', 'Gentium Plus', serif;
                     ">
                         <p style="color: #666; font-style: italic;">Loading relationships...</p>
                     </div>
@@ -3825,9 +3826,25 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
         const cardLabel = (relatedCardId: number): string => {
             const rc = relatedCardMap.get(relatedCardId);
             if (!rc) return `Card ${relatedCardId}`;
-            const front = cleanFieldDatum(rc, 0, false) || '';
-            const back = cleanFieldDatum(rc, 1, true) || '';
-            return `${front} → ${back}`;
+            // Determine which field index is the "front" (question) based on format
+            let frontIdx = 0;
+            let backIdx = 1;
+            if (rc.card_format === 'Native to Target') {
+                frontIdx = 1;
+                backIdx = 0;
+            } else if (rc.card_format === 'One Way') {
+                const processing: string[] = rc.field_processing || [];
+                for (let i = 0; i < processing.length; i++) {
+                    if (!processing[i] || processing[i].trim() === '') {
+                        frontIdx = i;
+                        backIdx = i === 0 ? 1 : 0;
+                        break;
+                    }
+                }
+            }
+            const front = cleanFieldDatum(rc, frontIdx, false) || '';
+            const back = cleanFieldDatum(rc, backIdx, true) || '';
+            return `Card ${relatedCardId} (${rc.deck}) · ${front} → ${back}`;
         };
 
         // Helper function to create relationship items with delete buttons
@@ -3851,7 +3868,7 @@ async function loadExistingRelationships(cardId: number): Promise<void> {
                         border: 1px solid #dee2e6;
                         border-radius: 6px;
                     ">
-                        <span style="color: #495057; font-weight: 500; font-family: 'GentiumPlus', 'Gentium Plus', serif;">${cardLabel(relatedCardId)}</span>
+                        <span style="color: #495057;">${cardLabel(relatedCardId)}</span>
                         <button
                             class="remove-relationship-btn"
                             data-card-a-id="${cardId}"
