@@ -6,6 +6,7 @@ import {hebrewSpecialChars} from './synapdeck_files/transcribe_hebrew.js';
 import {transliterateGreek} from './synapdeck_files/transcribe_ancient_greek.js';
 import {transliterateCoptic} from './synapdeck_files/transcribe_coptic.js';
 import {transliterateHebrew} from './synapdeck_files/transcribe_hebrew.js';
+import {transliterateSyriac} from './synapdeck_files/transcribe_syriac.js';
 import {transliterateGeez, GeezDiacriticify} from './synapdeck_files/transcribe_geez.js';
 import {transliterateRussian} from './synapdeck_files/transcribe_russian.js';
 import {getInitialDifficulty, getInitialStability, recalculateRetrievability} from './fsrs_client.js';
@@ -16,7 +17,7 @@ let transcriptionDecks: string[] = [
     "Ge'ez",
     "Hebrew",
     "Russian",
-    // "Syriac" // We will do Syriac later
+    "Syriac"
 ]
 
 function transcribeText(text: string, deck: string) {
@@ -31,6 +32,8 @@ function transcribeText(text: string, deck: string) {
             return transliterateHebrew(text, true);
         case "Russian":
             return transliterateRussian(text);
+        case "Syriac":
+            return transliterateSyriac(text);
     }
 }
 
@@ -1272,10 +1275,14 @@ function initializeSpreadsheet(): void {
     }
 
     // Clicking outside any spreadsheet cell deselects the current cell.
+    // Exception: clicks within #spreadsheetSection (transliterate button, special
+    // chars panel, add-rows button, etc.) don't deselect — they act on the selection.
     document.addEventListener('mousedown', (e) => {
         if (!selectedTd) return;
         const table = document.getElementById('spreadsheetTable');
         if (table && !table.contains(e.target as Node)) {
+            const section = document.getElementById('spreadsheetSection');
+            if (section && section.contains(e.target as Node)) return;
             _deselectAll();
         }
     }, true /* capture so it fires before any cell handler */);
