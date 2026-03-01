@@ -94,7 +94,9 @@ const breathingTokens = [
 const accentTokens = [
   { input: [acuteAlt, acuteAccent], internal: "acute", output: acuteAccent },
   { input: [graveAlt, graveAccent], internal: "grave", output: graveAccent },
-  { input: [circumflexAlt, circumflex], internal: "circumflex", output: circumflex },
+  // \u0302 = COMBINING CIRCUMFLEX ACCENT (Latin, from e.g. û in NFD)
+  // \u0303 = COMBINING TILDE (from e.g. ũ in NFD) — both map to Greek perispomeni
+  { input: [circumflexAlt, circumflex, "\u0302", "\u0303"], internal: "circumflex", output: circumflex },
 ] as const;
 
 // Iota subscript marker

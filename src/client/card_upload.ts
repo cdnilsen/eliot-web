@@ -630,6 +630,14 @@ function addSpreadsheetRow(): void {
                 return;
             }
 
+            // Enter → exit edit mode (Shift+Enter inserts a newline as normal)
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                _exitEditMode(td, true);
+                td.focus();
+                return;
+            }
+
             // Tab → exit edit, move horizontally
             if (e.key === 'Tab') {
                 e.preventDefault();
@@ -781,7 +789,7 @@ function addSpreadsheetRow(): void {
                 default:
                     // Any printable character collapses the range, overwrites the
                     // anchor cell content, and enters edit mode in one keystroke.
-                    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
                         e.preventDefault();
                         _clearRangeHighlight();
                         selectionActiveTd = selectionAnchorTd;
