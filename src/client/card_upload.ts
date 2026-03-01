@@ -556,9 +556,22 @@ function buildSpreadsheet(cardType: string): void {
     thNum.textContent = '#';
     headerRow.appendChild(thNum);
 
-    cols.forEach(col => {
+    cols.forEach((col, colIdx) => {
         const th = document.createElement('th');
         th.textContent = col;
+        th.style.cursor = 'pointer';
+        th.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+            if (!tbody || tbody.rows.length === 0) return;
+            const rows = Array.from(tbody.rows) as HTMLTableRowElement[];
+            const firstCell = rows[0].cells[colIdx + 1] as HTMLTableDataCellElement | undefined;
+            const lastCell = rows[rows.length - 1].cells[colIdx + 1] as HTMLTableDataCellElement | undefined;
+            if (!firstCell || !lastCell) return;
+            selectCell(firstCell);
+            selectionActiveTd = lastCell;
+            _applyRangeHighlight();
+        });
         headerRow.appendChild(th);
     });
 
@@ -599,6 +612,17 @@ function addSpreadsheetRow(): void {
     const tdNum = document.createElement('td');
     tdNum.className = 'row-number-cell';
     tdNum.textContent = String(rowNum);
+    tdNum.style.cursor = 'pointer';
+    tdNum.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const dataCells = Array.from(tr.cells)
+            .slice(1)
+            .filter(c => !c.classList.contains('initial-interval-cell')) as HTMLTableDataCellElement[];
+        if (dataCells.length === 0) return;
+        selectCell(dataCells[0]);
+        selectionActiveTd = dataCells[dataCells.length - 1];
+        _applyRangeHighlight();
+    });
     tr.appendChild(tdNum);
 
     cols.forEach((_col, colIdx) => {
@@ -626,15 +650,17 @@ function addSpreadsheetRow(): void {
             if (e.key === 'Escape') {
                 e.preventDefault();
                 _exitEditMode(td, true);
+                textarea.blur();
                 td.focus();
                 return;
             }
 
-            // Enter → exit edit mode (Shift+Enter inserts a newline as normal)
+            // Enter → exit edit mode and advance to next row (Shift+Enter inserts a newline as normal)
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 _exitEditMode(td, true);
                 td.focus();
+                moveSpreadsheetFocusVertical(tr, colIdx, 1);
                 return;
             }
 
@@ -683,7 +709,10 @@ function addSpreadsheetRow(): void {
             // Use a microtask so that if focus is moving to another cell's td
             // that selectCell/enterEditMode has a chance to fire first.
             setTimeout(() => {
-                if (td.classList.contains('cell-editing')) {
+                // Guard against a race condition: if the user types quickly after
+                // pressing Enter, _enterEditMode may have already re-acquired the
+                // textarea before this callback fires. In that case, don't exit.
+                if (td.classList.contains('cell-editing') && document.activeElement !== textarea) {
                     _exitEditMode(td, true);
                     // Don't steal focus back — the new target already has it.
                 }
@@ -702,7 +731,13 @@ function addSpreadsheetRow(): void {
                 return;
             }
             e.preventDefault();
-            selectCell(td);
+            if (e.shiftKey && selectionAnchorTd) {
+                // Extend selection rectangle to this cell
+                selectionActiveTd = td;
+                _applyRangeHighlight();
+            } else {
+                selectCell(td);
+            }
         });
 
         // ── TD: double-click → enter edit mode ────────────────────────────
@@ -717,6 +752,11 @@ function addSpreadsheetRow(): void {
             if (td.classList.contains('cell-editing')) return;
 
             switch (e.key) {
+                case 'Tab':
+                    e.preventDefault();
+                    moveSpreadsheetFocusHorizontal(tr, colIdx, e.shiftKey ? -1 : 1);
+                    break;
+
                 case 'Enter':
                 case 'F2':
                     // Enter edit mode at end of current text
