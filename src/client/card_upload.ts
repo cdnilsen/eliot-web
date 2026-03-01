@@ -3,7 +3,37 @@ import {postProcessSanskrit} from './synapdeck_files/transcribe_sanskrit.js';
 import {geezSpecialChars} from './synapdeck_files/transcribe_geez.js';
 import {akkadianSpecialChars} from './synapdeck_files/transcribe_akkadian.js';
 import {hebrewSpecialChars} from './synapdeck_files/transcribe_hebrew.js';
+import {transliterateGreek} from './synapdeck_files/transcribe_ancient_greek.js';
+import {transliterateCoptic} from './synapdeck_files/transcribe_coptic.js';
+import {transliterateHebrew} from './synapdeck_files/transcribe_hebrew.js';
+import {transliterateGeez, GeezDiacriticify} from './synapdeck_files/transcribe_geez.js';
+import {transliterateRussian} from './synapdeck_files/transcribe_russian.js';
 import {getInitialDifficulty, getInitialStability, recalculateRetrievability} from './fsrs_client.js';
+
+let transcriptionDecks: string[] = [
+    "Ancient Greek",
+    "Coptic",
+    "Ge'ez",
+    "Hebrew",
+    "Russian",
+    // "Syriac" // We will do Syriac later
+]
+
+function transcribeText(text: string, deck: string) {
+    switch (deck) {
+        case "Ancient Greek":
+            return transliterateGreek(text);
+        case "Coptic":
+            return transliterateCoptic(text);
+        case "Ge'ez":
+            return transliterateGeez(text, true);
+        case "Hebrew":
+            return transliterateHebrew(text, true);
+        case "Russian":
+            return transliterateRussian(text);
+    }
+}
+
 
 // ── Types & interfaces ─────────────────────────────────────────────────────
 
@@ -67,6 +97,16 @@ let focusedSpreadsheetCell: HTMLTextAreaElement | null = null;
 
 // The currently selected (but not necessarily editing) spreadsheet cell <td>
 let selectedTd: HTMLTableDataCellElement | null = null;
+
+// Range selection: anchor is where Shift+Arrow started, active is the moving end
+let selectionAnchorTd: HTMLTableDataCellElement | null = null;
+let selectionActiveTd: HTMLTableDataCellElement | null = null;
+
+// Undo history
+type GridSnapshot = string[][];
+const historyStack: GridSnapshot[] = [];
+let historyPointer = -1;
+let cellValueAtEditStart: string | null = null;
 
 // --- Conflict detection for the spreadsheet card editor ---
 // deckFrontsCache[i] maps trimmed-lowercase field_values[i] → matching cards
@@ -163,7 +203,10 @@ function selectCell(td: HTMLTableDataCellElement): void {
         _exitEditMode(selectedTd, true);
         selectedTd.classList.remove('cell-selected');
     }
+    _clearRangeHighlight();
     selectedTd = td;
+    selectionAnchorTd = td;
+    selectionActiveTd = td;
     td.classList.add('cell-selected');
 
     // Keep focusedSpreadsheetCell updated for the special-chars panel
@@ -184,6 +227,7 @@ function _enterEditMode(td: HTMLTableDataCellElement, initialChar?: string): voi
     const ta = td.querySelector('textarea') as HTMLTextAreaElement | null;
     if (!ta) return;
 
+    cellValueAtEditStart = ta.value;
     ta.readOnly = false;
     ta.tabIndex = 0;
     td.classList.add('cell-editing');
@@ -209,6 +253,10 @@ function _exitEditMode(td: HTMLTableDataCellElement, runConflictCheck = false): 
     const ta = td.querySelector('textarea') as HTMLTextAreaElement | null;
     if (!ta) return;
 
+    if (cellValueAtEditStart !== null && ta.value !== cellValueAtEditStart) {
+        _pushSnapshot();
+    }
+    cellValueAtEditStart = null;
     ta.readOnly = true;
     ta.tabIndex = -1;
     td.classList.remove('cell-editing');
@@ -240,7 +288,134 @@ function _deselectAll(): void {
         selectedTd.classList.remove('cell-selected');
         selectedTd = null;
     }
+    _clearRangeHighlight();
+    selectionAnchorTd = null;
+    selectionActiveTd = null;
 }
+
+// ── Range selection helpers ────────────────────────────────────────────────
+
+function _getCellCoords(td: HTMLTableDataCellElement): { row: number; col: number } | null {
+    const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+    if (!tbody) return null;
+    const row = td.closest('tr') as HTMLTableRowElement | null;
+    if (!row) return null;
+    const rowIdx = Array.from(tbody.rows).indexOf(row);
+    const dataCells = Array.from(row.cells).slice(1).filter(c => !c.classList.contains('initial-interval-cell'));
+    const colIdx = dataCells.indexOf(td as HTMLTableCellElement);
+    if (rowIdx < 0 || colIdx < 0) return null;
+    return { row: rowIdx, col: colIdx };
+}
+
+/** Returns all cells currently in the selection rectangle. */
+function _getSelectionCells(): HTMLTableDataCellElement[] {
+    const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+    if (!tbody || !selectionAnchorTd || !selectionActiveTd) {
+        return selectedTd ? [selectedTd] : [];
+    }
+    const a = _getCellCoords(selectionAnchorTd);
+    const b = _getCellCoords(selectionActiveTd);
+    if (!a || !b) return selectedTd ? [selectedTd] : [];
+    const minRow = Math.min(a.row, b.row), maxRow = Math.max(a.row, b.row);
+    const minCol = Math.min(a.col, b.col), maxCol = Math.max(a.col, b.col);
+    const cells: HTMLTableDataCellElement[] = [];
+    Array.from(tbody.rows).forEach((row, rowIdx) => {
+        if (rowIdx < minRow || rowIdx > maxRow) return;
+        const dataCells = Array.from(row.cells).slice(1).filter(c => !c.classList.contains('initial-interval-cell'));
+        dataCells.forEach((cell, colIdx) => {
+            if (colIdx >= minCol && colIdx <= maxCol) cells.push(cell as HTMLTableDataCellElement);
+        });
+    });
+    return cells;
+}
+
+function _clearRangeHighlight(): void {
+    const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+    if (!tbody) return;
+    tbody.querySelectorAll('td.cell-in-range').forEach(td => td.classList.remove('cell-in-range'));
+}
+
+function _applyRangeHighlight(): void {
+    _clearRangeHighlight();
+    if (!selectionAnchorTd || !selectionActiveTd || selectionAnchorTd === selectionActiveTd) return;
+    _getSelectionCells().forEach(td => {
+        if (td !== selectionAnchorTd) td.classList.add('cell-in-range');
+    });
+}
+
+/** Extends the active end of a shift-selection one step in the given direction. */
+function _extendSelection(dir: 'up' | 'down' | 'left' | 'right'): void {
+    const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+    if (!tbody || !selectionActiveTd) return;
+    const active = _getCellCoords(selectionActiveTd);
+    if (!active) return;
+    let { row, col } = active;
+    if (dir === 'up') row--; else if (dir === 'down') row++;
+    else if (dir === 'left') col--; else col++;
+    const rows = Array.from(tbody.rows) as HTMLTableRowElement[];
+    if (row < 0 || row >= rows.length) return;
+    const dataCells = Array.from(rows[row].cells).slice(1).filter(c => !c.classList.contains('initial-interval-cell'));
+    if (col < 0 || col >= dataCells.length) return;
+    selectionActiveTd = dataCells[col] as HTMLTableDataCellElement;
+    _applyRangeHighlight();
+}
+
+// ── Undo history ───────────────────────────────────────────────────────────
+
+function _captureGridSnapshot(): GridSnapshot {
+    const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+    if (!tbody) return [];
+    const cardFormatEl = document.getElementById('card_format_dropdown') as HTMLSelectElement;
+    const cardType = cardFormatEl?.value ?? 'two-way';
+    const numCols = (SPREADSHEET_COLS[cardType] ?? SPREADSHEET_COLS['two-way']).length;
+    return Array.from(tbody.rows).map(row => {
+        const values: string[] = [];
+        for (let i = 1; i <= numCols; i++) {
+            const ta = row.cells[i]?.querySelector('textarea') as HTMLTextAreaElement | null;
+            values.push(ta ? ta.value : '');
+        }
+        return values;
+    });
+}
+
+function _pushSnapshot(): void {
+    const snapshot = _captureGridSnapshot();
+    historyStack.splice(historyPointer + 1);
+    historyStack.push(snapshot);
+    historyPointer = historyStack.length - 1;
+}
+
+function _restoreSnapshot(idx: number): void {
+    const snapshot = historyStack[idx];
+    if (!snapshot) return;
+    const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
+    if (!tbody) return;
+    const cardFormatEl = document.getElementById('card_format_dropdown') as HTMLSelectElement;
+    const cardType = cardFormatEl?.value ?? 'two-way';
+    const numCols = (SPREADSHEET_COLS[cardType] ?? SPREADSHEET_COLS['two-way']).length;
+    while (tbody.rows.length < snapshot.length) addSpreadsheetRow();
+    Array.from(tbody.rows).forEach((row, rowIdx) => {
+        const rowValues = snapshot[rowIdx] ?? Array(numCols).fill('');
+        for (let i = 0; i < numCols; i++) {
+            const ta = row.cells[i + 1]?.querySelector('textarea') as HTMLTextAreaElement | null;
+            if (ta) {
+                ta.value = rowValues[i] ?? '';
+                ta.style.height = 'auto';
+                ta.style.height = ta.scrollHeight + 'px';
+            }
+        }
+    });
+    syncConflictColumnHeights();
+    historyPointer = idx;
+}
+
+function _clearHistory(): void {
+    historyStack.length = 0;
+    historyPointer = -1;
+    cellValueAtEditStart = null;
+}
+
+// ── End range selection & undo history ────────────────────────────────────
 
 // ── Special characters panel ───────────────────────────────────────────────
 
@@ -342,6 +517,7 @@ function updateSpecialCharacters(deckName: string): void {
 
 function buildSpreadsheet(cardType: string): void {
     _deselectAll();
+    _clearHistory();
     const container = document.getElementById('cardSpreadsheet');
     if (!container) return;
 
@@ -403,6 +579,7 @@ function buildSpreadsheet(cardType: string): void {
         addSpreadsheetRow();
     }
     syncConflictColumnHeights();
+    _pushSnapshot(); // baseline empty state for undo
 }
 
 function addSpreadsheetRow(): void {
@@ -538,36 +715,73 @@ function addSpreadsheetRow(): void {
 
                 case 'Delete':
                 case 'Backspace':
-                    // Clear the cell content without entering edit mode
+                    // Clear all selected cells without entering edit mode
                     e.preventDefault();
-                    textarea.value = '';
-                    textarea.style.height = 'auto';
-                    textarea.style.height = textarea.scrollHeight + 'px';
+                    for (const cell of _getSelectionCells()) {
+                        const ta = cell.querySelector('textarea') as HTMLTextAreaElement | null;
+                        if (ta) {
+                            ta.value = '';
+                            ta.style.height = 'auto';
+                            ta.style.height = ta.scrollHeight + 'px';
+                        }
+                    }
+                    _pushSnapshot();
                     syncConflictColumnHeights();
                     break;
 
                 case 'ArrowUp':
                     e.preventDefault();
-                    moveSpreadsheetFocusVertical(tr, colIdx, -1);
+                    if (e.shiftKey) {
+                        _extendSelection('up');
+                    } else {
+                        moveSpreadsheetFocusVertical(tr, colIdx, -1);
+                    }
                     break;
                 case 'ArrowDown':
                     e.preventDefault();
-                    moveSpreadsheetFocusVertical(tr, colIdx, 1);
+                    if (e.shiftKey) {
+                        _extendSelection('down');
+                    } else {
+                        moveSpreadsheetFocusVertical(tr, colIdx, 1);
+                    }
                     break;
                 case 'ArrowLeft':
                     e.preventDefault();
-                    moveSpreadsheetFocusHorizontal(tr, colIdx, -1);
+                    if (e.shiftKey) {
+                        _extendSelection('left');
+                    } else {
+                        moveSpreadsheetFocusHorizontal(tr, colIdx, -1);
+                    }
                     break;
                 case 'ArrowRight':
                     e.preventDefault();
-                    moveSpreadsheetFocusHorizontal(tr, colIdx, 1);
+                    if (e.shiftKey) {
+                        _extendSelection('right');
+                    } else {
+                        moveSpreadsheetFocusHorizontal(tr, colIdx, 1);
+                    }
+                    break;
+
+                case 'v':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        navigator.clipboard.readText().then(text => {
+                            textarea.value = text;
+                            textarea.style.height = 'auto';
+                            textarea.style.height = textarea.scrollHeight + 'px';
+                            _pushSnapshot();
+                            syncConflictColumnHeights();
+                        });
+                    }
                     break;
 
                 default:
-                    // Any printable character overwrites the cell content and
-                    // enters edit mode in one keystroke.
+                    // Any printable character collapses the range, overwrites the
+                    // anchor cell content, and enters edit mode in one keystroke.
                     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
                         e.preventDefault();
+                        _clearRangeHighlight();
+                        selectionActiveTd = selectionAnchorTd;
                         _enterEditMode(td, e.key);
                     }
                     break;
@@ -768,6 +982,81 @@ function moveSpreadsheetFocusHorizontal(currentRow: HTMLTableRowElement, dataCol
 }
 
 // ── End spreadsheet functions ──────────────────────────────────────────────
+
+// ── Transliteration ────────────────────────────────────────────────────────
+
+/**
+ * Transliterates plain-text segments while leaving HTML tags untouched.
+ * The text is split on HTML tags; odd-indexed parts are tags and are
+ * passed through unchanged.
+ */
+function transliterateIgnoringHtml(text: string, deck: string): string {
+    const parts = text.split(/(<[^>]*>)/);
+    return parts.map((part, i) => {
+        if (i % 2 === 1) return part; // HTML tag — keep as-is
+        const result = transcribeText(part, deck);
+        return result !== undefined ? result : part;
+    }).join('');
+}
+
+function transliterateSelectedCell(): void {
+    if (!selectedTd || !currentDeck) return;
+
+    const cells = _getSelectionCells();
+
+    if (cells.length > 1) {
+        // Multi-cell: transliterate each cell's full content
+        for (const cell of cells) {
+            const ta = cell.querySelector('textarea') as HTMLTextAreaElement | null;
+            if (!ta) continue;
+            ta.value = transliterateIgnoringHtml(ta.value, currentDeck);
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
+        }
+        _pushSnapshot();
+        syncConflictColumnHeights();
+        return;
+    }
+
+    // Single cell
+    const ta = selectedTd.querySelector('textarea') as HTMLTextAreaElement | null;
+    if (!ta) return;
+
+    const isEditing = selectedTd.classList.contains('cell-editing');
+    const selStart = ta.selectionStart ?? 0;
+    const selEnd = ta.selectionEnd ?? ta.value.length;
+    const hasPartialSelection = isEditing && selStart !== selEnd;
+
+    if (hasPartialSelection) {
+        const before = ta.value.substring(0, selStart);
+        const selected = ta.value.substring(selStart, selEnd);
+        const after = ta.value.substring(selEnd);
+        const transliterated = transliterateIgnoringHtml(selected, currentDeck);
+        ta.value = before + transliterated + after;
+        ta.setSelectionRange(selStart, selStart + transliterated.length);
+    } else {
+        ta.value = transliterateIgnoringHtml(ta.value, currentDeck);
+    }
+
+    // Snapshot only when not in edit mode; if editing, _exitEditMode will capture it
+    if (!isEditing) _pushSnapshot();
+
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+    syncConflictColumnHeights();
+}
+
+function updateTransliterateButtonVisibility(deck: string): void {
+    const btn = document.getElementById('transliterateBtn');
+    if (!btn) return;
+    if (transcriptionDecks.includes(deck)) {
+        btn.classList.remove('hidden');
+    } else {
+        btn.classList.add('hidden');
+    }
+}
+
+// ── End transliteration ────────────────────────────────────────────────────
 
 function insertCharacterAtCursor(character: string): void {
     if (character == "◌́") {
@@ -976,6 +1265,7 @@ function initializeSpreadsheet(): void {
     const uploadDropdown = document.getElementById("upload_dropdownMenu") as HTMLSelectElement;
     if (uploadDropdown && uploadDropdown.value) {
         updateSpecialCharacters(uploadDropdown.value);
+        updateTransliterateButtonVisibility(uploadDropdown.value);
         loadDeckFronts(uploadDropdown.value);
         const submitBtn = document.getElementById('upload_submitBtn') as HTMLButtonElement | null;
         if (submitBtn) submitBtn.classList.remove('hidden');
@@ -1023,11 +1313,36 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
                 updateSpecialCharacters(currentDeck);
             }
 
+            updateTransliterateButtonVisibility(currentDeck);
             loadDeckFronts(currentDeck);
 
             if (uploadSubmitButton) uploadSubmitButton.classList.remove('hidden');
         });
     }
+
+    const transliterateBtn = document.getElementById('transliterateBtn');
+    if (transliterateBtn) {
+        transliterateBtn.addEventListener('click', () => transliterateSelectedCell());
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.altKey && e.key.toLowerCase() === 't') {
+            const btn = document.getElementById('transliterateBtn');
+            if (btn && !btn.classList.contains('hidden')) {
+                e.preventDefault();
+                transliterateSelectedCell();
+            }
+        }
+
+        if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key === 'z') {
+            // Only intercept at the grid level when no cell is being actively edited
+            if (selectedTd?.classList.contains('cell-editing')) return;
+            if (historyPointer > 0) {
+                e.preventDefault();
+                _restoreSnapshot(historyPointer - 1);
+            }
+        }
+    });
 
     const addSpreadsheetRowBtn = document.getElementById('addSpreadsheetRow');
     if (addSpreadsheetRowBtn) {

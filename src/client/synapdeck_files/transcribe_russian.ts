@@ -24,7 +24,7 @@ const russianTokens: Token[] = [
     {input: ["o", "о"], internal: "o", output: "о"},
     {input: ["u", "у"], internal: "u", output: "у"},
     {input: ["y", "ы"], internal: "y", output: "ы"},
-    {input: ["è", "ě", "э"], internal: "è", output: "э"},
+    {input: ["`e", "è", "ě", "э"], internal: "è", output: "э"},
     {input: ["ju", "yu", "ю"], internal: "ju", output: "ю"},
     {input: ["ja", "ya", "я"], internal: "ja", output: "я"},
 

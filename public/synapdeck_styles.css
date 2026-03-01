@@ -2463,6 +2463,31 @@ input[type="file"]:hover {
     background: #fafcff;
 }
 
+#transliterateBtn {
+    margin-bottom: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    border: 1px solid #4285f4;
+    background: #e8f0fe;
+    color: #1a73e8;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#transliterateBtn:hover {
+    background: #d2e3fc;
+}
+
+#transliterateBtn kbd {
+    font-size: 11px;
+    color: #555;
+    background: #fff;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-left: 6px;
+}
+
 #addSpreadsheetRow {
     margin-top: 6px;
     padding: 6px 14px;
@@ -2590,10 +2615,21 @@ input[type="file"]:hover {
     /* suppress the old blue textarea focus ring */
 }
 
+/* Cells included in a Shift+Arrow range selection (non-anchor cells) */
+.card-spreadsheet td.cell-in-range {
+    background-color: #c0d8f8;
+    outline: 1px solid #4285f4;
+    outline-offset: -1px;
+}
+
 /* While selected-but-not-editing, block pointer events on the textarea
    so clicks are handled by the td instead */
 .card-spreadsheet td:not(.cell-editing) textarea {
     pointer-events: none;
     user-select: none;
     cursor: default;
+}
+
+.card-spreadsheet td:focus {
+    outline: none;
 }

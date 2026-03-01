@@ -45,7 +45,6 @@ const printFontSizes: { [key: string]: string } = {
 };
 
 
-
 // Consolidate all global declarations
 declare global {
     interface Window {
