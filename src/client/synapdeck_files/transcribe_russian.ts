@@ -55,54 +55,6 @@ const russianTokens: Token[] = [
     {input: ["'", "ʹ", "ь"], internal: "'", output: "ь"},
     {input: ["\"", "ʺ", "ъ"], internal: "\"", output: "ъ"},
 
-    // Palatalized consonants via Cyrillic+apostrophe input (e.g. direct Cyrillic typing).
-    // The Latin xj forms are intentionally omitted: they conflict with x+ja/je/jo/ju
-    // (e.g. "nja" should be н+я, not нь+а). Use x' (apostrophe after consonant = ь)
-    // for explicit soft sign in Latin input: "n'a" → нья, "nja" → ня.
-    {input: ["б'"], internal: "bj", output: "бь"},
-    {input: ["в'"], internal: "vj", output: "вь"},
-    {input: ["г'"], internal: "gj", output: "гь"},
-    {input: ["д'"], internal: "dj", output: "дь"},
-    {input: ["к'"], internal: "kj", output: "кь"},
-    {input: ["л'"], internal: "lj", output: "ль"},
-    {input: ["м'"], internal: "mj", output: "мь"},
-    {input: ["н'"], internal: "nj", output: "нь"},
-    {input: ["п'"], internal: "pj", output: "пь"},
-    {input: ["р'"], internal: "rj", output: "рь"},
-    {input: ["с'"], internal: "sj", output: "сь"},
-    {input: ["т'"], internal: "tj", output: "ть"},
-    {input: ["ф'"], internal: "fj", output: "фь"},
-    {input: ["з'"], internal: "zj", output: "зь"},
-
-    // Common digraph alternatives
-    {input: ["tch"], internal: "ch", output: "ч"},
-    {input: ["sch"], internal: "shch", output: "щ"},
-    {input: ["ck"], internal: "k", output: "к"},
-    {input: ["ph"], internal: "f", output: "ф"},
-    {input: ["th"], internal: "t", output: "т"}, // English speakers might use this
-
-    // ISO 9 and scientific transliteration variants
-    {input: ["ė"], internal: "è", output: "э"},
-    {input: ["ǔ"], internal: "j", output: "й"},
-    {input: ["ǧ"], internal: "g", output: "г"},
-    {input: ["ǰ"], internal: "zh", output: "ж"},
-    {input: ["ǯ"], internal: "z", output: "з"},
-    {input: ["ǹ"], internal: "n", output: "н"},
-    {input: ["ṡ"], internal: "s", output: "с"},
-    {input: ["ṫ"], internal: "t", output: "т"},
-    {input: ["ḟ"], internal: "f", output: "ф"},
-    {input: ["ẋ"], internal: "kh", output: "х"},
-    {input: ["ċ"], internal: "c", output: "ц"},
-    {input: ["ċ̌"], internal: "ch", output: "ч"},
-    {input: ["ṡ̌"], internal: "sh", output: "ш"},
-    {input: ["ṡ̌ċ̌"], internal: "shch", output: "щ"},
-
-    // Alternative representations for iotated vowels
-    {input: ["ie"], internal: "je", output: "е"}, // Sometimes used for е after consonants
-    {input: ["io"], internal: "jo", output: "ё"},
-    {input: ["iu"], internal: "ju", output: "ю"},
-    {input: ["ia"], internal: "ja", output: "я"},
-
     // Common endings and patterns
     {input: ["ij"], internal: "ij", output: "ий"},
     {input: ["yj"], internal: "yj", output: "ый"},
