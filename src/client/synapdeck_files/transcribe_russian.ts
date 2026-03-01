@@ -3,7 +3,7 @@ interface Token {
     internal: string;
     output: string;
 }
-
+// Adding dummy comment to force rebuild
 interface TrieNode {
     token: string | null;
     children: { [key: string]: TrieNode };
