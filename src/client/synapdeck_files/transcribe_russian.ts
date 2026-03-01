@@ -55,21 +55,24 @@ const russianTokens: Token[] = [
     {input: ["'", "ʹ", "ь"], internal: "'", output: "ь"},
     {input: ["\"", "ʺ", "ъ"], internal: "\"", output: "ъ"},
 
-    // Palatalized consonants (optional alternative forms)
-    {input: ["bj", "б'"], internal: "bj", output: "бь"},
-    {input: ["vj", "в'"], internal: "vj", output: "вь"},
-    {input: ["gj", "г'"], internal: "gj", output: "гь"},
-    {input: ["dj", "д'"], internal: "dj", output: "дь"},
-    {input: ["kj", "к'"], internal: "kj", output: "кь"},
-    {input: ["lj", "л'"], internal: "lj", output: "ль"},
-    {input: ["mj", "м'"], internal: "mj", output: "мь"},
-    {input: ["nj", "н'"], internal: "nj", output: "нь"},
-    {input: ["pj", "п'"], internal: "pj", output: "пь"},
-    {input: ["rj", "р'"], internal: "rj", output: "рь"},
-    {input: ["sj", "с'"], internal: "sj", output: "сь"},
-    {input: ["tj", "т'"], internal: "tj", output: "ть"},
-    {input: ["fj", "ф'"], internal: "fj", output: "фь"},
-    {input: ["zj", "з'"], internal: "zj", output: "зь"},
+    // Palatalized consonants via Cyrillic+apostrophe input (e.g. direct Cyrillic typing).
+    // The Latin xj forms are intentionally omitted: they conflict with x+ja/je/jo/ju
+    // (e.g. "nja" should be н+я, not нь+а). Use x' (apostrophe after consonant = ь)
+    // for explicit soft sign in Latin input: "n'a" → нья, "nja" → ня.
+    {input: ["б'"], internal: "bj", output: "бь"},
+    {input: ["в'"], internal: "vj", output: "вь"},
+    {input: ["г'"], internal: "gj", output: "гь"},
+    {input: ["д'"], internal: "dj", output: "дь"},
+    {input: ["к'"], internal: "kj", output: "кь"},
+    {input: ["л'"], internal: "lj", output: "ль"},
+    {input: ["м'"], internal: "mj", output: "мь"},
+    {input: ["н'"], internal: "nj", output: "нь"},
+    {input: ["п'"], internal: "pj", output: "пь"},
+    {input: ["р'"], internal: "rj", output: "рь"},
+    {input: ["с'"], internal: "sj", output: "сь"},
+    {input: ["т'"], internal: "tj", output: "ть"},
+    {input: ["ф'"], internal: "fj", output: "фь"},
+    {input: ["з'"], internal: "zj", output: "зь"},
 
     // Common digraph alternatives
     {input: ["tch"], internal: "ch", output: "ч"},
