@@ -2565,3 +2565,35 @@ input[type="file"]:hover {
     cursor: help;
     user-select: none;
 }
+
+/* ── Cell selection & edit-mode states ─────────────────────────────────── */
+
+/* Single-click: cell is selected but not being edited */
+.card-spreadsheet td.cell-selected {
+    background-color: #dbeeff;
+    /* light blue overlay */
+    outline: 2px solid #000;
+    /* black border */
+    outline-offset: -2px;
+}
+
+/* Double-click / typing: cell is actively being edited */
+.card-spreadsheet td.cell-editing {
+    background-color: #fff;
+    outline: 2px solid #000;
+    outline-offset: -2px;
+}
+
+.card-spreadsheet td.cell-editing textarea {
+    background: transparent;
+    outline: none;
+    /* suppress the old blue textarea focus ring */
+}
+
+/* While selected-but-not-editing, block pointer events on the textarea
+   so clicks are handled by the td instead */
+.card-spreadsheet td:not(.cell-editing) textarea {
+    pointer-events: none;
+    user-select: none;
+    cursor: default;
+}
