@@ -121,8 +121,14 @@ const hebrewVowels: HebrewToken[] = [
     // Kamatz katan (o)
     {input: ["å"], internal: "o_short", output: "ָ", isVowel: true},
     
+    // Holam male (o) - vav + holam
+    {input: ["ô"], internal: "holam_male", output: "וֹ", isVowel: true},
+
     // Kubuts (u)
     {input: ["u"], internal: "u", output: "ֻ", isVowel: true},
+
+    // Shuruk (u) - vav + dagesh
+    {input: ["û"], internal: "shuruk", output: "וּ", isVowel: true},
     
     // Shva (ə)
     {input: ["ə", "E", "è"], internal: "ə", output: "ְ", isVowel: true},
@@ -294,8 +300,13 @@ function renderHebrew(tokens: ParsedHebrewToken[], includeNiqqud: boolean, isEnd
                 // Use regular form (first output)
                 result += outputs[0];
             }
-        } else if (token.kind === "vowel" && includeNiqqud) {
-            result += outputs[0];
+        } else if (token.kind === "vowel") {
+            if (includeNiqqud) {
+                result += outputs[0];
+            } else if (outputs[0].startsWith("ו")) {
+                // Mater lectionis (holam male, shuruk): render the vav without niqqud
+                result += "ו";
+            }
         }
     }
     

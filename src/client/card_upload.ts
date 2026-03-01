@@ -65,6 +65,9 @@ const SPREADSHEET_COL_WIDTHS: Record<string, number[]> = {
 export let currentDeck: string = "";
 let focusedSpreadsheetCell: HTMLTextAreaElement | null = null;
 
+// The currently selected (but not necessarily editing) spreadsheet cell <td>
+let selectedTd: HTMLTableDataCellElement | null = null;
+
 // --- Conflict detection for the spreadsheet card editor ---
 // deckFrontsCache[i] maps trimmed-lowercase field_values[i] → matching cards
 let deckFrontsCache: Map<string, ConflictCardInfo[]>[] = [];
@@ -145,6 +148,97 @@ function checkRowConflicts(row: HTMLTableRowElement): void {
         btn.textContent = '!';
         btn.title = conflictMessages.join('\n');
         indicator.appendChild(btn);
+    }
+}
+
+// ── Cell selection & edit-mode helpers ────────────────────────────────────
+
+/**
+ * Highlights a cell without entering text-edit mode.
+ * The <td> itself receives keyboard focus so arrow keys / typing work.
+ */
+function selectCell(td: HTMLTableDataCellElement): void {
+    if (selectedTd && selectedTd !== td) {
+        // Commit any in-progress edit on the previously selected cell
+        _exitEditMode(selectedTd, true);
+        selectedTd.classList.remove('cell-selected');
+    }
+    selectedTd = td;
+    td.classList.add('cell-selected');
+
+    // Keep focusedSpreadsheetCell updated for the special-chars panel
+    const ta = td.querySelector('textarea') as HTMLTextAreaElement | null;
+    if (ta) focusedSpreadsheetCell = ta;
+
+    td.focus();
+}
+
+/**
+ * Unlocks the textarea and gives it focus so the user can type.
+ * @param initialChar  When set, the textarea content is replaced with this
+ *                     character (used when the user starts typing on a
+ *                     selected-but-not-editing cell).
+ */
+function _enterEditMode(td: HTMLTableDataCellElement, initialChar?: string): void {
+    selectCell(td); // ensure it's selected first
+    const ta = td.querySelector('textarea') as HTMLTextAreaElement | null;
+    if (!ta) return;
+
+    ta.readOnly = false;
+    ta.tabIndex = 0;
+    td.classList.add('cell-editing');
+
+    if (initialChar !== undefined) {
+        ta.value = initialChar;
+        ta.style.height = 'auto';
+        ta.style.height = ta.scrollHeight + 'px';
+        syncConflictColumnHeights();
+    }
+
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+    focusedSpreadsheetCell = ta;
+}
+
+/**
+ * Returns the cell to "selected but not editing" state.
+ * @param runConflictCheck  Pass true when the user has finished editing
+ *                          (blur / Escape / arrow-out) so conflicts are re-checked.
+ */
+function _exitEditMode(td: HTMLTableDataCellElement, runConflictCheck = false): void {
+    const ta = td.querySelector('textarea') as HTMLTextAreaElement | null;
+    if (!ta) return;
+
+    ta.readOnly = true;
+    ta.tabIndex = -1;
+    td.classList.remove('cell-editing');
+
+    if (runConflictCheck) {
+        const tr = td.closest('tr') as HTMLTableRowElement | null;
+        if (tr) {
+            const cardFormatEl = document.getElementById('card_format_dropdown') as HTMLSelectElement;
+            const cardType = cardFormatEl?.value ?? 'two-way';
+            const frontIndices: number[] = cardType === 'two-way' ? [0, 1] : [0];
+            // Determine which data-column index this td is
+            const dataCells = Array.from(tr.cells)
+                .slice(1) // skip row-number
+                .filter(c => !c.classList.contains('initial-interval-cell'));
+            const colIdx = dataCells.indexOf(td as HTMLTableCellElement);
+            if (frontIndices.includes(colIdx)) {
+                const trimmed = ta.value.trim();
+                if (ta.value !== trimmed) ta.value = trimmed;
+                checkRowConflicts(tr);
+            }
+        }
+    }
+}
+
+/** Deselects any selected cell (e.g. when the user clicks outside the table). */
+function _deselectAll(): void {
+    if (selectedTd) {
+        _exitEditMode(selectedTd, true);
+        selectedTd.classList.remove('cell-selected');
+        selectedTd = null;
     }
 }
 
@@ -247,6 +341,7 @@ function updateSpecialCharacters(deckName: string): void {
 // ── Spreadsheet functions ──────────────────────────────────────────────────
 
 function buildSpreadsheet(cardType: string): void {
+    _deselectAll();
     const container = document.getElementById('cardSpreadsheet');
     if (!container) return;
 
@@ -326,42 +421,162 @@ function addSpreadsheetRow(): void {
     tdNum.textContent = String(rowNum);
     tr.appendChild(tdNum);
 
-    const frontIndices: number[] = cardType === 'two-way' ? [0, 1] : [0];
-
     cols.forEach((_col, colIdx) => {
-        const td = document.createElement('td');
+        const td = document.createElement('td') as HTMLTableDataCellElement;
+
+        // The td itself is the focus target while in "selected" mode.
+        td.tabIndex = 0;
+
         const textarea = document.createElement('textarea');
         textarea.rows = 1;
-        textarea.addEventListener('focus', () => {
-            focusedSpreadsheetCell = textarea;
-        });
+        // Start locked — the td owns focus until the user double-clicks or types.
+        textarea.readOnly = true;
+        textarea.tabIndex = -1;
+
+        // ── Textarea: resize on input ──────────────────────────────────────
         textarea.addEventListener('input', () => {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
             syncConflictColumnHeights();
         });
+
+        // ── Textarea: keyboard handling while editing ──────────────────────
         textarea.addEventListener('keydown', (e) => {
+            // Escape → exit edit mode, keep cell selected
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                _exitEditMode(td, true);
+                td.focus();
+                return;
+            }
+
+            // Tab → exit edit, move horizontally
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                _exitEditMode(td, true);
+                moveSpreadsheetFocusHorizontal(tr, colIdx, e.shiftKey ? -1 : 1);
+                return;
+            }
+
+            // Arrow keys — navigate out when the cursor is at an edge
             const text = textarea.value;
             const pos = textarea.selectionStart ?? 0;
             if (e.key === 'ArrowUp') {
                 const isFirstLine = text.lastIndexOf('\n', pos - 1) === -1;
-                if (isFirstLine) { e.preventDefault(); moveSpreadsheetFocusVertical(tr, colIdx, -1); }
+                if (isFirstLine) {
+                    e.preventDefault();
+                    _exitEditMode(td, true);
+                    moveSpreadsheetFocusVertical(tr, colIdx, -1);
+                }
             } else if (e.key === 'ArrowDown') {
                 const isLastLine = text.indexOf('\n', pos) === -1;
-                if (isLastLine) { e.preventDefault(); moveSpreadsheetFocusVertical(tr, colIdx, 1); }
+                if (isLastLine) {
+                    e.preventDefault();
+                    _exitEditMode(td, true);
+                    moveSpreadsheetFocusVertical(tr, colIdx, 1);
+                }
             } else if (e.key === 'ArrowLeft') {
-                if (pos === 0 && textarea.selectionEnd === 0) { e.preventDefault(); moveSpreadsheetFocusHorizontal(tr, colIdx, -1); }
+                if (pos === 0 && textarea.selectionEnd === 0) {
+                    e.preventDefault();
+                    _exitEditMode(td, true);
+                    moveSpreadsheetFocusHorizontal(tr, colIdx, -1);
+                }
             } else if (e.key === 'ArrowRight') {
-                if (pos === text.length && textarea.selectionEnd === text.length) { e.preventDefault(); moveSpreadsheetFocusHorizontal(tr, colIdx, 1); }
+                if (pos === text.length && textarea.selectionEnd === text.length) {
+                    e.preventDefault();
+                    _exitEditMode(td, true);
+                    moveSpreadsheetFocusHorizontal(tr, colIdx, 1);
+                }
             }
         });
-        if (frontIndices.includes(colIdx)) {
-            textarea.addEventListener('blur', () => {
-                const trimmed = textarea.value.trim();
-                if (textarea.value !== trimmed) textarea.value = trimmed;
-                checkRowConflicts(tr);
-            });
-        }
+
+        // ── Textarea: when it loses focus, exit edit mode ──────────────────
+        textarea.addEventListener('blur', () => {
+            // Use a microtask so that if focus is moving to another cell's td
+            // that selectCell/enterEditMode has a chance to fire first.
+            setTimeout(() => {
+                if (td.classList.contains('cell-editing')) {
+                    _exitEditMode(td, true);
+                    // Don't steal focus back — the new target already has it.
+                }
+            }, 0);
+        });
+
+        // ── TD: mousedown ──────────────────────────────────────────────────
+        // Prevent the browser from natively focusing the textarea on a plain
+        // click.  We take over focus management ourselves.  When the cell is
+        // already in edit mode we let the event through so the browser can
+        // position the text cursor at the click point.
+        td.addEventListener('mousedown', (e) => {
+            if (td.classList.contains('cell-editing')) {
+                // Already editing — let the click reach the textarea so the
+                // user can reposition their cursor naturally.
+                return;
+            }
+            e.preventDefault();
+            selectCell(td);
+        });
+
+        // ── TD: double-click → enter edit mode ────────────────────────────
+        td.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            _enterEditMode(td);
+        });
+
+        // ── TD: keyboard handling while selected (not editing) ─────────────
+        td.addEventListener('keydown', (e) => {
+            // Ignore if the textarea is already handling input
+            if (td.classList.contains('cell-editing')) return;
+
+            switch (e.key) {
+                case 'Enter':
+                case 'F2':
+                    // Enter edit mode at end of current text
+                    e.preventDefault();
+                    _enterEditMode(td);
+                    break;
+
+                case 'Delete':
+                case 'Backspace':
+                    // Clear the cell content without entering edit mode
+                    e.preventDefault();
+                    textarea.value = '';
+                    textarea.style.height = 'auto';
+                    textarea.style.height = textarea.scrollHeight + 'px';
+                    syncConflictColumnHeights();
+                    break;
+
+                case 'ArrowUp':
+                    e.preventDefault();
+                    moveSpreadsheetFocusVertical(tr, colIdx, -1);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    moveSpreadsheetFocusVertical(tr, colIdx, 1);
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    moveSpreadsheetFocusHorizontal(tr, colIdx, -1);
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    moveSpreadsheetFocusHorizontal(tr, colIdx, 1);
+                    break;
+
+                default:
+                    // Any printable character overwrites the cell content and
+                    // enters edit mode in one keystroke.
+                    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                        e.preventDefault();
+                        _enterEditMode(td, e.key);
+                    }
+                    break;
+            }
+        });
+
+        // ── TD: clicking elsewhere deselects ──────────────────────────────
+        // (handled at document level — see initializeSpreadsheet)
+
         td.appendChild(textarea);
         tr.appendChild(td);
     });
@@ -428,11 +643,12 @@ function syncConflictColumnHeights(): void {
     const conflictCol = document.getElementById('conflictColumn');
     if (!tbody || !conflictCol) return;
 
-    const table = tbody.closest('table') as HTMLTableElement | null;
-    const thead = table?.querySelector('thead') as HTMLElement | null;
     const spacer = document.getElementById('conflictHeaderSpacer') as HTMLElement | null;
-    if (spacer && thead) {
-        spacer.style.height = thead.offsetHeight + 'px';
+    const container = document.getElementById('cardSpreadsheet');
+    if (spacer && container) {
+        const containerRect = container.getBoundingClientRect();
+        const tbodyRect = tbody.getBoundingClientRect();
+        spacer.style.height = (tbodyRect.top - containerRect.top + container.scrollTop) + 'px';
     }
 
     const rows = Array.from(tbody.rows) as HTMLTableRowElement[];
@@ -521,11 +737,8 @@ function moveSpreadsheetFocusVertical(currentRow: HTMLTableRowElement, dataColId
     const rowIdx = rows.indexOf(currentRow);
     const targetRow = rows[rowIdx + dir];
     if (!targetRow) return;
-    const target = getSpreadsheetCellTextarea(targetRow, dataColIdx);
-    if (!target) return;
-    target.focus();
-    const pos = dir === 1 ? 0 : target.value.length;
-    target.setSelectionRange(pos, pos);
+    const targetCell = targetRow.cells[dataColIdx + 1] as HTMLTableDataCellElement | undefined;
+    if (targetCell) selectCell(targetCell);
 }
 
 function moveSpreadsheetFocusHorizontal(currentRow: HTMLTableRowElement, dataColIdx: number, dir: -1 | 1): void {
@@ -550,11 +763,8 @@ function moveSpreadsheetFocusHorizontal(currentRow: HTMLTableRowElement, dataCol
         targetColIdx = 0;
     }
 
-    const target = getSpreadsheetCellTextarea(targetRow, targetColIdx);
-    if (!target) return;
-    target.focus();
-    const pos = dir === -1 ? target.value.length : 0;
-    target.setSelectionRange(pos, pos);
+    const targetCell = targetRow.cells[targetColIdx + 1] as HTMLTableDataCellElement | undefined;
+    if (targetCell) selectCell(targetCell);
 }
 
 // ── End spreadsheet functions ──────────────────────────────────────────────
@@ -564,6 +774,11 @@ function insertCharacterAtCursor(character: string): void {
         character = "\u0301";
     } else if (character == "◌̀") {
         character = "\u0300";
+    }
+
+    // If the focused cell isn't in edit mode, enter it first
+    if (selectedTd && !selectedTd.classList.contains('cell-editing')) {
+        _enterEditMode(selectedTd);
     }
 
     const textarea: HTMLTextAreaElement | null = focusedSpreadsheetCell;
@@ -765,6 +980,15 @@ function initializeSpreadsheet(): void {
         const submitBtn = document.getElementById('upload_submitBtn') as HTMLButtonElement | null;
         if (submitBtn) submitBtn.classList.remove('hidden');
     }
+
+    // Clicking outside any spreadsheet cell deselects the current cell.
+    document.addEventListener('mousedown', (e) => {
+        if (!selectedTd) return;
+        const table = document.getElementById('spreadsheetTable');
+        if (table && !table.contains(e.target as Node)) {
+            _deselectAll();
+        }
+    }, true /* capture so it fires before any cell handler */);
 }
 
 export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): void {
