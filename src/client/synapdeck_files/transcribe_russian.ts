@@ -19,7 +19,7 @@ const russianTokens: Token[] = [
     // Vowels
     {input: ["a", "а"], internal: "a", output: "а"},
     {input: ["e", "е"], internal: "e", output: "е"},
-    {input: ["ё", "jo", "yo"], internal: "ё", output: "ё"},
+    {input: ["ё", "jo", "yo", "e\""], internal: "ё", output: "ё"},
     {input: ["i", "и"], internal: "i", output: "и"},
     {input: ["o", "о"], internal: "o", output: "о"},
     {input: ["u", "у"], internal: "u", output: "у"},
@@ -199,28 +199,18 @@ type S2SDict = {
 }
 
 function preprocessLatin(str: string): string {
-    // Handle common alternative spellings and normalize
     str = str.toLowerCase();
-    
-    const alts: S2SDict = {
-        "w": "v",      // English speakers often use w instead of v
-        "iy": "iy",    // Keep as is for now
-        "ij": "ij",    // Keep as is for now
-        "sh": "š", // German-style spelling
-        "tsch": "ch",  // German-style spelling
-        "cz": "ch",    // Polish-style spelling
-        "sz": "sh",    // Polish-style spelling
-        "rz": "zh",    // Polish-style spelling
-        "dz": "z",     // Polish-style spelling
-        "qu": "kv",    // Handle qu combinations
-        "yi": "yi",    // Keep as is for now
-        "ji": "yi"     // Alternative for ы
-    };
 
-    let allKeys = Object.keys(alts);
-    for (let i = 0; i < allKeys.length; i++) {
-        str = str.replaceAll(allKeys[i], alts[allKeys[i]]);
-    }
+    // Decompose precomposed acute-accented vowels into base letter + apostrophe.
+    // é → e', á → a', etc.  Soft sign never follows a vowel, so the apostrophe
+    // is unambiguous here: it signals stress, not palatalization.
+    const acuteToBase: Record<string, string> = { á:'a', é:'e', í:'i', ó:'o', ú:'u', ý:'y' };
+    str = str.replace(/[áéíóúý]/g, c => (acuteToBase[c] ?? c) + "'");
+
+    // Apostrophe immediately after a vowel letter → U+0301 (combining acute accent).
+    // Covers the decomposed forms above plus explicit apostrophe-after-vowel input.
+    // è is included so that è' (and `é → `e') both yield stressed э.
+    str = str.replace(/([aeiouyè])'/g, "$1\u0301");
 
     return str;
 }
