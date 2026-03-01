@@ -105,6 +105,10 @@ let selectedTd: HTMLTableDataCellElement | null = null;
 let selectionAnchorTd: HTMLTableDataCellElement | null = null;
 let selectionActiveTd: HTMLTableDataCellElement | null = null;
 
+// The currently highlighted column <th> or row-number <td> (from header/row clicks)
+let activeHeaderTh: HTMLElement | null = null;
+let activeRowNumTd: HTMLElement | null = null;
+
 // Undo history
 type GridSnapshot = string[][];
 const historyStack: GridSnapshot[] = [];
@@ -207,6 +211,7 @@ function selectCell(td: HTMLTableDataCellElement): void {
         selectedTd.classList.remove('cell-selected');
     }
     _clearRangeHighlight();
+    _clearHeaderRowIndicators();
     selectedTd = td;
     selectionAnchorTd = td;
     selectionActiveTd = td;
@@ -292,6 +297,7 @@ function _deselectAll(): void {
         selectedTd = null;
     }
     _clearRangeHighlight();
+    _clearHeaderRowIndicators();
     selectionAnchorTd = null;
     selectionActiveTd = null;
 }
@@ -332,17 +338,28 @@ function _getSelectionCells(): HTMLTableDataCellElement[] {
     return cells;
 }
 
+function _clearHeaderRowIndicators(): void {
+    if (activeHeaderTh) { activeHeaderTh.classList.remove('col-header-active'); activeHeaderTh = null; }
+    if (activeRowNumTd) { activeRowNumTd.classList.remove('row-num-active'); activeRowNumTd = null; }
+}
+
 function _clearRangeHighlight(): void {
     const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
     if (!tbody) return;
-    tbody.querySelectorAll('td.cell-in-range').forEach(td => td.classList.remove('cell-in-range'));
+    tbody.querySelectorAll('td.cell-in-range, td.cell-in-range-empty').forEach(td => {
+        td.classList.remove('cell-in-range');
+        td.classList.remove('cell-in-range-empty');
+    });
 }
 
 function _applyRangeHighlight(): void {
     _clearRangeHighlight();
     if (!selectionAnchorTd || !selectionActiveTd || selectionAnchorTd === selectionActiveTd) return;
     _getSelectionCells().forEach(td => {
-        if (td !== selectionAnchorTd) td.classList.add('cell-in-range');
+        if (td === selectionAnchorTd) return;
+        const ta = td.querySelector('textarea') as HTMLTextAreaElement | null;
+        const isEmpty = !ta || ta.value.trim() === '';
+        td.classList.add(isEmpty ? 'cell-in-range-empty' : 'cell-in-range');
     });
 }
 
@@ -571,6 +588,8 @@ function buildSpreadsheet(cardType: string): void {
             selectCell(firstCell);
             selectionActiveTd = lastCell;
             _applyRangeHighlight();
+            activeHeaderTh = th;
+            th.classList.add('col-header-active');
         });
         headerRow.appendChild(th);
     });
@@ -622,6 +641,8 @@ function addSpreadsheetRow(): void {
         selectCell(dataCells[0]);
         selectionActiveTd = dataCells[dataCells.length - 1];
         _applyRangeHighlight();
+        activeRowNumTd = tdNum;
+        tdNum.classList.add('row-num-active');
     });
     tr.appendChild(tdNum);
 

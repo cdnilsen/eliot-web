@@ -2615,11 +2615,30 @@ input[type="file"]:hover {
     /* suppress the old blue textarea focus ring */
 }
 
-/* Cells included in a Shift+Arrow range selection (non-anchor cells) */
+/* Cells included in a range selection that have content */
 .card-spreadsheet td.cell-in-range {
     background-color: #c0d8f8;
     outline: 1px solid #4285f4;
     outline-offset: -1px;
+}
+
+/* Cells included in a range selection that are empty */
+.card-spreadsheet td.cell-in-range-empty {
+    background-color: #eaf2ff;
+    outline: 1px solid #b8d4f5;
+    outline-offset: -1px;
+}
+
+/* Column header highlighted by a header click */
+.card-spreadsheet th.col-header-active {
+    background: #4285f4;
+    color: #fff;
+}
+
+/* Row-number cell highlighted by a row click */
+.card-spreadsheet td.row-num-active {
+    background-color: #4285f4;
+    color: #fff;
 }
 
 /* While selected-but-not-editing, block pointer events on the textarea
