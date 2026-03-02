@@ -34,6 +34,8 @@ function transcribeText(text: string, deck: string) {
             return transliterateHebrew(text, true);
         case "Russian":
             return transliterateRussian(text);
+        case "Persian":
+            return transliteratePersian(text);
         case "Syriac":
             return transliterateSyriac(text);
     }
