@@ -3,6 +3,7 @@ import {transliterateGreek} from './synapdeck_files/transcribe_ancient_greek.js'
 import {transliterateCoptic} from './synapdeck_files/transcribe_coptic.js';
 import {ProcessedCard, processCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_files/synapdeck_lib.js'
 import {transliterateHebrew} from './synapdeck_files/transcribe_hebrew.js';
+import {transliteratePersian} from './synapdeck_files/transcribe_persian.js';
 import { initializeUploadTab } from './card_upload.js';
 import { CardBrowserDeps, initializeBrowserTab, setupBrowseCardsTab, createCardRelationship } from './card_browser.js';
 import React from 'react';
@@ -29,6 +30,7 @@ let deckNameList: string[] = [
     "Hittite",
     "Latin",
     "Lithuanian",
+    "Persian",
     "Proto-Algonquian",
     "Russian",
     "Sanskrit",
@@ -42,6 +44,7 @@ const printFontSizes: { [key: string]: string } = {
     "Syriac": "18px",
     "Cuneiform": "18px",
     "Ge'ez": "14px",
+    "Persian": "18px",
 };
 
 
@@ -409,6 +412,7 @@ function transcribe(str: string, process: string = "", otherProcess: string = ""
         "Ge'ez": (text) => transliterateGeez(text, optionalBoolean),
         "Ancient Greek": (text) => transliterateGreek(text),
         "Hebrew": (text) => transliterateHebrew(text, true),
+        "Persian": (text) => transliteratePersian(text)
     };
     
     const processor = processors[process] || ((text: string) => text);

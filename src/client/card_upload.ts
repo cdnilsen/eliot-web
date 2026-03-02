@@ -8,6 +8,7 @@ import {transliterateCoptic} from './synapdeck_files/transcribe_coptic.js';
 import {transliterateHebrew} from './synapdeck_files/transcribe_hebrew.js';
 import {transliterateSyriac} from './synapdeck_files/transcribe_syriac.js';
 import {transliterateGeez, GeezDiacriticify} from './synapdeck_files/transcribe_geez.js';
+import {transliteratePersian} from './synapdeck_files/transcribe_persian.js';
 import {transliterateRussian} from './synapdeck_files/transcribe_russian.js';
 import {getInitialDifficulty, getInitialStability, recalculateRetrievability} from './fsrs_client.js';
 
@@ -16,6 +17,7 @@ let transcriptionDecks: string[] = [
     "Coptic",
     "Ge'ez",
     "Hebrew",
+    "Persian",
     "Russian",
     "Syriac"
 ]
