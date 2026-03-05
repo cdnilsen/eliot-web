@@ -57,33 +57,42 @@ function getDaysAhead(): number {
     return 14;
 }
 
+function parseDateLocal(dateStr: string): Date {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+
 function transformHeatmapToForecast(
     heatmapData: HeatmapResponse,
     daysAhead: number
 ): { forecastData: ReviewForecastData[]; decks: string[] } {
+    const clientToday = new Date();
+    clientToday.setHours(0, 0, 0, 0);
+
+    const allEntries = heatmapData.future_due || [];
+
+    // Separate past-due entries from today-and-future entries
+    const overdueEntries = allEntries.filter(e => parseDateLocal(e.date) < clientToday);
+    const upcomingEntries = allEntries.filter(e => parseDateLocal(e.date) >= clientToday).slice(0, daysAhead);
+
     const allDecks = new Set<string>();
-
-    if (heatmapData.today_decks) {
-        Object.keys(heatmapData.today_decks).forEach(d => allDecks.add(d));
-    }
-
-    const futureDue = (heatmapData.future_due || []).slice(0, daysAhead);
-    futureDue.forEach(entry => {
+    [...overdueEntries, ...upcomingEntries].forEach(entry => {
         Object.keys(entry.decks || {}).forEach(d => allDecks.add(d));
     });
 
     const decks = Array.from(allDecks).sort();
     const forecastData: ReviewForecastData[] = [];
 
-    if ((heatmapData.today_due || 0) > 0) {
-        const overdueEntry: ReviewForecastData = { date: 'Overdue' };
+    // Aggregate all past-due dates into a single 'Overdue' bar
+    if (overdueEntries.length > 0) {
+        const overdueBar: ReviewForecastData = { date: 'Overdue' };
         decks.forEach(deck => {
-            overdueEntry[deck] = heatmapData.today_decks?.[deck] || 0;
+            overdueBar[deck] = overdueEntries.reduce((sum, e) => sum + (e.decks?.[deck] || 0), 0);
         });
-        forecastData.push(overdueEntry);
+        forecastData.push(overdueBar);
     }
 
-    futureDue.forEach(entry => {
+    upcomingEntries.forEach(entry => {
         const item: ReviewForecastData = { date: entry.date };
         decks.forEach(deck => {
             item[deck] = entry.decks?.[deck] || 0;
@@ -139,14 +148,6 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
     // Get today's date for comparison (local midnight)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
-    // Parse a YYYY-MM-DD string as local midnight (not UTC midnight).
-    // new Date('2026-02-26') would give Feb 25 18:00 CST due to UTC parsing rules,
-    // shifting every bar one day back. Using date parts avoids this.
-    function parseDateLocal(dateStr: string): Date {
-        const [y, m, d] = dateStr.split('-').map(Number);
-        return new Date(y, m - 1, d);
-    }
 
     // Create labels and determine which dates are overdue
     const labels = data.map(item => {

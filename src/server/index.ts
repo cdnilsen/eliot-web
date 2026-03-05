@@ -5331,14 +5331,14 @@ app.get('/review_heatmap', wrapAsync(async (req, res) => {
             ORDER BY review_date
         `);
 
-        // Future cards due by date, with per-deck breakdown
+        // Cards due by date: include past 30 days so the client can show accumulated overdue cards
         const futureQuery = await client.query(`
             SELECT
                 DATE(time_due) as due_date,
                 deck,
                 COUNT(*) as cards_due
             FROM cards
-            WHERE time_due >= CURRENT_DATE
+            WHERE DATE(time_due) >= CURRENT_DATE - INTERVAL '30 days'
               AND time_due < CURRENT_DATE + INTERVAL '365 days'
             GROUP BY DATE(time_due), deck
             ORDER BY due_date, deck
