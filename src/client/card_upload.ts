@@ -933,6 +933,15 @@ function initConflictColumn(): void {
             conflictCol.scrollTop = cardSpreadsheet.scrollTop;
             relCol.scrollTop = cardSpreadsheet.scrollTop;
         });
+
+        // Prevent the side columns from scrolling independently — redirect
+        // any wheel events on them to the spreadsheet container.
+        const redirectWheel = (e: WheelEvent) => {
+            e.preventDefault();
+            cardSpreadsheet.scrollTop += e.deltaY;
+        };
+        conflictCol.addEventListener('wheel', redirectWheel, { passive: false });
+        relCol.addEventListener('wheel', redirectWheel, { passive: false });
     }
 
     const conflictCol = document.getElementById('conflictColumn');
@@ -1144,15 +1153,15 @@ function removeRelEntry(rowDiv: HTMLElement, idx: number): void {
 async function searchRelCards(query: string): Promise<void> {
     const resultsDiv = document.getElementById('relSearchResults');
     if (!resultsDiv) return;
-    if (!query.trim() || !currentDeck) {
+    if (!query.trim()) {
         resultsDiv.innerHTML = '';
         return;
     }
     try {
+        // Search all decks; we'll partition the results afterwards.
         const params = new URLSearchParams();
-        params.append('deck', currentDeck);
         params.append('search_term', query.trim());
-        params.append('limit', '8');
+        params.append('limit', '20');
         const response = await fetch(`/browse_cards?${params.toString()}`);
         const data = await response.json();
         resultsDiv.innerHTML = '';
@@ -1163,20 +1172,42 @@ async function searchRelCards(query: string): Promise<void> {
             resultsDiv.appendChild(empty);
             return;
         }
-        (data.cards as Array<{ field_values: string[] }>).forEach(card => {
-            const primaryField = card.field_values?.[0] ?? '';
-            if (!primaryField) return;
-            const item = document.createElement('div');
-            item.className = 'rel-search-item';
-            item.textContent = primaryField;
-            item.addEventListener('click', () => {
-                addRelEntry(primaryField);
-                const searchInput = document.getElementById('relSearchInput') as HTMLInputElement | null;
-                if (searchInput) searchInput.value = '';
-                resultsDiv.innerHTML = '';
+
+        type CardResult = { field_values: string[]; deck: string };
+        const cards = data.cards as CardResult[];
+        const inDeck = cards.filter(c => c.deck === currentDeck);
+        const outDeck = cards.filter(c => c.deck !== currentDeck);
+
+        const appendSection = (items: CardResult[], header: string) => {
+            if (items.length === 0) return;
+            const hdr = document.createElement('div');
+            hdr.className = 'rel-search-header';
+            hdr.textContent = header;
+            resultsDiv.appendChild(hdr);
+            items.forEach(card => {
+                const primaryField = card.field_values?.[0] ?? '';
+                if (!primaryField) return;
+                const item = document.createElement('div');
+                item.className = 'rel-search-item';
+                item.textContent = primaryField;
+                if (card.deck !== currentDeck) {
+                    const deckLabel = document.createElement('span');
+                    deckLabel.className = 'rel-search-deck-label';
+                    deckLabel.textContent = ` (${card.deck})`;
+                    item.appendChild(deckLabel);
+                }
+                item.addEventListener('click', () => {
+                    addRelEntry(primaryField);
+                    const searchInput = document.getElementById('relSearchInput') as HTMLInputElement | null;
+                    if (searchInput) searchInput.value = '';
+                    resultsDiv.innerHTML = '';
+                });
+                resultsDiv.appendChild(item);
             });
-            resultsDiv.appendChild(item);
-        });
+        };
+
+        appendSection(inDeck, currentDeck);
+        appendSection(outDeck, 'Other decks');
     } catch (e) {
         console.error('Relationship search error:', e);
     }

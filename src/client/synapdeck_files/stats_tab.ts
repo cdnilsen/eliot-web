@@ -22,7 +22,6 @@ interface HeatmapResponse {
 }
 
 let pieChart: any = null;
-let statsInitialized = false;
 
 // Colors ordered to maximize contrast between adjacent slices
 const PIE_COLORS = [
@@ -156,8 +155,7 @@ function createHeatmap(pastReviews: HeatmapEntry[], futureDue: HeatmapEntry[], t
     const dateMap = new Map<string, { count: number; type: 'past' | 'today' | 'future' }>();
 
     for (const entry of pastReviews) {
-        const d = new Date(entry.date).toISOString().slice(0, 10);
-        dateMap.set(d, { count: entry.count, type: 'past' });
+        dateMap.set(entry.date, { count: entry.count, type: 'past' });
     }
 
     const _now = new Date();
@@ -165,8 +163,10 @@ function createHeatmap(pastReviews: HeatmapEntry[], futureDue: HeatmapEntry[], t
     dateMap.set(todayStr, { count: todayDue, type: 'today' });
 
     for (const entry of futureDue) {
-        const d = new Date(entry.date).toISOString().slice(0, 10);
-        dateMap.set(d, { count: entry.count, type: 'future' });
+        // Skip overdue entries (date in the past) — they belong in the bar chart's
+        // "Overdue" bucket, not as blue cells on past calendar days.
+        if (entry.date <= todayStr) continue;
+        dateMap.set(entry.date, { count: entry.count, type: 'future' });
     }
 
     // Determine range: 6 months back to 6 months forward
@@ -193,7 +193,7 @@ function createHeatmap(pastReviews: HeatmapEntry[], futureDue: HeatmapEntry[], t
     const cursor = new Date(startDate);
 
     while (cursor <= endDate) {
-        const dateStr = cursor.toISOString().slice(0, 10);
+        const dateStr = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
         const entry = dateMap.get(dateStr);
         currentWeek.push({
             date: new Date(cursor),
@@ -332,9 +332,6 @@ function getCellColor(count: number, maxCount: number, type: string, isToday: bo
 }
 
 export async function setupStatsTab(): Promise<void> {
-    if (statsInitialized) return;
-    statsInitialized = true;
-
     try {
         const [stats, heatmapData] = await Promise.all([
             fetchDeckStatistics(),

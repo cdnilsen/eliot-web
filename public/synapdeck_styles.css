@@ -2838,3 +2838,17 @@ input[type="file"]:hover {
     color: #999;
     padding: 5px 6px;
 }
+
+.rel-search-header {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #aaa;
+    padding: 6px 6px 2px;
+}
+
+.rel-search-deck-label {
+    color: #bbb;
+    font-size: 11px;
+}
