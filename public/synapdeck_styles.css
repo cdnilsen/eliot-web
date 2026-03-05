@@ -822,7 +822,7 @@ input[type="file"]:hover {
 
 .header-row {
     display: grid;
-    grid-template-columns: 1fr auto auto auto;
+    grid-template-columns: 1fr 80px 80px 80px;
     background: #007cba;
     color: white;
     font-weight: bold;
@@ -842,7 +842,7 @@ input[type="file"]:hover {
 
 .answer-row {
     display: grid;
-    grid-template-columns: 1fr auto auto auto;
+    grid-template-columns: 1fr 80px 80px 80px;
     background: white;
     border-bottom: 1px solid #eee;
     gap: 1px;

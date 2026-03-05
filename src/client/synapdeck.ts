@@ -1213,7 +1213,7 @@ function setupReviewAheadUI(): void {
 // Add a variable to store the cached card results
 let cachedCardResults: CheckCardsResponse | null = null;
 let lastCheckedDeck: string = "";
-let reviewSubmitButton = document.getElementById("review_submitBtn");
+let reviewSubmitButton = document.getElementById("review_submitBtn") as HTMLButtonElement | null;
 
 /** Set the review_numCards input to the total number of due cards. */
 function setReviewNumCardsToTotal(totalCardCount: number): void {
@@ -1282,32 +1282,43 @@ async function markCardsUnderReview(cardIds: number[]): Promise<boolean> {
 
 if (reviewSubmitButton) {
     reviewSubmitButton.addEventListener('click', async () => {
-        const deckRows = document.querySelectorAll<HTMLDivElement>('.deck-review-row');
-        const selections: { deckName: string, cards: CardDue[] }[] = [];
+        if (reviewSubmitButton.disabled) return;
+        reviewSubmitButton.disabled = true;
+        const originalText = reviewSubmitButton.textContent;
+        reviewSubmitButton.textContent = 'Creating sessions…';
 
-        for (const row of deckRows) {
-            const checkbox = row.querySelector<HTMLInputElement>('.deck-review-check');
-            if (!checkbox?.checked) continue;
+        try {
+            const deckRows = document.querySelectorAll<HTMLDivElement>('.deck-review-row');
+            const selections: { deckName: string, cards: CardDue[] }[] = [];
 
-            const deckName = row.dataset.deck!;
-            const countInput = row.querySelector<HTMLInputElement>('.deck-card-count');
-            const numCards = parseInt(countInput?.value || '0');
+            for (const row of deckRows) {
+                const checkbox = row.querySelector<HTMLInputElement>('.deck-review-check');
+                if (!checkbox?.checked) continue;
 
-            const cached = deckCardCache.get(deckName);
-            if (!cached?.cards || cached.cards.length === 0) continue;
+                const deckName = row.dataset.deck!;
+                const countInput = row.querySelector<HTMLInputElement>('.deck-card-count');
+                const numCards = parseInt(countInput?.value || '0');
 
-            const cards = produceFinalCardList(cached.cards, numCards);
-            if (cards.length > 0) {
-                selections.push({ deckName, cards });
+                const cached = deckCardCache.get(deckName);
+                if (!cached?.cards || cached.cards.length === 0) continue;
+
+                const cards = produceFinalCardList(cached.cards, numCards);
+                if (cards.length > 0) {
+                    selections.push({ deckName, cards });
+                }
             }
-        }
 
-        if (selections.length === 0) {
-            alert('No decks selected with due cards.');
-            return;
-        }
+            if (selections.length === 0) {
+                alert('No decks selected with due cards.');
+                reviewSubmitButton.disabled = false;
+                reviewSubmitButton.textContent = originalText;
+                return;
+            }
 
-        await produceMultiDeckReviewSheet(selections);
+            await produceMultiDeckReviewSheet(selections);
+        } finally {
+            reviewSubmitButton.textContent = originalText;
+        }
     });
 }
 
@@ -1618,6 +1629,7 @@ function displayAnswerKey(cards: CardDue[], deckName: string, isDifficult: boole
                         // always fetches a fresh list (reflecting burials from this session).
                         cachedCardResults = null;
                         lastCheckedDeck = "";
+                        populateCheckWorkDropdown();
 
                         // Clear the output after successful submission
                         outputDiv.innerHTML = `
