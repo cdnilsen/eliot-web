@@ -26,14 +26,9 @@ export function initializeBrowserTab(browserDeps: CardBrowserDeps): void {
 }
 
 function setupCardActionButtons(): void {
-    const resultsDiv = document.getElementById('browse_results');
-    if (!resultsDiv) {
-        console.error('Browse results div not found');
-        return;
-    }
-
-    // Use event delegation with proper typing
-    resultsDiv.addEventListener('click', async (event: MouseEvent) => {
+    // Delegate on document so this works regardless of when #browse_results is created
+    document.addEventListener('click', async (event: MouseEvent) => {
+        if (!document.getElementById('browse_results')?.contains(event.target as Node)) return;
         const target = event.target as HTMLElement;
         
         // Handle edit button clicks
@@ -119,10 +114,6 @@ function setupCardActionButtons(): void {
         }
     });
 
-    // Log button count for debugging
-    const editButtons = resultsDiv.querySelectorAll('.edit-card-btn');
-    const deleteButtons = resultsDiv.querySelectorAll('.delete-card-btn');
-    console.log(`Set up action handlers for ${editButtons.length} edit buttons and ${deleteButtons.length} delete buttons`);
 }
 
 // Add these interfaces first

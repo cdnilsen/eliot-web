@@ -2652,3 +2652,189 @@ input[type="file"]:hover {
 .card-spreadsheet td:focus {
     outline: none;
 }
+
+/* ── Relationship column ─────────────────────────────────────────────────── */
+
+#relationshipColumn {
+    max-height: 400px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    padding-left: 6px;
+}
+
+#relationshipColumn::-webkit-scrollbar {
+    display: none;
+}
+
+.rel-header-spacer {
+    flex-shrink: 0;
+}
+
+.rel-row {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.rel-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    font-size: 11px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    color: #777;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+    transition: background 0.15s;
+}
+
+.rel-badge:hover {
+    background: #e8e8e8;
+    color: #444;
+}
+
+.rel-badge.has-rels {
+    background: #e8f4fd;
+    border-color: #4285f4;
+    color: #1a73e8;
+    font-weight: 500;
+}
+
+.rel-badge.has-rels:hover {
+    background: #d2e9fc;
+}
+
+/* ── Relationship popover ─────────────────────────────────────────────────── */
+
+#relPopover {
+    position: absolute;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    width: 320px;
+    display: none;
+}
+
+.rel-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.rel-popover-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #666;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.rel-popover-close:hover {
+    color: #333;
+}
+
+.rel-popover-list {
+    padding: 8px 12px;
+    min-height: 32px;
+    max-height: 110px;
+    overflow-y: auto;
+    border-bottom: 1px solid #eee;
+}
+
+.rel-empty-msg {
+    font-size: 12px;
+    color: #999;
+    font-style: italic;
+}
+
+.rel-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    margin: 2px;
+    background: #e8f4fd;
+    border: 1px solid #4285f4;
+    border-radius: 3px;
+    font-size: 11px;
+    color: #1a73e8;
+}
+
+.rel-chip-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #1a73e8;
+    padding: 0;
+    line-height: 1;
+}
+
+.rel-chip-remove:hover {
+    color: #c62828;
+}
+
+.rel-add-section {
+    display: flex;
+    gap: 4px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    align-items: center;
+}
+
+.rel-type-select {
+    font-size: 12px;
+    padding: 3px 4px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    flex-shrink: 0;
+    width: 115px;
+}
+
+.rel-search-input {
+    font-size: 12px;
+    padding: 3px 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.rel-search-results {
+    padding: 0 12px 6px;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.rel-search-item {
+    padding: 5px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.rel-search-item:hover {
+    background: #f0f0f0;
+}
+
+.rel-search-empty {
+    font-size: 12px;
+    color: #999;
+    padding: 5px 6px;
+}

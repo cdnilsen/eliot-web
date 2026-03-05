@@ -93,8 +93,8 @@ const SPREADSHEET_COLS: Record<string, string[]> = {
 
 // Pixel widths for each data column (excluding the row-number column)
 const SPREADSHEET_COL_WIDTHS: Record<string, number[]> = {
-    'two-way': [160, 160, 130, 130, 70],
-    'one-way-N2T': [200, 200, 70]
+    'two-way': [175, 175, 145, 145, 70],
+    'one-way-N2T': [215, 215, 70],
 };
 
 // ── Module-level state ─────────────────────────────────────────────────────
@@ -126,6 +126,18 @@ let deckFrontsCache: Map<string, ConflictCardInfo[]>[] = [];
 // Callback injected by synapdeck.ts so we can create card relationships
 // without a circular import.
 let _createCardRelationship: CreateCardRelFn | null = null;
+
+// ── Relationship column ────────────────────────────────────────────────────
+
+interface RelEntry {
+    type: 'peer' | 'prereq' | 'dependent';
+    primaryField: string;
+}
+
+const rowRelationships = new Map<HTMLElement, RelEntry[]>();
+let relPopover: HTMLElement | null = null;
+let currentRelRow: HTMLElement | null = null;
+let relSearchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // ── Conflict detection ─────────────────────────────────────────────────────
 
@@ -542,6 +554,8 @@ function updateSpecialCharacters(deckName: string): void {
 function buildSpreadsheet(cardType: string): void {
     _deselectAll();
     _clearHistory();
+    closeRelPopover();
+    rowRelationships.clear();
     const container = document.getElementById('cardSpreadsheet');
     if (!container) return;
 
@@ -887,6 +901,7 @@ function addSpreadsheetRow(): void {
 
     tbody.appendChild(tr);
     addConflictIndicator();
+    addRelationshipRow();
 }
 
 function initConflictColumn(): void {
@@ -905,8 +920,13 @@ function initConflictColumn(): void {
         conflictCol.id = 'conflictColumn';
         rowWrapper.appendChild(conflictCol);
 
+        const relCol = document.createElement('div');
+        relCol.id = 'relationshipColumn';
+        rowWrapper.appendChild(relCol);
+
         cardSpreadsheet.addEventListener('scroll', () => {
             conflictCol.scrollTop = cardSpreadsheet.scrollTop;
+            relCol.scrollTop = cardSpreadsheet.scrollTop;
         });
     }
 
@@ -918,6 +938,15 @@ function initConflictColumn(): void {
     spacer.className = 'conflict-header-spacer';
     spacer.id = 'conflictHeaderSpacer';
     conflictCol.appendChild(spacer);
+
+    const relCol = document.getElementById('relationshipColumn');
+    if (relCol) {
+        relCol.innerHTML = '';
+        const relSpacer = document.createElement('div');
+        relSpacer.className = 'rel-header-spacer';
+        relSpacer.id = 'relHeaderSpacer';
+        relCol.appendChild(relSpacer);
+    }
 }
 
 function addConflictIndicator(): void {
@@ -928,23 +957,249 @@ function addConflictIndicator(): void {
     conflictCol.appendChild(indicator);
 }
 
+function addRelationshipRow(): void {
+    const relCol = document.getElementById('relationshipColumn');
+    if (!relCol) return;
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'rel-row';
+    rowRelationships.set(rowDiv, []);
+    const badge = document.createElement('div');
+    badge.className = 'rel-badge';
+    badge.textContent = '+ Rel';
+    badge.title = 'Add relationships to existing notes';
+    badge.addEventListener('click', () => {
+        if (relPopover && relPopover.style.display !== 'none' && currentRelRow === rowDiv) {
+            closeRelPopover();
+        } else {
+            openRelPopover(rowDiv, badge);
+        }
+    });
+    rowDiv.appendChild(badge);
+    relCol.appendChild(rowDiv);
+}
+
+function createRelPopover(): HTMLElement {
+    const popover = document.createElement('div');
+    popover.id = 'relPopover';
+
+    const header = document.createElement('div');
+    header.className = 'rel-popover-header';
+    const title = document.createElement('span');
+    title.textContent = 'Relationships';
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.className = 'rel-popover-close';
+    closeBtn.addEventListener('click', closeRelPopover);
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    popover.appendChild(header);
+
+    const relList = document.createElement('div');
+    relList.id = 'relPopoverList';
+    relList.className = 'rel-popover-list';
+    popover.appendChild(relList);
+
+    const addSection = document.createElement('div');
+    addSection.className = 'rel-add-section';
+    const typeSelect = document.createElement('select');
+    typeSelect.id = 'relTypeSelect';
+    typeSelect.className = 'rel-type-select';
+    [
+        { value: 'peer', label: 'peer of' },
+        { value: 'prereq', label: 'prerequisite of' },
+        { value: 'dependent', label: 'dependent of' },
+    ].forEach(({ value, label }) => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = label;
+        typeSelect.appendChild(opt);
+    });
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.id = 'relSearchInput';
+    searchInput.className = 'rel-search-input';
+    searchInput.placeholder = 'Search cards…';
+    searchInput.addEventListener('input', () => {
+        if (relSearchTimeout) clearTimeout(relSearchTimeout);
+        relSearchTimeout = setTimeout(() => searchRelCards(searchInput.value), 300);
+    });
+    addSection.appendChild(typeSelect);
+    addSection.appendChild(searchInput);
+    popover.appendChild(addSection);
+
+    const results = document.createElement('div');
+    results.id = 'relSearchResults';
+    results.className = 'rel-search-results';
+    popover.appendChild(results);
+
+    document.addEventListener('click', (e) => {
+        if (!relPopover || relPopover.style.display === 'none') return;
+        if (relPopover.contains(e.target as Node)) return;
+        if ((e.target as HTMLElement).closest('.rel-badge')) return;
+        closeRelPopover();
+    });
+
+    return popover;
+}
+
+function openRelPopover(rowDiv: HTMLElement, anchor: HTMLElement): void {
+    if (!relPopover) {
+        relPopover = createRelPopover();
+        document.body.appendChild(relPopover);
+    }
+    currentRelRow = rowDiv;
+    refreshPopoverContent();
+    relPopover.style.display = 'block';
+    const rect = anchor.getBoundingClientRect();
+    relPopover.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+    relPopover.style.left = (rect.left + window.scrollX) + 'px';
+}
+
+function closeRelPopover(): void {
+    if (relPopover) relPopover.style.display = 'none';
+    currentRelRow = null;
+    if (relSearchTimeout) { clearTimeout(relSearchTimeout); relSearchTimeout = null; }
+    const searchInput = document.getElementById('relSearchInput') as HTMLInputElement | null;
+    if (searchInput) searchInput.value = '';
+    const results = document.getElementById('relSearchResults');
+    if (results) results.innerHTML = '';
+}
+
+function refreshPopoverContent(): void {
+    const relList = document.getElementById('relPopoverList');
+    if (!relList || !currentRelRow) return;
+    const rels = rowRelationships.get(currentRelRow) ?? [];
+    relList.innerHTML = '';
+    if (rels.length === 0) {
+        const msg = document.createElement('div');
+        msg.className = 'rel-empty-msg';
+        msg.textContent = 'No relationships added yet';
+        relList.appendChild(msg);
+        return;
+    }
+    rels.forEach((rel, idx) => {
+        const chip = document.createElement('div');
+        chip.className = 'rel-chip';
+        const label = document.createElement('span');
+        label.textContent = `${rel.type}: ${rel.primaryField}`;
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '×';
+        removeBtn.className = 'rel-chip-remove';
+        removeBtn.addEventListener('click', () => {
+            if (currentRelRow) removeRelEntry(currentRelRow, idx);
+        });
+        chip.appendChild(label);
+        chip.appendChild(removeBtn);
+        relList.appendChild(chip);
+    });
+}
+
+function updateRowBadge(rowDiv: HTMLElement): void {
+    const rels = rowRelationships.get(rowDiv) ?? [];
+    const badge = rowDiv.querySelector('.rel-badge') as HTMLElement | null;
+    if (!badge) return;
+    if (rels.length === 0) {
+        badge.textContent = '+ Rel';
+        badge.title = 'Add relationships to existing notes';
+        badge.classList.remove('has-rels');
+        return;
+    }
+    const peers = rels.filter(r => r.type === 'peer').length;
+    const prereqs = rels.filter(r => r.type === 'prereq').length;
+    const deps = rels.filter(r => r.type === 'dependent').length;
+    const parts: string[] = [];
+    if (peers > 0) parts.push(`${peers} Peer${peers > 1 ? 's' : ''}`);
+    if (prereqs > 0) parts.push(`${prereqs} Prereq${prereqs > 1 ? 's' : ''}`);
+    if (deps > 0) parts.push(`${deps} Dep${deps > 1 ? 's' : ''}`);
+    badge.textContent = parts.join(', ');
+    badge.classList.add('has-rels');
+    badge.title = rels.map(r => `${r.type}: ${r.primaryField}`).join('\n');
+}
+
+function addRelEntry(primaryField: string): void {
+    if (!currentRelRow || !primaryField.trim()) return;
+    const typeSelect = document.getElementById('relTypeSelect') as HTMLSelectElement | null;
+    const type = (typeSelect?.value ?? 'peer') as 'peer' | 'prereq' | 'dependent';
+    const rels = rowRelationships.get(currentRelRow) ?? [];
+    if (rels.some(r => r.type === type && r.primaryField === primaryField)) return;
+    rels.push({ type, primaryField });
+    rowRelationships.set(currentRelRow, rels);
+    refreshPopoverContent();
+    updateRowBadge(currentRelRow);
+}
+
+function removeRelEntry(rowDiv: HTMLElement, idx: number): void {
+    const rels = rowRelationships.get(rowDiv) ?? [];
+    rels.splice(idx, 1);
+    rowRelationships.set(rowDiv, rels);
+    refreshPopoverContent();
+    updateRowBadge(rowDiv);
+}
+
+async function searchRelCards(query: string): Promise<void> {
+    const resultsDiv = document.getElementById('relSearchResults');
+    if (!resultsDiv) return;
+    if (!query.trim() || !currentDeck) {
+        resultsDiv.innerHTML = '';
+        return;
+    }
+    try {
+        const params = new URLSearchParams();
+        params.append('deck', currentDeck);
+        params.append('search_term', query.trim());
+        params.append('limit', '8');
+        const response = await fetch(`/browse_cards?${params.toString()}`);
+        const data = await response.json();
+        resultsDiv.innerHTML = '';
+        if (data.status !== 'success' || !data.cards?.length) {
+            const empty = document.createElement('div');
+            empty.className = 'rel-search-empty';
+            empty.textContent = 'No results';
+            resultsDiv.appendChild(empty);
+            return;
+        }
+        (data.cards as Array<{ field_values: string[] }>).forEach(card => {
+            const primaryField = card.field_values?.[0] ?? '';
+            if (!primaryField) return;
+            const item = document.createElement('div');
+            item.className = 'rel-search-item';
+            item.textContent = primaryField;
+            item.addEventListener('click', () => {
+                addRelEntry(primaryField);
+                const searchInput = document.getElementById('relSearchInput') as HTMLInputElement | null;
+                if (searchInput) searchInput.value = '';
+                resultsDiv.innerHTML = '';
+            });
+            resultsDiv.appendChild(item);
+        });
+    } catch (e) {
+        console.error('Relationship search error:', e);
+    }
+}
+
 function syncConflictColumnHeights(): void {
     const tbody = document.getElementById('spreadsheetBody') as HTMLTableSectionElement | null;
     const conflictCol = document.getElementById('conflictColumn');
     if (!tbody || !conflictCol) return;
 
     const spacer = document.getElementById('conflictHeaderSpacer') as HTMLElement | null;
+    const relSpacer = document.getElementById('relHeaderSpacer') as HTMLElement | null;
     const container = document.getElementById('cardSpreadsheet');
     if (spacer && container) {
         const containerRect = container.getBoundingClientRect();
         const tbodyRect = tbody.getBoundingClientRect();
-        spacer.style.height = (tbodyRect.top - containerRect.top + container.scrollTop) + 'px';
+        const h = (tbodyRect.top - containerRect.top + container.scrollTop) + 'px';
+        spacer.style.height = h;
+        if (relSpacer) relSpacer.style.height = h;
     }
 
+    const relCol = document.getElementById('relationshipColumn');
     const rows = Array.from(tbody.rows) as HTMLTableRowElement[];
     rows.forEach((row, i) => {
         const indicator = conflictCol.children[i + 1] as HTMLElement | undefined;
         if (indicator) indicator.style.height = row.offsetHeight + 'px';
+        const relRow = relCol?.children[i + 1] as HTMLElement | undefined;
+        if (relRow) relRow.style.minHeight = row.offsetHeight + 'px';
     });
 }
 
@@ -966,8 +1221,9 @@ function getNotesFromSpreadsheet(): NoteToProcess[] {
     }
 
     const notes: NoteToProcess[] = [];
+    const relCol = document.getElementById('relationshipColumn');
 
-    Array.from(tbody.rows).forEach(row => {
+    Array.from(tbody.rows).forEach((row, rowIdx) => {
         const allCells = Array.from(row.cells).slice(1); // skip row-number cell
         const intervalCell = allCells.find(td => td.classList.contains('initial-interval-cell'));
         const dataCells = allCells.filter(td => !td.classList.contains('initial-interval-cell'));
@@ -1002,12 +1258,23 @@ function getNotesFromSpreadsheet(): NoteToProcess[] {
             }
         }
 
+        // Collect relationships from the relationship column for this row
+        const relationships: CardRelationships = { peers: [], prereqs: [], dependents: [] };
+        const relRow = relCol?.children[rowIdx + 1] as HTMLElement | undefined;
+        if (relRow) {
+            for (const rel of rowRelationships.get(relRow) ?? []) {
+                if (rel.type === 'peer') relationships.peers.push(rel.primaryField);
+                else if (rel.type === 'dependent') relationships.prereqs.push(rel.primaryField);  // "dependent of X" → X is our prereq
+                else if (rel.type === 'prereq') relationships.dependents.push(rel.primaryField);  // "prerequisite of X" → X is our dependent
+            }
+        }
+
         notes.push({
             deck: currentDeck,
             noteType,
             dataList,
             processList,
-            relationships: { peers: [], prereqs: [], dependents: [] },
+            relationships,
             initialIntervalDays: noteInitialIntervalDays
         });
     });
