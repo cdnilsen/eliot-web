@@ -866,13 +866,18 @@ function addSpreadsheetRow(): void {
                     break;
 
                 default:
-                    // Any printable character collapses the range, overwrites the
-                    // anchor cell content, and enters edit mode in one keystroke.
+                    // Any printable character collapses the range and enters edit mode.
+                    // We do NOT call preventDefault, and do NOT inject the key as an
+                    // initial value, so that the OS input method (dead-key composition,
+                    // IME, etc.) continues to work correctly on the now-focused textarea.
                     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                        e.preventDefault();
+                        const savedValue = textarea.value;
+                        textarea.value = '';
+                        textarea.style.height = 'auto';
+                        textarea.style.height = textarea.scrollHeight + 'px';
                         _clearRangeHighlight();
-                        selectionActiveTd = selectionAnchorTd;
-                        _enterEditMode(td, e.key);
+                        _enterEditMode(td);
+                        cellValueAtEditStart = savedValue;
                     }
                     break;
             }
