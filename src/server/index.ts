@@ -5331,24 +5331,52 @@ app.get('/review_heatmap', wrapAsync(async (req, res) => {
             ORDER BY review_date
         `);
 
-        // Future cards due by date
+        // Future cards due by date, with per-deck breakdown
         const futureQuery = await client.query(`
             SELECT
                 DATE(time_due) as due_date,
+                deck,
                 COUNT(*) as cards_due
             FROM cards
             WHERE time_due >= CURRENT_DATE
               AND time_due < CURRENT_DATE + INTERVAL '365 days'
-            GROUP BY DATE(time_due)
-            ORDER BY due_date
+            GROUP BY DATE(time_due), deck
+            ORDER BY due_date, deck
         `);
 
-        // Today's due cards
+        // Today's due cards with per-deck breakdown
         const todayQuery = await client.query(`
-            SELECT COUNT(*) as cards_due_today
+            SELECT
+                deck,
+                COUNT(*) as cards_due
             FROM cards
             WHERE DATE(time_due) <= CURRENT_DATE
+            GROUP BY deck
+            ORDER BY deck
         `);
+
+        // Aggregate future_due rows into per-date objects with deck breakdowns
+        const futureDueMap = new Map<string, { count: number; decks: Record<string, number> }>();
+        for (const row of futureQuery.rows) {
+            const dateStr = row.due_date instanceof Date
+                ? row.due_date.toISOString().slice(0, 10)
+                : String(row.due_date);
+            if (!futureDueMap.has(dateStr)) {
+                futureDueMap.set(dateStr, { count: 0, decks: {} });
+            }
+            const entry = futureDueMap.get(dateStr)!;
+            const n = parseInt(row.cards_due);
+            entry.count += n;
+            entry.decks[row.deck] = n;
+        }
+
+        const todayDecks: Record<string, number> = {};
+        let todayTotal = 0;
+        for (const row of todayQuery.rows) {
+            const n = parseInt(row.cards_due);
+            todayDecks[row.deck] = n;
+            todayTotal += n;
+        }
 
         res.json({
             status: 'success',
@@ -5356,11 +5384,13 @@ app.get('/review_heatmap', wrapAsync(async (req, res) => {
                 date: row.review_date,
                 count: parseInt(row.cards_reviewed)
             })),
-            future_due: futureQuery.rows.map(row => ({
-                date: row.due_date,
-                count: parseInt(row.cards_due)
+            future_due: Array.from(futureDueMap.entries()).map(([date, { count, decks }]) => ({
+                date,
+                count,
+                decks
             })),
-            today_due: parseInt(todayQuery.rows[0].cards_due_today)
+            today_due: todayTotal,
+            today_decks: todayDecks
         });
     } catch (err) {
         console.error('Error fetching heatmap data:', err);

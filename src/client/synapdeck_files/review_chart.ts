@@ -3,15 +3,18 @@ export interface ReviewForecastData {
     [deck: string]: number | string;
 }
 
-interface ReviewForecastResponse {
+interface HeatmapFutureDue {
+    date: string;
+    count: number;
+    decks: Record<string, number>;
+}
+
+interface HeatmapResponse {
     status: 'success' | 'error';
-    forecast_data?: ReviewForecastData[];
-    decks?: string[];
-    date_range?: {
-        start_date: string;
-        end_date: string;
-    };
-    total_reviews?: number;
+    past_reviews?: { date: string; count: number }[];
+    future_due?: HeatmapFutureDue[];
+    today_due?: number;
+    today_decks?: Record<string, number>;
     error?: string;
 }
 
@@ -19,14 +22,16 @@ export interface ReviewForecastOptions {
     reviewForecastChart: any;
     availableDecks: string[];
     selectedDecks: string[];
+    cachedHeatmap: HeatmapResponse | null;
 }
 
 function getBlankReviewForecast(): ReviewForecastOptions {
     return {
         reviewForecastChart: null,
         availableDecks: [],
-        selectedDecks: []
-    }
+        selectedDecks: [],
+        cachedHeatmap: null
+    };
 }
 
 const DECK_COLORS = [
@@ -35,31 +40,58 @@ const DECK_COLORS = [
     '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'
 ];
 
-async function fetchReviewForecast(decks?: string[], daysAhead: number = 14, startDate?: string): Promise<ReviewForecastResponse> {
-    try {
-        const params = new URLSearchParams();
-        if (decks && decks.length > 0) {
-            params.append('decks', decks.join(','));
-        }
-        params.append('days_ahead', daysAhead.toString());
-        if (startDate) {
-            params.append('start_date', startDate); // Add this line
-        }
-
-        const response = await fetch(`/review_forecast?${params.toString()}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result: ReviewForecastResponse = await response.json();
-        return result;
-    } catch (error) {
-        console.error('Error fetching forecast data:', error);
-        return {
-            status: 'error',
-            error: error instanceof Error ? error.message : 'Unknown error'
-        };
+async function fetchHeatmapData(): Promise<HeatmapResponse> {
+    const response = await fetch('/review_heatmap');
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
     }
+    return await response.json();
+}
+
+function getDaysAhead(): number {
+    const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
+    if (daysSelect?.value) {
+        const parsed = parseInt(daysSelect.value);
+        if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    return 14;
+}
+
+function transformHeatmapToForecast(
+    heatmapData: HeatmapResponse,
+    daysAhead: number
+): { forecastData: ReviewForecastData[]; decks: string[] } {
+    const allDecks = new Set<string>();
+
+    if (heatmapData.today_decks) {
+        Object.keys(heatmapData.today_decks).forEach(d => allDecks.add(d));
+    }
+
+    const futureDue = (heatmapData.future_due || []).slice(0, daysAhead);
+    futureDue.forEach(entry => {
+        Object.keys(entry.decks || {}).forEach(d => allDecks.add(d));
+    });
+
+    const decks = Array.from(allDecks).sort();
+    const forecastData: ReviewForecastData[] = [];
+
+    if ((heatmapData.today_due || 0) > 0) {
+        const overdueEntry: ReviewForecastData = { date: 'Overdue' };
+        decks.forEach(deck => {
+            overdueEntry[deck] = heatmapData.today_decks?.[deck] || 0;
+        });
+        forecastData.push(overdueEntry);
+    }
+
+    futureDue.forEach(entry => {
+        const item: ReviewForecastData = { date: entry.date };
+        decks.forEach(deck => {
+            item[deck] = entry.decks?.[deck] || 0;
+        });
+        forecastData.push(item);
+    });
+
+    return { forecastData, decks };
 }
 
 interface ChartDataset {
@@ -88,11 +120,11 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
     // Register Chart.js components if not already done
     if (!Chart._registered) {
         Chart.register(
-            Chart.CategoryScale, 
-            Chart.LinearScale, 
-            Chart.BarElement, 
-            Chart.Title, 
-            Chart.Tooltip, 
+            Chart.CategoryScale,
+            Chart.LinearScale,
+            Chart.BarElement,
+            Chart.Title,
+            Chart.Tooltip,
             Chart.Legend
         );
         Chart._registered = true;
@@ -101,7 +133,7 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
     // Destroy existing chart if it exists
     if (chartData.reviewForecastChart) {
         chartData.reviewForecastChart.destroy();
-        chartData.reviewForecastChart = null;  // Clear the reference
+        chartData.reviewForecastChart = null;
     }
 
     // Get today's date for comparison (local midnight)
@@ -143,7 +175,7 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
         backgroundColor: DECK_COLORS[index % DECK_COLORS.length],
         borderColor: DECK_COLORS[index % DECK_COLORS.length],
         borderWidth: 1
-    }));;
+    }));
 
     // Create the chart
     chartData.reviewForecastChart = new Chart(ctx, {
@@ -173,7 +205,7 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
                             const item = tooltipItems[0];
                             const dataIndex = item.dataIndex;
                             const originalDate = data[dataIndex].date;
-                            
+
                             if (originalDate === 'Overdue' || isOverdueArray[dataIndex]) {
                                 return 'OVERDUE CARDS';
                             } else {
@@ -191,7 +223,7 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
                             const dataIndex = context.dataIndex;
                             const originalDate = data[dataIndex].date;
                             const isThisOverdue = originalDate === 'Overdue' || isOverdueArray[dataIndex];
-                            
+
                             if (isThisOverdue && value > 0) {
                                 return `${deck}: ${value} cards (OVERDUE!)`;
                             } else {
@@ -216,7 +248,7 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
             },
             scales: {
                 x: {
-                    stacked: true,  // ADD THIS
+                    stacked: true,
                     title: {
                         display: true,
                         text: 'Date'
@@ -224,7 +256,6 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
                     ticks: {
                         color: function(context: any) {
                             const dataIndex = context.index;
-                            // Make overdue labels red
                             if (data[dataIndex] && (data[dataIndex].date === 'Overdue' || isOverdueArray[dataIndex])) {
                                 return '#ff0000';
                             }
@@ -232,22 +263,15 @@ export function createReviewForecastChart(data: ReviewForecastData[], decks: str
                         },
                         font: function(context: any) {
                             const dataIndex = context.index;
-                            // Make overdue labels bold
                             if (data[dataIndex] && (data[dataIndex].date === 'Overdue' || isOverdueArray[dataIndex])) {
-                                return {
-                                    weight: 'bold',
-                                    size: 12
-                                };
+                                return { weight: 'bold', size: 12 };
                             }
-                            return {
-                                weight: 'normal',
-                                size: 12
-                            };
+                            return { weight: 'normal', size: 12 };
                         }
                     }
                 },
                 y: {
-                    stacked: true,  // ADD THIS
+                    stacked: true,
                     beginAtZero: true,
                     title: {
                         display: true,
@@ -266,86 +290,96 @@ function hasOverdueData(forecastData: ReviewForecastData[]): boolean {
     return forecastData.length > 0 && forecastData[0].date === 'Overdue';
 }
 
-// 5. Optional: Add a function to calculate overdue totals for display
 function calculateOverdueTotals(forecastData: ReviewForecastData[], decks: string[]): { [deck: string]: number } {
     const totals: { [deck: string]: number } = {};
-    
+
     if (hasOverdueData(forecastData)) {
         const overdueData = forecastData[0];
         decks.forEach(deck => {
             totals[deck] = overdueData[deck] as number || 0;
         });
     }
-    
+
     return totals;
 }
 
-// 6. Optional: Update the forecast stats display to show overdue information
 function updateForecastStats(forecastData: ReviewForecastData[], totalReviews: number, decks: string[]) {
     const statsEl = document.getElementById('forecastStats');
     if (!statsEl) return;
-    
+
     let statsHTML = `<div class="forecast-summary">
         <h4>Forecast Summary</h4>
         <p><strong>Total Reviews:</strong> ${totalReviews}</p>
     `;
-    
+
     if (hasOverdueData(forecastData)) {
         const overdueTotals = calculateOverdueTotals(forecastData, decks);
         const totalOverdue = Object.values(overdueTotals).reduce((sum, count) => sum + count, 0);
-        
+
         if (totalOverdue > 0) {
             statsHTML += `
                 <div class="overdue-summary" style="color: #ff4444; font-weight: bold; margin-top: 10px;">
                     <p>🔴 <strong>Overdue Cards:</strong> ${totalOverdue}</p>
                     <div style="font-size: 12px; margin-left: 20px;">
             `;
-            
+
             Object.entries(overdueTotals).forEach(([deck, count]) => {
                 if (count > 0) {
                     statsHTML += `<div>${deck}: ${count}</div>`;
                 }
             });
-            
+
             statsHTML += `
                     </div>
                 </div>
             `;
         }
     }
-    
+
     statsHTML += `</div>`;
     statsEl.innerHTML = statsHTML;
+}
+
+function renderFromCache(chartData: ReviewForecastOptions) {
+    if (!chartData.cachedHeatmap) return;
+    const daysAhead = getDaysAhead();
+    const { forecastData, decks } = transformHeatmapToForecast(chartData.cachedHeatmap, daysAhead);
+    chartData.availableDecks = decks;
+    chartData.selectedDecks = [...decks];
+    createDeckCheckboxes(chartData);
+    const totalReviews = forecastData.reduce((sum, item) =>
+        sum + decks.reduce((s, d) => s + (item[d] as number || 0), 0), 0);
+    createReviewForecastChart(forecastData, decks, chartData);
+    updateForecastStats(forecastData, totalReviews, decks);
 }
 
 // Function to update deck selection
 export async function updateDeckSelection(chartData: ReviewForecastOptions) {
     const checkboxes = document.querySelectorAll('#deckSelection input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
     chartData.selectedDecks = [];
-    
+
     checkboxes.forEach(checkbox => {
         if (checkbox.checked) {
             chartData.selectedDecks.push(checkbox.value);
         }
     });
-    
-    // Always include overdue cards if any deck is selected
-    // (You might want to make this configurable)
-    
-    await loadReviewForecast(chartData);
+
+    if (!chartData.cachedHeatmap) return;
+    const daysAhead = getDaysAhead();
+    const { forecastData, decks } = transformHeatmapToForecast(chartData.cachedHeatmap, daysAhead);
+    createReviewForecastChart(forecastData, decks, chartData);
 }
 
 // Function to create deck selection checkboxes
 function createDeckCheckboxes(chartData: ReviewForecastOptions) {
     const container = document.getElementById('deckSelection');
     if (!container) return;
-    
-    container.innerHTML = ''; // Clear existing checkboxes
-    
-    // Add select all/none buttons
+
+    container.innerHTML = '';
+
     const controlsDiv = document.createElement('div');
     controlsDiv.style.marginBottom = '10px';
-    
+
     const selectAllBtn = document.createElement('button');
     selectAllBtn.textContent = 'Select All';
     selectAllBtn.className = 'btn btn-small';
@@ -354,7 +388,7 @@ function createDeckCheckboxes(chartData: ReviewForecastOptions) {
         checkboxes.forEach(cb => cb.checked = true);
         updateDeckSelection(chartData);
     });
-    
+
     const selectNoneBtn = document.createElement('button');
     selectNoneBtn.textContent = 'Select None';
     selectNoneBtn.className = 'btn btn-small';
@@ -364,37 +398,35 @@ function createDeckCheckboxes(chartData: ReviewForecastOptions) {
         checkboxes.forEach(cb => cb.checked = false);
         updateDeckSelection(chartData);
     });
-    
+
     controlsDiv.appendChild(selectAllBtn);
     controlsDiv.appendChild(selectNoneBtn);
     container.appendChild(controlsDiv);
-    
-    // Add checkboxes for each deck
+
     const checkboxContainer = document.createElement('div');
     checkboxContainer.style.display = 'flex';
     checkboxContainer.style.flexWrap = 'wrap';
     checkboxContainer.style.gap = '15px';
-    
+
     chartData.availableDecks.forEach((deck, index) => {
         const label = document.createElement('label');
         label.style.display = 'flex';
         label.style.alignItems = 'center';
         label.style.cursor = 'pointer';
         label.style.fontSize = '14px';
-        
-        // Special styling for overdue
+
         if (deck === 'Overdue') {
             label.style.fontWeight = 'bold';
             label.style.color = '#ff4444';
         }
-        
+
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.value = deck;
-        checkbox.checked = true; // All selected by default
+        checkbox.checked = true;
         checkbox.style.marginRight = '8px';
         checkbox.addEventListener('change', () => updateDeckSelection(chartData));
-        
+
         const colorBox = document.createElement('span');
         colorBox.style.display = 'inline-block';
         colorBox.style.width = '12px';
@@ -402,69 +434,39 @@ function createDeckCheckboxes(chartData: ReviewForecastOptions) {
         colorBox.style.backgroundColor = DECK_COLORS[index % DECK_COLORS.length];
         colorBox.style.marginRight = '6px';
         colorBox.style.borderRadius = '2px';
-        
-        // Special styling for overdue color box
+
         if (deck === 'Overdue') {
             colorBox.style.border = '2px solid #cc0000';
         }
-        
+
         const text = document.createElement('span');
         text.textContent = deck;
-        
+
         label.appendChild(checkbox);
         label.appendChild(colorBox);
         label.appendChild(text);
         checkboxContainer.appendChild(label);
     });
-    
+
     container.appendChild(checkboxContainer);
 }
 
-// Enhanced loadReviewForecast function with better error handling
 export async function loadReviewForecast(chartData: ReviewForecastOptions): Promise<void> {
     const loadingEl = document.getElementById('forecastLoading');
     const errorEl = document.getElementById('forecastError');
-    
+
     if (loadingEl) loadingEl.style.display = 'block';
     if (errorEl) errorEl.style.display = 'none';
-    
-    const daysSelect = document.getElementById('forecastDays') as HTMLSelectElement;
-    let daysAhead = 14;
-    
-    if (daysSelect && daysSelect.value) {
-        const parsedDays = parseInt(daysSelect.value);
-        if (!isNaN(parsedDays) && parsedDays > 0) {
-            daysAhead = parsedDays;
-        }
-    }
-    
-    console.log(`Loading forecast for ${daysAhead} days ahead (dropdown value: "${daysSelect?.value}")`);
-    
+
     try {
-        const today = new Date();
-        today.setDate(today.getDate() + 1); // workaround: chart displays one day behind
-        const todayDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const heatmap = await fetchHeatmapData();
 
-        const result = await fetchReviewForecast(
-            chartData.selectedDecks.length > 0 ? chartData.selectedDecks : undefined,
-            daysAhead,
-            todayDateStr
-        );
-        
-        if (result.status === 'success' && result.forecast_data && result.decks) {
-            console.log(`Successfully loaded forecast data for ${daysAhead} days:`, result);
-
-            // Update chartData directly, not local variables
-            chartData.availableDecks = result.decks;
-            chartData.selectedDecks = result.decks;
-            
-            createDeckCheckboxes(chartData);
-            createReviewForecastChart(result.forecast_data, result.decks, chartData);
-            updateForecastStats(result.forecast_data, result.total_reviews || 0, result.decks);
-            
-        } else {
-            throw new Error(result.error || 'Failed to load forecast data');
+        if (heatmap.status !== 'success') {
+            throw new Error(heatmap.error || 'Failed to load heatmap data');
         }
+
+        chartData.cachedHeatmap = heatmap;
+        renderFromCache(chartData);
     } catch (error) {
         console.error('Error loading review forecast:', error);
         if (errorEl) {
@@ -477,46 +479,41 @@ export async function loadReviewForecast(chartData: ReviewForecastOptions): Prom
     }
 }
 
-export function setupReviewForecastTab(): void {  // Keep as void
+export function setupReviewForecastTab(): void {
     console.log('Setting up review forecast tab...');
-    
+
     const forecastDays = document.getElementById('forecastDays') as HTMLSelectElement;
     if (!forecastDays) {
         console.error('forecastDays dropdown not found!');
         return;
     }
-    
+
     if (forecastDays.dataset.initialized === 'true') {
         console.log('Forecast tab already initialized, skipping...');
         return;
     }
-    
+
     forecastDays.dataset.initialized = 'true';
 
     const chartData = getBlankReviewForecast();
-    
-    // Add clean event listener
-    forecastDays.addEventListener('change', async function(event) {
-        const target = event.target as HTMLSelectElement;
-        console.log(`Forecast period changed to: ${target.value} days`);
-        await loadReviewForecast(chartData);  // chartData is passed and modified in place
+
+    forecastDays.addEventListener('change', function() {
+        // Re-render from cache — no re-fetch needed since we have 365 days cached
+        renderFromCache(chartData);
     });
-    
-    // Set up deck selection if it exists
+
     const deckSelection = document.getElementById('deckSelection');
     if (deckSelection && !deckSelection.dataset.initialized) {
         deckSelection.dataset.initialized = 'true';
         deckSelection.addEventListener('change', function(event) {
             const target = event.target as HTMLInputElement;
             if (target.type === 'checkbox') {
-                console.log('Forecast deck selection changed');
                 updateDeckSelection(chartData);
             }
         });
     }
-    
+
     console.log('Forecast event listeners set up successfully');
-    
-    // Load initial data (don't await - just fire and forget)
+
     loadReviewForecast(chartData);
 }
