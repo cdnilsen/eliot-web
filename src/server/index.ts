@@ -1388,7 +1388,19 @@ app.post('/reset_cards_under_review', express.json(), wrapAsync(async (req, res)
         // Execute the update
         const result = await transactionClient.query(updateQuery, queryParams);
         const updatedCount = result.rowCount || 0;
-        
+
+        // Delete pending session_card_reviews rows for the reset cards
+        if (all) {
+            await transactionClient.query(
+                'DELETE FROM session_card_reviews WHERE under_review = true'
+            );
+        } else {
+            await transactionClient.query(
+                'DELETE FROM session_card_reviews WHERE deck = $1 AND under_review = true',
+                [deck]
+            );
+        }
+
         await transactionClient.query('COMMIT');
         
         console.log(`🔄 Reset ${updatedCount} cards from under review in ${resetScope}`);
@@ -1740,8 +1752,8 @@ app.post('/create_review_session', express.json(), wrapAsync(async (req, res) =>
             // Insert a record for each card presented
             for (const cardData of cardsData.rows) {
                 await transactionClient.query(
-                    `INSERT INTO session_card_reviews (session_id, card_id, interval_before, retrievability_before, deck, position)
-                     VALUES ($1, $2, $3, $4, $5, $6)`,
+                    `INSERT INTO session_card_reviews (session_id, card_id, interval_before, retrievability_before, deck, position, under_review)
+                     VALUES ($1, $2, $3, $4, $5, $6, true)`,
                     [sessionId, cardData.card_id, cardData.interval, cardData.retrievability,
                      cardData.deck, positionMap.get(cardData.card_id)]
                 );
@@ -2057,11 +2069,12 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
                 const scheduledCard = scheduledCards.find(sc => sc.card_id === result.cardId);
                 if (scheduledCard) {
                     await transactionClient.query(
-                        `UPDATE session_card_reviews 
+                        `UPDATE session_card_reviews
                          SET reviewed_at = $1,
                              grade = $2,
                              interval_after = $3,
-                             retrievability_after = $4
+                             retrievability_after = $4,
+                             under_review = false
                          WHERE session_id = $5 AND card_id = $6`,
                         [
                             reviewTimestamp,
