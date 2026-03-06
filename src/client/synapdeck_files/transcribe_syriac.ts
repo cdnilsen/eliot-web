@@ -109,8 +109,7 @@ const syriacConsonants: SyriacToken[] = [
     // ܩ  Qōph
     { input: ["q"], output: "ܩ" },
 
-    // ܪ  Rēsh  – in Estrangela resh carries a dot above to distinguish it
-    //    from dālath; the dot is added automatically in renderSyriac().
+    // ܪ  Rēsh
     { input: ["r"], output: "ܪ" },
 
     // ܫ  Shīn  – all capitalisations of the digraph, plus precomposed š/Š
@@ -129,15 +128,12 @@ const syriacModifiers: SyriacToken[] = [
     { input: ["-"], output: LINEA_OCCULTANS },
 
     // Syāmē: plural marker (two dots above)  →  m"  produces ܡ̈
-    // On resh the syāmē replaces the automatic dot above (handled in renderer).
     { input: ['"'], output: SYAME },
 
     // Dot below (qūššāyā / text-critical)
     { input: ["_"], output: DOT_BELOW },
 
     // Dot above (rukkākā / text-critical)
-    // On resh this is identical to the automatically-added dot, so duplicates
-    // are suppressed in the renderer.
     { input: ["^"], output: DOT_ABOVE },
 ];
 
@@ -269,19 +265,10 @@ function renderSyriac(tokens: ParsedSyriacToken[]): string {
             modifiers.push(tokens[i].output ?? "");
         }
 
-        const hasSyame    = modifiers.includes(SYAME);
-        const hasDotAbove = modifiers.includes(DOT_ABOVE);
-
-        if (isResh) {
-            // In Estrangela, resh normally carries a dot above to distinguish
-            // it from dālath.  We add it automatically unless:
-            //   (a) syāmē is present  – syāmē replaces the dot above, or
-            //   (b) an explicit dot-above modifier (^) is already present
-            //       – to avoid emitting U+0307 twice.
-            if (!hasSyame && !hasDotAbove) {
-                result += DOT_ABOVE;
-            }
-        }
+        // No automatic dot-above on resh: many fonts already render the resh
+        // glyph with a built-in distinguishing dot, so adding U+0307 produces
+        // a doubled dot.  Use the ^ modifier explicitly if you need one.
+        void isResh;
 
         // Append all explicit modifiers in input order.
         for (const mod of modifiers) {
@@ -304,14 +291,13 @@ function renderSyriac(tokens: ParsedSyriacToken[]): string {
  *   w/W/u/U → ܘ  z → ܙ   H/ḥ/Ḥ → ܚ   T/ṭ/Ṭ → ܛ
  *   y/Y/i/I → ܝ  k → ܟ   l → ܠ   m → ܡ   n → ܢ
  *   s → ܣ   j/ʿ → ܥ   p/f → ܦ   S/ṣ/Ṣ → ܨ   q → ܩ
- *   r → ܪ (+ automatic dot above)
- *   sh/Sh/sH/SH/š/Š → ܫ   t → ܬ
+ *   r → ܪ   sh/Sh/sH/SH/š/Š → ܫ   t → ܬ
  *
  * Post-consonant modifier characters:
  *   -  linea occultans (silent letter)
- *   "  syāmē / plural dots (replaces the automatic dot on resh)
+ *   "  syāmē / plural dots
  *   _  dot below
- *   ^  dot above (suppresses the automatic dot on resh to avoid duplication)
+ *   ^  dot above
  */
 export function transliterateSyriac(str: string): string {
     return renderSyriac(tokenizeSyriac(str));
