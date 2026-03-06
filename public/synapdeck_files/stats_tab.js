@@ -124,14 +124,16 @@ function createLineChart(entries) {
         setTimeout(() => createLineChart(entries), 100);
         return;
     }
-    // Build date range: last 90 days up to today
+    // Build date range: from earliest entry to today
+    const toDateStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const today = new Date();
-    const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() - 89);
+    const todayStr = toDateStr(today);
+    const firstEntryDate = entries.length > 0 ? entries[0].date : todayStr;
     const dates = [];
-    const cursor = new Date(startDate);
-    while (cursor <= today) {
-        dates.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`);
+    const cursor = new Date(firstEntryDate + 'T00:00:00');
+    const end = new Date(todayStr + 'T00:00:00');
+    while (cursor <= end) {
+        dates.push(toDateStr(cursor));
         cursor.setDate(cursor.getDate() + 1);
     }
     const dateSet = new Set(dates);
