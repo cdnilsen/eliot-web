@@ -2273,6 +2273,85 @@ input[type="file"]:hover {
     margin-bottom: 32px;
 }
 
+/* Stats sub-tabs */
+.stats-sub-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.stats-sub-tab {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 8px 20px;
+    margin-bottom: -2px;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #666;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.stats-sub-tab:hover {
+    color: #333;
+}
+
+.stats-sub-tab.active {
+    color: #4a90d9;
+    border-bottom-color: #4a90d9;
+    font-weight: 500;
+}
+
+/* Line chart */
+.line-chart-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.deck-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.deck-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-family: 'Jost', sans-serif;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    background: #f8f8f8;
+    transition: background 0.15s;
+    user-select: none;
+}
+
+.deck-checkbox-label:hover {
+    background: #eee;
+}
+
+.deck-checkbox-label input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.deck-cb-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
 .pie-chart-container {
     max-width: 800px;
     margin: 0 auto;

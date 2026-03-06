@@ -5342,6 +5342,36 @@ app.get('/todays_cards_summary', wrapAsync(async (req, res) => {
     }
 }));
 
+// Get per-deck daily review counts for the line graph
+app.get('/review_history', wrapAsync(async (_req, res) => {
+    try {
+        const query = await client.query(`
+            SELECT
+                DATE(completed_at) as review_date,
+                deck,
+                SUM(cards_completed) as cards_reviewed
+            FROM review_sessions
+            WHERE completed_at IS NOT NULL
+              AND session_status = 'completed'
+            GROUP BY DATE(completed_at), deck
+            ORDER BY review_date, deck
+        `);
+        res.json({
+            status: 'success',
+            entries: query.rows.map(row => ({
+                date: row.review_date instanceof Date
+                    ? row.review_date.toISOString().slice(0, 10)
+                    : String(row.review_date),
+                deck: row.deck,
+                count: parseInt(row.cards_reviewed)
+            }))
+        });
+    } catch (err) {
+        console.error('Error fetching review history:', err);
+        res.status(500).json({ status: 'error', error: 'Error fetching review history' });
+    }
+}));
+
 // Get review activity by date for heatmap (past reviews + future due dates)
 app.get('/review_heatmap', wrapAsync(async (req, res) => {
     try {
@@ -5407,7 +5437,9 @@ app.get('/review_heatmap', wrapAsync(async (req, res) => {
         res.json({
             status: 'success',
             past_reviews: pastQuery.rows.map(row => ({
-                date: row.review_date,
+                date: row.review_date instanceof Date
+                    ? row.review_date.toISOString().slice(0, 10)
+                    : String(row.review_date),
                 count: parseInt(row.cards_reviewed)
             })),
             future_due: Array.from(futureDueMap.entries()).map(([date, { count, decks }]) => ({

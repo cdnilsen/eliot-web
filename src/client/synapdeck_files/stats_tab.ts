@@ -21,7 +21,21 @@ interface HeatmapResponse {
     error?: string;
 }
 
+interface ReviewHistoryEntry {
+    date: string;
+    deck: string;
+    count: number;
+}
+
+interface ReviewHistoryResponse {
+    status: 'success' | 'error';
+    entries?: ReviewHistoryEntry[];
+    error?: string;
+}
+
 let pieChart: any = null;
+let lineChart: any = null;
+let subTabsSetup = false;
 
 // Colors ordered to maximize contrast between adjacent slices
 const PIE_COLORS = [
@@ -54,6 +68,11 @@ async function fetchDeckStatistics(): Promise<DeckStatistic[]> {
 
 async function fetchHeatmapData(): Promise<HeatmapResponse> {
     const response = await fetch('/review_heatmap');
+    return await response.json();
+}
+
+async function fetchReviewHistory(): Promise<ReviewHistoryResponse> {
+    const response = await fetch('/review_history');
     return await response.json();
 }
 
@@ -143,6 +162,151 @@ function createPieChart(stats: DeckStatistic[]): void {
                     }
                 }
             }
+        }
+    });
+}
+
+function createLineChart(entries: ReviewHistoryEntry[]): void {
+    const ctx = document.getElementById('reviewsLineChart') as HTMLCanvasElement;
+    if (!ctx) return;
+
+    const Chart = (window as any).Chart;
+    if (!Chart) {
+        setTimeout(() => createLineChart(entries), 100);
+        return;
+    }
+
+    // Build date range: last 90 days up to today
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - 89);
+
+    const dates: string[] = [];
+    const cursor = new Date(startDate);
+    while (cursor <= today) {
+        dates.push(
+            `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`
+        );
+        cursor.setDate(cursor.getDate() + 1);
+    }
+    const dateSet = new Set(dates);
+
+    // Collect decks and build lookup maps
+    const deckSet = new Set<string>();
+    for (const e of entries) deckSet.add(e.deck);
+    const decks = Array.from(deckSet).sort();
+
+    const deckDateMap = new Map<string, Map<string, number>>();
+    const totalDateMap = new Map<string, number>();
+    for (const deck of decks) deckDateMap.set(deck, new Map());
+
+    for (const e of entries) {
+        if (!dateSet.has(e.date)) continue;
+        deckDateMap.get(e.deck)?.set(e.date, e.count);
+        totalDateMap.set(e.date, (totalDateMap.get(e.date) || 0) + e.count);
+    }
+
+    // Build checkboxes
+    const checkboxContainer = document.getElementById('deckCheckboxes');
+    if (checkboxContainer) {
+        let html = `<label class="deck-checkbox-label">
+            <input type="checkbox" id="line-cb-total" checked>
+            <span class="deck-cb-swatch" style="background:#555"></span>
+            <span>Total</span>
+        </label>`;
+        decks.forEach((deck, i) => {
+            const color = PIE_COLORS[i % PIE_COLORS.length];
+            html += `<label class="deck-checkbox-label">
+                <input type="checkbox" id="line-cb-${i}" data-deck="${deck}" checked>
+                <span class="deck-cb-swatch" style="background:${color}"></span>
+                <span>${deck}</span>
+            </label>`;
+        });
+        checkboxContainer.innerHTML = html;
+    }
+
+    // Build datasets
+    const totalDataset = {
+        label: 'Total',
+        data: dates.map(d => totalDateMap.get(d) || 0),
+        borderColor: '#555',
+        backgroundColor: '#55555515',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: false,
+    };
+
+    const deckDatasets = decks.map((deck, i) => ({
+        label: deck,
+        data: dates.map(d => deckDateMap.get(deck)?.get(d) || 0),
+        borderColor: PIE_COLORS[i % PIE_COLORS.length],
+        backgroundColor: PIE_COLORS[i % PIE_COLORS.length] + '15',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: false,
+    }));
+
+    if (lineChart) {
+        lineChart.destroy();
+        lineChart = null;
+    }
+
+    // Format dates for display (e.g. "Mar 1")
+    const displayLabels = dates.map(d => {
+        const dt = new Date(d + 'T00:00:00');
+        return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    lineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: displayLabels,
+            datasets: [totalDataset, ...deckDatasets]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context: any) => `${context.dataset.label}: ${context.raw}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { maxTicksLimit: 12, maxRotation: 0 }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Cards Reviewed' }
+                }
+            }
+        }
+    });
+
+    // Wire up checkboxes
+    const totalCb = document.getElementById('line-cb-total') as HTMLInputElement | null;
+    if (totalCb) {
+        totalCb.addEventListener('change', () => {
+            lineChart.data.datasets[0].hidden = !totalCb.checked;
+            lineChart.update();
+        });
+    }
+    decks.forEach((_, i) => {
+        const cb = document.getElementById(`line-cb-${i}`) as HTMLInputElement | null;
+        if (cb) {
+            cb.addEventListener('change', () => {
+                lineChart.data.datasets[i + 1].hidden = !cb.checked;
+                lineChart.update();
+            });
         }
     });
 }
@@ -331,17 +495,42 @@ function getCellColor(count: number, maxCount: number, type: string, isToday: bo
     }
 }
 
+function setupStatsSubTabs(): void {
+    if (subTabsSetup) return;
+    subTabsSetup = true;
+
+    const tabs = document.querySelectorAll('.stats-sub-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const panelId = (tab as HTMLElement).dataset.panel;
+            document.querySelectorAll('.stats-panel').forEach(panel => {
+                (panel as HTMLElement).style.display =
+                    panel.id === `stats-panel-${panelId}` ? '' : 'none';
+            });
+        });
+    });
+}
+
 export async function setupStatsTab(): Promise<void> {
+    setupStatsSubTabs();
+
     try {
-        const [stats, heatmapData] = await Promise.all([
+        const [stats, heatmapData, historyData] = await Promise.all([
             fetchDeckStatistics(),
-            fetchHeatmapData()
+            fetchHeatmapData(),
+            fetchReviewHistory()
         ]);
 
         createPieChart(stats);
 
         if (heatmapData.status === 'success' && heatmapData.past_reviews && heatmapData.future_due) {
             createHeatmap(heatmapData.past_reviews, heatmapData.future_due, heatmapData.today_due || 0);
+        }
+
+        if (historyData.status === 'success' && historyData.entries) {
+            createLineChart(historyData.entries);
         }
     } catch (err) {
         console.error('Error setting up stats tab:', err);

@@ -199,18 +199,31 @@
 
         <div id="stats_mainDiv" class="tab-content">
             <h2>Stats</h2>
-            <div class="stats-section">
-                <h3 id="cardsByDeckTitle">Cards by Deck</h3>
-                <div class="pie-chart-container">
-                    <canvas id="deckPieChart" width="400" height="400"></canvas>
-                </div>
+            <div class="stats-sub-tabs">
+                <button class="stats-sub-tab active" data-panel="heatmap">Heatmap</button>
+                <button class="stats-sub-tab" data-panel="reviews">Reviews</button>
+                <button class="stats-sub-tab" data-panel="piechart">Cards by Deck</button>
             </div>
-            <div class="stats-section">
-                <h3>Review Activity</h3>
+
+            <div id="stats-panel-heatmap" class="stats-panel">
                 <div id="heatmapContainer" class="heatmap-container">
                     <!-- Heatmap will be rendered by JavaScript -->
                 </div>
                 <div id="heatmapTooltip" class="heatmap-tooltip" style="display:none;"></div>
+            </div>
+
+            <div id="stats-panel-reviews" class="stats-panel" style="display:none">
+                <div id="deckCheckboxes" class="deck-checkboxes"></div>
+                <div class="line-chart-container">
+                    <canvas id="reviewsLineChart"></canvas>
+                </div>
+            </div>
+
+            <div id="stats-panel-piechart" class="stats-panel" style="display:none">
+                <h3 id="cardsByDeckTitle">Cards by Deck</h3>
+                <div class="pie-chart-container">
+                    <canvas id="deckPieChart" width="400" height="400"></canvas>
+                </div>
             </div>
         </div>
 
