@@ -225,10 +225,15 @@ function createLineChart(entries: ReviewHistoryEntry[]): void {
         checkboxContainer.innerHTML = html;
     }
 
-    // Build datasets
+    // Build cumulative datasets
+    function cumsum(values: number[]): number[] {
+        let running = 0;
+        return values.map(v => (running += v));
+    }
+
     const totalDataset = {
         label: 'Total',
-        data: dates.map(d => totalDateMap.get(d) || 0),
+        data: cumsum(dates.map(d => totalDateMap.get(d) || 0)),
         borderColor: '#555',
         backgroundColor: '#55555515',
         borderWidth: 2,
@@ -239,7 +244,7 @@ function createLineChart(entries: ReviewHistoryEntry[]): void {
 
     const deckDatasets = decks.map((deck, i) => ({
         label: deck,
-        data: dates.map(d => deckDateMap.get(deck)?.get(d) || 0),
+        data: cumsum(dates.map(d => deckDateMap.get(deck)?.get(d) || 0)),
         borderColor: PIE_COLORS[i % PIE_COLORS.length],
         backgroundColor: PIE_COLORS[i % PIE_COLORS.length] + '15',
         borderWidth: 1.5,
@@ -286,7 +291,7 @@ function createLineChart(entries: ReviewHistoryEntry[]): void {
                 },
                 y: {
                     beginAtZero: true,
-                    title: { display: true, text: 'Cards Reviewed' }
+                    title: { display: true, text: 'Cumulative Cards Reviewed' }
                 }
             }
         }
