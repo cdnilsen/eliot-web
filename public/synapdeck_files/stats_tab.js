@@ -1,5 +1,4 @@
 let pieChart = null;
-let statsInitialized = false;
 // Colors ordered to maximize contrast between adjacent slices
 const PIE_COLORS = [
     '#4a90d9', // blue
@@ -79,7 +78,7 @@ function createPieChart(stats) {
                     position: 'right',
                     labels: {
                         font: { size: 13 },
-                        sort: (a, b) => a.index - b.index,
+                        sort: (a, b) => a.index - b.index, // Preserve data order (descending by card count)
                         generateLabels: function (chart) {
                             const dataset = chart.data.datasets[0];
                             return chart.data.labels.map((label, i) => {
@@ -117,14 +116,17 @@ function createHeatmap(pastReviews, futureDue, todayDue) {
     // Build a map of date -> count covering past year + future year
     const dateMap = new Map();
     for (const entry of pastReviews) {
-        const d = new Date(entry.date).toISOString().slice(0, 10);
-        dateMap.set(d, { count: entry.count, type: 'past' });
+        dateMap.set(entry.date, { count: entry.count, type: 'past' });
     }
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const _now = new Date();
+    const todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
     dateMap.set(todayStr, { count: todayDue, type: 'today' });
     for (const entry of futureDue) {
-        const d = new Date(entry.date).toISOString().slice(0, 10);
-        dateMap.set(d, { count: entry.count, type: 'future' });
+        // Skip overdue entries (date in the past) — they belong in the bar chart's
+        // "Overdue" bucket, not as blue cells on past calendar days.
+        if (entry.date <= todayStr)
+            continue;
+        dateMap.set(entry.date, { count: entry.count, type: 'future' });
     }
     // Determine range: 6 months back to 6 months forward
     const now = new Date();
@@ -148,7 +150,7 @@ function createHeatmap(pastReviews, futureDue, todayDue) {
     let currentWeek = [];
     const cursor = new Date(startDate);
     while (cursor <= endDate) {
-        const dateStr = cursor.toISOString().slice(0, 10);
+        const dateStr = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
         const entry = dateMap.get(dateStr);
         currentWeek.push({
             date: new Date(cursor),
@@ -277,9 +279,6 @@ function getCellColor(count, maxCount, type, isToday) {
     }
 }
 export async function setupStatsTab() {
-    if (statsInitialized)
-        return;
-    statsInitialized = true;
     try {
         const [stats, heatmapData] = await Promise.all([
             fetchDeckStatistics(),

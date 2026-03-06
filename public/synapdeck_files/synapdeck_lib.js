@@ -1,14 +1,8 @@
 export function TwoWayCard(values, processing) {
-    console.log("Values and processing before the Two Way Card function");
-    console.log(values);
-    console.log(processing);
     while (values.length < 5) {
         values.push("");
         processing.push("");
     }
-    console.log("Values and processing *after* the Two Way Card function");
-    console.log(values);
-    console.log(processing);
     return [
         {
             card_format: "Target to Native",
