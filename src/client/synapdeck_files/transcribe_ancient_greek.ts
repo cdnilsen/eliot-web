@@ -83,6 +83,7 @@ const consonantTokens = [
   { input: ["ph"], internal: "consonant_phi", output: "\u03c6" },
   { input: ["kh", "ch"], internal: "consonant_chi", output: "\u03c7" },
   { input: ["ps"], internal: "consonant_psi", output: "\u03c8" },
+  { input: ["w"], internal: "consonant_digamma", output: "\u03dc"}
 ] as const;
 
 // Breathing and accent markers
