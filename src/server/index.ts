@@ -1555,6 +1555,18 @@ app.get('/review_sessions/:deckName', wrapAsync(async (req, res) => {
     }
 }));
 
+// Get decks that have pending (under_review = true) session_card_reviews rows
+app.get('/active_session_decks', wrapAsync(async (req, res) => {
+    const result = await client.query(
+        `SELECT deck, session_id, COUNT(*)::int AS pending_count
+         FROM session_card_reviews
+         WHERE under_review = true
+         GROUP BY deck, session_id
+         ORDER BY deck`
+    );
+    res.json({ status: 'success', sessions: result.rows });
+}));
+
 // Get detailed information about a specific session
 app.get('/review_session/:sessionId', wrapAsync(async (req, res) => {
     const { sessionId } = req.params;

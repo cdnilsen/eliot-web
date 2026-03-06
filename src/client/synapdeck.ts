@@ -1484,7 +1484,7 @@ async function getCardsUnderReview(deckName: string, sessionId?: number | null):
 
 // In check your work - get cards in the exact review order
 async function getCardsUnderReviewInOrder(deckName: string): Promise<CardDue[]> {
-    // Get session ID from localStorage
+    // Get session ID from localStorage, falling back to server-found session
     const sessionData = localStorage.getItem(`reviewSession_${deckName}`);
     let sessionId: number | null = null;
     if (sessionData) {
@@ -1494,6 +1494,7 @@ async function getCardsUnderReviewInOrder(deckName: string): Promise<CardDue[]> 
             console.warn('Could not parse reviewSession data');
         }
     }
+    if (!sessionId) sessionId = currentSessionIds.get(deckName) ?? null;
     // Fetch cards from DB; server orders by position when sessionId is provided
     const result = await getCardsUnderReview(deckName, sessionId);
     return result.status === 'success' ? result.cards?.map(convertToCardDue) || [] : [];
@@ -1561,7 +1562,7 @@ function displayAnswerKey(cards: CardDue[], deckName: string, isDifficult: boole
 
     console.log(`Displaying answer key for ${cards.length} cards`);
 
-    // Get session ID from localStorage if available (not used for difficult reviews)
+    // Get session ID from localStorage, falling back to server-found session
     let sessionId: number | null = null;
     if (!isDifficult) {
         const sessionData = localStorage.getItem(`reviewSession_${deckName}`);
@@ -1572,6 +1573,7 @@ function displayAnswerKey(cards: CardDue[], deckName: string, isDifficult: boole
                 console.warn('Could not parse reviewSession data');
             }
         }
+        if (!sessionId) sessionId = currentSessionIds.get(deckName) ?? null;
     }
 
     const answerKeyHTML = generateAnswerKey(cards, deckName);
@@ -2281,30 +2283,51 @@ async function handleBulkReduction(): Promise<void> {
 
 // Populate the check-work dropdown with decks that have an active reviewSession in localStorage,
 // plus any difficult-card review sessions.
-function populateCheckWorkDropdown(): void {
+async function populateCheckWorkDropdown(): Promise<void> {
     const dropdown = document.getElementById('check_dropdownMenu') as HTMLSelectElement;
     if (!dropdown) return;
 
-    const regularDecks: string[] = [];
+    // Decks from localStorage (device-local sessions)
+    const regularDecks = new Map<string, number | null>(); // deck -> sessionId
     const difficultDecks: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key?.startsWith('reviewSession_')) {
-            regularDecks.push(key.slice('reviewSession_'.length));
+            const deckName = key.slice('reviewSession_'.length);
+            let sessionId: number | null = null;
+            try { sessionId = JSON.parse(localStorage.getItem(key) ?? '').sessionId ?? null; } catch (e) {}
+            regularDecks.set(deckName, sessionId);
         } else if (key?.startsWith('difficultReview_')) {
             difficultDecks.push(key.slice('difficultReview_'.length));
         }
     }
 
+    // Also fetch active sessions from the server (catches cross-device sessions)
+    try {
+        const resp = await fetch('/active_session_decks');
+        const data = await resp.json();
+        if (data.status === 'success') {
+            for (const { deck, session_id } of data.sessions) {
+                if (!regularDecks.has(deck)) {
+                    regularDecks.set(deck, session_id);
+                }
+                // Store so getCardsUnderReviewInOrder / displayAnswerKey can use it
+                if (session_id) currentSessionIds.set(deck, session_id);
+            }
+        }
+    } catch (e) {
+        console.warn('Could not fetch active sessions from server', e);
+    }
+
     dropdown.innerHTML = '<option value="" disabled selected>Select a deck</option>';
-    const anyActive = regularDecks.length > 0 || difficultDecks.length > 0;
+    const anyActive = regularDecks.size > 0 || difficultDecks.length > 0;
     if (!anyActive) {
         const opt = document.createElement('option');
         opt.disabled = true;
         opt.textContent = '(No active review sessions)';
         dropdown.appendChild(opt);
     } else {
-        regularDecks.sort().forEach(deckName => {
+        [...regularDecks.keys()].sort().forEach(deckName => {
             const opt = document.createElement('option');
             opt.value = deckName;
             opt.textContent = deckName;
