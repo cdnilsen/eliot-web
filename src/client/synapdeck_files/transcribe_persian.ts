@@ -257,19 +257,27 @@ function renderPersian(tokens: ParsedPersianToken[]): string {
         const raw = token.output ?? "";
 
         if (token.kind === "consonant") {
-            result += raw;
+            // Word-initial hamzeh (ء) → alef (ا) in Persian
+            result += (!lastWasLetter && raw === "\u0621") ? ALEF : raw;
             lastWasLetter = true;
         } else {
-            // Vowel: use آ for word-initial long ā, ا otherwise.
+            // Vowel
             if (raw === ALEF && !lastWasLetter) {
+                // Word-initial long ā/â → آ (alef-maddah)
                 result += ALEF_MADDAH;
-            } else {
-                result += raw;
-            }
-            // Combining marks don't change the letter-tracking state;
-            // mater lectionis letters (ا ی و) do.
-            if (!COMBINING_MARKS.has(raw)) {
                 lastWasLetter = true;
+            } else {
+                if (!lastWasLetter) {
+                    // Word-initial vowel other than ā/â: prepend alef as carrier
+                    result += ALEF;
+                    lastWasLetter = true;
+                }
+                result += raw;
+                // Combining marks don't change the letter-tracking state;
+                // mater lectionis letters (ا ی و) do.
+                if (!COMBINING_MARKS.has(raw)) {
+                    lastWasLetter = true;
+                }
             }
         }
     }
@@ -296,6 +304,7 @@ function renderPersian(tokens: ParsedPersianToken[]): string {
  *   e  → ◌ِ  kasra   (short e; diacritic on preceding consonant)
  *   o  → ◌ُ  damma   (short o; diacritic on preceding consonant)
  *   ā / â → ا  alef (long a; آ when word-initial)
+ *   a/e/o/ī/ū → diacritic/mater (ا carrier prepended automatically when word-initial)
  *   ī  → ی  ye      (long i)
  *   ū  → و  vav     (long u)
  *   ~  → ◌ّ  shadda  (consonant doubling / tashdid)

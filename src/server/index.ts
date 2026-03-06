@@ -2075,14 +2075,15 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
                              interval_after = $3,
                              retrievability_after = $4,
                              under_review = false
-                         WHERE session_id = $5 AND card_id = $6`,
+                         WHERE session_id = $5 AND card_id = $6 AND deck = $7`,
                         [
                             reviewTimestamp,
                             result.result,
                             scheduledCard.new_interval,
                             scheduledCard.new_retrievability,
                             session_id,
-                            result.cardId
+                            result.cardId,
+                            deck
                         ]
                     );
                 }
