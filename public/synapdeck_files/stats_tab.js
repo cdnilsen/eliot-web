@@ -281,6 +281,17 @@ function createLineChart(entries) {
             });
         }
     });
+    // Wire up linear / log scale toggle
+    document.querySelectorAll('.line-scale-tab').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.line-scale-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const scale = btn.dataset.scale;
+            lineChart.options.scales.y.type = scale === 'log' ? 'logarithmic' : 'linear';
+            lineChart.options.scales.y.beginAtZero = scale !== 'log';
+            lineChart.update();
+        };
+    });
 }
 function createHeatmap(pastReviews, futureDue, todayDue) {
     const container = document.getElementById('heatmapContainer');

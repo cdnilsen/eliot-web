@@ -2273,6 +2273,42 @@ input[type="file"]:hover {
     margin-bottom: 32px;
 }
 
+/* Linear / log scale toggle */
+.line-scale-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.line-scale-tab {
+    background: #f0f0f0;
+    border: 1px solid #d0d0d0;
+    padding: 4px 14px;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    color: #555;
+    transition: background 0.15s, color 0.15s;
+}
+
+.line-scale-tab:first-child {
+    border-radius: 4px 0 0 4px;
+}
+
+.line-scale-tab:last-child {
+    border-radius: 0 4px 4px 0;
+    border-left: none;
+}
+
+.line-scale-tab.active {
+    background: #4a90d9;
+    border-color: #4a90d9;
+    color: #fff;
+}
+
 /* Stats sub-tabs */
 .stats-sub-tabs {
     display: flex;
