@@ -214,8 +214,13 @@
 
             <div id="stats-panel-reviews" class="stats-panel" style="display:none">
                 <div id="deckCheckboxes" class="deck-checkboxes"></div>
-                <div class="line-chart-container">
-                    <canvas id="reviewsLineChart"></canvas>
+                <div class="line-chart-wrapper">
+                    <div class="line-chart-container">
+                        <canvas id="reviewsLineChart"></canvas>
+                    </div>
+                    <div id="lineChartTooltipPanel" class="line-chart-tooltip-panel">
+                        <span class="line-tooltip-placeholder">Hover over chart</span>
+                    </div>
                 </div>
             </div>
 

@@ -196,11 +196,10 @@ function createLineChart(entries: ReviewHistoryEntry[]): void {
     // Collect decks and build lookup maps
     const deckSet = new Set<string>();
     for (const e of entries) deckSet.add(e.deck);
-    const decks = Array.from(deckSet).sort();
 
     const deckDateMap = new Map<string, Map<string, number>>();
     const totalDateMap = new Map<string, number>();
-    for (const deck of decks) deckDateMap.set(deck, new Map());
+    for (const deck of deckSet) deckDateMap.set(deck, new Map());
 
     for (const e of entries) {
         if (!dateSet.has(e.date)) continue;
@@ -208,7 +207,15 @@ function createLineChart(entries: ReviewHistoryEntry[]): void {
         totalDateMap.set(e.date, (totalDateMap.get(e.date) || 0) + e.count);
     }
 
-    // Build checkboxes
+    // Sort decks by all-time total descending
+    const deckTotals = new Map<string, number>();
+    for (const deck of deckSet) {
+        const dm = deckDateMap.get(deck)!;
+        deckTotals.set(deck, Array.from(dm.values()).reduce((a, b) => a + b, 0));
+    }
+    const decks = Array.from(deckSet).sort((a, b) => (deckTotals.get(b) || 0) - (deckTotals.get(a) || 0));
+
+    // Build checkboxes (in sorted order)
     const checkboxContainer = document.getElementById('deckCheckboxes');
     if (checkboxContainer) {
         let html = `<label class="deck-checkbox-label">
@@ -266,6 +273,8 @@ function createLineChart(entries: ReviewHistoryEntry[]): void {
         return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     });
 
+    const tooltipPanel = document.getElementById('lineChartTooltipPanel');
+
     lineChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -282,8 +291,30 @@ function createLineChart(entries: ReviewHistoryEntry[]): void {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    callbacks: {
-                        label: (context: any) => `${context.dataset.label}: ${context.raw}`
+                    enabled: false,
+                    external: (context: any) => {
+                        if (!tooltipPanel) return;
+                        const tooltip = context.tooltip;
+                        if (!tooltip.dataPoints || tooltip.dataPoints.length === 0) return;
+
+                        const dateLabel = tooltip.title?.[0] || '';
+
+                        // Sort visible data points by value descending
+                        const points = [...tooltip.dataPoints]
+                            .filter((p: any) => !lineChart.data.datasets[p.datasetIndex].hidden)
+                            .sort((a: any, b: any) => b.raw - a.raw);
+
+                        let html = `<div class="line-tooltip-date">${dateLabel}</div>`;
+                        for (const point of points) {
+                            const color = point.dataset.borderColor;
+                            const value = (point.raw as number).toLocaleString();
+                            html += `<div class="line-tooltip-row">
+                                <span class="line-tooltip-swatch" style="background:${color}"></span>
+                                <span class="line-tooltip-label">${point.dataset.label}</span>
+                                <span class="line-tooltip-value">${value}</span>
+                            </div>`;
+                        }
+                        tooltipPanel.innerHTML = html;
                     }
                 }
             },
