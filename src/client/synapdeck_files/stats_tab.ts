@@ -354,8 +354,18 @@ function createLineChart(entries: ReviewHistoryEntry[]): void {
             document.querySelectorAll('.line-scale-tab').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const scale = (btn as HTMLElement).dataset.scale;
-            lineChart.options.scales.y.type = scale === 'log' ? 'logarithmic' : 'linear';
-            lineChart.options.scales.y.beginAtZero = scale !== 'log';
+            const isLog = scale === 'log';
+            lineChart.options.scales.y.type = isLog ? 'logarithmic' : 'linear';
+            lineChart.options.scales.y.beginAtZero = !isLog;
+            lineChart.options.scales.y.min = isLog ? 1 : undefined;
+            lineChart.options.scales.y.ticks = isLog ? {
+                callback: (value: any) => {
+                    const v = Number(value);
+                    if (v <= 0) return null;
+                    const log = Math.log10(v);
+                    return Math.abs(log - Math.round(log)) < 1e-9 ? v.toLocaleString() : null;
+                }
+            } : {};
             lineChart.update();
         };
     });
