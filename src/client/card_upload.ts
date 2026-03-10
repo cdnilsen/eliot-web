@@ -113,6 +113,9 @@ let selectionActiveTd: HTMLTableDataCellElement | null = null;
 let activeHeaderTh: HTMLElement | null = null;
 let activeRowNumTd: HTMLElement | null = null;
 
+// Last known textarea text selection (saved before Alt key can steal focus)
+let savedTextareaSelection: { ta: HTMLTextAreaElement; start: number; end: number } | null = null;
+
 // Undo history
 type GridSnapshot = string[][];
 const historyStack: GridSnapshot[] = [];
@@ -681,6 +684,15 @@ function addSpreadsheetRow(): void {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
             syncConflictColumnHeights();
+        });
+
+        // Save the selection whenever the user finishes a drag or moves the cursor,
+        // so Alt+T can use it even if pressing Alt shifts focus away from the textarea.
+        textarea.addEventListener('mouseup', () => {
+            savedTextareaSelection = { ta: textarea, start: textarea.selectionStart, end: textarea.selectionEnd };
+        });
+        textarea.addEventListener('keyup', () => {
+            savedTextareaSelection = { ta: textarea, start: textarea.selectionStart, end: textarea.selectionEnd };
         });
 
         // ── Textarea: keyboard handling while editing ──────────────────────
@@ -1402,8 +1414,12 @@ function transliterateSelectedCell(): void {
     if (!ta) return;
 
     const isEditing = selectedTd.classList.contains('cell-editing');
-    const selStart = ta.selectionStart ?? 0;
-    const selEnd = ta.selectionEnd ?? ta.value.length;
+    const liveStart = ta.selectionStart ?? 0;
+    const liveEnd = ta.selectionEnd ?? 0;
+    // Fall back to the last saved selection if Alt stole focus before we got here
+    const saved = savedTextareaSelection?.ta === ta ? savedTextareaSelection : null;
+    const selStart = (liveStart !== liveEnd) ? liveStart : (saved?.start ?? 0);
+    const selEnd   = (liveStart !== liveEnd) ? liveEnd   : (saved?.end   ?? ta.value.length);
     const hasPartialSelection = isEditing && selStart !== selEnd;
 
     if (hasPartialSelection) {
