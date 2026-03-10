@@ -1253,7 +1253,7 @@ function getNotesFromSpreadsheet(): NoteToProcess[] {
         baseProcessList = [currentDeck, '', currentDeck, '', ''];
     } else if (cardType === 'one-way-N2T') {
         noteType = 'One-Way';
-        baseProcessList = ['', currentDeck, ''];
+        baseProcessList = [currentDeck, '', ''];
     }
 
     const notes: NoteToProcess[] = [];

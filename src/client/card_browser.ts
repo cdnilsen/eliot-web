@@ -2176,4 +2176,4 @@ async function deleteCard(cardId: number): Promise<void> {
 }
 
 
-window.performCardSearch = performCardSearch;
+window.performCardSearch = performCardSearch;

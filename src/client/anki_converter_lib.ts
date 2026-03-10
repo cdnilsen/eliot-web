@@ -247,7 +247,7 @@ class AnkiToSynapdeckConverter {
         dependents: [], // Would need additional logic to determine dependents
         created: this.estimateCreatedDate(card, reviews),
         time_due: new Date(card.due_date),
-        interval: card.interval_days * 24 * 60 * 60 * 1000, // Convert days to milliseconds
+        interval: card.interval_days,
         past_reviews: pastReviews,
         past_grades: pastGrades,
         retrievability: retrievability,

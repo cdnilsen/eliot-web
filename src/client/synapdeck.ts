@@ -1,5 +1,4 @@
 import {transliterateGeez, GeezDiacriticify} from './synapdeck_files/transcribe_geez.js';
-import {transliterateGreek} from './synapdeck_files/transcribe_ancient_greek.js';
 import {transliterateCoptic} from './synapdeck_files/transcribe_coptic.js';
 import {ProcessedCard, processCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_files/synapdeck_lib.js'
 import {transliterateHebrew} from './synapdeck_files/transcribe_hebrew.js';
@@ -410,7 +409,6 @@ function transcribe(str: string, process: string = "", otherProcess: string = ""
     const processors: Record<string, (text: string) => string> = {
         "Coptic": (text) => transliterateCoptic(text),
         "Ge'ez": (text) => transliterateGeez(text, optionalBoolean),
-        "Ancient Greek": (text) => transliterateGreek(text),
         "Hebrew": (text) => transliterateHebrew(text, true),
         "Persian": (text) => transliteratePersian(text)
     };
@@ -423,21 +421,13 @@ function transcribe(str: string, process: string = "", otherProcess: string = ""
         let outputSegment: string = segment.text;
         let segmentOtherProcess = segment.process;
         
-        if (process === "Ancient Greek") {
-            console.log(`Segment ${i}: shouldTranscribe=${segment.shouldTranscribe}, process="${segmentOtherProcess}", text="${segment.text}"`);
-        }
-        
         if (segment.shouldTranscribe) {
             outputSegment = processor(outputSegment);
         } else {
             let otherProcessor = processors[segmentOtherProcess] || ((text: string) => text);
             outputSegment = otherProcessor(outputSegment);
         }
-        
-        if (process === "Ancient Greek") {
-            console.log(`Segment ${i} output: "${outputSegment}"`);
-        }
-        
+
         outputSegments.push(outputSegment);
     }
     
@@ -455,16 +445,6 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
 
     let datum = card.field_values[targetIndex] ?? "";
     let process = card.field_processing[targetIndex];
-    // Log the raw codepoints of the incoming string
-    if (process === "Ancient Greek") {
-        console.log("Raw datum:", datum);
-        console.log("Codepoints:", [...datum].map(c => 
-            `${c} U+${c.codePointAt(0)!.toString(16).padStart(4, '0')}`
-        ).join(' '));
-    }
-    // ἄφρων / senseless, crazed / ἄφρων/ον (-ονος)
-    // Process all languages uniformly — transliterateGreek handles already-Greek
-    // text by normalizing to NFC, which fixes diacritic stripping on paste
     let output = transcribe(datum, process, card.deck, isBackOfCard);
 
     if (isBackOfCard) {
@@ -1077,23 +1057,7 @@ function generateCardFrontLine(card: CardDue): string {
     if (card.card_format == "Native to Target") {
         targetIndex = 1; 
     } else if (card.card_format == "One Way") {
-        // For One Way cards, find the field WITHOUT processing (that's the question)
-        let foundQuestion = false;
-        for (let i = 0; i < maxIndex; i++) {
-            const processing = allProcessing[i];
-            // Question is the field WITHOUT processing or with empty/null processing
-            if (!processing || (typeof processing === 'string' && processing.trim() === "")) {
-                targetIndex = i;
-                foundQuestion = true;
-                break;
-            }
-        }
-        
-        // If all fields have processing (shouldn't happen), use first field
-        if (!foundQuestion) {
-            console.warn("One Way card has processing on all fields, using field 0:", card);
-            targetIndex = 0;
-        }
+        targetIndex = 0;
     }
     
     // Safety check
@@ -1123,23 +1087,7 @@ function generateCardBackLine(card: CardDue): string {
     let targetIndex = 0;
     
     if (card.card_format === "One Way") {
-        // For One Way cards, the ANSWER is the field WITH processing
-        let foundAnswer = false;
-        for (let i = 0; i < maxIndex; i++) {
-            const processing = card.field_processing[i];
-            // Check for truthy processing value (not null, not empty string)
-            if (processing && typeof processing === 'string' && processing.trim() !== "") {
-                targetIndex = i;
-                foundAnswer = true;
-                break;
-            }
-        }
-        
-        // If no field has processing, use the field that's NOT used in front
-        if (!foundAnswer) {
-            console.warn("One Way card has no processing, guessing field 1:", card);
-            targetIndex = Math.min(1, maxIndex - 1);
-        }
+        targetIndex = Math.min(1, maxIndex - 1);
     } else {
         // Original logic for Two-Way cards with ENHANCED null safety
         if (card.field_values.length >= 3) {
