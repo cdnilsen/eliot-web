@@ -163,6 +163,8 @@ let colorCodingDictionary: Record<string, string[]> = {
     "m": ["#0000ff"],
     "f": ["#ff0000"],
     "n": ["#000000", "#00ff00"],
+    "fn": ["#000000", "#ffff00"],
+    "nf": ["#000000", "#ffff00"],
     "e": ["#ff00ff"],
     "1": ["#ffffff", "#ff0000"],
     "2": ["#000000", "#ffff00"],
