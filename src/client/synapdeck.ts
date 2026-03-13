@@ -159,6 +159,7 @@ function parseTaggedText(input: string, otherProcess: string): TextSegment[] {
 
 let colorCodingDictionary: Record<string, string[]> = {
     "mn": ["#000000", "#00ffff"],
+    "nm": ["#000000", "#00ffff"],
     "m": ["#0000ff"],
     "f": ["#ff0000"],
     "n": ["#000000", "#00ff00"],
