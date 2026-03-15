@@ -320,7 +320,13 @@ function createLineChart(entries: ReviewHistoryEntry[]): void {
             },
             scales: {
                 x: {
-                    ticks: { maxTicksLimit: 12, maxRotation: 0 }
+                    ticks: {
+                        maxRotation: 0,
+                        callback: function(_value: any, index: number) {
+                            // Only show tick on the 1st of each month
+                            return dates[index]?.endsWith('-01') ? displayLabels[index] : '';
+                        }
+                    }
                 },
                 y: {
                     beginAtZero: true,
