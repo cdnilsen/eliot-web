@@ -34,7 +34,8 @@ let deckNameList: string[] = [
     "Russian",
     "Sanskrit",
     "Syriac",
-    "Tocharian B"
+    "Tocharian B",
+    "Trivia"
 ]
 
 const printFontSizes: { [key: string]: string } = {
