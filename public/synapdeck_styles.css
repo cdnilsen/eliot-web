@@ -2687,6 +2687,10 @@ input[type="file"]:hover {
     background-color: #ffe8e8;
 }
 
+.card-spreadsheet td.cell-unclosed-tag textarea {
+    background-color: #fff9c4;
+}
+
 /* Wrapper that puts the spreadsheet container and the conflict column side by side */
 #spreadsheetRowWrapper {
     display: flex;

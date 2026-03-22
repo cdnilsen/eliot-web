@@ -144,6 +144,26 @@ let relSearchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // ── Conflict detection ─────────────────────────────────────────────────────
 
+function hasUnclosedHtmlTag(text: string): boolean {
+    const voidElements = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+    const tagPattern = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)[^>]*?(\/?)>/g;
+    const stack: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = tagPattern.exec(text)) !== null) {
+        const isClose = match[1] === '/';
+        const tagName = match[2].toLowerCase();
+        const isSelfClose = match[3] === '/';
+        if (voidElements.has(tagName) || isSelfClose) continue;
+        if (isClose) {
+            if (stack.length === 0 || stack[stack.length - 1] !== tagName) return true;
+            stack.pop();
+        } else {
+            stack.push(tagName);
+        }
+    }
+    return stack.length > 0;
+}
+
 async function loadDeckFronts(deck: string): Promise<void> {
     deckFrontsCache = [];
     if (!deck) return;
@@ -305,6 +325,7 @@ function _exitEditMode(td: HTMLTableDataCellElement, runConflictCheck = false): 
                 checkRowConflicts(tr);
             }
         }
+        td.classList.toggle('cell-unclosed-tag', hasUnclosedHtmlTag(ta.value));
     }
 }
 
