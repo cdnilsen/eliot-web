@@ -1742,6 +1742,11 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
 
     const transliterateBtn = document.getElementById('transliterateBtn');
     if (transliterateBtn) {
+        // Prevent mousedown from stealing focus away from the textarea — keeps the
+        // live selectionStart/selectionEnd intact so partial-selection transliteration
+        // works correctly for RTL scripts (Hebrew, Syriac) where browsers may clear
+        // the selection on blur before the click handler runs.
+        transliterateBtn.addEventListener('mousedown', (e) => e.preventDefault());
         transliterateBtn.addEventListener('click', () => transliterateSelectedCell());
     }
 
