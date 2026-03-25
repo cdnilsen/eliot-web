@@ -1,4 +1,4 @@
-import {OneWayCard, TwoWayCard, CardRelationships} from './synapdeck_files/synapdeck_lib.js';
+import {OneWayCard, TwoWayCard} from './synapdeck_files/synapdeck_lib.js';
 import {postProcessSanskrit} from './synapdeck_files/transcribe_sanskrit.js';
 import {geezSpecialChars} from './synapdeck_files/transcribe_geez.js';
 import {akkadianSpecialChars} from './synapdeck_files/transcribe_akkadian.js';
@@ -55,7 +55,7 @@ interface NoteToProcess {
     noteType: string;
     dataList: string[];
     processList: string[];
-    relationships: CardRelationships;
+    relationships: RelationshipsWithDecks;
     initialIntervalDays: number;
 }
 
@@ -135,6 +135,18 @@ let _createCardRelationship: CreateCardRelFn | null = null;
 interface RelEntry {
     type: 'peer' | 'prereq' | 'dependent';
     primaryField: string;
+    deck: string;
+}
+
+interface RelTarget {
+    primaryField: string;
+    deck: string;
+}
+
+interface RelationshipsWithDecks {
+    peers: RelTarget[];
+    prereqs: RelTarget[];
+    dependents: RelTarget[];
 }
 
 const rowRelationships = new Map<HTMLElement, RelEntry[]>();
@@ -1163,13 +1175,13 @@ function updateRowBadge(rowDiv: HTMLElement): void {
     badge.title = rels.map(r => `${r.type}: ${r.primaryField}`).join('\n');
 }
 
-function addRelEntry(primaryField: string): void {
+function addRelEntry(primaryField: string, deck: string = currentDeck): void {
     if (!currentRelRow || !primaryField.trim()) return;
     const typeSelect = document.getElementById('relTypeSelect') as HTMLSelectElement | null;
     const type = (typeSelect?.value ?? 'peer') as 'peer' | 'prereq' | 'dependent';
     const rels = rowRelationships.get(currentRelRow) ?? [];
     if (rels.some(r => r.type === type && r.primaryField === primaryField)) return;
-    rels.push({ type, primaryField });
+    rels.push({ type, primaryField, deck });
     rowRelationships.set(currentRelRow, rels);
     refreshPopoverContent();
     updateRowBadge(currentRelRow);
@@ -1230,7 +1242,7 @@ async function searchRelCards(query: string): Promise<void> {
                     item.appendChild(deckLabel);
                 }
                 item.addEventListener('click', () => {
-                    addRelEntry(primaryField);
+                    addRelEntry(primaryField, card.deck);
                     const searchInput = document.getElementById('relSearchInput') as HTMLInputElement | null;
                     if (searchInput) searchInput.value = '';
                     resultsDiv.innerHTML = '';
@@ -1328,13 +1340,14 @@ function getNotesFromSpreadsheet(): NoteToProcess[] {
         }
 
         // Collect relationships from the relationship column for this row
-        const relationships: CardRelationships = { peers: [], prereqs: [], dependents: [] };
+        const relationships: RelationshipsWithDecks = { peers: [], prereqs: [], dependents: [] };
         const relRow = relCol?.children[rowIdx + 1] as HTMLElement | undefined;
         if (relRow) {
             for (const rel of rowRelationships.get(relRow) ?? []) {
-                if (rel.type === 'peer') relationships.peers.push(rel.primaryField);
-                else if (rel.type === 'dependent') relationships.prereqs.push(rel.primaryField);  // "dependent of X" → X is our prereq
-                else if (rel.type === 'prereq') relationships.dependents.push(rel.primaryField);  // "prerequisite of X" → X is our dependent
+                const target: RelTarget = { primaryField: rel.primaryField, deck: rel.deck };
+                if (rel.type === 'peer') relationships.peers.push(target);
+                else if (rel.type === 'dependent') relationships.prereqs.push(target);  // "dependent of X" → X is our prereq
+                else if (rel.type === 'prereq') relationships.dependents.push(target);  // "prerequisite of X" → X is our dependent
             }
         }
 
@@ -1616,54 +1629,53 @@ async function processAllRelationships(cardsWithRelationships: Array<{
     cardIds: number[],
     deck: string,
     primaryField: string,
-    relationships: CardRelationships
+    relationships: RelationshipsWithDecks
 }>): Promise<void> {
     if (!_createCardRelationship) {
         console.error('createCardRelationship callback not set');
         return;
     }
-    // adding a comment here to make it redeploy
     for (const cardSet of cardsWithRelationships) {
-        const { cardIds, deck, relationships } = cardSet;
+        const { cardIds, relationships } = cardSet;
         for (const cardId of cardIds) {
-            for (const peerPrimary of relationships.peers) {
+            for (const peer of relationships.peers) {
                 try {
-                    const peerResult = await findCardByPrimaryField(deck, peerPrimary);
+                    const peerResult = await findCardByPrimaryField(peer.deck, peer.primaryField);
                     if (peerResult && peerResult.card_id) {
                         await _createCardRelationship(cardId, peerResult.card_id, 'peer', true);
                     } else {
-                        console.warn(`Peer card not found: "${peerPrimary}" in deck "${deck}"`);
+                        console.warn(`Peer card not found: "${peer.primaryField}" in deck "${peer.deck}"`);
                     }
                 } catch (error) {
-                    console.error(`Error creating peer relationship for "${peerPrimary}":`, error);
+                    console.error(`Error creating peer relationship for "${peer.primaryField}":`, error);
                 }
                 await delay(50);
             }
 
-            for (const prereqPrimary of relationships.prereqs) {
+            for (const prereq of relationships.prereqs) {
                 try {
-                    const prereqResult = await findCardByPrimaryField(deck, prereqPrimary);
+                    const prereqResult = await findCardByPrimaryField(prereq.deck, prereq.primaryField);
                     if (prereqResult && prereqResult.card_id) {
                         await _createCardRelationship(cardId, prereqResult.card_id, 'dependent', true);
                     } else {
-                        console.warn(`Prereq card not found: "${prereqPrimary}" in deck "${deck}"`);
+                        console.warn(`Prereq card not found: "${prereq.primaryField}" in deck "${prereq.deck}"`);
                     }
                 } catch (error) {
-                    console.error(`Error creating prereq relationship for "${prereqPrimary}":`, error);
+                    console.error(`Error creating prereq relationship for "${prereq.primaryField}":`, error);
                 }
                 await delay(50);
             }
 
-            for (const depPrimary of relationships.dependents) {
+            for (const dep of relationships.dependents) {
                 try {
-                    const depResult = await findCardByPrimaryField(deck, depPrimary);
+                    const depResult = await findCardByPrimaryField(dep.deck, dep.primaryField);
                     if (depResult && depResult.card_id) {
                         await _createCardRelationship(depResult.card_id, cardId, 'dependent', true);
                     } else {
-                        console.warn(`Dependent card not found: "${depPrimary}" in deck "${deck}"`);
+                        console.warn(`Dependent card not found: "${dep.primaryField}" in deck "${dep.deck}"`);
                     }
                 } catch (error) {
-                    console.error(`Error creating dependent relationship for "${depPrimary}":`, error);
+                    console.error(`Error creating dependent relationship for "${dep.primaryField}":`, error);
                 }
                 await delay(50);
             }
@@ -1808,7 +1820,7 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
                 cardIds: number[],
                 deck: string,
                 primaryField: string,
-                relationships: CardRelationships
+                relationships: RelationshipsWithDecks
             }> = [];
 
             // One representative card_id per successfully created note (for peer-all)
