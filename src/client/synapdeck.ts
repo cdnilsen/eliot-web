@@ -642,10 +642,11 @@ type idToCardDict = {
 }
 
 function selectCardsFromGroup(
-        candidateCards: CardDue[], 
-        alreadySelected: Set<number>, 
-        maxCards: number, 
-        cardDict: idToCardDict
+        candidateCards: CardDue[],
+        alreadySelected: Set<number>,
+        maxCards: number,
+        cardDict: idToCardDict,
+        conflictIds?: Set<number>
         ): CardDue[] {
     const selectedFromGroup: CardDue[] = [];
     const shuffledCandidates = shuffleCardArray(candidateCards);
@@ -662,9 +663,10 @@ function selectCardsFromGroup(
         }
         
         // Check if any peers, prereqs, or dependents of this card are already selected
-        const hasPeerConflict = card.peers && card.peers.some(peerId => alreadySelected.has(peerId));
-        const hasPrereqConflict = card.prereqs && card.prereqs.some(prereqId => alreadySelected.has(prereqId));
-        const hasDependentConflict = card.dependents && card.dependents.some(depId => alreadySelected.has(depId));
+        // conflictIds includes selections from other decks so peer conflicts are caught globally
+        const hasPeerConflict = card.peers && card.peers.some(peerId => alreadySelected.has(peerId) || conflictIds?.has(peerId));
+        const hasPrereqConflict = card.prereqs && card.prereqs.some(prereqId => alreadySelected.has(prereqId) || conflictIds?.has(prereqId));
+        const hasDependentConflict = card.dependents && card.dependents.some(depId => alreadySelected.has(depId) || conflictIds?.has(depId));
 
         if (!hasPeerConflict && !hasPrereqConflict && !hasDependentConflict) {
             // This card is safe to add
@@ -683,7 +685,7 @@ function selectCardsFromGroup(
     return selectedFromGroup;
 }
 
-function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
+function produceFinalCardList(cards: CardDue[], numCards: number, sharedSelectedIds?: Set<number>): CardDue[] {
     console.log(`🎯 Producing review sheet: ${numCards} cards from ${cards.length} available`);
 
     // Create lookup dictionary for cards
@@ -709,13 +711,15 @@ function produceFinalCardList(cards: CardDue[], numCards: number): CardDue[] {
         console.log(`   Available in group: ${group.length}, Remaining slots: ${remainingSlots}`);
         
         const selectedFromGroup = selectCardsFromGroup(
-            group, 
-            selectedCardIds, 
-            numCards, 
-            cardDict
+            group,
+            selectedCardIds,
+            numCards,
+            cardDict,
+            sharedSelectedIds
         );
-        
+
         finalCardList.push(...selectedFromGroup);
+        selectedFromGroup.forEach(c => sharedSelectedIds?.add(c.card_id));
         console.log(`   Selected ${selectedFromGroup.length} cards from this group`);
         
         // Log current progress
@@ -1242,6 +1246,7 @@ if (reviewSubmitButton) {
         try {
             const deckRows = document.querySelectorAll<HTMLDivElement>('.deck-review-row');
             const selections: { deckName: string, cards: CardDue[] }[] = [];
+            const globalSelectedIds = new Set<number>();
 
             for (const row of deckRows) {
                 const checkbox = row.querySelector<HTMLInputElement>('.deck-review-check');
@@ -1254,7 +1259,7 @@ if (reviewSubmitButton) {
                 const cached = deckCardCache.get(deckName);
                 if (!cached?.cards || cached.cards.length === 0) continue;
 
-                const cards = produceFinalCardList(cached.cards, numCards);
+                const cards = produceFinalCardList(cached.cards, numCards, globalSelectedIds);
                 if (cards.length > 0) {
                     selections.push({ deckName, cards });
                 }
