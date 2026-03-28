@@ -10,7 +10,7 @@ import {transliterateSyriac} from './synapdeck_files/transcribe_syriac.js';
 import {transliterateGeez, GeezDiacriticify} from './synapdeck_files/transcribe_geez.js';
 import {transliteratePersian} from './synapdeck_files/transcribe_persian.js';
 import {transliterateRussian} from './synapdeck_files/transcribe_russian.js';
-import {getInitialDifficulty, getInitialStability, recalculateRetrievability} from './fsrs_client.js';
+import {getInitialDifficulty, recalculateRetrievability} from './fsrs_client.js';
 
 let transcriptionDecks: string[] = [
     "Ancient Greek",
@@ -912,17 +912,16 @@ function addSpreadsheetRow(): void {
 
                 default:
                     // Any printable character collapses the range and enters edit mode.
-                    // We do NOT call preventDefault, and do NOT inject the key as an
-                    // initial value, so that the OS input method (dead-key composition,
-                    // IME, etc.) continues to work correctly on the now-focused textarea.
+                    // Dead keys (e.key === 'Dead') and IME keys (e.key === 'Process') both
+                    // have length > 1, so they are already excluded by the length check and
+                    // composition will continue to work normally on the now-focused textarea.
                     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                        const savedValue = textarea.value;
-                        textarea.value = '';
-                        textarea.style.height = 'auto';
-                        textarea.style.height = textarea.scrollHeight + 'px';
+                        // Prevent the browser from also delivering this character via keypress
+                        // to avoid it appearing twice on browsers that re-target keypress to
+                        // the newly focused element.
+                        e.preventDefault();
                         _clearRangeHighlight();
-                        _enterEditMode(td);
-                        cellValueAtEditStart = savedValue;
+                        _enterEditMode(td, e.key);
                     }
                     break;
             }
@@ -1549,7 +1548,7 @@ async function sendNoteToBackend(deck: string, note_type: string, field_values: 
     let initialRetrievability: number | number[] = 1;
 
     if (initialIntervalDays > 1) {
-        initialStability = getInitialStability(3);
+        initialStability = initialIntervalDays;
         initialDifficulty = getInitialDifficulty(3);
 
         const now = new Date();
