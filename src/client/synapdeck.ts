@@ -1887,6 +1887,19 @@ function setupShuffleCardsTab(): void {
                         🎲 Shuffle Due Dates
                     </button>
                 </div>
+
+                <hr style="margin: 1.5rem 0; border-color: #ddd;">
+
+                <div class="form-group">
+                    <strong>Scheduler Repair</strong>
+                    <p class="form-text" style="margin: 0.25rem 0 0.5rem;">
+                        Finds cards with impossibly large intervals caused by a historical scheduling bug,
+                        and resets them to a 10-year ceiling.
+                    </p>
+                    <button id="fixWeirdIntervalsBtn" class="btn btn-secondary">
+                        🔧 Fix Cards with Weird Intervals
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -1940,6 +1953,12 @@ function setupDateShuffleEventListeners(): void {
     if (executeBtn && !executeBtn.dataset.initialized) {
         executeBtn.dataset.initialized = 'true';
         executeBtn.addEventListener('click', handleDirectShuffle);
+    }
+
+    const fixWeirdBtn = document.getElementById('fixWeirdIntervalsBtn') as HTMLButtonElement;
+    if (fixWeirdBtn && !fixWeirdBtn.dataset.initialized) {
+        fixWeirdBtn.dataset.initialized = 'true';
+        fixWeirdBtn.addEventListener('click', handleFixWeirdIntervals);
     }
 
     if (closeModalBtn) {
@@ -2010,6 +2029,51 @@ async function handleDirectShuffle(): Promise<void> {
     await executeDateShuffle(params);
 }
 
+
+// Fix cards with absurdly large intervals from the historical scheduling bug
+async function handleFixWeirdIntervals(): Promise<void> {
+    const btn = document.getElementById('fixWeirdIntervalsBtn') as HTMLButtonElement;
+    const outputDiv = document.getElementById('shuffle_output') as HTMLDivElement;
+
+    const confirmed = confirm(
+        'SCHEDULER REPAIR\n\n' +
+        'This will find every card whose stability or interval exceeds 3,650 days (10 years) ' +
+        'and reset it to that ceiling, recalculating the due date from the last review.\n\n' +
+        'Continue?'
+    );
+    if (!confirmed) return;
+
+    if (btn) { btn.textContent = '🔧 Fixing...'; btn.disabled = true; }
+    if (outputDiv) outputDiv.innerHTML = '<p class="loading">Scanning for cards with weird intervals...</p>';
+
+    try {
+        const response = await fetch('/fix_weird_intervals', { method: 'POST' });
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            if (result.fixed === 0) {
+                if (outputDiv) outputDiv.innerHTML = '<div class="success-message"><p>No cards with weird intervals found — everything looks healthy!</p></div>';
+            } else {
+                const breakdown = Object.entries(result.deck_breakdown as Record<string, number>)
+                    .map(([deck, count]) => `<li>${deck}: ${count} card${count !== 1 ? 's' : ''}</li>`)
+                    .join('');
+                if (outputDiv) outputDiv.innerHTML = `
+                    <div class="success-message">
+                        <h3>✅ Repair Complete</h3>
+                        <p>Fixed <strong>${result.fixed}</strong> card${result.fixed !== 1 ? 's' : ''} (intervals capped at 3,650 days).</p>
+                        <ul>${breakdown}</ul>
+                    </div>`;
+            }
+        } else {
+            if (outputDiv) outputDiv.innerHTML = `<div class="error-message"><h3>❌ Repair Failed</h3><p>${result.error ?? 'Unknown error'}</p></div>`;
+        }
+    } catch (error) {
+        console.error('Error fixing weird intervals:', error);
+        if (outputDiv) outputDiv.innerHTML = '<div class="error-message"><h3>❌ Network Error</h3><p>Failed to reach the server. Please try again.</p></div>';
+    } finally {
+        if (btn) { btn.textContent = '🔧 Fix Cards with Weird Intervals'; btn.disabled = false; }
+    }
+}
 
 // Handle confirmed shuffle from modal
 async function handleConfirmedShuffle(): Promise<void> {

@@ -4509,6 +4509,48 @@ app.post('/shuffle_due_dates', express.json(), wrapAsync(async (req, res) => {
     }
 }));
 
+// Fix cards with absurdly large stability/interval values caused by the historical
+// W[10] ** vs * bug in getStabilityOnSuccess (fixed Aug 2025).
+// Caps stability and interval at MAX_DAYS and recomputes time_due from last_reviewed.
+app.post('/fix_weird_intervals', wrapAsync(async (req, res) => {
+    const MAX_DAYS = 3650; // 10-year ceiling — nothing realistic should exceed this
+
+    const countResult = await client.query(
+        `SELECT COUNT(*)::int AS count FROM cards WHERE stability > $1 OR interval > $1`,
+        [MAX_DAYS]
+    );
+    const affectedCount: number = countResult.rows[0].count;
+
+    if (affectedCount === 0) {
+        return res.json({ status: 'success', fixed: 0, message: 'No cards with weird intervals found.' });
+    }
+
+    const updateResult = await client.query(
+        `UPDATE cards
+         SET
+             stability = LEAST(stability::numeric, $1)::float4,
+             interval  = LEAST(interval::numeric,  $1)::int8,
+             time_due  = COALESCE(last_reviewed, created, NOW())
+                         + (LEAST(stability::numeric, $1) * INTERVAL '1 day')
+         WHERE stability > $1 OR interval > $1
+         RETURNING card_id, deck`,
+        [MAX_DAYS]
+    );
+
+    const deckBreakdown: Record<string, number> = {};
+    for (const row of updateResult.rows) {
+        deckBreakdown[row.deck] = (deckBreakdown[row.deck] ?? 0) + 1;
+    }
+
+    console.log(`🔧 Fixed ${updateResult.rowCount} cards with weird intervals (cap: ${MAX_DAYS}d)`, deckBreakdown);
+
+    return res.json({
+        status: 'success',
+        fixed: updateResult.rowCount,
+        deck_breakdown: deckBreakdown,
+    });
+}));
+
 // Replace your existing /review_forecast endpoint with this fixed version
 app.get('/review_forecast', wrapAsync(async (req, res) => {
     const { decks, days_ahead, start_date } = req.query;

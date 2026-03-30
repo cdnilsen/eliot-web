@@ -216,12 +216,14 @@ export async function rescheduleCards(
                 difficulty = 5;
             }
 
-            // Calculate new interval
+            // Calculate new interval (cap at 100 years to prevent bigint overflow)
+            const MAX_INTERVAL_DAYS = 36500;
             const newIntervalMs = updateInterval(stability, settings);
-            let newIntervalDays = Math.max(1, Math.ceil(newIntervalMs / (24 * 60 * 60 * 1000))); // At least 1 day
+            let newIntervalDays = Math.min(MAX_INTERVAL_DAYS, Math.max(1, Math.ceil(newIntervalMs / (24 * 60 * 60 * 1000))));
+            stability = Math.min(stability, MAX_INTERVAL_DAYS);
 
             // Calculate new due date
-            let newTimeDue = new Date(reviewTimestamp.getTime() + newIntervalMs);
+            let newTimeDue = new Date(reviewTimestamp.getTime() + (newIntervalDays * 24 * 60 * 60 * 1000));
 
             // New cards graded hard: push to start of next day so they don't reappear today
             if (isFirstReview && card.grade === 'hard') {
