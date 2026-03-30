@@ -4525,20 +4525,39 @@ app.post('/fix_weird_intervals', wrapAsync(async (req, res) => {
         return res.json({ status: 'success', fixed: 0, message: 'No cards with weird intervals found.' });
     }
 
-    const updateResult = await client.query(
+    // Fix reviewed cards: cap stability/interval and recompute due date from last_reviewed + interval.
+    // Use interval (not stability) for time_due — interval is the scheduled review gap.
+    const reviewedResult = await client.query(
         `UPDATE cards
          SET
              stability = LEAST(stability::numeric, $1)::float4,
              interval  = LEAST(interval::numeric,  $1)::int8,
-             time_due  = COALESCE(last_reviewed, created, NOW())
-                         + (LEAST(stability::numeric, $1) * INTERVAL '1 day')
-         WHERE stability > $1 OR interval > $1
+             time_due  = last_reviewed
+                         + (LEAST(interval::numeric, $1) * INTERVAL '1 day')
+         WHERE (stability > $1 OR interval > $1)
+           AND last_reviewed IS NOT NULL
          RETURNING card_id, deck`,
         [MAX_DAYS]
     );
 
+    // Never-reviewed cards with corrupted stability/interval: reset to initial state.
+    // Don't push them 10 years into the future — make them due now.
+    const neverReviewedResult = await client.query(
+        `UPDATE cards
+         SET
+             stability = NULL,
+             interval  = 1,
+             time_due  = NOW()
+         WHERE (stability > $1 OR interval > $1)
+           AND last_reviewed IS NULL
+         RETURNING card_id, deck`,
+        [MAX_DAYS]
+    );
+
+    const updateResult = { rowCount: (reviewedResult.rowCount ?? 0) + (neverReviewedResult.rowCount ?? 0) };
+
     const deckBreakdown: Record<string, number> = {};
-    for (const row of updateResult.rows) {
+    for (const row of [...reviewedResult.rows, ...neverReviewedResult.rows]) {
         deckBreakdown[row.deck] = (deckBreakdown[row.deck] ?? 0) + 1;
     }
 
