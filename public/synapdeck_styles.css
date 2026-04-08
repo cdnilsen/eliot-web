@@ -2987,6 +2987,7 @@ input[type="file"]:hover {
 }
 
 .rel-search-input {
+    font-family: inherit;
     font-size: 12px;
     padding: 3px 6px;
     border: 1px solid #ccc;
