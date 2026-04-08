@@ -28,6 +28,7 @@ let deckNameList: string[] = [
     "Hebrew",
     "Hittite",
     "Latin",
+    "Latvian",
     "Lithuanian",
     "Persian",
     "Proto-Algonquian",
