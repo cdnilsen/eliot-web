@@ -1973,11 +1973,24 @@ app.post('/submit_review_results', express.json(), wrapAsync(async (req, res) =>
                 // Apply boosts
                 for (const peerId of peersToBoostIds) {
                     const peer = peerInfoMap.get(peerId)!;
-                    const currentInterval = peer.interval || 1;
+                    const currentInterval = Number(peer.interval) || 1;
+
+                    // Skip cards with corrupted/extreme intervals — boosting them is meaningless
+                    // and an invalid time_due (e.g. year 132702) produces NaN and breaks the transaction.
+                    if (currentInterval > 36500) {
+                        console.warn(`⚠️ Skipping boost for peer ${peerId}: interval ${currentInterval}d exceeds max`);
+                        continue;
+                    }
+
                     const fivePercent = Math.floor(currentInterval * 0.05);
                     const boost = Math.max(fivePercent, 1);
                     const newInterval = currentInterval + boost;
                     const newTimeDue = new Date(new Date(peer.time_due).getTime() + boost * 24 * 60 * 60 * 1000);
+
+                    if (isNaN(newTimeDue.getTime())) {
+                        console.warn(`⚠️ Skipping boost for peer ${peerId}: time_due is invalid`);
+                        continue;
+                    }
 
                     await transactionClient.query(
                         `UPDATE cards SET interval = $1, time_due = $2 WHERE card_id = $3`,

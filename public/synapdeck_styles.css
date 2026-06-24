@@ -2987,7 +2987,7 @@ input[type="file"]:hover {
 }
 
 .rel-search-input {
-    font-family: inherit;
+    font-family: 'GentiumPlus', 'Gentium Plus', serif !important;
     font-size: 12px;
     padding: 3px 6px;
     border: 1px solid #ccc;
@@ -3003,6 +3003,7 @@ input[type="file"]:hover {
 }
 
 .rel-search-item {
+    font-family: 'GentiumPlus', 'Gentium Plus', serif;
     padding: 5px 6px;
     font-size: 12px;
     cursor: pointer;
