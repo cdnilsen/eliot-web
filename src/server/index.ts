@@ -1556,13 +1556,17 @@ app.get('/review_sessions/:deckName', wrapAsync(async (req, res) => {
 }));
 
 // Get decks that have pending (under_review = true) session_card_reviews rows
+// from the current session (started today) — excludes stale, abandoned sessions
+// from prior days so the check-your-work dropdown doesn't accumulate old decks.
 app.get('/active_session_decks', wrapAsync(async (req, res) => {
     const result = await client.query(
-        `SELECT deck, session_id, COUNT(*)::int AS pending_count
-         FROM session_card_reviews
-         WHERE under_review = true
-         GROUP BY deck, session_id
-         ORDER BY deck`
+        `SELECT scr.deck, scr.session_id, COUNT(*)::int AS pending_count
+         FROM session_card_reviews scr
+         JOIN review_sessions rs ON rs.session_id = scr.session_id
+         WHERE scr.under_review = true
+           AND rs.started_at >= CURRENT_DATE
+         GROUP BY scr.deck, scr.session_id
+         ORDER BY scr.deck`
     );
     res.json({ status: 'success', sessions: result.rows });
 }));

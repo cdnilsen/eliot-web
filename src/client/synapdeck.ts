@@ -2303,26 +2303,62 @@ async function handleBulkReduction(): Promise<void> {
     }
 }
 
+// A localStorage session/difficult-review entry only belongs to the current
+// session if its timestamp falls on today's date — otherwise it's a leftover
+// from an abandoned session (tab closed without submitting/finishing) that
+// should no longer clutter the dropdown.
+function isFromToday(timestamp: string | undefined): boolean {
+    if (!timestamp) return false;
+    const date = new Date(timestamp);
+    const now = new Date();
+    return date.getFullYear() === now.getFullYear()
+        && date.getMonth() === now.getMonth()
+        && date.getDate() === now.getDate();
+}
+
 // Populate the check-work dropdown with decks that have an active reviewSession in localStorage,
 // plus any difficult-card review sessions.
 async function populateCheckWorkDropdown(): Promise<void> {
     const dropdown = document.getElementById('check_dropdownMenu') as HTMLSelectElement;
     if (!dropdown) return;
 
-    // Decks from localStorage (device-local sessions)
+    // Decks from localStorage (device-local sessions), scoped to today so
+    // abandoned sessions from prior days don't linger in the list.
     const regularDecks = new Map<string, number | null>(); // deck -> sessionId
     const difficultDecks: string[] = [];
+    const staleKeys: string[] = [];
+    const keys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key?.startsWith('reviewSession_')) {
+        if (key) keys.push(key);
+    }
+    for (const key of keys) {
+        if (key.startsWith('reviewSession_')) {
             const deckName = key.slice('reviewSession_'.length);
             let sessionId: number | null = null;
-            try { sessionId = JSON.parse(localStorage.getItem(key) ?? '').sessionId ?? null; } catch (e) {}
-            regularDecks.set(deckName, sessionId);
-        } else if (key?.startsWith('difficultReview_')) {
-            difficultDecks.push(key.slice('difficultReview_'.length));
+            let timestamp: string | undefined;
+            try {
+                const parsed = JSON.parse(localStorage.getItem(key) ?? '');
+                sessionId = parsed.sessionId ?? null;
+                timestamp = parsed.timestamp;
+            } catch (e) {}
+            if (isFromToday(timestamp)) {
+                regularDecks.set(deckName, sessionId);
+            } else {
+                staleKeys.push(key);
+            }
+        } else if (key.startsWith('difficultReview_')) {
+            const deckName = key.slice('difficultReview_'.length);
+            let timestamp: string | undefined;
+            try { timestamp = JSON.parse(localStorage.getItem(key) ?? '').timestamp; } catch (e) {}
+            if (isFromToday(timestamp)) {
+                difficultDecks.push(deckName);
+            } else {
+                staleKeys.push(key);
+            }
         }
     }
+    staleKeys.forEach(key => localStorage.removeItem(key));
 
     // Also fetch active sessions from the server (catches cross-device sessions)
     try {
