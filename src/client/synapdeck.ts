@@ -1337,6 +1337,28 @@ if (reviewDifficultBtn) {
 }
 
 // Frontend helper functions
+// Remove a deck's local session/difficult-review bookkeeping so it stops
+// showing in the Check Your Work dropdown once its server-side session is gone.
+function clearLocalReviewState(deckName: string): void {
+    localStorage.removeItem(`reviewSession_${deckName}`);
+    localStorage.removeItem(`difficultReview_${deckName}`);
+    currentSessionIds.delete(deckName);
+}
+
+function clearAllLocalReviewState(): void {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) keys.push(key);
+    }
+    for (const key of keys) {
+        if (key.startsWith('reviewSession_') || key.startsWith('difficultReview_')) {
+            localStorage.removeItem(key);
+        }
+    }
+    currentSessionIds.clear();
+}
+
 async function resetDeckCardsUnderReview(deckName: string): Promise<boolean> {
     try {
         const response = await fetch('/reset_cards_under_review', {
@@ -1344,14 +1366,16 @@ async function resetDeckCardsUnderReview(deckName: string): Promise<boolean> {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
-                deck: deckName 
+            body: JSON.stringify({
+                deck: deckName
             })
         });
 
         const result = await response.json();
         if (result.status === 'success') {
             console.log(`✅ Reset ${result.updated_count} cards in deck "${result.deck}"`);
+            clearLocalReviewState(deckName);
+            await populateCheckWorkDropdown();
             return true;
         } else {
             console.error('❌ Error resetting deck cards:', result.error);
@@ -1370,14 +1394,16 @@ async function resetAllCardsUnderReview(): Promise<boolean> {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
-                all: true 
+            body: JSON.stringify({
+                all: true
             })
         });
 
         const result = await response.json();
         if (result.status === 'success') {
             console.log(`✅ Reset ${result.updated_count} cards across all decks`);
+            clearAllLocalReviewState();
+            await populateCheckWorkDropdown();
             return true;
         } else {
             console.error('❌ Error resetting all cards:', result.error);
