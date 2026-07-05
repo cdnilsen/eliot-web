@@ -30,6 +30,12 @@
     src: url('Santakku/Santakku.ttf') format('truetype');
     unicode-range: U+12000-1254F;
 }
+/* GentiumPlus has no Hebrew glyphs, so route the Hebrew block (U+0590-05FF) to Times New Roman */
+@font-face {
+    font-family: 'GentiumPlus';
+    src: local('Times New Roman'), local('Times');
+    unicode-range: U+0590-05FF;
+}
 
 body {
     font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
