@@ -941,6 +941,13 @@ function generateMultiDeckReviewSheetHTML(
             unicode-range: U+0590-05FF;
             font-display: swap;
         }
+        @font-face {
+            font-family: 'GentiumPlus';
+            font-style: italic;
+            src: local('Times New Roman Italic'), local('Times Italic'), local('Times New Roman'), local('Times');
+            unicode-range: U+0590-05FF;
+            font-display: swap;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'GentiumPlus', 'Gentium Plus', serif;
