@@ -377,7 +377,7 @@ function createLineChart(entries: ReviewHistoryEntry[]): void {
     });
 }
 
-function createHeatmap(pastReviews: HeatmapEntry[], futureDue: HeatmapEntry[], todayDue: number): void {
+function createHeatmap(pastReviews: HeatmapEntry[], futureDue: HeatmapEntry[]): void {
     const container = document.getElementById('heatmapContainer');
     if (!container) return;
 
@@ -390,7 +390,10 @@ function createHeatmap(pastReviews: HeatmapEntry[], futureDue: HeatmapEntry[], t
 
     const _now = new Date();
     const todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
-    dateMap.set(todayStr, { count: todayDue, type: 'today' });
+    // Today's cell shows reviews actually completed today (already present in
+    // pastReviews), re-tagged as 'today' so it keeps its own highlight color.
+    const todayReviews = dateMap.get(todayStr)?.count ?? 0;
+    dateMap.set(todayStr, { count: todayReviews, type: 'today' });
 
     for (const entry of futureDue) {
         // Skip overdue entries (date in the past) — they belong in the bar chart's
@@ -524,7 +527,7 @@ function createHeatmap(pastReviews: HeatmapEntry[], futureDue: HeatmapEntry[], t
 
             let label: string;
             if (type === 'today') {
-                label = `${count} card${count !== 1 ? 's' : ''} due today`;
+                label = `${count} review${count !== 1 ? 's' : ''} done today`;
             } else if (type === 'past') {
                 label = `${count} card${count !== 1 ? 's' : ''} reviewed`;
             } else {
@@ -592,7 +595,7 @@ export async function setupStatsTab(): Promise<void> {
         createPieChart(stats);
 
         if (heatmapData.status === 'success' && heatmapData.past_reviews && heatmapData.future_due) {
-            createHeatmap(heatmapData.past_reviews, heatmapData.future_due, heatmapData.today_due || 0);
+            createHeatmap(heatmapData.past_reviews, heatmapData.future_due);
         }
 
         if (historyData.status === 'success' && historyData.entries) {
