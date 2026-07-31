@@ -5542,7 +5542,18 @@ app.get('/todays_hard_fail', wrapAsync(async (req, res) => {
     const deck = req.query.deck as string | undefined;
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+    // How many days back to include (1 = today only), clamped to 1..14.
+    let days = parseInt(String(req.query.days ?? '1'), 10);
+    if (!Number.isFinite(days)) days = 1;
+    days = Math.min(14, Math.max(1, days));
+
+    // Whether to include cards marked "hard" alongside forgotten ("fail") cards.
+    const includeHard = req.query.includeHard !== '0' && req.query.includeHard !== 'false';
+    const grades = includeHard ? ['hard', 'fail'] : ['fail'];
+
     try {
+        // Lower bound is (today - (days - 1)) in the server's local timezone.
+        const daysBack = days - 1;
         const query = deck
             ? await client.query(
                 `SELECT
@@ -5563,11 +5574,11 @@ app.get('/todays_hard_fail', wrapAsync(async (req, res) => {
                  FROM session_card_reviews scr
                  JOIN cards c ON c.card_id = scr.card_id
                  WHERE c.deck = $1
-                   AND scr.grade IN ('hard', 'fail')
-                   AND DATE(scr.reviewed_at AT TIME ZONE $2) = (CURRENT_TIMESTAMP AT TIME ZONE $2)::date
+                   AND scr.grade = ANY($2)
+                   AND DATE(scr.reviewed_at AT TIME ZONE $3) >= (CURRENT_TIMESTAMP AT TIME ZONE $3)::date - $4::int
                    AND scr.reviewed_at IS NOT NULL
                  ORDER BY c.deck, scr.grade, scr.reviewed_at`,
-                [deck, tz]
+                [deck, grades, tz, daysBack]
               )
             : await client.query(
                 `SELECT
@@ -5587,11 +5598,11 @@ app.get('/todays_hard_fail', wrapAsync(async (req, res) => {
                     scr.session_id
                  FROM session_card_reviews scr
                  JOIN cards c ON c.card_id = scr.card_id
-                 WHERE scr.grade IN ('hard', 'fail')
-                   AND DATE(scr.reviewed_at AT TIME ZONE $1) = (CURRENT_TIMESTAMP AT TIME ZONE $1)::date
+                 WHERE scr.grade = ANY($1)
+                   AND DATE(scr.reviewed_at AT TIME ZONE $2) >= (CURRENT_TIMESTAMP AT TIME ZONE $2)::date - $3::int
                    AND scr.reviewed_at IS NOT NULL
                  ORDER BY c.deck, scr.grade, scr.reviewed_at`,
-                [tz]
+                [grades, tz, daysBack]
               );
 
         res.json({

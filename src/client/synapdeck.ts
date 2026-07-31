@@ -1293,9 +1293,13 @@ if (reviewSubmitButton) {
     });
 }
 
-async function fetchTodaysHardFail(deck?: string): Promise<{status: string, cards: (CardDue & {grade: string, reviewed_at: string})[], count: number, error?: string}> {
-    const url = deck ? `/todays_hard_fail?deck=${encodeURIComponent(deck)}` : '/todays_hard_fail';
-    const response = await fetch(url);
+async function fetchTodaysHardFail(opts: { days?: number, includeHard?: boolean, deck?: string } = {}): Promise<{status: string, cards: (CardDue & {grade: string, reviewed_at: string})[], count: number, error?: string}> {
+    const { days = 1, includeHard = true, deck } = opts;
+    const params = new URLSearchParams();
+    params.set('days', String(days));
+    params.set('includeHard', includeHard ? '1' : '0');
+    if (deck) params.set('deck', deck);
+    const response = await fetch(`/todays_hard_fail?${params.toString()}`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();
 }
@@ -1303,19 +1307,122 @@ async function fetchTodaysHardFail(deck?: string): Promise<{status: string, card
 
 const reviewDifficultBtn = document.getElementById('reviewDifficultBtn');
 if (reviewDifficultBtn) {
-    reviewDifficultBtn.addEventListener('click', async () => {
-        const outputDiv = document.getElementById('review_output') as HTMLDivElement;
-        if (outputDiv) outputDiv.innerHTML = `<p>Loading...</p>`;
-        try {
-            const result = await fetchTodaysHardFail();
-            if (result.status !== 'success') {
-                if (outputDiv) outputDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
-                return;
-            }
-            if (result.cards.length === 0) {
-                if (outputDiv) outputDiv.innerHTML = `<p>No hard or failed cards today across any deck.</p>`;
-                return;
-            }
+    reviewDifficultBtn.addEventListener('click', () => {
+        showForgottenReviewModal();
+    });
+}
+
+// Prompt for how many days back to pull forgotten cards, and whether to
+// include cards marked Hard, then build the review sheet.
+function showForgottenReviewModal(): void {
+    const existing = document.getElementById('forgottenReviewModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'forgottenReviewModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease-out;
+    `;
+
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 460px;
+        padding: 0;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease-out;
+    `;
+
+    modalContent.innerHTML = `
+        <div style="padding: 24px; border-bottom: 1px solid #e1e5e9;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0; color: #333; font-size: 20px;">Review Forgotten Cards</h2>
+                <button id="closeForgottenModal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">×</button>
+            </div>
+        </div>
+
+        <div style="padding: 24px;">
+            <div style="margin-bottom: 20px;">
+                <label for="forgottenDaysInput" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Review forgotten cards from the last:</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" id="forgottenDaysInput" min="1" max="14" value="1" step="1" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                    <span style="color: #666; font-size: 14px;">day(s)</span>
+                </div>
+                <small style="color: #666; font-size: 12px;">1 day = cards forgotten today. Up to 14 days (two weeks).</small>
+            </div>
+
+            <div style="margin-bottom: 4px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="forgottenIncludeHard" checked style="transform: scale(1.2);">
+                    <span style="font-weight: 600; color: #333;">Include cards marked <em>Hard</em></span>
+                </label>
+            </div>
+        </div>
+
+        <div style="padding: 20px 24px; border-top: 1px solid #e1e5e9; display: flex; gap: 12px; justify-content: flex-end;">
+            <button id="cancelForgottenReview" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+            <button id="startForgottenReview" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Start Review</button>
+        </div>
+    `;
+
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    const closeModal = () => {
+        modal.style.animation = 'fadeOut 0.3s ease-in';
+        setTimeout(() => modal.remove(), 300);
+    };
+
+    const closeBtn = document.getElementById('closeForgottenModal') as HTMLButtonElement;
+    const cancelBtn = document.getElementById('cancelForgottenReview') as HTMLButtonElement;
+    const startBtn = document.getElementById('startForgottenReview') as HTMLButtonElement;
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    if (startBtn) {
+        startBtn.addEventListener('click', async () => {
+            const daysInput = document.getElementById('forgottenDaysInput') as HTMLInputElement;
+            const includeHardInput = document.getElementById('forgottenIncludeHard') as HTMLInputElement;
+            let days = parseInt(daysInput?.value ?? '1', 10);
+            if (!Number.isFinite(days)) days = 1;
+            days = Math.min(14, Math.max(1, days));
+            const includeHard = includeHardInput?.checked ?? true;
+            closeModal();
+            await runForgottenReview(days, includeHard);
+        });
+    }
+}
+
+async function runForgottenReview(days: number, includeHard: boolean): Promise<void> {
+    const outputDiv = document.getElementById('review_output') as HTMLDivElement;
+    if (outputDiv) outputDiv.innerHTML = `<p>Loading...</p>`;
+    try {
+        const result = await fetchTodaysHardFail({ days, includeHard });
+        if (result.status !== 'success') {
+            if (outputDiv) outputDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+            return;
+        }
+        if (result.cards.length === 0) {
+            const rangeLabel = days === 1 ? 'today' : `in the last ${days} days`;
+            const kindLabel = includeHard ? 'forgotten or hard' : 'forgotten';
+            if (outputDiv) outputDiv.innerHTML = `<p>No ${kindLabel} cards ${rangeLabel} across any deck.</p>`;
+            return;
+        }
 
             // Group cards by deck
             const byDeck = new Map<string, (CardDue & {grade: string, reviewed_at: string})[]>();
@@ -1343,10 +1450,9 @@ if (reviewDifficultBtn) {
             const deckSummary = Array.from(byDeck.entries()).map(([n, c]) => `${n} (${c.length})`).join(', ');
             if (outputDiv) outputDiv.innerHTML = `<p>Review sheet opened in new tab — ${result.cards.length} cards across: ${deckSummary}. Use the Check Your Work tab to grade them.</p>`;
             populateCheckWorkDropdown();
-        } catch (err) {
-            if (outputDiv) outputDiv.innerHTML = `<p class="error">Network error loading difficult cards.</p>`;
-        }
-    });
+    } catch (err) {
+        if (outputDiv) outputDiv.innerHTML = `<p class="error">Network error loading forgotten cards.</p>`;
+    }
 }
 
 // Frontend helper functions
