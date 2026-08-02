@@ -29,7 +29,7 @@ const vowelTokens = [
   { input: ["e"], internal: "vowel_epsilon", output: "\u03b5" },
   
   // Eta (long e)
-  { input: ["ē", "e\u0304"], internal: "vowel_eta", output: "\u03b7" }, // ē or e with macron or ê
+  { input: ["ē", "e\u0304", "j"], internal: "vowel_eta", output: "\u03b7" }, // ē or e with macron or ê
   
   // Iota
   { input: ["i"], internal: "vowel_iota", output: "\u03b9" },
@@ -38,7 +38,7 @@ const vowelTokens = [
   { input: ["o"], internal: "vowel_omicron", output: "\u03bf" },
   
   // Omega (long o)
-  { input: ["ō", "o\u0304"], internal: "vowel_omega", output: "\u03c9" }, // ō or o with macron or ô
+  { input: ["ō", "o\u0304", "w"], internal: "vowel_omega", output: "\u03c9" }, // ō or o with macron or ô
   
   // Upsilon
   { input: ["u", "y"], internal: "vowel_upsilon", output: "\u03c5" },
@@ -83,7 +83,7 @@ const consonantTokens = [
   { input: ["ph"], internal: "consonant_phi", output: "\u03c6" },
   { input: ["kh", "ch"], internal: "consonant_chi", output: "\u03c7" },
   { input: ["ps"], internal: "consonant_psi", output: "\u03c8" },
-  { input: ["w"], internal: "consonant_digamma", output: "\u03dc"}
+  { input: ["v"], internal: "consonant_digamma", output: "\u03dc"}
 ] as const;
 
 // Breathing and accent markers
