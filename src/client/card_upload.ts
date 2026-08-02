@@ -1762,10 +1762,14 @@ export function initializeUploadTab(createCardRelationshipFn: CreateCardRelFn): 
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.altKey && e.key.toLowerCase() === 't') {
+        // Match alt-t / option-t. On Mac, option-t emits '†' as e.key, so also
+        // check e.code (physical key, modifier-independent).
+        if (e.altKey && (e.key.toLowerCase() === 't' || e.code === 'KeyT')) {
+            // Always suppress the keystroke so option-t never types a '†' on Mac,
+            // even when the transliterate button is hidden/unavailable.
+            e.preventDefault();
             const btn = document.getElementById('transliterateBtn');
             if (btn && !btn.classList.contains('hidden')) {
-                e.preventDefault();
                 transliterateSelectedCell();
             }
         }
