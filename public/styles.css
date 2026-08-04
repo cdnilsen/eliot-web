@@ -366,6 +366,11 @@ button {
      silent ketiv -> <span class="silentKetiv">KETIV</span>
      bare qere    -> <span class="qereVeloKetiv">QERE</span>
    The ketiv (written form) is always visible; hovering reveals the qere. */
+:root {
+    /* Shared grey for qere text — the qere tooltip and (later) orphaned qeres. */
+    --qere-grey: #666;
+}
+
 .ketiv {
     position: relative;
     display: inline-block;
@@ -388,10 +393,11 @@ button {
 
     direction: rtl;
     white-space: nowrap;
-    background-color: #222;
-    color: #fff;
+    background-color: #fff;
+    color: var(--qere-grey);
+    border: 1px solid #000;
     border-radius: 6px;
-    padding: 4px 8px;
+    padding: 2px 8px;
     font-size: 0.9em;
 }
 

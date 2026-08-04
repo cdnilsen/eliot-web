@@ -540,7 +540,7 @@ function createDummyVerse(editions: Edition[], isNT: boolean, book: string) {
         "first_edition": "α (1663)",
         "second_edition": "β (1685)",
         "mayhew": "Mayhew (1709)",
-        "zeroth_edition": "\u05D0\u202A (1655)",
+        "zeroth_edition": "<bdi class=\"hebrew-font\">\u05D0</bdi> (1655)",
         "kjv": "KJV",
         "grebrew": "G"
     }
