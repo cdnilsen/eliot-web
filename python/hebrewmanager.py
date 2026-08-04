@@ -359,11 +359,46 @@ def main(book_name):
 # different verse totals and are NOT handled here; they need per-verse logic.
 # ---------------------------------------------------------------------------
 
-# Books whose Masoretic and KJV verse *totals* differ (split/merge or Psalms).
-# These are excluded from the flatten-by-KJV mechanism and handled separately.
+# Books still handled outside generate_grebrew_file: the two split books (one
+# Hebrew verse -> two KJV verses, needs text splitting) and Psalms (verse-0
+# superscriptions, via process_psalms.py). Ps 13 rides with the split books.
 COMPLEX_BOOKS = {
-    "Numbers", "1 Samuel", "1 Kings", "1 Chronicles", "Nehemiah", "Isaiah", "Psalms",
+    "Nehemiah", "Isaiah", "Psalms",
 }
+
+# Merge books: one Hebrew verse-pair corresponds to a single KJV verse. Each
+# listed (chapter, verse) is concatenated with the immediately following verse,
+# making the total match KJV so reindex_by_kjv can handle the boundary shifts.
+# Points verified against the KJV text:
+#   Numbers 25:19 (וַיְהִי אַחֲרֵי הַמַּגֵּפָה) + 26:1  -> KJV 26:1
+#   1 Samuel 20:42 + 21:1 (וַיָּקָם וַיֵּלַךְ)          -> KJV 20:42
+#   1 Kings 22:43 + 22:44 (אַךְ הַבָּמוֹת …)             -> KJV 22:43
+#   1 Chronicles 12:4 + 12:5                            -> KJV 12:4
+MERGE_AFTER = {
+    "Numbers": [(25, 19)],
+    "1 Samuel": [(20, 42)],
+    "1 Kings": [(22, 43)],
+    "1 Chronicles": [(12, 4)],
+}
+
+
+def apply_merges(verses, book_name):
+    """Concatenate each configured Hebrew verse with the one immediately after
+    it, so two-Hebrew-verses-to-one-KJV-verse books match the KJV total."""
+    points = set(MERGE_AFTER.get(book_name, []))
+    if not points:
+        return verses
+    out = []
+    i = 0
+    while i < len(verses):
+        ch, v, body = verses[i]
+        if (ch, v) in points and i + 1 < len(verses):
+            out.append((ch, v, (body + " " + verses[i + 1][2]).strip()))
+            i += 2
+        else:
+            out.append((ch, v, body))
+            i += 1
+    return out
 
 
 def kjv_chapter_sizes(book_name):
@@ -403,6 +438,7 @@ def generate_grebrew_file(book_name):
     with open(f"../Hebrew XML/{book_name}.xml", 'r', encoding='utf-8') as f:
         xml_content = f.read()
     verses = process_xml_to_text(xml_content, book_name)
+    verses = apply_merges(verses, book_name)  # no-op for non-merge books
     verses = reindex_by_kjv(verses, kjv_chapter_sizes(book_name))
     out_path = f"../texts/{book_name}.Grebrew.txt"
     with open(out_path, 'w', encoding='utf-8') as f:
