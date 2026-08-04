@@ -331,32 +331,56 @@ button {
 */
 
 
+/* Qere/Ketiv display.
+   Markup comes from python/hebrewmanager.py (KQTagging + bare-qere handling):
+     ketiv + qere -> <span class="ketiv">KETIV<span class="qere">QERE</span></span>
+     silent ketiv -> <span class="silentKetiv">KETIV</span>
+     bare qere    -> <span class="qereVeloKetiv">QERE</span>
+   The ketiv (written form) is always visible; hovering reveals the qere. */
 .ketiv {
     position: relative;
     display: inline-block;
-    border-bottom: 1px dotted black;
-    border-color: black;
+    border-bottom: 1px dotted #b00;
+    cursor: help;
 }
-  
-.ketiv .hover-tooltip {
+
+/* The qere sits inside the ketiv span and is shown only on hover, as a
+   floating tooltip that takes no layout space until revealed. */
+.ketiv .qere {
     visibility: hidden;
-    width: 50px;
-    background-color: black;
-    color: #fff;
-    text-align: center;
-    border-radius: 6px;
-    padding: 5px 0;
-  
-    /* Position the tooltip */
+    opacity: 0;
+    transition: opacity 0.1s ease-in;
+
     position: absolute;
-    z-index: 1;
-    top: 120%;
-    left: 0%;
-    margin-left: 0px;
-  }
-  
-.ketiv:hover .hover-tooltip {
+    z-index: 10;
+    top: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+
+    direction: rtl;
+    white-space: nowrap;
+    background-color: #222;
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.9em;
+}
+
+.ketiv:hover .qere,
+.ketiv:focus .qere {
     visibility: visible;
+    opacity: 1;
+}
+
+/* Ketiv written but not read: distinct dotted underline, no qere to reveal. */
+.silentKetiv {
+    border-bottom: 1px dotted #888;
+}
+
+/* Qere read but never written (qere velo ketiv): show the read word, marked
+   subtly to signal it has no consonantal form in the text. */
+.qereVeloKetiv {
+    border-bottom: 1px dashed #b00;
 }
 
 body {

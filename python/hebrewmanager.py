@@ -114,7 +114,7 @@ def KQTagging(ketiv, qere):
     return span
 
 
-def process_xml_to_text(xml_content, book_name):
+def process_xml_to_text(xml_content, book_name, reversify=None):
     try:
         hapaxes = grabHapaxes(book_name)
 
@@ -144,6 +144,11 @@ def process_xml_to_text(xml_content, book_name):
                 print("More than one possible match for: ")
                 print(hapax)
     
+        # Resolve the reversification map for this book (identity if none).
+        if reversify is None:
+            reversify = REVERSIFY_MAPS.get(book_name)
+
+        collected = []  # list of (kjv_chapter:int, kjv_verse:int, body:str)
         for chapter in book.findall('c'):
             chapter_num = chapter.get('n')
             #print(chapter_num)
@@ -155,18 +160,32 @@ def process_xml_to_text(xml_content, book_name):
                 while i < len(verse):
                     element = verse[i]
                     if element.tag == 'k':
-                        # Get the corresponding qere
-                        qere = verse[i + 1].text if i + 1 < len(verse) and verse[i + 1].tag == 'q' else ''
-                        ketiv = killCantillationMarks(element.text)
-                        qere = killCantillationMarks(qere)
+                        # A ketiv may be paired with one OR MORE qere words
+                        # (e.g. Gen 30:11, where the written בגד is read as the
+                        # two words בָּא גָד). Consume every consecutive <k>, then
+                        # every consecutive <q>, so no qere word is dropped.
+                        ketivParts = []
+                        while i < len(verse) and verse[i].tag == 'k':
+                            ketivParts.append(verse[i].text)
+                            i += 1
+                        qereParts = []
+                        while i < len(verse) and verse[i].tag == 'q':
+                            qereParts.append(verse[i].text)
+                            i += 1
+
+                        ketiv = ' '.join(killCantillationMarks(p) for p in ketivParts)
+                        qere = ' '.join(killCantillationMarks(p) for p in qereParts)
 
                         ketiv = colorHapaxes(ketiv, masterHapaxList, matchToHapaxDict, book_name)
                         qere = colorHapaxes(qere, masterHapaxList, matchToHapaxDict, book_name)
 
                         words.append(KQTagging(ketiv, qere))
-                        i += 2  # Skip the next element (qere)
                     elif element.tag == 'q':
-                        # Skip as it's handled with ketiv
+                        # Lone qere (qere velo ketiv): read but never written. There
+                        # is no consonantal form to show, so display the qere itself.
+                        loneQere = killCantillationMarks(element.text)
+                        loneQere = colorHapaxes(loneQere, masterHapaxList, matchToHapaxDict, book_name)
+                        words.append(f'<span class="qereVeloKetiv">{loneQere}</span>')
                         i += 1
                     elif element.tag == 'w' and element.text:
                         cleanedWord = killCantillationMarks(element.text)
@@ -182,11 +201,18 @@ def process_xml_to_text(xml_content, book_name):
                     else:
                         i += 1
 
-                verse_text = f"{chapter_num}.{verse_num} {' '.join(words)}".replace('־ ', '־')
-                output.append(verse_text)
+                ch_i, v_i = int(chapter_num), int(verse_num)
+                if reversify:
+                    ch_i, v_i = reversify(ch_i, v_i)
+                body = ' '.join(words)
+                collected.append((ch_i, v_i, body))
             print("Completed chapter " + str(chapter_num))
 
         print("Should have completed processing XML?")
+
+        # Sort so reversified verses (e.g. Hebrew 32:1 -> KJV 31:55) land in order.
+        collected.sort(key=lambda t: (t[0], t[1]))
+        output = [f"{ch}.{v} {body}".replace('־ ', '־') for ch, v, body in collected]
 
         return '\n'.join(output)
     
@@ -292,13 +318,52 @@ def main(book_name):
             xml_content = f.read()
 
         find_consecutive_qeres(book_name, xml_content)
-        
+
         compareCounts(book_name, xml_content)
         return True
-    
+
     except Exception as e:
         print(f"Error processing {book_name}: {str(e)}")
         return False
-    
-for book in allOTBooks:
-    main(book)
+
+
+# ---------------------------------------------------------------------------
+# Reversification: remap Masoretic (Tanakh) verse addresses onto KJV numbering
+# so the Hebrew lines up with the other editions in all_verses.
+#
+# Each map is a function (chapter:int, verse:int) -> (chapter:int, verse:int).
+# Genesis's only divergence is the 31/32 boundary: Hebrew 32:1 is KJV 31:55,
+# and Hebrew 32:2-33 shift down to KJV 32:1-32 (verified against the XML and
+# texts/Genesis.KJV.txt: Hebrew ch31=54/ch32=33 vs KJV ch31=55/ch32=32).
+# Other books' split/merge cases are added here as they are pilot-verified.
+# ---------------------------------------------------------------------------
+
+def genesis_reversify(chapter, verse):
+    if chapter == 32:
+        return (31, 55) if verse == 1 else (32, verse - 1)
+    return (chapter, verse)
+
+
+REVERSIFY_MAPS = {
+    "Genesis": genesis_reversify,
+}
+
+
+def generate_grebrew_file(book_name):
+    """Parse the UXLC XML for `book_name`, reversify to KJV numbering, and write
+    ../texts/{book_name}.Grebrew.txt (chapter.verse <hebrew html> per line)."""
+    with open(f"../Hebrew XML/{book_name}.xml", 'r', encoding='utf-8') as f:
+        xml_content = f.read()
+    text = process_xml_to_text(xml_content, book_name)
+    out_path = f"../texts/{book_name}.Grebrew.txt"
+    with open(out_path, 'w', encoding='utf-8') as f:
+        f.write(text + "\n")
+    print(f"Wrote {out_path} ({len(text.splitlines())} verses)")
+    return out_path
+
+
+if __name__ == "__main__":
+    # Diagnostics over every OT book (read-only). Guarded so the module can be
+    # imported without side effects.
+    for book in allOTBooks:
+        main(book)

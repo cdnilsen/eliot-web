@@ -451,7 +451,26 @@ function processText(text: string, state: EditionState, edition: Edition, isDumm
             return text;
         }
     }
-    
+
+}
+
+// The OT sections whose original-language text is Hebrew (right-to-left). The NT
+// sections' grebrew text is Greek (left-to-right), so they are deliberately excluded.
+const hebrewSections = ["pentateuch", "history", "wisdom", "major_prophets", "minor_prophets"];
+
+function isHebrewBook(book: string): boolean {
+    return hebrewSections.some(section => sectionToBookDict[section].includes(book));
+}
+
+// Hebrew grebrew text carries its own HTML (qere/ketiv spans, hapax coloring).
+// Unlike the generic grebrew branch in processText, this must NOT blanket-strip
+// </span>, which would destroy the nested qere/ketiv markup. When hapaxes are
+// hidden we remove only the hapax-color spans and leave the variant markup intact.
+function processGrebrewText(text: string, state: EditionState): string {
+    if (state.hapaxes == "none") {
+        return text.replace(/<span style="color:#0044FF">(.*?)<\/span>/g, "$1");
+    }
+    return text;
 }
 
 type EditionColumns = {
@@ -494,11 +513,9 @@ function getColumnWidths(editions: Edition[], state: EditionState): EditionColum
     if (editions.includes("kjv")) {
         rightHandSideEditions.push("kjv");
     }
-    /*
     if (editions.includes("grebrew")) {
         rightHandSideEditions.push("grebrew");
     }
-    */
    
     let rightHandSideWidth = 45 / rightHandSideEditions.length;
     let leftHandSideWidth = 45 / leftHandSideEditions.length;
@@ -624,9 +641,15 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
         } else if (isMassachusett(edition) && verseText) {
             verseText = processMassText(verseText, state);
         } else if (verseText) {
-            console.log(edition)
             if (edition == "kjv") {
                 verseText = processEnglishText(verseText, state);
+            } else if (edition == "grebrew") {
+                verseText = processGrebrewText(verseText, state);
+                // Hebrew (OT) is right-to-left; Greek (NT) stays left-to-right.
+                if (isHebrewBook(state.book)) {
+                    cell.dir = "rtl";
+                    cell.style.textAlign = "right";
+                }
             }
         }
         if (verseText && typeof verseText === 'string') {
