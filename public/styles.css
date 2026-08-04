@@ -3,16 +3,31 @@
     src: url('./Gentium/GentiumPlus-Regular.ttf') format('truetype');
 }
 
-/* Ezra SIL: a Biblical-Hebrew serif with full niqqud coverage (incl. the rare
-   U+05BA holam-haser-for-vav, paseq, upper dot) that Gentium and the system
-   fallback lack. Applied to Hebrew (OT) verse cells via .hebrew-text. */
+/* Biblical-Hebrew serifs with full niqqud coverage (incl. the rare U+05BA
+   holam-haser-for-vav, paseq, upper dot) that Gentium and the system fallback
+   lack. Noto Serif Hebrew is the primary face (a variable font, so the weight
+   is dialable); Ezra SIL is the fallback. Applied via .hebrew-text. */
+@font-face {
+    font-family: 'Noto Serif Hebrew';
+    src: url('./Noto_Serif_Hebrew/NotoSerifHebrew-VariableFont_wdth,wght.ttf') format('truetype');
+    font-weight: 100 900;
+}
+
 @font-face {
     font-family: 'Ezra SIL';
     src: url('./Ezra/SILEOT.ttf') format('truetype');
 }
 
+/* .hebrew-font: apply the Hebrew face/weight only (for inline Hebrew or cells
+   with their own sizing, e.g. the notes page). .hebrew-text adds the reader's
+   verse-cell sizing on top. */
+.hebrew-font,
 .hebrew-text {
-    font-family: 'Ezra SIL', serif;
+    font-family: 'Noto Serif Hebrew', 'Ezra SIL', serif;
+    font-weight: 350;
+}
+
+.hebrew-text {
     font-size: 1.2em;
     line-height: 1.9;
 }
