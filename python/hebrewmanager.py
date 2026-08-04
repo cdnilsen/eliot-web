@@ -9,6 +9,20 @@ allOTBooks = ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshu
 textFolder = "../texts/"
 hebrewXMLFolder = "../hebrew_text_files/"
 
+def word_text(element):
+    """Full text of a <w>/<k>/<q>, including tails after inline markers.
+    <x> elements are editorial note references (content is a letter like
+    'd'/'t'/'q', NOT part of the word), so their text is dropped while the word
+    continues in their tail — e.g. <w>קֹ<x>d</x>רַח</w> is the single word קֹרַח.
+    <s> (unusually sized letter) and any other inline text IS part of the word."""
+    parts = [element.text or ""]
+    for child in element:
+        if child.tag != "x":
+            parts.append(child.text or "")
+        parts.append(child.tail or "")
+    return "".join(parts)
+
+
 def killCantillationMarks(word):
     if not word:  # empty/None <w>/<k>/<q> text
         return ""
@@ -64,7 +78,7 @@ def checkWordsAgainstHapaxes(xml_content, book_name):
             while i < len(verse):
                 element = verse[i]
                 if element.tag == 'k' or element.tag == 'q' or element.tag == 'w':
-                   cleanedWord = killCantillationMarks(element.text)
+                   cleanedWord = killCantillationMarks(word_text(element))
                    for hapax in allHapaxes:
                        if hapax in cleanedWord:
                            hapaxToMatchDict[hapax].append(cleanedWord)
@@ -120,6 +134,58 @@ def KQTagging(ketiv, qere):
     return span
 
 
+def process_word_elements(elements, book_name, masterHapaxList, matchToHapaxDict):
+    """Turn a list of <w>/<k>/<q>/<pe>/<samekh> elements into a body string:
+    cantillation stripped, qere/ketiv tagged, hapaxes coloured, whitespace
+    normalized. Works on a whole verse's children or any slice of them (used by
+    the Psalms superscription splitter)."""
+    words = []
+    i = 0
+    n = len(elements)
+    while i < n:
+        element = elements[i]
+        if element.tag == 'k':
+            # A ketiv may be paired with one OR MORE qere words (e.g. Gen 30:11,
+            # written בגד read as בָּא גָד). Consume all consecutive <k> then all
+            # consecutive <q> so no qere word is dropped.
+            ketivParts = []
+            while i < n and elements[i].tag == 'k':
+                ketivParts.append(word_text(elements[i]))
+                i += 1
+            qereParts = []
+            while i < n and elements[i].tag == 'q':
+                qereParts.append(word_text(elements[i]))
+                i += 1
+            ketiv = ' '.join(killCantillationMarks(p) for p in ketivParts)
+            qere = ' '.join(killCantillationMarks(p) for p in qereParts)
+            ketiv = colorHapaxes(ketiv, masterHapaxList, matchToHapaxDict, book_name)
+            qere = colorHapaxes(qere, masterHapaxList, matchToHapaxDict, book_name)
+            words.append(KQTagging(ketiv, qere))
+        elif element.tag == 'q':
+            # Lone qere (qere velo ketiv): read but never written -> show the qere.
+            loneQere = killCantillationMarks(word_text(element))
+            loneQere = colorHapaxes(loneQere, masterHapaxList, matchToHapaxDict, book_name)
+            words.append(f'<span class="qereVeloKetiv">{loneQere}</span>')
+            i += 1
+        elif element.tag == 'w':
+            cleanedWord = killCantillationMarks(word_text(element))
+            if cleanedWord:
+                cleanedWord = colorHapaxes(cleanedWord, masterHapaxList, matchToHapaxDict, book_name)
+                words.append(cleanedWord)
+            i += 1
+        elif element.tag == 'pe':
+            words.append('<sup>פ</sup>')
+            i += 1
+        elif element.tag == 'samekh':
+            words.append('<sup>ס</sup>')
+            i += 1
+        else:
+            i += 1
+    # Collapse any embedded whitespace (some UXLC <w> texts carry a stray
+    # newline, e.g. Jer 34:21) so one verse == one output line.
+    return ' '.join(' '.join(words).split()).replace('־ ', '־')
+
+
 def process_xml_to_text(xml_content, book_name):
     """Parse the UXLC XML into an ordered list of (chapter, verse, body) tuples
     in the Masoretic (Hebrew) numbering, with cantillation stripped, qere/ketiv
@@ -160,56 +226,7 @@ def process_xml_to_text(xml_content, book_name):
             #print(chapter_num)
             for verse in chapter.findall('v'):
                 verse_num = verse.get('n')
-                words = []
-                # Process each word element
-                i = 0
-                while i < len(verse):
-                    element = verse[i]
-                    if element.tag == 'k':
-                        # A ketiv may be paired with one OR MORE qere words
-                        # (e.g. Gen 30:11, where the written בגד is read as the
-                        # two words בָּא גָד). Consume every consecutive <k>, then
-                        # every consecutive <q>, so no qere word is dropped.
-                        ketivParts = []
-                        while i < len(verse) and verse[i].tag == 'k':
-                            ketivParts.append(verse[i].text)
-                            i += 1
-                        qereParts = []
-                        while i < len(verse) and verse[i].tag == 'q':
-                            qereParts.append(verse[i].text)
-                            i += 1
-
-                        ketiv = ' '.join(killCantillationMarks(p) for p in ketivParts)
-                        qere = ' '.join(killCantillationMarks(p) for p in qereParts)
-
-                        ketiv = colorHapaxes(ketiv, masterHapaxList, matchToHapaxDict, book_name)
-                        qere = colorHapaxes(qere, masterHapaxList, matchToHapaxDict, book_name)
-
-                        words.append(KQTagging(ketiv, qere))
-                    elif element.tag == 'q':
-                        # Lone qere (qere velo ketiv): read but never written. There
-                        # is no consonantal form to show, so display the qere itself.
-                        loneQere = killCantillationMarks(element.text)
-                        loneQere = colorHapaxes(loneQere, masterHapaxList, matchToHapaxDict, book_name)
-                        words.append(f'<span class="qereVeloKetiv">{loneQere}</span>')
-                        i += 1
-                    elif element.tag == 'w' and element.text:
-                        cleanedWord = killCantillationMarks(element.text)
-                        cleanedWord = colorHapaxes(cleanedWord, masterHapaxList, matchToHapaxDict, book_name)
-                        words.append(cleanedWord)
-                        i += 1
-                    elif element.tag == 'pe':
-                        words.append('<sup>פ</sup>')
-                        i += 1
-                    elif element.tag == 'samekh':
-                        words.append('<sup>ס</sup>')
-                        i += 1
-                    else:
-                        i += 1
-
-                # Collapse any embedded whitespace (some UXLC <w> texts carry a
-                # stray newline, e.g. Jer 34:21) so one verse == one output line.
-                body = ' '.join(' '.join(words).split()).replace('־ ', '־')
+                body = process_word_elements(list(verse), book_name, masterHapaxList, matchToHapaxDict)
                 collected.append((int(chapter_num), int(verse_num), body))
             #print("Completed chapter " + str(chapter_num))
 
