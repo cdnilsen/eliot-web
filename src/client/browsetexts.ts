@@ -366,19 +366,17 @@ function editionNumberListener(state: EditionState) {
         if (checkbox.checked) {
             state.editions = state.editions * p;
         }
-        checkbox.addEventListener("change", function() {
-            if (checkbox.checked) {
-                state.editions = state.editions * p;
-            } else {
-                state.editions = state.editions / p;
-            }
-            // Re-render the currently displayed chapter with the new columns.
-            const display = document.getElementById('textColumns');
-            if (display && display.children.length > 0 && state.book) {
-                fetchChapter(state);
-            }
-        });
+        // Attach the change-listener exactly once (fetchChapter calls this
+        // function on every load; re-attaching would stack duplicate handlers).
+        if (!editionChangeAttached) {
+            checkbox.addEventListener("change", function() {
+                // Re-render the current chapter's columns from cache — no
+                // re-fetch and no scroll reset.
+                if (state.book) rerenderColumns(state);
+            });
+        }
     }
+    editionChangeAttached = true;
 }
 
 function highlightingListener(docID: string, setting: Highlighting, state: EditionState) {
@@ -737,6 +735,16 @@ function createNavBar(state: EditionState) {
 // Single resize handler that keeps the sticky header aligned under the nav bar.
 let headerResizeHandler: (() => void) | null = null;
 
+// Cache of the last-fetched chapter so a column checkbox can re-render from it
+// without re-fetching or resetting the scroll position.
+let lastVerses: Verse[] | null = null;
+let lastCorrectedEditions: Edition[] = [];
+let editionChangeAttached = false;
+
+function rerenderColumns(state: EditionState) {
+    if (lastVerses) createVerseGrid(lastVerses, lastCorrectedEditions, state);
+}
+
 // Each toggle-able column's checkbox. Editions not listed here (e.g. kjv) have
 // no checkbox and are always shown.
 const editionCheckboxId: { [k: string]: string } = {
@@ -1020,6 +1028,10 @@ async function fetchChapter(state: EditionState) {
         console.log("editionsToFetch:", editionsToFetch);
         console.log("columnsToNuke:", columnsToNuke);
         console.log("correctedEditions:", correctedEditions);
+
+        // Cache for cheap column-toggle re-renders (see rerenderColumns).
+        lastVerses = verses;
+        lastCorrectedEditions = correctedEditions;
 
         createVerseGrid(verses, correctedEditions, state);
 
