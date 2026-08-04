@@ -728,5 +728,7 @@ def delete_by_book(table_name: str, book_value: str) -> None:
 #delete_by_book('all_verses', 'Acts')
 #main()
 
-connection = psycopg2.connect(DATABASE_URL)
-clear_tables(connection)
+# Runs on import and prompts to wipe tables — commented out to defuse.
+# Re-enable deliberately (e.g. inside main() or an __main__ guard) if needed.
+#connection = psycopg2.connect(DATABASE_URL)
+#clear_tables(connection)
