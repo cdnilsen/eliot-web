@@ -412,10 +412,10 @@ button {
     border-bottom: 1px dotted #888;
 }
 
-/* Qere read but never written (qere velo ketiv): show the read word, marked
-   subtly to signal it has no consonantal form in the text. */
+/* Qere read but never written (qere velo ketiv): show the read word in the
+   same grey as the qere tooltip to signal it has no consonantal form. */
 .qereVeloKetiv {
-    border-bottom: 1px dashed #b00;
+    color: var(--qere-grey);
 }
 
 body {
