@@ -1,4 +1,5 @@
 import os
+import re
 import xml.etree.ElementTree as ET
 from library import cantillationMarksCodePoints, leftoverHapaxes
 import unicodedata
@@ -447,6 +448,21 @@ MERGE_AFTER = {
 }
 
 
+def ensure_sof_pasuq(body):
+    """Guarantee the first half of a merged verse ends with a sof pasuq. Most
+    verses already do, but some (e.g. Num 25:19) end on an athnach in the
+    Leningrad — which we strip — so the verse boundary would otherwise vanish.
+    Any trailing pe/samekh section marker stays after the sof pasuq."""
+    m = re.search(r'((?:\s*<sup>[פס]</sup>)+)\s*$', body)
+    if m:
+        core, trailing = body[:m.start()].rstrip(), m.group(1).strip()
+    else:
+        core, trailing = body.rstrip(), ''
+    if core and not core.endswith('׃'):
+        core += '׃'
+    return (core + ' ' + trailing).strip() if trailing else core
+
+
 def apply_merges(verses, book_name):
     """Concatenate each configured Hebrew verse with the one immediately after
     it, so two-Hebrew-verses-to-one-KJV-verse books match the KJV total."""
@@ -458,7 +474,7 @@ def apply_merges(verses, book_name):
     while i < len(verses):
         ch, v, body = verses[i]
         if (ch, v) in points and i + 1 < len(verses):
-            out.append((ch, v, (body + " " + verses[i + 1][2]).strip()))
+            out.append((ch, v, (ensure_sof_pasuq(body) + " " + verses[i + 1][2]).strip()))
             i += 2
         else:
             out.append((ch, v, body))
