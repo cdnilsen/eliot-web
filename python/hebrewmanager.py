@@ -370,12 +370,44 @@ def main(book_name):
 # different verse totals and are NOT handled here; they need per-verse logic.
 # ---------------------------------------------------------------------------
 
-# Books still handled outside generate_grebrew_file: Nehemiah (KJV 7:68 exists
-# only as Leningrad marginalia — deferred) and Psalms (verse-0 superscriptions,
-# via process_psalms.py; Ps 13 also has a final-verse split handled there).
+# Only Psalms is handled outside generate_grebrew_file (verse-0 superscriptions,
+# via process_psalms.py; Ps 13's final-verse split is handled there too).
 COMPLEX_BOOKS = {
-    "Nehemiah", "Psalms",
+    "Psalms",
 }
+
+
+def _clean_inserted(text):
+    """Normalize supplied (non-XML) verse text to the corpus style: drop Western
+    punctuation and use the Hebrew sof pasuq for the final stop."""
+    return " ".join(text.replace(",", "").replace(";", "").replace(".", "׃").split())
+
+
+# Verses present in the KJV but absent from the UXLC XML (Leningrad marginalia),
+# supplied by hand. Inserted after the given Hebrew (chapter, verse) so
+# reindex_by_kjv then places them at the right KJV address.
+#   Nehemiah 7:68 (horses 736, mules 245) sits between Heb 7:67 (manservants)
+#   and Heb 7:68 (camels/asses), i.e. KJV 7:68; the camels verse becomes 7:69.
+INSERT_AFTER = {
+    "Nehemiah": [((7, 67), _clean_inserted(
+        "סוּסֵיהֶם, שְׁבַע מֵאוֹת שְׁלֹשִׁים וְשִׁשָּׁה; פִּרְדֵיהֶם, מָאתַיִם אַרְבָּעִים וַחֲמִשָּׁה."))],
+}
+
+
+def apply_inserts(verses, book_name):
+    """Insert supplied verses (INSERT_AFTER) into the flat Hebrew list so the
+    total matches KJV; reindex_by_kjv assigns their final addresses."""
+    after = {}
+    for key, body in INSERT_AFTER.get(book_name, []):
+        after.setdefault(key, []).append(body)
+    if not after:
+        return verses
+    out = []
+    for ch, v, body in verses:
+        out.append((ch, v, body))
+        for ins in after.get((ch, v), []):
+            out.append((ch, v, ins))
+    return out
 
 # Split points: one Hebrew verse the KJV divides into two. {(ch, v): word_index}
 # where word_index is the 0-based word at which the second KJV verse begins.
@@ -471,7 +503,8 @@ def generate_grebrew_file(book_name):
     with open(f"../Hebrew XML/{book_name}.xml", 'r', encoding='utf-8') as f:
         xml_content = f.read()
     verses = process_xml_to_text(xml_content, book_name)
-    verses = apply_merges(verses, book_name)  # no-op for non-merge books
+    verses = apply_merges(verses, book_name)   # no-op for non-merge books
+    verses = apply_inserts(verses, book_name)  # no-op unless verses are supplied
     verses = reindex_by_kjv(verses, kjv_chapter_sizes(book_name))
     out_path = f"../texts/{book_name}.Grebrew.txt"
     with open(out_path, 'w', encoding='utf-8') as f:
