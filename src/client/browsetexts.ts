@@ -726,6 +726,9 @@ function createNavBar(state: EditionState) {
     return navBar;
 }
 
+// Single resize handler that keeps the sticky header aligned under the nav bar.
+let headerResizeHandler: (() => void) | null = null;
+
 function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], state: EditionState) {
     const displayDiv = document.getElementById('textColumns');
     if (!displayDiv) return;
@@ -768,6 +771,20 @@ function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], state: Edi
 
     tableContainer.appendChild(table);
     displayDiv.appendChild(table);
+
+    // The header row is sticky just below the sticky nav bar. The nav bar's
+    // height varies (e.g. taller when both Prev/Next buttons show), so measure
+    // it rather than hardcoding an offset — otherwise the header slides under
+    // the nav bar and gets clipped. Re-measure on resize (wrapping changes it).
+    const syncHeaderOffset = () => {
+        thead.style.top = navBar.offsetHeight + 'px';
+    };
+    syncHeaderOffset();
+    requestAnimationFrame(syncHeaderOffset);
+    // Keep a single resize listener (createVerseGrid runs on every chapter view).
+    if (headerResizeHandler) window.removeEventListener('resize', headerResizeHandler);
+    headerResizeHandler = syncHeaderOffset;
+    window.addEventListener('resize', headerResizeHandler);
 
     // Add CSS style
     const style = document.createElement('style');
