@@ -4,7 +4,9 @@ import psycopg2
 from library import bookToIDDict, cleanDiacritics
 
 #load_dotenv('vars.env')
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:Cb4-D5B2BEEg6*GBBB*Fga*b5FE6CbfF@monorail.proxy.rlwy.net:14224/railway')
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    raise SystemExit("DATABASE_URL is not set. Export it (its value is in python/vars.env) before running.")
 
 
 def clear_tables(connection):

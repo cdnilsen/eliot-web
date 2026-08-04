@@ -14,10 +14,9 @@ import psycopg2
 import psycopg2.extras
 from datetime import datetime, timezone, timedelta
 
-DATABASE_URL = os.environ.get(
-    'DATABASE_URL',
-    'postgresql://postgres:Cb4-D5B2BEEg6*GBBB*Fga*b5FE6CbfF@monorail.proxy.rlwy.net:14224/railway'
-)
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    raise SystemExit("DATABASE_URL is not set. Export it (its value is in python/vars.env) before running.")
 
 DECK = sys.argv[1] if len(sys.argv) > 1 else 'Akkadian'
 SESSION_ID = int(sys.argv[2]) if len(sys.argv) > 2 else None

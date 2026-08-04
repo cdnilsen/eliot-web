@@ -16,10 +16,9 @@ import psycopg2
 import psycopg2.extras
 from datetime import datetime, timezone, timedelta
 
-DATABASE_URL = os.environ.get(
-    'DATABASE_URL',
-    'postgresql://postgres:Cb4-D5B2BEEg6*GBBB*Fga*b5FE6CbfF@monorail.proxy.rlwy.net:14224/railway'
-)
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    raise SystemExit("DATABASE_URL is not set. Export it (its value is in python/vars.env) before running.")
 
 APPLY = '--apply' in sys.argv
 MAX_INTERVAL = 36500  # 100 years — anything over this is corrupt
