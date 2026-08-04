@@ -255,7 +255,13 @@ function createLineChart(entries) {
             },
             scales: {
                 x: {
-                    ticks: { maxTicksLimit: 12, maxRotation: 0 }
+                    ticks: {
+                        maxRotation: 0,
+                        callback: function (_value, index) {
+                            // Only show tick on the 1st of each month
+                            return dates[index]?.endsWith('-01') ? displayLabels[index] : '';
+                        }
+                    }
                 },
                 y: {
                     beginAtZero: true,
@@ -304,7 +310,7 @@ function createLineChart(entries) {
         };
     });
 }
-function createHeatmap(pastReviews, futureDue, todayDue) {
+function createHeatmap(pastReviews, futureDue) {
     const container = document.getElementById('heatmapContainer');
     if (!container)
         return;
@@ -315,7 +321,10 @@ function createHeatmap(pastReviews, futureDue, todayDue) {
     }
     const _now = new Date();
     const todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
-    dateMap.set(todayStr, { count: todayDue, type: 'today' });
+    // Today's cell shows reviews actually completed today (already present in
+    // pastReviews), re-tagged as 'today' so it keeps its own highlight color.
+    const todayReviews = dateMap.get(todayStr)?.count ?? 0;
+    dateMap.set(todayStr, { count: todayReviews, type: 'today' });
     for (const entry of futureDue) {
         // Skip overdue entries (date in the past) — they belong in the bar chart's
         // "Overdue" bucket, not as blue cells on past calendar days.
@@ -435,7 +444,7 @@ function createHeatmap(pastReviews, futureDue, todayDue) {
             const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
             let label;
             if (type === 'today') {
-                label = `${count} card${count !== 1 ? 's' : ''} due today`;
+                label = `${count} review${count !== 1 ? 's' : ''} done today`;
             }
             else if (type === 'past') {
                 label = `${count} card${count !== 1 ? 's' : ''} reviewed`;
@@ -500,7 +509,7 @@ export async function setupStatsTab() {
         ]);
         createPieChart(stats);
         if (heatmapData.status === 'success' && heatmapData.past_reviews && heatmapData.future_due) {
-            createHeatmap(heatmapData.past_reviews, heatmapData.future_due, heatmapData.today_due || 0);
+            createHeatmap(heatmapData.past_reviews, heatmapData.future_due);
         }
         if (historyData.status === 'success' && historyData.entries) {
             createLineChart(historyData.entries);
