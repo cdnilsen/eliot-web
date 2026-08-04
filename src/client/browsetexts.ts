@@ -645,10 +645,12 @@ function createVerseRow(verse: Verse, editions: EditionColumns, cellType: string
                 verseText = processEnglishText(verseText, state);
             } else if (edition == "grebrew") {
                 verseText = processGrebrewText(verseText, state);
-                // Hebrew (OT) is right-to-left; Greek (NT) stays left-to-right.
+                // Hebrew (OT) is right-to-left and needs the Ezra SIL font for
+                // full niqqud coverage; Greek (NT) stays left-to-right/default.
                 if (isHebrewBook(state.book)) {
                     cell.dir = "rtl";
                     cell.style.textAlign = "right";
+                    cell.classList.add("hebrew-text");
                 }
             }
         }

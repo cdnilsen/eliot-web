@@ -3,6 +3,20 @@
     src: url('./Gentium/GentiumPlus-Regular.ttf') format('truetype');
 }
 
+/* Ezra SIL: a Biblical-Hebrew serif with full niqqud coverage (incl. the rare
+   U+05BA holam-haser-for-vav, paseq, upper dot) that Gentium and the system
+   fallback lack. Applied to Hebrew (OT) verse cells via .hebrew-text. */
+@font-face {
+    font-family: 'Ezra SIL';
+    src: url('./Ezra/SILEOT.ttf') format('truetype');
+}
+
+.hebrew-text {
+    font-family: 'Ezra SIL', serif;
+    font-size: 1.2em;
+    line-height: 1.9;
+}
+
 body {
     font-family: Gentium, serif;
     font-size: 16px;
