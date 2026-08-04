@@ -252,8 +252,90 @@ function populateDropdownForTab(dropdownId: string) {
     });
 }
 
+// Populate the upload deck dropdown from the live DB deck list. Brand-new decks are
+// added via the "+ New Deck" button (a deck doesn't exist in the DB until a card is
+// uploaded into it), so this list reflects decks that currently have cards.
+async function populateUploadDeckDropdown(selectDeck?: string): Promise<void> {
+    const dropdown = document.getElementById('upload_dropdownMenu') as HTMLSelectElement;
+    if (!dropdown) return;
+    const decks = await fetchLiveDecks();
+    const previous = selectDeck ?? dropdown.value;
+    dropdown.innerHTML = '<option value="" disabled selected>(None)</option>';
+    decks.forEach(deckName => {
+        const option = document.createElement('option');
+        option.value = deckName;
+        option.text = deckName;
+        dropdown.appendChild(option);
+    });
+    if (previous && decks.includes(previous)) {
+        dropdown.value = previous;
+    }
+}
+
+// Wire up the "+ New Deck" control on the upload tab.
+function setupNewDeckButton(): void {
+    const newDeckBtn = document.getElementById('newDeckBtn') as HTMLButtonElement;
+    const form = document.getElementById('newDeckForm') as HTMLDivElement;
+    const input = document.getElementById('newDeckNameInput') as HTMLInputElement;
+    const createBtn = document.getElementById('newDeckCreateBtn') as HTMLButtonElement;
+    const cancelBtn = document.getElementById('newDeckCancelBtn') as HTMLButtonElement;
+    const errorDiv = document.getElementById('newDeckError') as HTMLDivElement;
+    if (!newDeckBtn || !form || !input || !createBtn || !cancelBtn) return;
+
+    const showForm = (show: boolean) => {
+        form.classList.toggle('hidden', !show);
+        if (show) {
+            input.value = '';
+            if (errorDiv) errorDiv.textContent = '';
+            input.focus();
+        }
+    };
+
+    const createDeck = () => {
+        if (errorDiv) errorDiv.textContent = '';
+        // Strip surrounding whitespace so " Hebrew " and "Hebrew" can't diverge.
+        const name = input.value.trim();
+        if (!name) {
+            if (errorDiv) errorDiv.textContent = 'Please enter a deck name.';
+            return;
+        }
+
+        const dropdown = document.getElementById('upload_dropdownMenu') as HTMLSelectElement;
+        if (!dropdown) return;
+
+        // Reject a name that already exists among the current options (case-insensitive).
+        const existing = Array.from(dropdown.options).map(o => o.value).filter(v => v !== '');
+        if (existing.some(d => d.toLowerCase() === name.toLowerCase())) {
+            if (errorDiv) errorDiv.textContent = `Deck "${name}" already exists.`;
+            return;
+        }
+
+        // Add and select the new deck, then fire the dropdown's change handler so the
+        // rest of the upload UI (submit button, special characters, etc.) updates.
+        const option = document.createElement('option');
+        option.value = name;
+        option.text = name;
+        dropdown.appendChild(option);
+        dropdown.value = name;
+        dropdown.dispatchEvent(new Event('change', { bubbles: true }));
+        showForm(false);
+    };
+
+    newDeckBtn.addEventListener('click', () => showForm(form.classList.contains('hidden')));
+    createBtn.addEventListener('click', createDeck);
+    cancelBtn.addEventListener('click', () => showForm(false));
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); createDeck(); }
+        else if (e.key === 'Escape') { showForm(false); }
+    });
+}
+
 createDeckDropdowns();
 initializeUploadTab(createCardRelationship);
+// Replace the upload dropdown's hardcoded seed with the live deck list, then wire
+// up the "+ New Deck" control for creating decks that don't exist yet.
+void populateUploadDeckDropdown();
+setupNewDeckButton();
 
 
 interface CardFieldData {
@@ -800,8 +882,9 @@ async function buildReviewDeckList(): Promise<void> {
 
     container.innerHTML = '<p>Loading card counts...</p>';
 
+    const decks = await fetchLiveDecks();
     const results = await Promise.all(
-        deckNameList.map(async (deckName) => {
+        decks.map(async (deckName) => {
             const result = await checkAvailableCardsWithOptions(deckName);
             deckCardCache.set(deckName, result);
             return { deckName, result };
@@ -1974,20 +2057,23 @@ function setupShuffleCardsTab(): void {
     const shuffleTab = document.getElementById('shuffle_mainDiv');
     if (!shuffleTab) return;
 
-    // Only set up once
+    // Build the DOM only once, but always refresh the deck dropdowns below so that
+    // decks created or deleted elsewhere are reflected each time the tab is opened.
     if (shuffleTab.querySelector('.date-shuffle-controls')) {
+        void refreshDeckManagementDropdowns();
         return;
     }
 
     // Replace content with new date shuffle interface
     shuffleTab.innerHTML = `
-        <h2>🎲 Shuffle Card Due Dates</h2>
-        <p class="tab-description">
-            Randomly redistribute the due dates of cards within a specified time period. 
-            This helps spread out card reviews more evenly.
-        </p>
-        
+        <h2>🗂️ Deck Management</h2>
+
         <div class="date-shuffle-controls">
+            <h3 style="margin-top: 0;">🎲 Shuffle Card Due Dates</h3>
+            <p class="tab-description">
+                Randomly redistribute the due dates of cards within a specified time period.
+                This helps spread out card reviews more evenly.
+            </p>
             <div class="shuffle-form">
                 <div class="form-group">
                     <label for="shuffleDeckSelect">
@@ -2050,7 +2136,66 @@ function setupShuffleCardsTab(): void {
         </div>
         
         <div id="shuffle_output" class="shuffle-output"></div>
-        
+
+        <div class="date-shuffle-controls" style="margin-top: 1.5rem;">
+            <h3 style="margin-top: 0;">📤 Export Deck</h3>
+            <p class="tab-description">
+                Download every card in a deck as a spreadsheet file.
+            </p>
+            <div class="shuffle-form">
+                <div class="form-group">
+                    <label for="exportDeckSelect"><strong>Select Deck:</strong></label>
+                    <select id="exportDeckSelect" class="form-control">
+                        <option value="">Choose a deck...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="exportFormatSelect"><strong>Format:</strong></label>
+                    <select id="exportFormatSelect" class="form-control">
+                        <option value="csv">CSV (.csv)</option>
+                        <option value="tsv">Tab-separated (.txt)</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button id="exportDeckBtn" class="btn btn-primary">📤 Export Deck</button>
+                </div>
+            </div>
+            <div id="export_output" class="shuffle-output"></div>
+        </div>
+
+        <div class="date-shuffle-controls" style="margin-top: 1.5rem; border: 1px solid #e0a0a0;">
+            <h3 style="margin-top: 0; color: #b30000;">🗑️ Delete Deck</h3>
+            <p class="tab-description">
+                Permanently delete an entire deck and every card and note in it.
+                <strong>This cannot be undone.</strong>
+            </p>
+            <div class="shuffle-form">
+                <div class="form-group">
+                    <label for="deleteDeckSelect"><strong>Select Deck:</strong></label>
+                    <select id="deleteDeckSelect" class="form-control">
+                        <option value="">Choose a deck...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="deleteDeckConfirmInput">
+                        <strong>Type the deck name to confirm:</strong>
+                    </label>
+                    <input type="text" id="deleteDeckConfirmInput" class="form-control"
+                           placeholder="Select a deck first" autocomplete="off" disabled>
+                    <small class="form-text">
+                        Must match the deck name exactly (trailing whitespace is ignored).
+                    </small>
+                </div>
+                <div class="form-actions">
+                    <button id="deleteDeckBtn" class="btn btn-primary"
+                            style="background: #b30000; border-color: #b30000;" disabled>
+                        🗑️ Delete Deck Permanently
+                    </button>
+                </div>
+            </div>
+            <div id="delete_output" class="shuffle-output"></div>
+        </div>
+
         <div id="shufflePreviewModal" class="modal-overlay" style="display: none;">
             <div class="modal-content">
                 <div class="modal-header">
@@ -2068,19 +2213,266 @@ function setupShuffleCardsTab(): void {
         </div>
     `;
     
-    // Dynamically populate deck options
-    const deckSelect = document.getElementById('shuffleDeckSelect') as HTMLSelectElement;
-    if (deckSelect) {
-        deckNameList.forEach(deckName => {
+    // Add event listeners
+    setupDateShuffleEventListeners();
+    setupDeckManagementEventListeners();
+
+    // Populate deck options from the live DB list (see setupShuffleCardsTab caller too).
+    void refreshDeckManagementDropdowns();
+}
+
+// Fetch the decks that currently exist in the database (have at least one card).
+// Falls back to the hardcoded list if the request fails so the UI still works.
+async function fetchLiveDecks(): Promise<string[]> {
+    try {
+        const response = await fetch('/decks');
+        const data = await response.json();
+        if (data.status === 'success' && Array.isArray(data.decks)) {
+            return data.decks;
+        }
+    } catch (error) {
+        console.error('Failed to fetch live deck list:', error);
+    }
+    return [...deckNameList];
+}
+
+// Repopulate the shuffle/export/delete deck dropdowns from the live deck list,
+// preserving the current selection when that deck still exists.
+async function refreshDeckManagementDropdowns(): Promise<void> {
+    const decks = await fetchLiveDecks();
+    ['shuffleDeckSelect', 'exportDeckSelect', 'deleteDeckSelect'].forEach(selectId => {
+        const select = document.getElementById(selectId) as HTMLSelectElement;
+        if (!select) return;
+        const previous = select.value;
+        select.innerHTML = '<option value="">Choose a deck...</option>';
+        decks.forEach(deckName => {
             const option = document.createElement('option');
             option.value = deckName;
             option.textContent = deckName;
-            deckSelect.appendChild(option);
+            select.appendChild(option);
+        });
+        if (previous && decks.includes(previous)) {
+            select.value = previous;
+        }
+    });
+}
+
+// Event listeners for the export/delete deck-management controls
+function setupDeckManagementEventListeners(): void {
+    const exportBtn = document.getElementById('exportDeckBtn') as HTMLButtonElement;
+    if (exportBtn && !exportBtn.dataset.initialized) {
+        exportBtn.dataset.initialized = 'true';
+        exportBtn.addEventListener('click', handleExportDeck);
+    }
+
+    const deleteSelect = document.getElementById('deleteDeckSelect') as HTMLSelectElement;
+    const confirmInput = document.getElementById('deleteDeckConfirmInput') as HTMLInputElement;
+    const deleteBtn = document.getElementById('deleteDeckBtn') as HTMLButtonElement;
+
+    // The confirmation input and delete button only make sense once a deck is chosen.
+    const refreshDeleteControls = () => {
+        const deck = deleteSelect?.value || '';
+        if (confirmInput) {
+            confirmInput.disabled = !deck;
+            confirmInput.placeholder = deck ? `Type "${deck}" to confirm` : 'Select a deck first';
+        }
+        // Ignore trailing whitespace only; leading whitespace / casing must match exactly.
+        const typedMatches = deck !== '' && confirmInput?.value.replace(/\s+$/, '') === deck;
+        if (deleteBtn) deleteBtn.disabled = !typedMatches;
+    };
+
+    if (deleteSelect && !deleteSelect.dataset.initialized) {
+        deleteSelect.dataset.initialized = 'true';
+        deleteSelect.addEventListener('change', () => {
+            if (confirmInput) confirmInput.value = '';
+            refreshDeleteControls();
         });
     }
-    
-    // Add event listeners
-    setupDateShuffleEventListeners();
+    if (confirmInput && !confirmInput.dataset.initialized) {
+        confirmInput.dataset.initialized = 'true';
+        confirmInput.addEventListener('input', refreshDeleteControls);
+    }
+    if (deleteBtn && !deleteBtn.dataset.initialized) {
+        deleteBtn.dataset.initialized = 'true';
+        deleteBtn.addEventListener('click', handleDeleteDeck);
+    }
+}
+
+// Escape a single field for CSV/TSV output.
+function escapeDelimitedField(value: string, delimiter: string): string {
+    const str = value ?? '';
+    if (delimiter === '\t') {
+        // Tabs and newlines would break a TSV row; replace them with spaces.
+        return str.replace(/[\t\r\n]+/g, ' ');
+    }
+    // CSV: quote fields containing the delimiter, quotes, or newlines (RFC 4180).
+    if (/[",\r\n]/.test(str)) {
+        return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+}
+
+// Build delimited text (CSV or TSV) from exported deck cards.
+function buildDelimitedDeckExport(
+    cards: Array<{ card_id: number; note_id: number; card_format: string; field_names: string[]; field_values: string[] }>,
+    delimiter: string
+): string {
+    // Work positionally so cards keep every value even when field_names are missing
+    // or a deck mixes card types with different field counts.
+    let maxFields = 0;
+    for (const card of cards) {
+        maxFields = Math.max(maxFields, (card.field_names || []).length, (card.field_values || []).length);
+    }
+
+    // Header for each field position: first non-empty name seen at that index, else field_N.
+    const fieldColumns: string[] = [];
+    for (let i = 0; i < maxFields; i++) {
+        let name = '';
+        for (const card of cards) {
+            const candidate = (card.field_names || [])[i];
+            if (candidate && candidate.trim() !== '') { name = candidate; break; }
+        }
+        fieldColumns.push(name || `field_${i + 1}`);
+    }
+
+    const header = ['card_id', 'note_id', 'card_format', ...fieldColumns];
+    const rows: string[] = [header.map(h => escapeDelimitedField(h, delimiter)).join(delimiter)];
+
+    for (const card of cards) {
+        const values = card.field_values || [];
+        const row = [
+            String(card.card_id),
+            String(card.note_id ?? ''),
+            card.card_format ?? '',
+            ...fieldColumns.map((_, i) => values[i] ?? '')
+        ];
+        rows.push(row.map(cell => escapeDelimitedField(cell, delimiter)).join(delimiter));
+    }
+
+    return rows.join('\r\n');
+}
+
+// Export a whole deck to a downloadable CSV or TSV file.
+async function handleExportDeck(): Promise<void> {
+    const deckSelect = document.getElementById('exportDeckSelect') as HTMLSelectElement;
+    const formatSelect = document.getElementById('exportFormatSelect') as HTMLSelectElement;
+    const btn = document.getElementById('exportDeckBtn') as HTMLButtonElement;
+    const outputDiv = document.getElementById('export_output') as HTMLDivElement;
+
+    const deck = deckSelect?.value || '';
+    const format = formatSelect?.value === 'tsv' ? 'tsv' : 'csv';
+
+    if (!deck) {
+        if (outputDiv) outputDiv.innerHTML = '<div class="error-message"><p>Please select a deck to export.</p></div>';
+        return;
+    }
+
+    if (btn) { btn.textContent = '📤 Exporting...'; btn.disabled = true; }
+    if (outputDiv) outputDiv.innerHTML = '<p class="loading">Fetching cards...</p>';
+
+    try {
+        const response = await fetch(`/export_deck?deck=${encodeURIComponent(deck)}`);
+        const result = await response.json();
+
+        if (result.status !== 'success') {
+            if (outputDiv) outputDiv.innerHTML = `<div class="error-message"><p>${result.error ?? 'Export failed.'}</p></div>`;
+            return;
+        }
+
+        const cards = result.cards || [];
+        if (cards.length === 0) {
+            if (outputDiv) outputDiv.innerHTML = `<div class="error-message"><p>Deck "${deck}" has no cards to export.</p></div>`;
+            return;
+        }
+
+        const delimiter = format === 'tsv' ? '\t' : ',';
+        const content = buildDelimitedDeckExport(cards, delimiter);
+        const mime = format === 'tsv' ? 'text/tab-separated-values' : 'text/csv';
+        const extension = format === 'tsv' ? 'txt' : 'csv';
+
+        // Trigger a browser download.
+        const safeName = deck.replace(/[^\w'-]+/g, '_');
+        const blob = new Blob([content], { type: `${mime};charset=utf-8;` });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${safeName}.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        if (outputDiv) outputDiv.innerHTML = `
+            <div class="success-message">
+                <p>✅ Exported <strong>${cards.length}</strong> card${cards.length !== 1 ? 's' : ''} from "${deck}" as ${extension.toUpperCase()}.</p>
+            </div>`;
+    } catch (error) {
+        console.error('Error exporting deck:', error);
+        if (outputDiv) outputDiv.innerHTML = '<div class="error-message"><p>❌ Failed to reach the server. Please try again.</p></div>';
+    } finally {
+        if (btn) { btn.textContent = '📤 Export Deck'; btn.disabled = false; }
+    }
+}
+
+// Permanently delete a whole deck.
+async function handleDeleteDeck(): Promise<void> {
+    const deckSelect = document.getElementById('deleteDeckSelect') as HTMLSelectElement;
+    const confirmInput = document.getElementById('deleteDeckConfirmInput') as HTMLInputElement;
+    const btn = document.getElementById('deleteDeckBtn') as HTMLButtonElement;
+    const outputDiv = document.getElementById('delete_output') as HTMLDivElement;
+
+    const deck = deckSelect?.value || '';
+    const typed = (confirmInput?.value ?? '').replace(/\s+$/, '');
+
+    // Guard again here in case the button was somehow enabled.
+    if (!deck || typed !== deck) {
+        if (outputDiv) outputDiv.innerHTML = '<div class="error-message"><p>The typed deck name must match the selected deck exactly.</p></div>';
+        return;
+    }
+
+    const confirmed = confirm(
+        `DELETE DECK\n\n` +
+        `Deck: ${deck}\n\n` +
+        `This permanently deletes every card and note in this deck and cannot be undone.\n\n` +
+        `Continue?`
+    );
+    if (!confirmed) return;
+
+    if (btn) { btn.textContent = '🗑️ Deleting...'; btn.disabled = true; }
+    if (outputDiv) outputDiv.innerHTML = '<p class="loading">Deleting deck...</p>';
+
+    try {
+        const response = await fetch('/delete_deck', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deck })
+        });
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            if (outputDiv) outputDiv.innerHTML = `
+                <div class="success-message">
+                    <h3>✅ Deck Deleted</h3>
+                    <p>Deleted <strong>${result.cards_deleted}</strong> card${result.cards_deleted !== 1 ? 's' : ''} and <strong>${result.notes_deleted}</strong> note${result.notes_deleted !== 1 ? 's' : ''} from "${deck}".</p>
+                </div>`;
+            // Reset the confirmation controls.
+            if (deckSelect) deckSelect.value = '';
+            if (confirmInput) { confirmInput.value = ''; confirmInput.disabled = true; confirmInput.placeholder = 'Select a deck first'; }
+            if (btn) btn.disabled = true;
+            // The deleted deck should no longer appear in any deck dropdown.
+            await refreshDeckManagementDropdowns();
+        } else {
+            if (outputDiv) outputDiv.innerHTML = `<div class="error-message"><h3>❌ Delete Failed</h3><p>${result.error ?? 'Unknown error'}</p></div>`;
+        }
+    } catch (error) {
+        console.error('Error deleting deck:', error);
+        if (outputDiv) outputDiv.innerHTML = '<div class="error-message"><h3>❌ Network Error</h3><p>Failed to reach the server. Please try again.</p></div>';
+    } finally {
+        if (btn) { btn.textContent = '🗑️ Delete Deck Permanently'; }
+        // Leave the button disabled unless the confirmation text still matches.
+        const stillMatches = (deckSelect?.value || '') !== '' && (confirmInput?.value ?? '').replace(/\s+$/, '') === deckSelect?.value;
+        if (btn) btn.disabled = !stillMatches;
+    }
 }
 
 // Event listener setup for date shuffle

@@ -12,7 +12,7 @@
         <h1>Welcome to Synapdeck!</h1>
         <div class="button-row">
             <button type="button" id="upload_cards" class="active">Upload Card Data</button>
-            <button type="button" id="shuffle_cards">Shuffle Cards</button>
+            <button type="button" id="shuffle_cards">Deck Management</button>
             <button type="button" id="browse_cards">Browse Cards</button>
             <button type="button" id="review_cards">Do Reviews</button>
             <button type="button" id="check_work">Check Your Work</button>
@@ -26,6 +26,13 @@
             <select id="upload_dropdownMenu" name="upload_dropdownMenu">
                 <option value="" disabled selected>(None)</option>
             </select>
+            <button type="button" id="newDeckBtn">+ New Deck</button>
+            <div id="newDeckForm" class="hidden" style="margin-top: 8px;">
+                <input type="text" id="newDeckNameInput" placeholder="New deck name" autocomplete="off">
+                <button type="button" id="newDeckCreateBtn">Create</button>
+                <button type="button" id="newDeckCancelBtn">Cancel</button>
+                <div id="newDeckError" style="color: #b30000; font-size: 13px; margin-top: 4px;"></div>
+            </div>
 
             <div id="cardFormatSection">
                 <label for="card_format_dropdown">Choose card type (more coming soon):</label>

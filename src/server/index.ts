@@ -4587,6 +4587,112 @@ app.post('/fix_weird_intervals', wrapAsync(async (req, res) => {
     });
 }));
 
+// Return the list of decks that actually exist (have at least one card)
+app.get('/decks', wrapAsync(async (req, res) => {
+    const result = await client.query(
+        `SELECT DISTINCT deck FROM cards WHERE deck IS NOT NULL AND deck <> '' ORDER BY deck`
+    );
+    const decks = result.rows.map(r => r.deck);
+    return res.json({ status: 'success', decks });
+}));
+
+// Export every card in a deck (field data) so the client can build a CSV/TSV file
+app.get('/export_deck', wrapAsync(async (req, res) => {
+    const deck = ((req.query.deck as string) || '').trim();
+    if (!deck) {
+        return res.status(400).json({ status: 'error', error: 'deck is required' });
+    }
+
+    const result = await client.query(
+        `SELECT card_id, note_id, card_format, field_names, field_values
+         FROM cards
+         WHERE deck = $1
+         ORDER BY note_id, card_id`,
+        [deck]
+    );
+
+    const cards = result.rows.map(row => ({
+        card_id: row.card_id,
+        note_id: row.note_id,
+        card_format: row.card_format || '',
+        field_names: row.field_names || [],
+        field_values: row.field_values || [],
+    }));
+
+    return res.json({ status: 'success', deck, count: cards.length, cards });
+}));
+
+// Permanently delete an entire deck: its cards, its notes, and its review history
+app.post('/delete_deck', express.json(), wrapAsync(async (req, res) => {
+    const deck = ((req.body?.deck as string) || '').trim();
+    if (!deck) {
+        return res.status(400).json({ status: 'error', error: 'deck is required' });
+    }
+
+    const transactionClient = await client.connect();
+    try {
+        await transactionClient.query('BEGIN');
+
+        // Grab the card_ids we're about to delete so we can scrub references to them
+        // from cards in OTHER decks (peers/prereqs/dependents can cross deck boundaries).
+        const cardIdsResult = await transactionClient.query(
+            'SELECT card_id FROM cards WHERE deck = $1',
+            [deck]
+        );
+        const cardIds: number[] = cardIdsResult.rows.map(r => r.card_id);
+
+        if (cardIds.length === 0) {
+            await transactionClient.query('ROLLBACK');
+            return res.status(404).json({ status: 'error', error: `Deck "${deck}" has no cards.` });
+        }
+
+        // Remove the soon-to-be-deleted card_ids from relationship arrays of cards in other decks.
+        await transactionClient.query(
+            `UPDATE cards c
+             SET peers = CASE WHEN c.peers && $1::int[]
+                          THEN ARRAY(SELECT x FROM unnest(c.peers) x WHERE NOT (x = ANY($1::int[])))
+                          ELSE c.peers END,
+                 prereqs = CASE WHEN c.prereqs && $1::int[]
+                          THEN ARRAY(SELECT x FROM unnest(c.prereqs) x WHERE NOT (x = ANY($1::int[])))
+                          ELSE c.prereqs END,
+                 dependents = CASE WHEN c.dependents && $1::int[]
+                          THEN ARRAY(SELECT x FROM unnest(c.dependents) x WHERE NOT (x = ANY($1::int[])))
+                          ELSE c.dependents END
+             WHERE c.deck <> $2
+               AND (c.peers && $1::int[] OR c.prereqs && $1::int[] OR c.dependents && $1::int[])`,
+            [cardIds, deck]
+        );
+
+        // Clear review history for this deck first (references this deck's cards/sessions).
+        await transactionClient.query('DELETE FROM session_card_reviews WHERE deck = $1', [deck]);
+        await transactionClient.query('DELETE FROM review_sessions WHERE deck = $1', [deck]);
+
+        // Delete the deck's cards, then its now-childless notes.
+        const cardsDeleted = await transactionClient.query('DELETE FROM cards WHERE deck = $1', [deck]);
+        const notesDeleted = await transactionClient.query('DELETE FROM notes WHERE deck = $1', [deck]);
+
+        await transactionClient.query('COMMIT');
+
+        console.log(`🗑️ Deleted deck "${deck}": ${cardsDeleted.rowCount} cards, ${notesDeleted.rowCount} notes`);
+
+        return res.json({
+            status: 'success',
+            deck,
+            cards_deleted: cardsDeleted.rowCount ?? 0,
+            notes_deleted: notesDeleted.rowCount ?? 0,
+        });
+    } catch (err) {
+        await transactionClient.query('ROLLBACK');
+        console.error('❌ Error deleting deck:', err);
+        return res.status(500).json({
+            status: 'error',
+            error: err instanceof Error ? err.message : 'Unknown error',
+        });
+    } finally {
+        transactionClient.release();
+    }
+}));
+
 // Replace your existing /review_forecast endpoint with this fixed version
 app.get('/review_forecast', wrapAsync(async (req, res) => {
     const { decks, days_ahead, start_date } = req.query;
