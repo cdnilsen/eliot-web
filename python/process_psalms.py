@@ -31,8 +31,6 @@ PASEQ = 0x05C0
 #   25, 28: bare לְדָוִד before an אֵלֶיךָ acrostic.
 #   98:     bare מִזְמוֹר before שִׁירוּ לַיהוָה (paseq is mid-body).
 SPECIAL_CUT = {25: 1, 28: 1, 98: 1}
-# Handled with the split books (fold + final-verse split), not by this script.
-SKIP = {13}
 
 BOOK_ID = "019"
 
@@ -101,12 +99,21 @@ def process(write=False):
         H = len(verses)
         tgt = target.get(ch, [])
         has0 = bool(tgt) and tgt[0] == 0
-        if ch in SKIP:
-            report["skip"].append(ch)
-            continue
 
         def body(v):  # process a whole Hebrew verse element
             return process_word_elements(list(v), "Psalms", [], {})
+
+        if ch == 13:
+            # Special: Heb 13:1 is a superscription-only verse (-> v0), and its
+            # final verse (13:6) is split by the KJV into 13:5 + 13:6.
+            out.append((13, 0, body(verses[0])))              # superscription
+            for i, v in enumerate(verses[1:5], start=1):       # Heb 13:2-5 -> v1-4
+                out.append((13, i, body(v)))
+            last = word_elements(verses[5])                    # Heb 13:6 -> v5 + v6
+            out.append((13, 5, process_word_elements(last[:6], "Psalms", [], {})))
+            out.append((13, 6, process_word_elements(last[6:], "Psalms", [], {})))
+            report["special"] = report.get("special", []) + [13]
+            continue
 
         if not has0:  # plain
             for i, v in enumerate(verses, start=1):
@@ -137,14 +144,14 @@ def process(write=False):
 
         # verify this chapter's produced verse set matches the DB target
         produced = sorted(v for (c, v, _) in out if c == ch)
-        if ch not in SKIP and produced != sorted(tgt):
+        if produced != sorted(tgt):
             problems.append((ch, produced, sorted(tgt)))
 
     # report
     print(f"plain psalms: {len(report['plain'])}")
     print(f"Type A (fold): {len(report['typeA'])}  e.g. {report['typeA'][:5]}")
     print(f"Type B (split): {len(report['typeB'])}")
-    print(f"skipped (special): {sorted(report['skip'])}")
+    print(f"special (fold+split): {sorted(report.get('special', []))}")
     print(f"\nverse-count problems: {problems if problems else 'NONE'}")
     print("\n--- all Type B superscription cuts (v0 | v1-start) ---")
     for ch, cut, sup in report["typeB"]:

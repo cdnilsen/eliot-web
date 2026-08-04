@@ -220,14 +220,25 @@ def process_xml_to_text(xml_content, book_name):
                 print("More than one possible match for: ")
                 print(hapax)
     
+        splits = SPLIT_AT.get(book_name, {})
         collected = []  # list of (heb_chapter:int, heb_verse:int, body:str)
         for chapter in book.findall('c'):
             chapter_num = chapter.get('n')
             #print(chapter_num)
             for verse in chapter.findall('v'):
                 verse_num = verse.get('n')
-                body = process_word_elements(list(verse), book_name, masterHapaxList, matchToHapaxDict)
-                collected.append((int(chapter_num), int(verse_num), body))
+                els = list(verse)
+                key = (int(chapter_num), int(verse_num))
+                if key in splits:
+                    # One Hebrew verse the KJV divides in two: emit two bodies.
+                    left, right = split_elements(els, splits[key])
+                    collected.append((int(chapter_num), int(verse_num),
+                                      process_word_elements(left, book_name, masterHapaxList, matchToHapaxDict)))
+                    collected.append((int(chapter_num), int(verse_num),
+                                      process_word_elements(right, book_name, masterHapaxList, matchToHapaxDict)))
+                else:
+                    collected.append((int(chapter_num), int(verse_num),
+                                      process_word_elements(els, book_name, masterHapaxList, matchToHapaxDict)))
             #print("Completed chapter " + str(chapter_num))
 
         return collected
@@ -359,12 +370,34 @@ def main(book_name):
 # different verse totals and are NOT handled here; they need per-verse logic.
 # ---------------------------------------------------------------------------
 
-# Books still handled outside generate_grebrew_file: the two split books (one
-# Hebrew verse -> two KJV verses, needs text splitting) and Psalms (verse-0
-# superscriptions, via process_psalms.py). Ps 13 rides with the split books.
+# Books still handled outside generate_grebrew_file: Nehemiah (KJV 7:68 exists
+# only as Leningrad marginalia — deferred) and Psalms (verse-0 superscriptions,
+# via process_psalms.py; Ps 13 also has a final-verse split handled there).
 COMPLEX_BOOKS = {
-    "Nehemiah", "Isaiah", "Psalms",
+    "Nehemiah", "Psalms",
 }
+
+# Split points: one Hebrew verse the KJV divides into two. {(ch, v): word_index}
+# where word_index is the 0-based word at which the second KJV verse begins.
+# Verified against the KJV text:
+#   Isaiah 9:20  at בְּכָל־זֹאת  -> KJV 9:21 (…יְהוּדָה) + 9:22 (For all this…)
+#   Isaiah 63:19 at לוּא־        -> KJV 63:19 + 64:1 (Oh that thou wouldest rend…)
+SPLIT_AT = {
+    "Isaiah": {(9, 20): 10, (63, 19): 9},
+}
+
+
+def split_elements(els, word_index):
+    """Split a verse's child elements just before its `word_index`-th word
+    element (<w>/<k>/<q>), keeping any interspersed markers on the correct
+    side. Returns (left, right) element lists."""
+    count = 0
+    for pos, e in enumerate(els):
+        if e.tag in ("w", "k", "q"):
+            if count == word_index:
+                return els[:pos], els[pos:]
+            count += 1
+    return els, []
 
 # Merge books: one Hebrew verse-pair corresponds to a single KJV verse. Each
 # listed (chapter, verse) is concatenated with the immediately following verse,
