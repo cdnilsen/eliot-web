@@ -10,6 +10,8 @@ textFolder = "../texts/"
 hebrewXMLFolder = "../hebrew_text_files/"
 
 def killCantillationMarks(word):
+    if not word:  # empty/None <w>/<k>/<q> text
+        return ""
     word = unicodedata.normalize('NFD', word)  # Decompose
     newWord = ""
     for char in word:
@@ -26,6 +28,10 @@ def grabHapaxes(book):
         if line.startswith(book):
             thisBookHapaxLine = line.split("|")[1].strip()
             break
+
+    hapaxFile.close()
+    if not thisBookHapaxLine:  # no curated hapax list for this book -> no colouring
+        return []
 
     hapaxes = []
     splitHapaxLine = thisBookHapaxLine.split(",")
@@ -84,7 +90,7 @@ def checkWordsAgainstHapaxes(xml_content, book_name):
 
 
 def colorHapaxes(match, hapaxFormList, matchToHapaxDict, book):
-    leftoverHapaxList = list(leftoverHapaxes[book].keys())
+    leftoverHapaxList = list(leftoverHapaxes.get(book, {}).keys())
     if match in leftoverHapaxList:
         substring = leftoverHapaxes[book][match]
         return match.replace(substring, f'<span style="color:#0044FF">{substring}</span>')
@@ -114,7 +120,11 @@ def KQTagging(ketiv, qere):
     return span
 
 
-def process_xml_to_text(xml_content, book_name, reversify=None):
+def process_xml_to_text(xml_content, book_name):
+    """Parse the UXLC XML into an ordered list of (chapter, verse, body) tuples
+    in the Masoretic (Hebrew) numbering, with cantillation stripped, qere/ketiv
+    tagged, and hapaxes coloured. Reversification to KJV numbering happens later
+    (generate_grebrew_file), not here."""
     try:
         hapaxes = grabHapaxes(book_name)
 
@@ -144,11 +154,7 @@ def process_xml_to_text(xml_content, book_name, reversify=None):
                 print("More than one possible match for: ")
                 print(hapax)
     
-        # Resolve the reversification map for this book (identity if none).
-        if reversify is None:
-            reversify = REVERSIFY_MAPS.get(book_name)
-
-        collected = []  # list of (kjv_chapter:int, kjv_verse:int, body:str)
+        collected = []  # list of (heb_chapter:int, heb_verse:int, body:str)
         for chapter in book.findall('c'):
             chapter_num = chapter.get('n')
             #print(chapter_num)
@@ -201,20 +207,13 @@ def process_xml_to_text(xml_content, book_name, reversify=None):
                     else:
                         i += 1
 
-                ch_i, v_i = int(chapter_num), int(verse_num)
-                if reversify:
-                    ch_i, v_i = reversify(ch_i, v_i)
-                body = ' '.join(words)
-                collected.append((ch_i, v_i, body))
-            print("Completed chapter " + str(chapter_num))
+                # Collapse any embedded whitespace (some UXLC <w> texts carry a
+                # stray newline, e.g. Jer 34:21) so one verse == one output line.
+                body = ' '.join(' '.join(words).split()).replace('־ ', '־')
+                collected.append((int(chapter_num), int(verse_num), body))
+            #print("Completed chapter " + str(chapter_num))
 
-        print("Should have completed processing XML?")
-
-        # Sort so reversified verses (e.g. Hebrew 32:1 -> KJV 31:55) land in order.
-        collected.sort(key=lambda t: (t[0], t[1]))
-        output = [f"{ch}.{v} {body}".replace('־ ', '־') for ch, v, body in collected]
-
-        return '\n'.join(output)
+        return collected
     
     except Exception as e:
         print(f"Error in process_xml_to_text: {str(e)}")
@@ -331,34 +330,68 @@ def main(book_name):
 # Reversification: remap Masoretic (Tanakh) verse addresses onto KJV numbering
 # so the Hebrew lines up with the other editions in all_verses.
 #
-# Each map is a function (chapter:int, verse:int) -> (chapter:int, verse:int).
-# Genesis's only divergence is the 31/32 boundary: Hebrew 32:1 is KJV 31:55,
-# and Hebrew 32:2-33 shift down to KJV 32:1-32 (verified against the XML and
-# texts/Genesis.KJV.txt: Hebrew ch31=54/ch32=33 vs KJV ch31=55/ch32=32).
-# Other books' split/merge cases are added here as they are pilot-verified.
+# For the great majority of OT books the ONLY difference is where chapter
+# boundaries fall: the verse *sequence* is identical, so we flatten the Hebrew
+# verses in canonical order and re-chapter them by the KJV chapter sizes. This
+# covers books with identical numbering, pure boundary reshuffles (e.g. Genesis
+# 31/32), and books whose chapter *count* differs (Joel, Malachi) — all in one
+# mechanism, with counts matching KJV by construction.
+#
+# Books with an actual verse split/merge (Numbers, 1 Samuel, 1 Kings,
+# 1 Chronicles, Nehemiah, Isaiah) or superscription shifts (Psalms) have
+# different verse totals and are NOT handled here; they need per-verse logic.
 # ---------------------------------------------------------------------------
 
-def genesis_reversify(chapter, verse):
-    if chapter == 32:
-        return (31, 55) if verse == 1 else (32, verse - 1)
-    return (chapter, verse)
-
-
-REVERSIFY_MAPS = {
-    "Genesis": genesis_reversify,
+# Books whose Masoretic and KJV verse *totals* differ (split/merge or Psalms).
+# These are excluded from the flatten-by-KJV mechanism and handled separately.
+COMPLEX_BOOKS = {
+    "Numbers", "1 Samuel", "1 Kings", "1 Chronicles", "Nehemiah", "Isaiah", "Psalms",
 }
+
+
+def kjv_chapter_sizes(book_name):
+    """Ordered list of KJV verse counts per chapter, from texts/{book}.KJV.txt."""
+    file_book = "Psalms (prose)" if book_name == "Psalms" else book_name
+    counts = {}
+    with open(f"../texts/{file_book}.KJV.txt", 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or '.' not in line.split(' ')[0]:
+                continue
+            ch, vs = line.split(' ')[0].split('.')
+            counts[int(ch)] = max(counts.get(int(ch), 0), int(vs))
+    return [counts[ch] for ch in sorted(counts)]
+
+
+def reindex_by_kjv(verses, kjv_sizes):
+    """Flatten Hebrew `verses` (ordered (ch, v, body)) and relabel them by the
+    KJV chapter sizes. Requires equal totals (pure boundary reshuffling)."""
+    total = sum(kjv_sizes)
+    if len(verses) != total:
+        raise ValueError(f"verse count {len(verses)} != KJV total {total}; not a pure boundary shift")
+    out = []
+    it = iter(verses)
+    for ch_idx, size in enumerate(kjv_sizes, start=1):
+        for v in range(1, size + 1):
+            _, _, body = next(it)
+            out.append((ch_idx, v, body))
+    return out
 
 
 def generate_grebrew_file(book_name):
     """Parse the UXLC XML for `book_name`, reversify to KJV numbering, and write
     ../texts/{book_name}.Grebrew.txt (chapter.verse <hebrew html> per line)."""
+    if book_name in COMPLEX_BOOKS:
+        raise ValueError(f"{book_name} has a verse split/merge or superscription shift; handle separately")
     with open(f"../Hebrew XML/{book_name}.xml", 'r', encoding='utf-8') as f:
         xml_content = f.read()
-    text = process_xml_to_text(xml_content, book_name)
+    verses = process_xml_to_text(xml_content, book_name)
+    verses = reindex_by_kjv(verses, kjv_chapter_sizes(book_name))
     out_path = f"../texts/{book_name}.Grebrew.txt"
     with open(out_path, 'w', encoding='utf-8') as f:
-        f.write(text + "\n")
-    print(f"Wrote {out_path} ({len(text.splitlines())} verses)")
+        for ch, v, body in verses:
+            f.write(f"{ch}.{v} {body}\n")
+    print(f"Wrote {out_path} ({len(verses)} verses)")
     return out_path
 
 
