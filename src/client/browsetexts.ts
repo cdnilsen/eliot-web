@@ -490,7 +490,9 @@ function getColumnWidths(editions: Edition[], state: EditionState): EditionColum
     let rightHandSideEditions: Edition[] = []
 
     let secondEditionOnRight = false;
-    if (editions.includes("zeroth_edition") && editions.includes("first_edition")) {
+    // Zeroth edition shows on its own whenever selected (independent of first);
+    // its presence pushes second edition to the right to balance the layout.
+    if (editions.includes("zeroth_edition")) {
         leftHandSideEditions.push("zeroth_edition");
         secondEditionOnRight = true;
     }
