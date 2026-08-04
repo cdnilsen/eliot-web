@@ -265,6 +265,7 @@ function sectionListener(state: EditionState) {
             bookDropdown.appendChild(option);
         }
         zerothContainer!.hidden = (state.book != "Genesis");
+        updateGrebrewControl(state.book);
 
         let numChapters = bookToChapterDict[state.book];
         console.log(numChapters)
@@ -295,6 +296,7 @@ function sectionListener(state: EditionState) {
             chapterDropdown.appendChild(option);
         }
         zerothContainer!.hidden = (state.book != "Genesis");
+        updateGrebrewControl(book);
 
         let mayhewContainer = document.getElementById("mayhewContainer")!;
         let mayhewCheckbox = <HTMLInputElement>document.getElementById("useMayhew");
@@ -369,6 +371,11 @@ function editionNumberListener(state: EditionState) {
                 state.editions = state.editions * p;
             } else {
                 state.editions = state.editions / p;
+            }
+            // Re-render the currently displayed chapter with the new columns.
+            const display = document.getElementById('textColumns');
+            if (display && display.children.length > 0 && state.book) {
+                fetchChapter(state);
             }
         });
     }
@@ -542,7 +549,8 @@ function createDummyVerse(editions: Edition[], isNT: boolean, book: string) {
         "mayhew": "Mayhew (1709)",
         "zeroth_edition": "<bdi class=\"hebrew-font\">\u05D0</bdi> (1655)",
         "kjv": "KJV",
-        "grebrew": "G"
+        // Original-language column: Hebrew for the OT, Greek for the NT.
+        "grebrew": isHebrewBook(book) ? "Hebrew" : "Greek"
     }
 
 
@@ -729,9 +737,39 @@ function createNavBar(state: EditionState) {
 // Single resize handler that keeps the sticky header aligned under the nav bar.
 let headerResizeHandler: (() => void) | null = null;
 
+// Each toggle-able column's checkbox. Editions not listed here (e.g. kjv) have
+// no checkbox and are always shown.
+const editionCheckboxId: { [k: string]: string } = {
+    first_edition: "useFirstEdition",
+    second_edition: "useSecondEdition",
+    mayhew: "useMayhew",
+    zeroth_edition: "useZerothEdition",
+    grebrew: "useGrebrew",
+};
+
+function editionChecked(edition: Edition): boolean {
+    const id = editionCheckboxId[edition];
+    if (!id) return true;
+    const cb = document.getElementById(id) as HTMLInputElement | null;
+    return cb ? cb.checked : true;
+}
+
+// Show the original-language checkbox for OT/NT books (hidden for mishnaic),
+// labelled by the language of that book's grebrew column.
+function updateGrebrewControl(book: string) {
+    const container = document.getElementById("grebrewContainer");
+    const label = document.getElementById("grebrewLabel");
+    if (!container || !label) return;
+    container.hidden = sectionToBookDict["mishnaic"].includes(book);
+    label.textContent = isHebrewBook(book) ? "Show Hebrew" : "Show Greek";
+}
+
 function createVerseGrid(verses: Verse[], editionsToFetch: Edition[], state: EditionState) {
     const displayDiv = document.getElementById('textColumns');
     if (!displayDiv) return;
+
+    // Respect the edition checkboxes: only show columns whose box is checked.
+    editionsToFetch = editionsToFetch.filter(editionChecked);
 
     displayDiv.innerHTML = '';
     let navBar = createNavBar(state);
