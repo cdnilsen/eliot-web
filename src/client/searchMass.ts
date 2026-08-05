@@ -656,30 +656,31 @@ function getDisplayBox(rawDict: VerseDisplayDict, headword: string, isHebrew: bo
     return table;
 }
 
-async function grabMatchingVerses(addresses: string[]) {
-    // Remove the number conversion - just pass the strings directly
-    try {
-        const queryParams = new URLSearchParams({
-            addresses: addresses.join(',')  // Keep as strings
-        });
-        
-        const response = await fetch(`/matching_verses?${queryParams}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-
+async function grabMatchingVerses(addresses: string[], retries = 2) {
+    // Remove the number conversion - just pass the strings directly.
+    // Retry transient failures (e.g. a request that lost the race for a DB
+    // connection under load) before giving up on this headword.
+    for (let attempt = 0; attempt <= retries; attempt++) {
         try {
-            return data;
+            const queryParams = new URLSearchParams({
+                addresses: addresses.join(',')  // Keep as strings
+            });
+
+            const response = await fetch(`/matching_verses?${queryParams}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
         } catch (error) {
-            console.error('Error parsing matching verses:', error);
-            throw error;
+            if (attempt === retries) {
+                console.error('Error fetching matching verses:', error);
+                throw error;
+            }
+            // Small backoff before retrying.
+            await new Promise(resolve => setTimeout(resolve, 150 * (attempt + 1)));
         }
-    } catch (error) {
-        console.error('Error fetching matching verses:', error);
-        throw error;
     }
 }
 
@@ -788,12 +789,31 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
     verseBoxContainer.innerHTML = '';
     headlineContainer.innerHTML = '';
 
-    // Create all WordObjects first
+    // Create all WordObjects, but cap concurrency. A broad search can produce
+    // hundreds of headwords, and each one fetches its verses from /matching_verses.
+    // Firing all of those requests at once overwhelms the server's database
+    // connection pool, so some fail. Previously a single failed request rejected
+    // the whole Promise.all and left the page completely blank; now we throttle the
+    // requests and swallow per-headword failures so partial results still render.
     let allObjects: {result: WordMassResult, wordObj: WordObject}[] = [];
-    await Promise.all(results.map(async result => {
-        let wordObj = await getResultObjectStrict(result);
-        allObjects.push({result, wordObj});
-    }));
+    let failedHeadwords = 0;
+    const CONCURRENCY = 6;
+    let nextIndex = 0;
+    async function renderWorker() {
+        while (nextIndex < results.length) {
+            const result = results[nextIndex++];
+            try {
+                let wordObj = await getResultObjectStrict(result);
+                allObjects.push({result, wordObj});
+            } catch (err) {
+                failedHeadwords++;
+                console.error(`Failed to load verses for "${result.headword}":`, err);
+            }
+        }
+    }
+    await Promise.all(
+        Array.from({length: Math.min(CONCURRENCY, results.length)}, () => renderWorker())
+    );
 
     // Sort based on user preference
     if (sortAlphabetically) {
@@ -871,7 +891,11 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
     let allWordTokens = allObjects.reduce((sum, obj) => sum + obj.wordObj.numTokens, 0);
 
     // Display headline
-    let headlineString = `<i>Found <b>${allWordTokens}</b> tokens, representing <b>${totalWords}</b> separate headwords, across <b>${totalVerses}</b> verses.</i><br><br>`;
+    let headlineString = `<i>Found <b>${allWordTokens}</b> tokens, representing <b>${totalWords}</b> separate headwords, across <b>${totalVerses}</b> verses.</i>`;
+    if (failedHeadwords > 0) {
+        headlineString += `<br><span style="color:red; font-size:0.85em;">(${failedHeadwords} headword${failedHeadwords === 1 ? '' : 's'} could not be loaded &mdash; try again.)</span>`;
+    }
+    headlineString += `<br><br>`;
     let headlineSpan = document.createElement('span');
     headlineSpan.innerHTML = headlineString;
     headlineSpan.style.textAlign = 'center';
