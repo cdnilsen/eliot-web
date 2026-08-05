@@ -684,7 +684,12 @@ async function grabMatchingVerses(addresses: string[], retries = 2) {
     }
 }
 
-async function getResultObjectStrict(result: WordMassResult) {
+// Build a headword's result row WITHOUT fetching its verses. The verse texts are
+// only needed once the user expands the row, so they're fetched lazily on first
+// click. This keeps the search itself instant no matter how many headwords match
+// (a broad search like "qut" can return hundreds, and fetching every one up front
+// was what made searches crawl).
+function getResultObjectStrict(result: WordMassResult): WordObject {
     let topDiv = resultDiv(result);
 
     let triangleObject = createTriangleObject();
@@ -695,6 +700,7 @@ async function getResultObjectStrict(result: WordMassResult) {
 
     let totalTokens: number = 0;
     let addressToCountDict = {} as { [key: string]: number };
+    let genericVerses = new Set<string>();
     for (let i = 0; i < allAddressNums.length; i++) {
         let addressNum = allAddressNums[i];
         let count = result.counts[i];
@@ -702,80 +708,102 @@ async function getResultObjectStrict(result: WordMassResult) {
         let newAddressString = "1" + rawAddressString.slice(1) + rawAddressString[0];
         totalTokens += count;
         addressToCountDict[newAddressString] = count;
-        allAddresses.push(newAddressString.slice(0, -1));
+        let genericAddress = newAddressString.slice(0, -1);
+        allAddresses.push(genericAddress);
+        // The same verse can appear once per edition; the verse count should
+        // count distinct verses, which is what the fetch used to return.
+        genericVerses.add(genericAddress);
     }
 
     allAddresses.sort((a, b) => parseInt(b) - parseInt(a));
 
-    let matchingVerseTextsRaw = await grabMatchingVerses(allAddresses);
-
-    let matchingVerseTexts: VerseDisplaySuperdict = {};
-
-    for (let i=0; i < matchingVerseTextsRaw.length; i++) {
-        let thisMatchingVerse = matchingVerseTextsRaw[i];
-        let subdict: VerseDisplayDict = {
-            '2': thisMatchingVerse['first_edition'],
-            '3': thisMatchingVerse['second_edition'],
-            '5': thisMatchingVerse['mayhew'],
-            '7': thisMatchingVerse['zeroth_edition'],
-            '4': thisMatchingVerse['kjv'],
-            '8': "",
-            //'8': thisMatchingVerse['grebrew'].replaceAll('<span style="color:blue">', "").replaceAll("</span>", ""),
-            'book': thisMatchingVerse['book'],
-            'chapter': thisMatchingVerse['chapter'],
-            'verse': thisMatchingVerse['verse'],
-            'genericID': thisMatchingVerse['verse_id'],
-            'count': addressToCountDict[thisMatchingVerse['verse_id']]
-        };
-
-        if (thisMatchingVerse['book'] in matchingVerseTexts) {
-            matchingVerseTexts[thisMatchingVerse['book']].push(subdict);
-        } else {
-            matchingVerseTexts[thisMatchingVerse['book']] = [subdict];
-        }
-    }
-
-    let editionDict = {
-        '2': 'α',
-        '3': 'β',
-        '5': 'M',
-        '7': 'א'
-    }
-
-    let bookDivs = getBookDivs(matchingVerseTexts, addressToCountDict, result.headword);
     let childContainerDiv = document.createElement("div");
-
-    bookDivs.forEach(bookDiv => {   
-        childContainerDiv.appendChild(bookDiv);
-    })
 
     let object: WordObject = {
         parentDiv: topDiv,
         childContainer: childContainerDiv,
         triangle: triangleObject,
-        verseBoxDict: matchingVerseTexts,
-        numVerses: matchingVerseTextsRaw.length,
+        verseBoxDict: {},
+        numVerses: genericVerses.size,
         numTokens: totalTokens
     }
 
-    object.triangle.span.onclick = () => {
+    let versesLoaded = false;
+    let loadingPromise: Promise<void> | null = null;
+
+    async function loadVerses(): Promise<void> {
+        if (versesLoaded) return;
+        if (loadingPromise) return loadingPromise;
+
+        loadingPromise = (async () => {
+            let matchingVerseTextsRaw;
+            try {
+                matchingVerseTextsRaw = await grabMatchingVerses(allAddresses);
+            } catch (err) {
+                console.error(`Failed to load verses for "${result.headword}":`, err);
+                childContainerDiv.innerHTML =
+                    '<span style="color:red;">&nbsp;&nbsp;&nbsp;&nbsp;Could not load verses. Collapse and expand to retry.</span>';
+                loadingPromise = null; // allow a retry on the next expand
+                return;
+            }
+
+            let matchingVerseTexts: VerseDisplaySuperdict = {};
+            for (let i = 0; i < matchingVerseTextsRaw.length; i++) {
+                let thisMatchingVerse = matchingVerseTextsRaw[i];
+                let subdict: VerseDisplayDict = {
+                    '2': thisMatchingVerse['first_edition'],
+                    '3': thisMatchingVerse['second_edition'],
+                    '5': thisMatchingVerse['mayhew'],
+                    '7': thisMatchingVerse['zeroth_edition'],
+                    '4': thisMatchingVerse['kjv'],
+                    '8': "",
+                    //'8': thisMatchingVerse['grebrew'].replaceAll('<span style="color:blue">', "").replaceAll("</span>", ""),
+                    'book': thisMatchingVerse['book'],
+                    'chapter': thisMatchingVerse['chapter'],
+                    'verse': thisMatchingVerse['verse'],
+                    'genericID': thisMatchingVerse['verse_id'],
+                    'count': addressToCountDict[thisMatchingVerse['verse_id']]
+                };
+
+                if (thisMatchingVerse['book'] in matchingVerseTexts) {
+                    matchingVerseTexts[thisMatchingVerse['book']].push(subdict);
+                } else {
+                    matchingVerseTexts[thisMatchingVerse['book']] = [subdict];
+                }
+            }
+
+            object.verseBoxDict = matchingVerseTexts;
+            let bookDivs = getBookDivs(matchingVerseTexts, addressToCountDict, result.headword);
+            childContainerDiv.innerHTML = '';
+            bookDivs.forEach(bookDiv => {
+                childContainerDiv.appendChild(bookDiv);
+            });
+            versesLoaded = true;
+        })();
+
+        return loadingPromise;
+    }
+
+    object.triangle.span.onclick = async () => {
         object.triangle.isClicked = !object.triangle.isClicked;
         object.triangle.span.innerHTML = object.triangle.isClicked ? "▼" : "▶";
         if (object.triangle.isClicked) {
             object.triangle.span.style.color = "blue";
+            if (!versesLoaded) {
+                childContainerDiv.innerHTML =
+                    '<span style="color:gray;">&nbsp;&nbsp;&nbsp;&nbsp;Loading…</span>';
+            }
             object.parentDiv.appendChild(object.childContainer);
-            console.log("Matching verse texts for " + result.headword);
-            console.log(matchingVerseTexts);
+            await loadVerses();
         } else {
             object.triangle.span.style.color = "";
-            object.parentDiv.removeChild(object.childContainer);
+            if (object.parentDiv.contains(object.childContainer)) {
+                object.parentDiv.removeChild(object.childContainer);
+            }
         }
-        
     }
 
     return object;
-
-    //console.log(addressBook);
 }
 
 async function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
@@ -789,31 +817,13 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
     verseBoxContainer.innerHTML = '';
     headlineContainer.innerHTML = '';
 
-    // Create all WordObjects, but cap concurrency. A broad search can produce
-    // hundreds of headwords, and each one fetches its verses from /matching_verses.
-    // Firing all of those requests at once overwhelms the server's database
-    // connection pool, so some fail. Previously a single failed request rejected
-    // the whole Promise.all and left the page completely blank; now we throttle the
-    // requests and swallow per-headword failures so partial results still render.
-    let allObjects: {result: WordMassResult, wordObj: WordObject}[] = [];
-    let failedHeadwords = 0;
-    const CONCURRENCY = 6;
-    let nextIndex = 0;
-    async function renderWorker() {
-        while (nextIndex < results.length) {
-            const result = results[nextIndex++];
-            try {
-                let wordObj = await getResultObjectStrict(result);
-                allObjects.push({result, wordObj});
-            } catch (err) {
-                failedHeadwords++;
-                console.error(`Failed to load verses for "${result.headword}":`, err);
-            }
-        }
-    }
-    await Promise.all(
-        Array.from({length: Math.min(CONCURRENCY, results.length)}, () => renderWorker())
-    );
+    // Build every headword row synchronously. Each row's verses are fetched lazily
+    // when the user expands it (see getResultObjectStrict), so no network requests
+    // happen here — the search renders instantly regardless of how many words match.
+    let allObjects: {result: WordMassResult, wordObj: WordObject}[] = results.map(result => ({
+        result,
+        wordObj: getResultObjectStrict(result)
+    }));
 
     // Sort based on user preference
     if (sortAlphabetically) {
@@ -891,21 +901,21 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
     let allWordTokens = allObjects.reduce((sum, obj) => sum + obj.wordObj.numTokens, 0);
 
     // Display headline
-    let headlineString = `<i>Found <b>${allWordTokens}</b> tokens, representing <b>${totalWords}</b> separate headwords, across <b>${totalVerses}</b> verses.</i>`;
-    if (failedHeadwords > 0) {
-        headlineString += `<br><span style="color:red; font-size:0.85em;">(${failedHeadwords} headword${failedHeadwords === 1 ? '' : 's'} could not be loaded &mdash; try again.)</span>`;
-    }
-    headlineString += `<br><br>`;
+    let headlineString = `<i>Found <b>${allWordTokens}</b> tokens, representing <b>${totalWords}</b> separate headwords, across <b>${totalVerses}</b> verses.</i><br><br>`;
     let headlineSpan = document.createElement('span');
     headlineSpan.innerHTML = headlineString;
     headlineSpan.style.textAlign = 'center';
     headlineSpan.style.fontSize = '1.2em';
     headlineContainer.appendChild(headlineSpan);
 
-    // Display results in sorted order
+    // Display results in sorted order. Append into a DocumentFragment first so the
+    // (potentially thousands of) rows hit the live DOM in a single insertion instead
+    // of forcing a reflow per row.
+    let fragment = document.createDocumentFragment();
     allObjects.forEach(obj => {
-        citationContainer.appendChild(obj.wordObj.parentDiv);
+        fragment.appendChild(obj.wordObj.parentDiv);
     });
+    citationContainer.appendChild(fragment);
 }
 
 
