@@ -816,67 +816,15 @@ function formatIndexLabel(label: string): string {
     return out.trim().length ? out : "(blank)";
 }
 
-// Contiguous runs of items sharing the character at `depth` (empty string for keys
-// shorter than depth+1). Input must already be sorted, so runs are contiguous.
-function groupByChar(items: ResultEntry[], getKey: (item: ResultEntry) => string, depth: number): ResultEntry[][] {
-    const groups: ResultEntry[][] = [];
-    let i = 0;
-    while (i < items.length) {
-        const c = getKey(items[i]).charAt(depth);
-        let j = i;
-        while (j < items.length && getKey(items[j]).charAt(depth) === c) j++;
-        groups.push(items.slice(i, j));
-        i = j;
+// The character index at which two sorted keys first differ — 0 when the first
+// letters differ (the coarsest, most desirable cut point), larger for finer
+// boundaries, largest for identical keys (the worst place to cut).
+function diffLevel(a: string, b: string): number {
+    const m = Math.min(a.length, b.length);
+    for (let i = 0; i < m; i++) {
+        if (a[i] !== b[i]) return i;
     }
-    return groups;
-}
-
-function maxKeyLen(items: ResultEntry[], getKey: (item: ResultEntry) => string): number {
-    let m = 0;
-    for (const it of items) {
-        const l = getKey(it).length;
-        if (l > m) m = l;
-    }
-    return m;
-}
-
-function chunkBySize(items: ResultEntry[], target: number): ResultEntry[][] {
-    const out: ResultEntry[][] = [];
-    for (let i = 0; i < items.length; i += target) out.push(items.slice(i, i + target));
-    return out;
-}
-
-// Break a sorted headword list into batches of ~target words, cutting at the
-// coarsest letter boundary possible: small first-letter groups get merged together,
-// a first-letter group bigger than the cap is split by second letter (then third,
-// …). This keeps tabs to a manageable number instead of one per initial letter.
-function batchByLetters(items: ResultEntry[], getKey: (item: ResultEntry) => string, target: number, cap: number, depth: number): ResultEntry[][] {
-    if (items.length <= cap) return [items];
-
-    const groups = groupByChar(items, getKey, depth);
-    if (groups.length === 1) {
-        // Everything shares this character — go deeper, or hard-chunk if we've run
-        // out of distinguishing characters (identical/near-identical keys).
-        if (depth + 1 >= maxKeyLen(items, getKey)) return chunkBySize(items, target);
-        return batchByLetters(items, getKey, target, cap, depth + 1);
-    }
-
-    const batches: ResultEntry[][] = [];
-    let cur: ResultEntry[] = [];
-    for (const g of groups) {
-        if (g.length > cap) {
-            if (cur.length) { batches.push(cur); cur = []; }
-            const split = depth + 1 >= maxKeyLen(g, getKey)
-                ? chunkBySize(g, target)
-                : batchByLetters(g, getKey, target, cap, depth + 1);
-            for (const b of split) batches.push(b);
-        } else {
-            if (cur.length && cur.length + g.length > cap) { batches.push(cur); cur = []; }
-            for (const it of g) cur.push(it);
-        }
-    }
-    if (cur.length) batches.push(cur);
-    return batches;
+    return a.length === b.length ? a.length + 1 : m;
 }
 
 // A short range label for a batch, e.g. "b–h" or "quta–qute" — the shared prefix
@@ -893,10 +841,45 @@ function batchLabel(items: ResultEntry[], getKey: (item: ResultEntry) => string)
     return `${fp}–${lp}`;
 }
 
+// Break a sorted headword list into pages of ~target words. Each page is filled to
+// roughly `target`, then its end is snapped to the coarsest letter boundary within a
+// size window: sparse letters merge onto one page, a dense prefix (e.g. the "qut-"
+// cluster) is divided at its second/third letter, and — because every non-final
+// page is at least minSize — a lone word like "requt" never gets its own tab.
 function buildBatches(items: ResultEntry[], getKey: (item: ResultEntry) => string, target: number): PageBucket[] {
-    const cap = Math.round(target * 1.4);
-    return batchByLetters(items, getKey, target, cap, 0)
-        .map(b => ({ label: batchLabel(b, getKey), items: b }));
+    const n = items.length;
+    const minSize = Math.max(2, Math.round(target * 0.5));
+    const maxSize = Math.round(target * 1.5);
+    const batches: ResultEntry[][] = [];
+
+    let i = 0;
+    while (i < n) {
+        if (n - i <= maxSize) { batches.push(items.slice(i, n)); break; }
+        const lo = i + minSize - 1;
+        const hi = i + maxSize - 1;
+        const targetEnd = i + target - 1;
+        // Among the allowed cut positions, pick the coarsest boundary, breaking ties
+        // toward the one nearest the target size.
+        let best = hi, bestLevel = Infinity, bestDist = Infinity;
+        for (let p = lo; p <= hi; p++) {
+            const lvl = diffLevel(getKey(items[p]), getKey(items[p + 1]));
+            const dist = Math.abs(p - targetEnd);
+            if (lvl < bestLevel || (lvl === bestLevel && dist < bestDist)) {
+                best = p; bestLevel = lvl; bestDist = dist;
+            }
+        }
+        batches.push(items.slice(i, best + 1));
+        i = best + 1;
+    }
+
+    // A short trailing page reads as overkill; fold it back into its predecessor.
+    if (batches.length >= 2 && batches[batches.length - 1].length < minSize) {
+        const tail = batches.pop() as ResultEntry[];
+        const prev = batches[batches.length - 1];
+        for (const it of tail) prev.push(it);
+    }
+
+    return batches.map(b => ({ label: batchLabel(b, getKey), items: b }));
 }
 
 async function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
