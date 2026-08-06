@@ -806,6 +806,47 @@ function getResultObjectStrict(result: WordMassResult): WordObject {
     return object;
 }
 
+type ResultEntry = { result: WordMassResult; wordObj: WordObject };
+type PageBucket = { label: string; items: ResultEntry[] };
+
+// Split an already-sorted list of headwords into alphabetical pages. Normally each
+// page is one first-letter group ("q"). If a first-letter group is larger than
+// maxPerPage it's split further by second letter ("qa", "qe", "qu", …). The label
+// is the shared prefix — the first letter, or the first two letters when we had to
+// split. This mirrors a dictionary's letter tabs.
+function buildAlphabeticalPages(items: ResultEntry[], getKey: (item: ResultEntry) => string, maxPerPage: number): PageBucket[] {
+    const pages: PageBucket[] = [];
+    const n = items.length;
+    let i = 0;
+    while (i < n) {
+        const firstChar = getKey(items[i]).charAt(0);
+        let j = i;
+        while (j < n && getKey(items[j]).charAt(0) === firstChar) j++;
+        const group = items.slice(i, j);
+        if (group.length <= maxPerPage) {
+            pages.push({ label: firstChar, items: group });
+        } else {
+            let k = 0;
+            while (k < group.length) {
+                const secondChar = getKey(group[k]).charAt(1);
+                let m = k;
+                while (m < group.length && getKey(group[m]).charAt(1) === secondChar) m++;
+                pages.push({ label: firstChar + secondChar, items: group.slice(k, m) });
+                k = m;
+            }
+        }
+        i = j;
+    }
+    return pages;
+}
+
+// Turn a raw prefix ("8x", "qu") into what the reader should see: the 8/$ sentinels
+// used internally become the ligature and a space.
+function formatIndexLabel(label: string): string {
+    const out = label.replaceAll("8", "ꝏ̄").replaceAll("$", " ");
+    return out.trim().length ? out : "(blank)";
+}
+
 async function displayAllResults(results: WordMassResult[], diacritics: "lax" | "strict", sortAlphabetically: boolean) {
     let citationContainer = document.getElementById("citation-column") as HTMLDivElement;
     let verseBoxContainer = document.getElementById("verse-box-column") as HTMLDivElement;
@@ -908,14 +949,65 @@ async function displayAllResults(results: WordMassResult[], diacritics: "lax" | 
     headlineSpan.style.fontSize = '1.2em';
     headlineContainer.appendChild(headlineSpan);
 
-    // Display results in sorted order. Append into a DocumentFragment first so the
-    // (potentially thousands of) rows hit the live DOM in a single insertion instead
-    // of forcing a reflow per row.
-    let fragment = document.createDocumentFragment();
-    allObjects.forEach(obj => {
-        fragment.appendChild(obj.wordObj.parentDiv);
-    });
-    citationContainer.appendChild(fragment);
+    // Render rows into citationContainer via a DocumentFragment so that a page of
+    // (potentially hundreds of) rows hits the live DOM in a single insertion instead
+    // of forcing a reflow per row. Each parentDiv keeps its own lazy-load state, so
+    // moving it in and out of the DOM when switching pages preserves loaded verses.
+    let pageIndexContainer = document.getElementById("page-index-container") as HTMLDivElement | null;
+    if (pageIndexContainer) pageIndexContainer.innerHTML = '';
+
+    const appendItems = (items: ResultEntry[]) => {
+        let fragment = document.createDocumentFragment();
+        items.forEach(obj => fragment.appendChild(obj.wordObj.parentDiv));
+        citationContainer.appendChild(fragment);
+    };
+
+    // Alphabetical letter tabs only make sense when the list is in alphabetical
+    // order. When sorting by frequency there's no natural letter to page on, so we
+    // just render everything.
+    const getKey = (obj: ResultEntry) =>
+        (diacritics === "lax" ? obj.result.no_diacritics : obj.result.headword) || '';
+    // Only page the list up once it's big enough to be unwieldy — a handful of
+    // results shouldn't be scattered one-per-letter across tabs.
+    const PAGE_SIZE = 200;
+    const pages = (sortAlphabetically && allObjects.length > PAGE_SIZE)
+        ? buildAlphabeticalPages(allObjects, getKey, PAGE_SIZE) : [];
+
+    if (pages.length > 1 && pageIndexContainer) {
+        const container = pageIndexContainer;
+        const linkSpans: HTMLSpanElement[] = [];
+
+        const showPage = (idx: number) => {
+            citationContainer.innerHTML = '';
+            verseBoxContainer.innerHTML = '';
+            appendItems(pages[idx].items);
+            linkSpans.forEach((span, i) => {
+                span.style.fontWeight = i === idx ? 'bold' : 'normal';
+                span.style.textDecoration = i === idx ? 'none' : 'underline';
+            });
+        };
+
+        pages.forEach((page, idx) => {
+            const link = document.createElement('span');
+            link.innerHTML = formatIndexLabel(page.label);
+            link.style.cursor = 'pointer';
+            link.style.color = 'blue';
+            link.style.padding = '0 5px';
+            link.title = `${page.items.length} headword${page.items.length === 1 ? '' : 's'}`;
+            link.addEventListener('click', () => showPage(idx));
+            linkSpans.push(link);
+            container.appendChild(link);
+            if (idx < pages.length - 1) {
+                const sep = document.createElement('span');
+                sep.textContent = '·';
+                container.appendChild(sep);
+            }
+        });
+
+        showPage(0);
+    } else {
+        appendItems(allObjects);
+    }
 }
 
 

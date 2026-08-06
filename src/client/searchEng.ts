@@ -93,23 +93,29 @@ function sortByFrequency(results: WordKJVResult[]) {
         return a.headword.localeCompare(b.headword);
     });
 }
-async function grabMatchingVerses(addresses: string[]) {
-    try {
-        const queryParams = new URLSearchParams({
-            addresses: addresses.join(',')
-        });
-        
-        const response = await fetch(`/matching_verses?${queryParams}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+async function grabMatchingVerses(addresses: string[], retries = 2) {
+    // Retry transient failures (e.g. a request that lost the race for a DB
+    // connection under load) before giving up on this headword.
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const queryParams = new URLSearchParams({
+                addresses: addresses.join(',')
+            });
+
+            const response = await fetch(`/matching_verses?${queryParams}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            if (attempt === retries) {
+                console.error('Error fetching matching verses:', error);
+                throw error;
+            }
+            await new Promise(resolve => setTimeout(resolve, 150 * (attempt + 1)));
         }
-        
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Error fetching matching verses:', error);
-        throw error;
     }
 }
 
@@ -208,25 +214,69 @@ function getResultDiv(result: WordKJVResult): HTMLDivElement {
     return resultDiv;
 }
 
-async function displayAllResults(results: WordKJVResult[], sortAlphabetically: boolean) {
+type ResultEntry = { result: WordKJVResult; wordObj: WordObject };
+type PageBucket = { label: string; items: ResultEntry[] };
+
+// Split an already-sorted list of headwords into alphabetical pages. Normally each
+// page is one first-letter group. If a first-letter group is larger than maxPerPage
+// it's split further by second letter. The label is the shared prefix — the first
+// letter, or the first two letters when we had to split.
+function buildAlphabeticalPages(items: ResultEntry[], getKey: (item: ResultEntry) => string, maxPerPage: number): PageBucket[] {
+    const pages: PageBucket[] = [];
+    const n = items.length;
+    let i = 0;
+    while (i < n) {
+        const firstChar = getKey(items[i]).charAt(0);
+        let j = i;
+        while (j < n && getKey(items[j]).charAt(0) === firstChar) j++;
+        const group = items.slice(i, j);
+        if (group.length <= maxPerPage) {
+            pages.push({ label: firstChar, items: group });
+        } else {
+            let k = 0;
+            while (k < group.length) {
+                const secondChar = getKey(group[k]).charAt(1);
+                let m = k;
+                while (m < group.length && getKey(group[m]).charAt(1) === secondChar) m++;
+                pages.push({ label: firstChar + secondChar, items: group.slice(k, m) });
+                k = m;
+            }
+        }
+        i = j;
+    }
+    return pages;
+}
+
+function formatIndexLabel(label: string): string {
+    const out = label.replaceAll("8", "ꝏ̄").replaceAll("$", " ");
+    return out.trim().length ? out : "(blank)";
+}
+
+function displayAllResults(results: WordKJVResult[], sortAlphabetically: boolean) {
     let citationContainer = document.getElementById("citation-column") as HTMLDivElement;
     let verseBoxContainer = document.getElementById("verse-box-column") as HTMLDivElement;
     let headlineContainer = document.getElementById("headline-container") as HTMLDivElement;
     headlineContainer.style.textAlign = 'center';
 
     // Clear previous results
-    citationContainer.innerHTML = ''; 
+    citationContainer.innerHTML = '';
     verseBoxContainer.innerHTML = '';
     headlineContainer.innerHTML = '';
 
     // Sort results based on user preference
     results = sortAlphabetically ? sortByAlphabet(results) : sortByFrequency(results);
 
-    let totalWords = results.length;
-    let totalVerses = results.reduce((sum, result) => sum + result.verses.length, 0);
-    let allWordTokens = results.reduce((sum, result) => 
-        sum + result.counts.reduce((a, b) => a + b, 0), 0
-    );
+    // Build every headword row synchronously. Each row's verses are fetched lazily
+    // when the user expands it, so no network requests happen here — the search
+    // renders instantly regardless of how many words match.
+    let allObjects: ResultEntry[] = results.map(result => ({
+        result,
+        wordObj: getResultObjectStrict(result)
+    }));
+
+    let totalWords = allObjects.length;
+    let totalVerses = allObjects.reduce((sum, obj) => sum + obj.wordObj.numVerses, 0);
+    let allWordTokens = allObjects.reduce((sum, obj) => sum + obj.wordObj.numTokens, 0);
 
     // Create headline
     let headlineString = `<i>Found in <b>${totalVerses}</b> verses, representing <b>${totalWords}</b> separate tokens`;
@@ -236,10 +286,58 @@ async function displayAllResults(results: WordKJVResult[], sortAlphabetically: b
     headlineSpan.style.fontSize = '1.2em';
     headlineContainer.appendChild(headlineSpan);
 
-    // Process each result
-    for (const result of results) {
-        const resultObject = await getResultObjectStrict(result);
-        citationContainer.appendChild(resultObject.parentDiv);
+    // Alphabetical letter tabs (see buildAlphabeticalPages). Only shown when sorting
+    // alphabetically and there's more than one page's worth of headwords.
+    let pageIndexContainer = document.getElementById("page-index-container") as HTMLDivElement | null;
+    if (pageIndexContainer) pageIndexContainer.innerHTML = '';
+
+    const appendItems = (items: ResultEntry[]) => {
+        let fragment = document.createDocumentFragment();
+        items.forEach(obj => fragment.appendChild(obj.wordObj.parentDiv));
+        citationContainer.appendChild(fragment);
+    };
+
+    const getKey = (obj: ResultEntry) => obj.result.headword || '';
+    // Only page the list up once it's big enough to be unwieldy — a handful of
+    // results shouldn't be scattered one-per-letter across tabs.
+    const PAGE_SIZE = 200;
+    const pages = (sortAlphabetically && allObjects.length > PAGE_SIZE)
+        ? buildAlphabeticalPages(allObjects, getKey, PAGE_SIZE) : [];
+
+    if (pages.length > 1 && pageIndexContainer) {
+        const container = pageIndexContainer;
+        const linkSpans: HTMLSpanElement[] = [];
+
+        const showPage = (idx: number) => {
+            citationContainer.innerHTML = '';
+            verseBoxContainer.innerHTML = '';
+            appendItems(pages[idx].items);
+            linkSpans.forEach((span, i) => {
+                span.style.fontWeight = i === idx ? 'bold' : 'normal';
+                span.style.textDecoration = i === idx ? 'none' : 'underline';
+            });
+        };
+
+        pages.forEach((page, idx) => {
+            const link = document.createElement('span');
+            link.innerHTML = formatIndexLabel(page.label);
+            link.style.cursor = 'pointer';
+            link.style.color = 'blue';
+            link.style.padding = '0 5px';
+            link.title = `${page.items.length} headword${page.items.length === 1 ? '' : 's'}`;
+            link.addEventListener('click', () => showPage(idx));
+            linkSpans.push(link);
+            container.appendChild(link);
+            if (idx < pages.length - 1) {
+                const sep = document.createElement('span');
+                sep.textContent = '·';
+                container.appendChild(sep);
+            }
+        });
+
+        showPage(0);
+    } else {
+        appendItems(allObjects);
     }
 }
 
@@ -609,8 +707,10 @@ function getBookDivs(matchingVerseTexts: VerseDisplaySuperdict, addressToCountDi
 
 }
 
-async function getResultObjectStrict(result: WordKJVResult) {
-    console.log(result)
+// Build a headword's result row WITHOUT fetching its verses. The verse texts are
+// only needed once the user expands the row, so they're fetched lazily on first
+// click. This keeps the search itself instant no matter how many headwords match.
+function getResultObjectStrict(result: WordKJVResult): WordObject {
     let topDiv = getResultDiv(result);
 
     let triangleObject = createTriangleObject();
@@ -621,6 +721,7 @@ async function getResultObjectStrict(result: WordKJVResult) {
 
     let totalTokens: number = 0;
     let addressToCountDict = {} as { [key: string]: number };
+    let genericVerses = new Set<string>();
     for (let i = 0; i < allAddressNums.length; i++) {
         let addressNum = allAddressNums[i];
         let count = result.counts[i];
@@ -628,80 +729,100 @@ async function getResultObjectStrict(result: WordKJVResult) {
         let newAddressString = "1" + rawAddressString.slice(1) + rawAddressString[0];
         totalTokens += count;
         addressToCountDict[newAddressString] = count;
-        allAddresses.push(newAddressString.slice(0, -1));
+        let genericAddress = newAddressString.slice(0, -1);
+        allAddresses.push(genericAddress);
+        genericVerses.add(genericAddress);
     }
 
     allAddresses.sort((a, b) => parseInt(b) - parseInt(a));
 
-    let matchingVerseTextsRaw = await grabMatchingVerses(allAddresses);
-
-    let matchingVerseTexts: VerseDisplaySuperdict = {};
-
-    for (let i=0; i < matchingVerseTextsRaw.length; i++) {
-        let thisMatchingVerse = matchingVerseTextsRaw[i];
-        let subdict: VerseDisplayDict = {
-            '2': thisMatchingVerse['first_edition'],
-            '3': thisMatchingVerse['second_edition'],
-            '5': thisMatchingVerse['mayhew'],
-            '7': thisMatchingVerse['zeroth_edition'],
-            '4': thisMatchingVerse['kjv'],
-             '8': "",
-            //'8': thisMatchingVerse['grebrew'].replaceAll('<span style="color:blue">', "").replaceAll("</span>", ""),
-            'book': thisMatchingVerse['book'],
-            'chapter': thisMatchingVerse['chapter'],
-            'verse': thisMatchingVerse['verse'],
-            'genericID': thisMatchingVerse['verse_id'],
-            'count': addressToCountDict[thisMatchingVerse['verse_id']]
-        };
-
-        if (thisMatchingVerse['book'] in matchingVerseTexts) {
-            matchingVerseTexts[thisMatchingVerse['book']].push(subdict);
-        } else {
-            matchingVerseTexts[thisMatchingVerse['book']] = [subdict];
-        }
-    }
-
-    let editionDict = {
-        '2': 'α',
-        '3': 'β',
-        '5': 'M',
-        '7': 'א'
-    }
-
-    let bookDivs = getBookDivs(matchingVerseTexts, addressToCountDict, result.headword);
     let childContainerDiv = document.createElement("div");
-
-    bookDivs.forEach(bookDiv => {   
-        childContainerDiv.appendChild(bookDiv);
-    })
 
     let object: WordObject = {
         parentDiv: topDiv,
         childContainer: childContainerDiv,
         triangle: triangleObject,
-        verseBoxDict: matchingVerseTexts,
-        numVerses: matchingVerseTextsRaw.length,
+        verseBoxDict: {},
+        numVerses: genericVerses.size,
         numTokens: totalTokens
     }
 
-    object.triangle.span.onclick = () => {
+    let versesLoaded = false;
+    let loadingPromise: Promise<void> | null = null;
+
+    async function loadVerses(): Promise<void> {
+        if (versesLoaded) return;
+        if (loadingPromise) return loadingPromise;
+
+        loadingPromise = (async () => {
+            let matchingVerseTextsRaw;
+            try {
+                matchingVerseTextsRaw = await grabMatchingVerses(allAddresses);
+            } catch (err) {
+                console.error(`Failed to load verses for "${result.headword}":`, err);
+                childContainerDiv.innerHTML =
+                    '<span style="color:red;">&nbsp;&nbsp;&nbsp;&nbsp;Could not load verses. Collapse and expand to retry.</span>';
+                loadingPromise = null; // allow a retry on the next expand
+                return;
+            }
+
+            let matchingVerseTexts: VerseDisplaySuperdict = {};
+            for (let i = 0; i < matchingVerseTextsRaw.length; i++) {
+                let thisMatchingVerse = matchingVerseTextsRaw[i];
+                let subdict: VerseDisplayDict = {
+                    '2': thisMatchingVerse['first_edition'],
+                    '3': thisMatchingVerse['second_edition'],
+                    '5': thisMatchingVerse['mayhew'],
+                    '7': thisMatchingVerse['zeroth_edition'],
+                    '4': thisMatchingVerse['kjv'],
+                    '8': "",
+                    //'8': thisMatchingVerse['grebrew'].replaceAll('<span style="color:blue">', "").replaceAll("</span>", ""),
+                    'book': thisMatchingVerse['book'],
+                    'chapter': thisMatchingVerse['chapter'],
+                    'verse': thisMatchingVerse['verse'],
+                    'genericID': thisMatchingVerse['verse_id'],
+                    'count': addressToCountDict[thisMatchingVerse['verse_id']]
+                };
+
+                if (thisMatchingVerse['book'] in matchingVerseTexts) {
+                    matchingVerseTexts[thisMatchingVerse['book']].push(subdict);
+                } else {
+                    matchingVerseTexts[thisMatchingVerse['book']] = [subdict];
+                }
+            }
+
+            object.verseBoxDict = matchingVerseTexts;
+            let bookDivs = getBookDivs(matchingVerseTexts, addressToCountDict, result.headword);
+            childContainerDiv.innerHTML = '';
+            bookDivs.forEach(bookDiv => {
+                childContainerDiv.appendChild(bookDiv);
+            });
+            versesLoaded = true;
+        })();
+
+        return loadingPromise;
+    }
+
+    object.triangle.span.onclick = async () => {
         object.triangle.isClicked = !object.triangle.isClicked;
         object.triangle.span.innerHTML = object.triangle.isClicked ? "▼" : "▶";
         if (object.triangle.isClicked) {
             object.triangle.span.style.color = "blue";
+            if (!versesLoaded) {
+                childContainerDiv.innerHTML =
+                    '<span style="color:gray;">&nbsp;&nbsp;&nbsp;&nbsp;Loading…</span>';
+            }
             object.parentDiv.appendChild(object.childContainer);
-            console.log("Matching verse texts for " + result.headword);
-            console.log(matchingVerseTexts);
+            await loadVerses();
         } else {
             object.triangle.span.style.color = "";
-            object.parentDiv.removeChild(object.childContainer);
+            if (object.parentDiv.contains(object.childContainer)) {
+                object.parentDiv.removeChild(object.childContainer);
+            }
         }
-        
     }
 
     return object;
-
-    //console.log(addressBook);
 }
 
 
