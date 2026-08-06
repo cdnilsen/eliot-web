@@ -217,39 +217,92 @@ function getResultDiv(result: WordKJVResult): HTMLDivElement {
 type ResultEntry = { result: WordKJVResult; wordObj: WordObject };
 type PageBucket = { label: string; items: ResultEntry[] };
 
-// Split an already-sorted list of headwords into alphabetical pages. Normally each
-// page is one first-letter group. If a first-letter group is larger than maxPerPage
-// it's split further by second letter. The label is the shared prefix — the first
-// letter, or the first two letters when we had to split.
-function buildAlphabeticalPages(items: ResultEntry[], getKey: (item: ResultEntry) => string, maxPerPage: number): PageBucket[] {
-    const pages: PageBucket[] = [];
-    const n = items.length;
-    let i = 0;
-    while (i < n) {
-        const firstChar = getKey(items[i]).charAt(0);
-        let j = i;
-        while (j < n && getKey(items[j]).charAt(0) === firstChar) j++;
-        const group = items.slice(i, j);
-        if (group.length <= maxPerPage) {
-            pages.push({ label: firstChar, items: group });
-        } else {
-            let k = 0;
-            while (k < group.length) {
-                const secondChar = getKey(group[k]).charAt(1);
-                let m = k;
-                while (m < group.length && getKey(group[m]).charAt(1) === secondChar) m++;
-                pages.push({ label: firstChar + secondChar, items: group.slice(k, m) });
-                k = m;
-            }
-        }
-        i = j;
-    }
-    return pages;
-}
-
 function formatIndexLabel(label: string): string {
     const out = label.replaceAll("8", "ꝏ̄").replaceAll("$", " ");
     return out.trim().length ? out : "(blank)";
+}
+
+// Contiguous runs of items sharing the character at `depth` (empty string for keys
+// shorter than depth+1). Input must already be sorted, so runs are contiguous.
+function groupByChar(items: ResultEntry[], getKey: (item: ResultEntry) => string, depth: number): ResultEntry[][] {
+    const groups: ResultEntry[][] = [];
+    let i = 0;
+    while (i < items.length) {
+        const c = getKey(items[i]).charAt(depth);
+        let j = i;
+        while (j < items.length && getKey(items[j]).charAt(depth) === c) j++;
+        groups.push(items.slice(i, j));
+        i = j;
+    }
+    return groups;
+}
+
+function maxKeyLen(items: ResultEntry[], getKey: (item: ResultEntry) => string): number {
+    let m = 0;
+    for (const it of items) {
+        const l = getKey(it).length;
+        if (l > m) m = l;
+    }
+    return m;
+}
+
+function chunkBySize(items: ResultEntry[], target: number): ResultEntry[][] {
+    const out: ResultEntry[][] = [];
+    for (let i = 0; i < items.length; i += target) out.push(items.slice(i, i + target));
+    return out;
+}
+
+// Break a sorted headword list into batches of ~target words, cutting at the
+// coarsest letter boundary possible: small first-letter groups get merged together,
+// a first-letter group bigger than the cap is split by second letter (then third,
+// …). This keeps tabs to a manageable number instead of one per initial letter.
+function batchByLetters(items: ResultEntry[], getKey: (item: ResultEntry) => string, target: number, cap: number, depth: number): ResultEntry[][] {
+    if (items.length <= cap) return [items];
+
+    const groups = groupByChar(items, getKey, depth);
+    if (groups.length === 1) {
+        // Everything shares this character — go deeper, or hard-chunk if we've run
+        // out of distinguishing characters (identical/near-identical keys).
+        if (depth + 1 >= maxKeyLen(items, getKey)) return chunkBySize(items, target);
+        return batchByLetters(items, getKey, target, cap, depth + 1);
+    }
+
+    const batches: ResultEntry[][] = [];
+    let cur: ResultEntry[] = [];
+    for (const g of groups) {
+        if (g.length > cap) {
+            if (cur.length) { batches.push(cur); cur = []; }
+            const split = depth + 1 >= maxKeyLen(g, getKey)
+                ? chunkBySize(g, target)
+                : batchByLetters(g, getKey, target, cap, depth + 1);
+            for (const b of split) batches.push(b);
+        } else {
+            if (cur.length && cur.length + g.length > cap) { batches.push(cur); cur = []; }
+            for (const it of g) cur.push(it);
+        }
+    }
+    if (cur.length) batches.push(cur);
+    return batches;
+}
+
+// A short range label for a batch, e.g. "b–h" or "quta–qute" — the shared prefix
+// of the first and last headword plus the first character where they diverge.
+function batchLabel(items: ResultEntry[], getKey: (item: ResultEntry) => string): string {
+    const MAX = 14;
+    const f = getKey(items[0]);
+    const l = getKey(items[items.length - 1]);
+    if (f === l) return formatIndexLabel(f.slice(0, MAX));
+    let c = 0;
+    while (c < f.length && c < l.length && f[c] === l[c]) c++;
+    const fp = formatIndexLabel(f.slice(0, Math.min(c + 1, MAX)));
+    const lp = formatIndexLabel(l.slice(0, Math.min(c + 1, MAX)));
+    return `${fp}–${lp}`;
+}
+
+function buildBatches(items: ResultEntry[], getKey: (item: ResultEntry) => string, target: number): PageBucket[] {
+    const cap = Math.round(target * 1.4);
+    return batchByLetters(items, getKey, target, cap, 0)
+        .map(b => ({ label: batchLabel(b, getKey), items: b }));
 }
 
 function displayAllResults(results: WordKJVResult[], sortAlphabetically: boolean) {
@@ -298,14 +351,19 @@ function displayAllResults(results: WordKJVResult[], sortAlphabetically: boolean
     };
 
     const getKey = (obj: ResultEntry) => obj.result.headword || '';
-    // Only page the list up once it's big enough to be unwieldy — a handful of
-    // results shouldn't be scattered one-per-letter across tabs.
-    const PAGE_SIZE = 200;
-    const pages = (sortAlphabetically && allObjects.length > PAGE_SIZE)
-        ? buildAlphabeticalPages(allObjects, getKey, PAGE_SIZE) : [];
+    // Batch into ~50-word pages cut at letter boundaries (see buildBatches). Only
+    // shown when sorting alphabetically; if it all fits in one batch, no tabs.
+    const PAGE_SIZE = 50;
+    const pages = sortAlphabetically ? buildBatches(allObjects, getKey, PAGE_SIZE) : [];
 
     if (pages.length > 1 && pageIndexContainer) {
         const container = pageIndexContainer;
+        // Flexbox so the tab bar wraps onto multiple lines instead of running off
+        // the side of the window when there are many batches.
+        container.style.display = 'flex';
+        container.style.flexWrap = 'wrap';
+        container.style.justifyContent = 'center';
+        container.style.gap = '2px 14px';
         const linkSpans: HTMLSpanElement[] = [];
 
         const showPage = (idx: number) => {
@@ -320,19 +378,14 @@ function displayAllResults(results: WordKJVResult[], sortAlphabetically: boolean
 
         pages.forEach((page, idx) => {
             const link = document.createElement('span');
-            link.innerHTML = formatIndexLabel(page.label);
+            link.textContent = `[${page.label}]`;
             link.style.cursor = 'pointer';
             link.style.color = 'blue';
-            link.style.padding = '0 5px';
+            link.style.whiteSpace = 'nowrap';
             link.title = `${page.items.length} headword${page.items.length === 1 ? '' : 's'}`;
             link.addEventListener('click', () => showPage(idx));
             linkSpans.push(link);
             container.appendChild(link);
-            if (idx < pages.length - 1) {
-                const sep = document.createElement('span');
-                sep.textContent = '·';
-                container.appendChild(sep);
-            }
         });
 
         showPage(0);
