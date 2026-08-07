@@ -19,7 +19,6 @@ import psycopg2
 
 from library import bookToIDDict
 
-
 def load_env(path="vars.env"):
     """Populate os.environ from a KEY=VALUE env file (gitignored creds)."""
     if not os.path.exists(path):
@@ -89,7 +88,38 @@ def ingest(book_name, dry_run=False):
         print("All verses matched an existing row.")
 
 
+NTBooks = [
+    "Matthew",
+    "Mark",
+    "Luke",
+    "John",
+    "Acts",
+    "Romans",
+    "1 Corinthians",
+    "2 Corinthians",
+    "Galatians",
+    "Ephesians",
+    "Philippians",
+    "Colossians",
+    "1 Thessalonians",
+    "2 Thessalonians",
+    "1 Timothy",
+    "2 Timothy",
+    "Titus",
+    "Philemon",
+    "Hebrews",
+    "James",
+    "1 Peter",
+    "2 Peter",
+    "1 John",
+    "2 John",
+    "3 John",
+    "Jude",
+    "Revelation",
+]
+
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    book = args[0] if args else "Genesis"
-    ingest(book, dry_run="--dry-run" in sys.argv)
+
+    for book in NTBooks:
+        ingest(book, dry_run="--dry-run" in sys.argv)
+        
