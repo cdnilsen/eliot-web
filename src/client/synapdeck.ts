@@ -942,12 +942,6 @@ async function produceMultiDeckReviewSheet(selections: { deckName: string, cards
         deckData.push({ name: deckName, cards, sessionId });
     }
 
-    // Shuffle deck order for the PDF (cards within each deck stay in their order)
-    for (let i = deckData.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deckData[i], deckData[j]] = [deckData[j], deckData[i]];
-    }
-
     try {
         const htmlContent = generateMultiDeckReviewSheetHTML(deckData);
         const blob = new Blob([htmlContent], { type: 'text/html' });
@@ -977,19 +971,72 @@ function generateMultiDeckReviewSheetHTML(
     // Build per-deck font-size CSS overrides
     const fontOverrides = decks.map(d => {
         const fontSize = printFontSizes[d.name] ?? '11pt';
-        return `.deck-section[data-deck="${d.name}"] .card-question { font-size: ${fontSize} !important; }`;
+        return `.deck-section[data-deck="${d.name}"] .card-question, .deck-half[data-deck="${d.name}"] .card-question { font-size: ${fontSize} !important; }`;
     }).join('\n');
 
-    const deckSections = decks.map(d => `
-        <div class="deck-section" data-deck="${d.name}">
+    function renderDeckHeader(d: { name: string, cards: CardDue[], sessionId: number | null }): string {
+        const cardWord = d.cards.length === 1 ? 'card' : 'cards';
+        return `
             <div class="deck-section-header">
                 <span class="deck-section-name">${d.name}</span>
-                <span class="deck-section-count">${d.cards.length} cards${d.sessionId ? ` · Session ${d.sessionId}` : ''}</span>
+                <span class="deck-section-count">${d.cards.length} ${cardWord}${d.sessionId ? ` · Session ${d.sessionId}` : ''}</span>
+            </div>`;
+    }
+
+    // Decks with only one due card waste a full-width row (the two-column
+    // card layout has nothing to split). Pair them up so two single-card
+    // decks share one row, each keeping its own header — one leftover deck
+    // (odd count) falls back to a normal full-width row.
+    const singleCardDecks = decks.filter(d => d.cards.length === 1);
+    const otherDecks = decks.filter(d => d.cards.length !== 1);
+
+    type DeckDatum = { name: string, cards: CardDue[], sessionId: number | null };
+    type ReviewRow =
+        | { kind: 'single', deck: DeckDatum }
+        | { kind: 'paired', left: DeckDatum, right: DeckDatum };
+
+    const rows: ReviewRow[] = otherDecks.map(deck => ({ kind: 'single', deck }));
+    for (let i = 0; i + 1 < singleCardDecks.length; i += 2) {
+        rows.push({ kind: 'paired', left: singleCardDecks[i], right: singleCardDecks[i + 1] });
+    }
+    if (singleCardDecks.length % 2 === 1) {
+        rows.push({ kind: 'single', deck: singleCardDecks[singleCardDecks.length - 1] });
+    }
+
+    // Shuffle row order for the PDF (cards within each deck, and which two
+    // decks share a paired row, stay fixed — only row order is randomized).
+    for (let i = rows.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [rows[i], rows[j]] = [rows[j], rows[i]];
+    }
+
+    const deckSections = rows.map(row => {
+        if (row.kind === 'paired') {
+            return `
+        <div class="deck-row">
+            <div class="deck-half" data-deck="${row.left.name}">
+                ${renderDeckHeader(row.left)}
+                <div class="deck-half-cards">
+                    ${row.left.cards.map((card, i) => generateCardHTML(card, i + 1)).join('')}
+                </div>
             </div>
+            <div class="deck-half" data-deck="${row.right.name}">
+                ${renderDeckHeader(row.right)}
+                <div class="deck-half-cards">
+                    ${row.right.cards.map((card, i) => generateCardHTML(card, i + 1)).join('')}
+                </div>
+            </div>
+        </div>`;
+        }
+        const d = row.deck;
+        return `
+        <div class="deck-section" data-deck="${d.name}">
+            ${renderDeckHeader(d)}
             <div class="two-column-container">
                 ${d.cards.map((card, i) => generateCardHTML(card, i + 1)).join('')}
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -1066,6 +1113,15 @@ function generateMultiDeckReviewSheetHTML(
         }
         .deck-section-name { font-size: 16px; font-weight: bold; }
         .deck-section-count { font-size: 11px; color: #666; }
+        .deck-row {
+            display: flex;
+            gap: 40px;
+            margin-top: 24px;
+        }
+        .deck-half {
+            flex: 1 1 0;
+            min-width: 0;
+        }
         .two-column-container {
             column-count: 2;
             column-gap: 60px;
@@ -1099,6 +1155,7 @@ function generateMultiDeckReviewSheetHTML(
             body { font-size: 11pt !important; max-width: none; margin: 0; padding: 0 0.4in 0.4in 0.4in !important; }
             .header { margin-bottom: 10px !important; padding-bottom: 8px !important; page-break-after: avoid; }
             .deck-section { margin-top: 16px; }
+            .deck-row { margin-top: 16px; page-break-inside: avoid; break-inside: avoid; }
             .deck-section-header { page-break-after: avoid; }
             .two-column-container {
                 column-count: 2 !important; column-gap: 60px !important;
@@ -1112,6 +1169,7 @@ function generateMultiDeckReviewSheetHTML(
         @media (max-width: 768px) {
             .two-column-container { column-count: 1; }
             .card-item { text-align: left; }
+            .deck-row { flex-direction: column; gap: 0; }
         }
     </style>
 </head>
