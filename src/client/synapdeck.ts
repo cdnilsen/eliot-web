@@ -1171,7 +1171,7 @@ function generateMultiDeckReviewSheetHTML(
             .card-question { line-height: 1.3 !important; text-align: left !important; display: inline !important; }
             @page { margin: 0.4in; }
         }
-        @media (max-width: 768px) {
+        @media screen and (max-width: 768px) {
             .two-column-container { column-count: 1; }
             .card-item { text-align: left; }
             .deck-row { display: block; }
