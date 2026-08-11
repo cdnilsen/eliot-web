@@ -1114,14 +1114,19 @@ function generateMultiDeckReviewSheetHTML(
         .deck-section-name { font-size: 16px; font-weight: bold; }
         .deck-section-count { font-size: 11px; color: #666; }
         .deck-row {
-            display: flex;
-            gap: 40px;
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+            border-spacing: 0;
             margin-top: 24px;
         }
         .deck-half {
-            flex: 1 1 0;
-            min-width: 0;
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
         }
+        .deck-half:first-child { padding-right: 20px; }
+        .deck-half:last-child { padding-left: 20px; }
         .two-column-container {
             column-count: 2;
             column-gap: 60px;
@@ -1169,7 +1174,10 @@ function generateMultiDeckReviewSheetHTML(
         @media (max-width: 768px) {
             .two-column-container { column-count: 1; }
             .card-item { text-align: left; }
-            .deck-row { flex-direction: column; gap: 0; }
+            .deck-row { display: block; }
+            .deck-half { display: block; width: 100%; }
+            .deck-half:first-child { padding-right: 0; }
+            .deck-half:last-child { padding-left: 0; }
         }
     </style>
 </head>
