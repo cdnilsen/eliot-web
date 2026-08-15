@@ -12,6 +12,7 @@ import { createCardRelationshipGraph, CardNode, RelationshipLink } from './CardR
 import { ReviewForecastData, ReviewForecastOptions, updateDeckSelection, loadReviewForecast, createReviewForecastChart, setupReviewForecastTab } from './synapdeck_files/review_chart.js';
 import { addRetrievabilityManagementSection } from './synapdeck_files/retrievability.js';
 import { setupStatsTab } from './synapdeck_files/stats_tab.js';
+import Papa from 'papaparse';
 
 window.loadReviewForecast = loadReviewForecast;
 window.setupReviewForecastTab = setupReviewForecastTab;
@@ -540,11 +541,22 @@ function cleanFieldDatum(card: CardDue, targetIndex: number, isBackOfCard: boole
     return output;
 }
 
-async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCardsResponse> {
+interface ReviewWindowOptions {
+    checkTime: Date;
+    targetDate: Date;
+    currentTime: Date;
+    reviewAhead: boolean;
+    daysAhead: number;
+}
+
+// Shared by the single-deck and batch card-availability checks so the
+// "review ahead" window (checkTime/targetDate) is computed identically
+// for both call sites.
+function computeReviewWindowOptions(): ReviewWindowOptions {
     const reviewAheadCheckbox = document.getElementById('reviewAheadCheckbox') as HTMLInputElement;
     const reviewAheadDropdown = document.getElementById('reviewAheadOptions') as HTMLInputElement;
     const reviewDaysAhead = document.getElementById('reviewDaysAhead') as HTMLSelectElement;
-    
+
     let checkTime: Date;
     let targetDate: Date;
 
@@ -555,39 +567,45 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
             }
         });
     }
-    
+
     if (reviewAheadCheckbox && reviewAheadCheckbox.checked) {
         const daysAhead = parseInt(reviewDaysAhead?.value || '1');
         targetDate = new Date();
         targetDate.setDate(targetDate.getDate() + daysAhead);
-        
+
         // Create end of target day in LOCAL timezone, then convert to UTC
         checkTime = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
     } else {
-        // Create end of today in LOCAL timezone, then convert to UTC  
+        // Create end of today in LOCAL timezone, then convert to UTC
         const today = new Date();
         checkTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
         targetDate = new Date();
     }
 
-    const currentTime = new Date();
-    console.log('DEBUG - Check time being used:', checkTime.toISOString());
-    console.log('DEBUG - Current actual time:', currentTime.toISOString());
-    console.log('DEBUG - Review ahead enabled:', reviewAheadCheckbox?.checked || false);
-    console.log('DEBUG - Days ahead:', reviewAheadCheckbox?.checked ? parseInt(reviewDaysAhead?.value || '1') : 0);
-    
+    return {
+        checkTime,
+        targetDate,
+        currentTime: new Date(),
+        reviewAhead: reviewAheadCheckbox?.checked || false,
+        daysAhead: reviewAheadCheckbox?.checked ? parseInt(reviewDaysAhead?.value || '1') : 0
+    };
+}
+
+async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCardsResponse> {
+    const { checkTime, targetDate, reviewAhead, daysAhead } = computeReviewWindowOptions();
+
     try {
         const response = await fetch('/check_cards_available', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 deck: deckName,
                 current_time: checkTime.toISOString(),
                 actual_current_time: new Date().toISOString(),
-                review_ahead: reviewAheadCheckbox?.checked || false,
-                days_ahead: reviewAheadCheckbox?.checked ? parseInt(reviewDaysAhead?.value || '1') : 0,
+                review_ahead: reviewAhead,
+                days_ahead: daysAhead,
                 target_date: targetDate.toISOString()
             })
         });
@@ -600,10 +618,58 @@ async function checkAvailableCardsWithOptions(deckName: string): Promise<CheckCa
         return result;
     } catch (error) {
         console.error('Error checking available cards:', error);
-        return { 
-            status: 'error', 
-            error: 'Network error checking available cards' 
+        return {
+            status: 'error',
+            error: 'Network error checking available cards'
         };
+    }
+}
+
+// Batched equivalent of checkAvailableCardsWithOptions: checks due-card
+// availability for every deck in one request/query instead of one
+// /check_cards_available call per deck (see buildReviewDeckList).
+async function checkAvailableCardsBatch(deckNames: string[]): Promise<Map<string, CheckCardsResponse>> {
+    const results = new Map<string, CheckCardsResponse>();
+    if (deckNames.length === 0) return results;
+
+    const { checkTime, targetDate, reviewAhead, daysAhead } = computeReviewWindowOptions();
+
+    try {
+        const response = await fetch('/check_cards_available_batch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                decks: deckNames,
+                current_time: checkTime.toISOString(),
+                actual_current_time: new Date().toISOString(),
+                review_ahead: reviewAhead,
+                days_ahead: daysAhead,
+                target_date: targetDate.toISOString()
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const body: { status: string; decks?: Record<string, CheckCardsResponse>; error?: string } = await response.json();
+        if (body.status !== 'success' || !body.decks) {
+            const errorResult: CheckCardsResponse = { status: 'error', error: body.error || 'Error checking available cards' };
+            for (const deckName of deckNames) results.set(deckName, errorResult);
+            return results;
+        }
+
+        for (const deckName of deckNames) {
+            results.set(deckName, body.decks[deckName] || { status: 'success', cards: [], total_due: 0 });
+        }
+        return results;
+    } catch (error) {
+        console.error('Error checking available cards (batch):', error);
+        const errorResult: CheckCardsResponse = { status: 'error', error: 'Network error checking available cards' };
+        for (const deckName of deckNames) results.set(deckName, errorResult);
+        return results;
     }
 }
 
@@ -883,13 +949,12 @@ async function buildReviewDeckList(): Promise<void> {
     container.innerHTML = '<p>Loading card counts...</p>';
 
     const decks = await fetchLiveDecks();
-    const results = await Promise.all(
-        decks.map(async (deckName) => {
-            const result = await checkAvailableCardsWithOptions(deckName);
-            deckCardCache.set(deckName, result);
-            return { deckName, result };
-        })
-    );
+    const batchResults = await checkAvailableCardsBatch(decks);
+    const results = decks.map((deckName) => {
+        const result = batchResults.get(deckName) || { status: 'error' as const, error: 'No result returned' };
+        deckCardCache.set(deckName, result);
+        return { deckName, result };
+    });
 
     const anyDue = results.some(({ result }) => (result.cards?.length || 0) > 0);
 
@@ -2229,6 +2294,31 @@ function setupShuffleCardsTab(): void {
             <div id="export_output" class="shuffle-output"></div>
         </div>
 
+        <div class="date-shuffle-controls" style="margin-top: 1.5rem;">
+            <h3 style="margin-top: 0;">📥 Import Deck</h3>
+            <p class="tab-description">
+                Upload a previously exported (and possibly edited) CSV/TSV file to update cards in a deck.
+                Only existing cards are updated — no new cards are created and no cards are deleted.
+            </p>
+            <div class="shuffle-form">
+                <div class="form-group">
+                    <label for="importDeckSelect"><strong>Target Deck:</strong></label>
+                    <select id="importDeckSelect" class="form-control">
+                        <option value="">Choose a deck...</option>
+                    </select>
+                    <small class="form-text">Must match the deck the file was exported from.</small>
+                </div>
+                <div class="form-group">
+                    <label for="importDeckFile"><strong>File:</strong></label>
+                    <input type="file" id="importDeckFile" class="form-control" accept=".csv,.txt,.tsv">
+                </div>
+                <div class="form-actions">
+                    <button id="importDeckBtn" class="btn btn-primary" disabled>📥 Import Deck</button>
+                </div>
+            </div>
+            <div id="import_output" class="shuffle-output"></div>
+        </div>
+
         <div class="date-shuffle-controls" style="margin-top: 1.5rem; border: 1px solid #e0a0a0;">
             <h3 style="margin-top: 0; color: #b30000;">🗑️ Delete Deck</h3>
             <p class="tab-description">
@@ -2306,7 +2396,7 @@ async function fetchLiveDecks(): Promise<string[]> {
 // preserving the current selection when that deck still exists.
 async function refreshDeckManagementDropdowns(): Promise<void> {
     const decks = await fetchLiveDecks();
-    ['shuffleDeckSelect', 'exportDeckSelect', 'deleteDeckSelect'].forEach(selectId => {
+    ['shuffleDeckSelect', 'exportDeckSelect', 'importDeckSelect', 'deleteDeckSelect'].forEach(selectId => {
         const select = document.getElementById(selectId) as HTMLSelectElement;
         if (!select) return;
         const previous = select.value;
@@ -2329,6 +2419,30 @@ function setupDeckManagementEventListeners(): void {
     if (exportBtn && !exportBtn.dataset.initialized) {
         exportBtn.dataset.initialized = 'true';
         exportBtn.addEventListener('click', handleExportDeck);
+    }
+
+    const importSelect = document.getElementById('importDeckSelect') as HTMLSelectElement;
+    const importFile = document.getElementById('importDeckFile') as HTMLInputElement;
+    const importBtn = document.getElementById('importDeckBtn') as HTMLButtonElement;
+
+    // The import button only makes sense once both a target deck and a file are chosen.
+    const refreshImportControls = () => {
+        const deck = importSelect?.value || '';
+        const hasFile = !!importFile?.files?.length;
+        if (importBtn) importBtn.disabled = !deck || !hasFile;
+    };
+
+    if (importSelect && !importSelect.dataset.initialized) {
+        importSelect.dataset.initialized = 'true';
+        importSelect.addEventListener('change', refreshImportControls);
+    }
+    if (importFile && !importFile.dataset.initialized) {
+        importFile.dataset.initialized = 'true';
+        importFile.addEventListener('change', refreshImportControls);
+    }
+    if (importBtn && !importBtn.dataset.initialized) {
+        importBtn.dataset.initialized = 'true';
+        importBtn.addEventListener('click', handleImportDeck);
     }
 
     const deleteSelect = document.getElementById('deleteDeckSelect') as HTMLSelectElement;
@@ -2364,6 +2478,151 @@ function setupDeckManagementEventListeners(): void {
     }
 }
 
+// --- Scheduling/relationship blob codec ---
+// Mirrors src/server/blob_codec.ts. Kept as a separate client-side copy
+// (matching this project's convention of duplicating small type/logic
+// definitions between client and server rather than sharing a module).
+// The server is the authoritative decoder for /import_deck; the client copy
+// here is only used for an upfront preview of which rows look valid before
+// the file is submitted.
+
+const FNV_OFFSET_BASIS = 0x811c9dc5;
+const FNV_PRIME = 0x01000193;
+
+function fnv1a32(str: string): string {
+    // Blob payloads are ASCII-only by construction (ISO dates, decimal
+    // numbers, 0/1 flags, comma/semicolon-separated integers), so charCodeAt
+    // gives the correct UTF-8 byte value for every character here.
+    let hash = FNV_OFFSET_BASIS;
+    for (let i = 0; i < str.length; i++) {
+        hash ^= str.charCodeAt(i);
+        hash = Math.imul(hash, FNV_PRIME) >>> 0;
+    }
+    return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+function base64urlEncode(payload: string): string {
+    return btoa(payload).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64urlDecode(encoded: string): string {
+    const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    return atob(padded);
+}
+
+function encodeVersionedBlob(tag: string, rawPayload: string): string {
+    return `${tag}:${base64urlEncode(rawPayload)}.${fnv1a32(rawPayload)}`;
+}
+
+type DecodedBlob =
+    | { ok: true; payload: string }
+    | { ok: false; reason: 'empty' | 'bad_tag' | 'bad_base64' | 'checksum_mismatch' };
+
+function decodeVersionedBlob(cell: string | null | undefined, expectedTag: string): DecodedBlob {
+    const trimmed = (cell ?? '').trim();
+    if (trimmed === '') return { ok: false, reason: 'empty' };
+
+    const prefix = `${expectedTag}:`;
+    if (!trimmed.startsWith(prefix)) return { ok: false, reason: 'bad_tag' };
+
+    const rest = trimmed.slice(prefix.length);
+    const dotIndex = rest.lastIndexOf('.');
+    if (dotIndex === -1) return { ok: false, reason: 'bad_base64' };
+
+    const encodedPayload = rest.slice(0, dotIndex);
+    const checksum = rest.slice(dotIndex + 1);
+
+    let payload: string;
+    try {
+        payload = base64urlDecode(encodedPayload);
+    } catch {
+        return { ok: false, reason: 'bad_base64' };
+    }
+
+    if (fnv1a32(payload) !== checksum.toLowerCase()) {
+        return { ok: false, reason: 'checksum_mismatch' };
+    }
+
+    return { ok: true, payload };
+}
+
+interface SchedulingFields {
+    time_due: string | null;
+    interval: number | null;
+    retrievability: number | null;
+    stability: number | null;
+    difficulty: number | null;
+    last_reviewed: string | null;
+    is_suspended: boolean | null;
+    is_buried: boolean | null;
+    bury_tomorrow: boolean | null;
+}
+
+type DecodedSchedulingBlob =
+    | { ok: true; data: SchedulingFields }
+    | { ok: false; reason: string };
+
+function decodeSchedulingBlob(cell: string | null | undefined): DecodedSchedulingBlob {
+    const decoded = decodeVersionedBlob(cell, 'S1');
+    if (decoded.ok === false) return { ok: false, reason: decoded.reason };
+
+    const parts = decoded.payload.split('|');
+    if (parts.length !== 7) return { ok: false, reason: 'malformed_payload' };
+
+    const [timeDue, interval, retrievability, stability, difficulty, lastReviewed, flags] = parts;
+    if (!/^[01]{3}$/.test(flags)) return { ok: false, reason: 'malformed_payload' };
+
+    return {
+        ok: true,
+        data: {
+            time_due: timeDue === '' ? null : timeDue,
+            interval: interval === '' ? null : Number(interval),
+            retrievability: retrievability === '' ? null : Number(retrievability),
+            stability: stability === '' ? null : Number(stability),
+            difficulty: difficulty === '' ? null : Number(difficulty),
+            last_reviewed: lastReviewed === '' ? null : lastReviewed,
+            is_suspended: flags[0] === '1',
+            is_buried: flags[1] === '1',
+            bury_tomorrow: flags[2] === '1',
+        },
+    };
+}
+
+interface RelationshipFields {
+    peers: number[];
+    prereqs: number[];
+    dependents: number[];
+}
+
+type DecodedRelationshipBlob =
+    | { ok: true; data: RelationshipFields }
+    | { ok: false; reason: string };
+
+function parseIdList(str: string): number[] | null {
+    if (str === '') return [];
+    const ids = str.split(',').map(s => Number(s));
+    if (ids.some(n => !Number.isInteger(n))) return null;
+    return ids;
+}
+
+function decodeRelationshipBlob(cell: string | null | undefined): DecodedRelationshipBlob {
+    const decoded = decodeVersionedBlob(cell, 'R1');
+    if (decoded.ok === false) return { ok: false, reason: decoded.reason };
+
+    const parts = decoded.payload.split(';');
+    if (parts.length !== 3) return { ok: false, reason: 'malformed_payload' };
+
+    const peers = parseIdList(parts[0]);
+    const prereqs = parseIdList(parts[1]);
+    const dependents = parseIdList(parts[2]);
+    if (peers === null || prereqs === null || dependents === null) {
+        return { ok: false, reason: 'malformed_payload' };
+    }
+
+    return { ok: true, data: { peers, prereqs, dependents } };
+}
+
 // Escape a single field for CSV/TSV output.
 function escapeDelimitedField(value: string, delimiter: string): string {
     const str = value ?? '';
@@ -2380,7 +2639,7 @@ function escapeDelimitedField(value: string, delimiter: string): string {
 
 // Build delimited text (CSV or TSV) from exported deck cards.
 function buildDelimitedDeckExport(
-    cards: Array<{ card_id: number; note_id: number; card_format: string; field_names: string[]; field_values: string[] }>,
+    cards: Array<{ card_id: number; note_id: number; card_format: string; sched: string; rel: string; field_names: string[]; field_values: string[] }>,
     delimiter: string
 ): string {
     // Work positionally so cards keep every value even when field_names are missing
@@ -2401,7 +2660,7 @@ function buildDelimitedDeckExport(
         fieldColumns.push(name || `field_${i + 1}`);
     }
 
-    const header = ['card_id', 'note_id', 'card_format', ...fieldColumns];
+    const header = ['card_id', 'note_id', 'card_format', 'sched', 'rel', ...fieldColumns];
     const rows: string[] = [header.map(h => escapeDelimitedField(h, delimiter)).join(delimiter)];
 
     for (const card of cards) {
@@ -2410,6 +2669,8 @@ function buildDelimitedDeckExport(
             String(card.card_id),
             String(card.note_id ?? ''),
             card.card_format ?? '',
+            card.sched ?? '',
+            card.rel ?? '',
             ...fieldColumns.map((_, i) => values[i] ?? '')
         ];
         rows.push(row.map(cell => escapeDelimitedField(cell, delimiter)).join(delimiter));
@@ -2477,6 +2738,153 @@ async function handleExportDeck(): Promise<void> {
         if (outputDiv) outputDiv.innerHTML = '<div class="error-message"><p>❌ Failed to reach the server. Please try again.</p></div>';
     } finally {
         if (btn) { btn.textContent = '📤 Export Deck'; btn.disabled = false; }
+    }
+}
+
+interface ImportDeckRowResult {
+    card_id: number;
+    status: 'updated' | 'skipped' | 'error';
+    content_applied: boolean;
+    sched_applied: boolean;
+    sched_warning?: string;
+    rel_applied: boolean;
+    rel_warning?: string;
+}
+
+interface ImportDeckResponse {
+    status: 'success' | 'error';
+    error?: string;
+    deck?: string;
+    total_rows?: number;
+    updated?: number;
+    skipped?: number;
+    warnings?: number;
+    results?: ImportDeckRowResult[];
+}
+
+const IMPORT_FIXED_COLUMNS = new Set(['card_id', 'note_id', 'card_format', 'sched', 'rel']);
+
+// Re-import a previously exported (and possibly edited) CSV/TSV deck file.
+// Update-only: rows are matched by card_id against the target deck; nothing
+// is inserted or deleted. Scheduling/relationship blobs are sent to the
+// server raw (undecoded) so checksum validation stays authoritative there —
+// the decode here is only used to show an upfront preview to the user.
+async function handleImportDeck(): Promise<void> {
+    const deckSelect = document.getElementById('importDeckSelect') as HTMLSelectElement;
+    const fileInput = document.getElementById('importDeckFile') as HTMLInputElement;
+    const btn = document.getElementById('importDeckBtn') as HTMLButtonElement;
+    const outputDiv = document.getElementById('import_output') as HTMLDivElement;
+
+    const deck = deckSelect?.value || '';
+    const file = fileInput?.files?.[0];
+
+    if (!deck || !file) {
+        if (outputDiv) outputDiv.innerHTML = '<div class="error-message"><p>Please select a target deck and a file.</p></div>';
+        return;
+    }
+
+    if (btn) { btn.textContent = '📥 Importing...'; btn.disabled = true; }
+    if (outputDiv) outputDiv.innerHTML = '<p class="loading">Reading file...</p>';
+
+    try {
+        const text = await file.text();
+        const parsed = Papa.parse<Record<string, string>>(text, {
+            header: true,
+            skipEmptyLines: true,
+            transformHeader: (header: string) => header.trim()
+        });
+
+        if (parsed.errors.length > 0) {
+            console.warn('Deck import CSV parsing errors:', parsed.errors);
+        }
+
+        const headers = (parsed.meta.fields || []).filter(h => !IMPORT_FIXED_COLUMNS.has(h));
+
+        const rows = parsed.data
+            .filter(row => (row['card_id'] ?? '').toString().trim() !== '')
+            .map(row => {
+                const cardId = parseInt(row['card_id'], 10);
+                const fieldValues = headers.map(h => row[h] ?? '');
+                return {
+                    card_id: cardId,
+                    card_format: row['card_format'],
+                    field_values: fieldValues,
+                    sched_raw: row['sched'],
+                    rel_raw: row['rel'],
+                };
+            });
+
+        if (rows.length === 0) {
+            if (outputDiv) outputDiv.innerHTML = '<div class="error-message"><p>No rows with a card_id were found in the file.</p></div>';
+            return;
+        }
+
+        // Client-side preview only — the server independently re-validates
+        // every checksum before writing anything.
+        let previewOk = 0, previewWarn = 0;
+        for (const row of rows) {
+            const sched = decodeSchedulingBlob(row.sched_raw);
+            const rel = decodeRelationshipBlob(row.rel_raw);
+            const schedBad = sched.ok === false && sched.reason !== 'empty';
+            const relBad = rel.ok === false && rel.reason !== 'empty';
+            if (schedBad || relBad) previewWarn++; else previewOk++;
+        }
+
+        if (outputDiv) {
+            outputDiv.innerHTML = `<p class="loading">Importing ${rows.length} row${rows.length !== 1 ? 's' : ''} into "${deck}"` +
+                (previewWarn > 0 ? ` (${previewWarn} row${previewWarn !== 1 ? 's' : ''} look corrupted and may be flagged)` : '') +
+                `...</p>`;
+        }
+
+        const response = await fetch('/import_deck', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deck, rows })
+        });
+        const result: ImportDeckResponse = await response.json();
+
+        if (result.status !== 'success' || !result.results) {
+            if (outputDiv) outputDiv.innerHTML = `<div class="error-message"><p>${result.error ?? 'Import failed.'}</p></div>`;
+            return;
+        }
+
+        const rowsHtml = result.results.map(r => {
+            const rowColor = r.status === 'skipped' ? '#fdd' : (r.sched_warning || r.rel_warning) ? '#ffe8b3' : '#d9f2d9';
+            const warnings = [r.sched_warning, r.rel_warning].filter(Boolean).join('; ');
+            return `<tr style="background:${rowColor}">
+                <td>${r.card_id}</td>
+                <td>${r.status}</td>
+                <td>${r.content_applied ? '✓' : ''}</td>
+                <td>${r.sched_applied ? '✓' : ''}</td>
+                <td>${r.rel_applied ? '✓' : ''}</td>
+                <td>${escapeTextContent(warnings)}</td>
+            </tr>`;
+        }).join('');
+
+        if (outputDiv) outputDiv.innerHTML = `
+            <div class="success-message">
+                <p>✅ Import complete: <strong>${result.updated}</strong> updated,
+                   <strong>${result.skipped}</strong> skipped,
+                   <strong>${result.warnings}</strong> with warnings
+                   (of ${result.total_rows} rows).</p>
+            </div>
+            <div style="max-height: 400px; overflow-y: auto; margin-top: 0.5rem;">
+                <table class="data-table" style="width:100%; border-collapse: collapse;">
+                    <thead>
+                        <tr><th>card_id</th><th>status</th><th>content</th><th>sched</th><th>rel</th><th>warnings</th></tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            </div>`;
+
+        // Reset the file input so the same file isn't accidentally resubmitted.
+        if (fileInput) fileInput.value = '';
+        if (btn) btn.disabled = true;
+    } catch (error) {
+        console.error('Error importing deck:', error);
+        if (outputDiv) outputDiv.innerHTML = '<div class="error-message"><p>❌ Failed to reach the server. Please try again.</p></div>';
+    } finally {
+        if (btn) { btn.textContent = '📥 Import Deck'; }
     }
 }
 

@@ -8,6 +8,13 @@ import { wrapAsync } from './utils'
 import { Request, Response, NextFunction } from 'express';
 import { rescheduleCards, getSchedulingStats } from './scheduler';
 import { CronJob } from 'cron';
+import {
+    encodeSchedulingBlob,
+    decodeSchedulingBlob,
+    encodeRelationshipBlob,
+    decodeRelationshipBlob,
+    RelationshipFields,
+} from './blob_codec';
 
 import multer from 'multer';
 //import { convertUploadedFiles } from './anki-synapdeck-converter';
@@ -1108,39 +1115,9 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
     
     const targetDateTime = target_date ? new Date(target_date) : new Date();
 
-    console.log('Testing simple query...');
-    const testQuery = await client.query(
-        'SELECT COUNT(*) as count FROM cards WHERE deck = $1',
-        [deck]
-    );
-    console.log('Simple query result:', testQuery.rows);
-
-    console.log('Request body:', req.body);
-    console.log('Deck:', deck);
-    console.log('Check time (end of target day):', checkTime.toISOString());
-    console.log('Target date:', targetDateTime.toDateString());
-    console.log('Actual current time:', actualCurrentTime.toISOString());
-    
-    const modeText = review_ahead ? 
-        `cards due by end of ${targetDateTime.toDateString()} (${days_ahead || 1} days ahead)` : 
-        'cards due by end of today';
-    console.log(`Checking cards for deck: ${deck} - Mode: ${modeText}`);
-    
     try {
-        const allCards = await client.query(
-            `SELECT card_id, time_due, deck FROM cards WHERE deck = $1 ORDER BY time_due`, [deck]
-        );
-        
-        console.log(`DEBUG: Found ${allCards.rows.length} total cards in deck "${deck}":`);
-        allCards.rows.forEach(card => {
-            console.log(`  Card ${card.card_id}: due ${card.time_due}`);
-        });
-        
-        console.log(`DEBUG: Looking for cards where time_due <= ${checkTime.toISOString()}`);
-        console.log(`DEBUG: Current actual time: ${actualCurrentTime.toISOString()}`);
-
         const query = await client.query(
-            `SELECT 
+            `SELECT
                 card_id,
                 note_id,
                 deck,
@@ -1158,32 +1135,34 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
                     WHEN time_due <= $3 THEN 'due_now'
                     ELSE 'due_ahead'
                 END as due_status
-            FROM cards 
-            WHERE deck = $1 
+            FROM cards
+            WHERE deck = $1
             AND time_due <= $2
             AND (is_buried = false OR is_buried IS NULL)  -- Exclude buried cards
             ORDER BY time_due ASC`,
             [deck, checkTime, actualCurrentTime]
         );
-        
-        const dueNow = query.rows.filter(card => card.due_status === 'due_now');
-        const dueAhead = query.rows.filter(card => card.due_status === 'due_ahead');
-        
-        console.log(`Found ${query.rows.length} cards total (${dueNow.length} due now, ${dueAhead.length} due ahead by end of target date)`);
-        
+
+        let dueNowCount = 0;
+        let dueAheadCount = 0;
+        for (const card of query.rows) {
+            if (card.due_status === 'due_now') dueNowCount++;
+            else dueAheadCount++;
+        }
+
         res.json({
             status: 'success',
             cards: query.rows,
             total_due: query.rows.length,
-            due_now_count: dueNow.length,
-            due_ahead_count: dueAhead.length,
+            due_now_count: dueNowCount,
+            due_ahead_count: dueAheadCount,
             deck: deck,
             checked_at: checkTime.toISOString(),
             target_date: targetDateTime.toISOString(),
             review_ahead: review_ahead || false,
             days_ahead: days_ahead || 0
         });
-        
+
     } catch (err) {
         console.error('Error checking available cards:', err);
         res.status(500).json({
@@ -1193,6 +1172,106 @@ app.post('/check_cards_available', express.json(), wrapAsync(async (req, res) =>
         });
     }
 }));
+
+// Batched version of /check_cards_available: checks due cards across multiple
+// decks in a single query instead of one request+query per deck (the previous
+// per-deck fan-out from buildReviewDeckList was the main cost of opening the
+// Review tab).
+app.post('/check_cards_available_batch', express.json(), wrapAsync(async (req, res) => {
+    const { decks, current_time, actual_current_time, review_ahead, days_ahead, target_date } = req.body;
+
+    if (!Array.isArray(decks) || decks.length === 0) {
+        return res.status(400).json({
+            status: 'error',
+            error: 'decks array is required'
+        });
+    }
+
+    const actualCurrentTime = actual_current_time ? new Date(actual_current_time) : new Date();
+
+    let checkTime;
+    if (review_ahead && target_date) {
+        checkTime = new Date(target_date);
+        checkTime.setHours(23, 59, 59, 999);
+    } else if (current_time) {
+        // See /check_cards_available: this is already an end-of-day UTC ISO
+        // string from the client, so no local-timezone math here.
+        checkTime = new Date(current_time);
+    } else {
+        checkTime = new Date();
+        checkTime.setHours(23, 59, 59, 999);
+    }
+
+    const targetDateTime = target_date ? new Date(target_date) : new Date();
+
+    try {
+        const query = await client.query(
+            `SELECT
+                card_id,
+                note_id,
+                deck,
+                card_format,
+                field_names,
+                field_values,
+                field_processing,
+                time_due,
+                interval,
+                retrievability,
+                peers,
+                prereqs,
+                dependents,
+                CASE
+                    WHEN time_due <= $3 THEN 'due_now'
+                    ELSE 'due_ahead'
+                END as due_status
+            FROM cards
+            WHERE deck = ANY($1::text[])
+            AND time_due <= $2
+            AND (is_buried = false OR is_buried IS NULL)  -- Exclude buried cards
+            ORDER BY deck, time_due ASC`,
+            [decks, checkTime, actualCurrentTime]
+        );
+
+        const byDeck = new Map<string, any[]>();
+        for (const deckName of decks) byDeck.set(deckName, []);
+        for (const card of query.rows) {
+            byDeck.get(card.deck)?.push(card);
+        }
+
+        const results: Record<string, unknown> = {};
+        for (const [deckName, cards] of byDeck) {
+            let dueNowCount = 0;
+            let dueAheadCount = 0;
+            for (const card of cards) {
+                if (card.due_status === 'due_now') dueNowCount++;
+                else dueAheadCount++;
+            }
+            results[deckName] = {
+                status: 'success',
+                cards,
+                total_due: cards.length,
+                due_now_count: dueNowCount,
+                due_ahead_count: dueAheadCount,
+                deck: deckName,
+                checked_at: checkTime.toISOString(),
+                target_date: targetDateTime.toISOString(),
+                review_ahead: review_ahead || false,
+                days_ahead: days_ahead || 0
+            };
+        }
+
+        res.json({ status: 'success', decks: results });
+
+    } catch (err) {
+        console.error('Error checking available cards (batch):', err);
+        res.status(500).json({
+            status: 'error',
+            error: 'Error checking available cards',
+            details: err instanceof Error ? err.message : 'Unknown error'
+        });
+    }
+}));
+
 // Additional endpoint to get deck statistics
 app.get('/deck_stats/:deckName', wrapAsync(async (req, res) => {
     const { deckName } = req.params;
@@ -1759,22 +1838,27 @@ app.post('/create_review_session', express.json(), wrapAsync(async (req, res) =>
         // Get current card data and insert session_card_reviews records
         if (card_ids.length > 0) {
             const positionMap = new Map(card_ids.map((id: number, i: number) => [id, i]));
-            const placeholders = card_ids.map((_, index) => `$${index + 1}`).join(',');
             const cardsData = await transactionClient.query(
-                `SELECT card_id, interval, retrievability, deck FROM cards WHERE card_id IN (${placeholders})`,
-                card_ids
+                `SELECT card_id, interval, retrievability, deck FROM cards WHERE card_id = ANY($1::int[])`,
+                [card_ids]
             );
 
-            // Insert a record for each card presented
-            for (const cardData of cardsData.rows) {
-                await transactionClient.query(
-                    `INSERT INTO session_card_reviews (session_id, card_id, interval_before, retrievability_before, deck, position, under_review)
-                     VALUES ($1, $2, $3, $4, $5, $6, true)`,
-                    [sessionId, cardData.card_id, cardData.interval, cardData.retrievability,
-                     cardData.deck, positionMap.get(cardData.card_id)]
-                );
-            }
-            
+            // Single multi-row insert instead of one INSERT per card.
+            const insertCardIds = cardsData.rows.map((c: any) => c.card_id);
+            const insertIntervals = cardsData.rows.map((c: any) => c.interval);
+            const insertRetrievabilities = cardsData.rows.map((c: any) => c.retrievability);
+            const insertDecks = cardsData.rows.map((c: any) => c.deck);
+            const insertPositions = cardsData.rows.map((c: any) => positionMap.get(c.card_id));
+
+            await transactionClient.query(
+                `INSERT INTO session_card_reviews
+                    (session_id, card_id, interval_before, retrievability_before, deck, position, under_review)
+                 SELECT $1, card_id, interval_before, retrievability_before, deck, position, true
+                 FROM unnest($2::int[], $3::int8[], $4::float4[], $5::text[], $6::int[])
+                    AS t(card_id, interval_before, retrievability_before, deck, position)`,
+                [sessionId, insertCardIds, insertIntervals, insertRetrievabilities, insertDecks, insertPositions]
+            );
+
             console.log(`Added ${cardsData.rows.length} cards to session ${sessionId}`);
         }
         
@@ -4604,7 +4688,10 @@ app.get('/export_deck', wrapAsync(async (req, res) => {
     }
 
     const result = await client.query(
-        `SELECT card_id, note_id, card_format, field_names, field_values
+        `SELECT card_id, note_id, card_format, field_names, field_values,
+                time_due, interval, retrievability, stability, difficulty, last_reviewed,
+                is_suspended, is_buried, bury_tomorrow,
+                peers, prereqs, dependents
          FROM cards
          WHERE deck = $1
          ORDER BY note_id, card_id`,
@@ -4615,11 +4702,362 @@ app.get('/export_deck', wrapAsync(async (req, res) => {
         card_id: row.card_id,
         note_id: row.note_id,
         card_format: row.card_format || '',
+        sched: encodeSchedulingBlob({
+            time_due: row.time_due,
+            interval: row.interval,
+            retrievability: row.retrievability,
+            stability: row.stability,
+            difficulty: row.difficulty,
+            last_reviewed: row.last_reviewed,
+            is_suspended: row.is_suspended,
+            is_buried: row.is_buried,
+            bury_tomorrow: row.bury_tomorrow,
+        }),
+        rel: encodeRelationshipBlob({
+            peers: row.peers || [],
+            prereqs: row.prereqs || [],
+            dependents: row.dependents || [],
+        }),
         field_names: row.field_names || [],
         field_values: row.field_values || [],
     }));
 
     return res.json({ status: 'success', deck, count: cards.length, cards });
+}));
+
+// Re-import a previously exported (and possibly edited) deck. Update-only:
+// every row must match an existing card_id in the target deck, no cards are
+// inserted or deleted. Content (field_values/card_format) updates apply
+// independently of scheduling/relationship blob validity, so a corrupted
+// sched/rel cell only skips that piece of that one row.
+interface ImportDeckRow {
+    card_id: number;
+    card_format?: string;
+    field_values?: string[];
+    sched_raw?: string;
+    rel_raw?: string;
+}
+
+interface ImportDeckRowResult {
+    card_id: number;
+    status: 'updated' | 'skipped' | 'error';
+    content_applied: boolean;
+    sched_applied: boolean;
+    sched_warning?: string;
+    rel_applied: boolean;
+    rel_warning?: string;
+}
+
+const SCHED_WARNING_TEXT: Record<string, string> = {
+    empty: 'no scheduling data provided',
+    bad_tag: 'scheduling cell is not a recognized S1 blob',
+    bad_base64: 'scheduling cell could not be decoded',
+    checksum_mismatch: 'scheduling cell checksum mismatch — data was likely corrupted by the spreadsheet program',
+    malformed_payload: 'scheduling cell decoded but has an unexpected shape',
+};
+
+const REL_WARNING_TEXT: Record<string, string> = {
+    empty: 'no relationship data provided',
+    bad_tag: 'relationship cell is not a recognized R1 blob',
+    bad_base64: 'relationship cell could not be decoded',
+    checksum_mismatch: 'relationship cell checksum mismatch — data was likely corrupted by the spreadsheet program',
+    malformed_payload: 'relationship cell decoded but has an unexpected shape',
+};
+
+app.post('/import_deck', express.json({ limit: '15mb' }), wrapAsync(async (req, res) => {
+    const deck = ((req.body?.deck as string) || '').trim();
+    const rows = req.body?.rows as ImportDeckRow[] | undefined;
+
+    if (!deck) {
+        return res.status(400).json({ status: 'error', error: 'deck is required' });
+    }
+    if (!Array.isArray(rows) || rows.length === 0) {
+        return res.status(400).json({ status: 'error', error: 'rows must be a non-empty array' });
+    }
+
+    const transactionClient = await client.connect();
+
+    try {
+        await transactionClient.query('BEGIN');
+
+        // Authoritative set of card_ids that belong to the target deck.
+        const deckCardsResult = await transactionClient.query(
+            'SELECT card_id FROM cards WHERE deck = $1',
+            [deck]
+        );
+        const deckCardIds = new Set<number>(deckCardsResult.rows.map(r => r.card_id));
+
+        const results: ImportDeckRowResult[] = [];
+        // Rows whose relationship blob decoded successfully; reconciled in a
+        // second pass once every row's content/scheduling update has run.
+        const validRelRows: { card_id: number; data: RelationshipFields }[] = [];
+
+        for (const row of rows) {
+            const cardId = Number(row.card_id);
+
+            if (!Number.isInteger(cardId) || !deckCardIds.has(cardId)) {
+                results.push({
+                    card_id: Number.isFinite(cardId) ? cardId : -1,
+                    status: 'skipped',
+                    content_applied: false,
+                    sched_applied: false,
+                    rel_applied: false,
+                });
+                continue;
+            }
+
+            let contentApplied = false;
+            let schedApplied = false;
+            let schedWarning: string | undefined;
+            let relApplied = false;
+            let relWarning: string | undefined;
+
+            // Content update.
+            const updateFields: string[] = [];
+            const updateValues: any[] = [];
+            let paramIndex = 1;
+            if (Array.isArray(row.field_values)) {
+                updateFields.push(`field_values = $${paramIndex}`);
+                updateValues.push(row.field_values);
+                paramIndex++;
+            }
+            if (typeof row.card_format === 'string' && row.card_format.trim() !== '') {
+                updateFields.push(`card_format = $${paramIndex}`);
+                updateValues.push(row.card_format);
+                paramIndex++;
+            }
+            if (updateFields.length > 0) {
+                updateValues.push(cardId);
+                await transactionClient.query(
+                    `UPDATE cards SET ${updateFields.join(', ')} WHERE card_id = $${paramIndex}`,
+                    updateValues
+                );
+                contentApplied = true;
+            }
+
+            // Scheduling update.
+            const decodedSched = decodeSchedulingBlob(row.sched_raw);
+            if (decodedSched.ok === true) {
+                const s = decodedSched.data;
+                await transactionClient.query(
+                    `UPDATE cards
+                     SET time_due = $1, interval = $2, retrievability = $3, stability = $4,
+                         difficulty = $5, last_reviewed = $6, is_suspended = $7,
+                         is_buried = $8, bury_tomorrow = $9
+                     WHERE card_id = $10`,
+                    [
+                        s.time_due ? new Date(s.time_due) : null, s.interval, s.retrievability, s.stability,
+                        s.difficulty, s.last_reviewed ? new Date(s.last_reviewed) : null, s.is_suspended,
+                        s.is_buried, s.bury_tomorrow, cardId,
+                    ]
+                );
+                schedApplied = true;
+            } else if (decodedSched.reason !== 'empty') {
+                schedWarning = SCHED_WARNING_TEXT[decodedSched.reason] || decodedSched.reason;
+            }
+
+            // Relationship update: validated here, reconciled after the loop.
+            const decodedRel = decodeRelationshipBlob(row.rel_raw);
+            if (decodedRel.ok === true) {
+                validRelRows.push({ card_id: cardId, data: decodedRel.data });
+                relApplied = true;
+            } else if (decodedRel.reason !== 'empty') {
+                relWarning = REL_WARNING_TEXT[decodedRel.reason] || decodedRel.reason;
+                relApplied = false;
+            }
+
+            results.push({
+                card_id: cardId,
+                status: 'updated',
+                content_applied: contentApplied,
+                sched_applied: schedApplied,
+                sched_warning: schedWarning,
+                rel_applied: relApplied,
+                rel_warning: relWarning,
+            });
+        }
+
+        // --- Relationship reconciliation pass ---
+        if (validRelRows.length > 0) {
+            const relResultByCardId = new Map(results.map(r => [r.card_id, r]));
+
+            // Drop dangling references (card_id doesn't exist anywhere), with a
+            // per-row warning, but keep the rest of that row's valid references.
+            const allReferencedIds = new Set<number>();
+            for (const { data } of validRelRows) {
+                for (const id of [...data.peers, ...data.prereqs, ...data.dependents]) {
+                    allReferencedIds.add(id);
+                }
+            }
+            const existingIdsResult = allReferencedIds.size > 0
+                ? await transactionClient.query(
+                    'SELECT card_id FROM cards WHERE card_id = ANY($1::int[])',
+                    [[...allReferencedIds]]
+                )
+                : { rows: [] as { card_id: number }[] };
+            const existingIds = new Set<number>(existingIdsResult.rows.map(r => r.card_id));
+
+            const desired = new Map<number, RelationshipFields>();
+            for (const { card_id, data } of validRelRows) {
+                const dangling = [...data.peers, ...data.prereqs, ...data.dependents]
+                    .filter(id => !existingIds.has(id));
+                if (dangling.length > 0) {
+                    const r = relResultByCardId.get(card_id);
+                    if (r) {
+                        r.rel_warning = `ignored ${dangling.length} relationship reference(s) to card_id(s) that no longer exist: ${[...new Set(dangling)].join(', ')}`;
+                    }
+                }
+                desired.set(card_id, {
+                    peers: data.peers.filter(id => existingIds.has(id)),
+                    prereqs: data.prereqs.filter(id => existingIds.has(id)),
+                    dependents: data.dependents.filter(id => existingIds.has(id)),
+                });
+            }
+
+            // Load current DB state for exactly the imported card_ids.
+            const currentResult = await transactionClient.query(
+                'SELECT card_id, peers, prereqs, dependents FROM cards WHERE card_id = ANY($1::int[])',
+                [[...desired.keys()]]
+            );
+            // Working copy of every card's relationship arrays touched during
+            // reconciliation, seeded from the DB and mutated in place as we
+            // apply diffs (including for "other side" cards not in `desired`).
+            const working = new Map<number, RelationshipFields>();
+            for (const row of currentResult.rows) {
+                working.set(row.card_id, {
+                    peers: [...(row.peers || [])],
+                    prereqs: [...(row.prereqs || [])],
+                    dependents: [...(row.dependents || [])],
+                });
+            }
+            const ensureWorking = async (cardId: number): Promise<RelationshipFields> => {
+                let w = working.get(cardId);
+                if (!w) {
+                    const r = await transactionClient.query(
+                        'SELECT peers, prereqs, dependents FROM cards WHERE card_id = $1',
+                        [cardId]
+                    );
+                    w = {
+                        peers: [...(r.rows[0]?.peers || [])],
+                        prereqs: [...(r.rows[0]?.prereqs || [])],
+                        dependents: [...(r.rows[0]?.dependents || [])],
+                    };
+                    working.set(cardId, w);
+                }
+                return w;
+            };
+
+            const touchedCardIds = new Set<number>();
+
+            // Peers: symmetric. For each imported card A, diff desired vs current
+            // peers, then mirror each add/remove onto the other side B.
+            for (const [cardId, desiredRel] of desired) {
+                const current = working.get(cardId) ?? { peers: [], prereqs: [], dependents: [] };
+                const currentPeers = new Set(current.peers);
+                const desiredPeers = new Set(desiredRel.peers);
+
+                for (const otherId of desiredPeers) {
+                    if (!currentPeers.has(otherId)) {
+                        const a = await ensureWorking(cardId);
+                        const b = await ensureWorking(otherId);
+                        if (!a.peers.includes(otherId)) a.peers.push(otherId);
+                        if (!b.peers.includes(cardId)) b.peers.push(cardId);
+                        touchedCardIds.add(cardId);
+                        touchedCardIds.add(otherId);
+                    }
+                }
+                for (const otherId of currentPeers) {
+                    if (!desiredPeers.has(otherId)) {
+                        const a = await ensureWorking(cardId);
+                        const b = await ensureWorking(otherId);
+                        a.peers = a.peers.filter(id => id !== otherId);
+                        b.peers = b.peers.filter(id => id !== cardId);
+                        touchedCardIds.add(cardId);
+                        touchedCardIds.add(otherId);
+                    }
+                }
+            }
+
+            // Prereqs/dependents: asymmetric pair (A.prereqs ∋ B ⟺ B.dependents ∋ A).
+            // Only `prereqs` diffs on an imported row drive changes — a row's own
+            // `dependents` array is never independently diffed, since it's fully
+            // derived from the other side's prereqs and diffing both would double
+            // process (or conflict on) the same pair.
+            for (const [cardId, desiredRel] of desired) {
+                const current = working.get(cardId) ?? { peers: [], prereqs: [], dependents: [] };
+                const currentPrereqs = new Set(current.prereqs);
+                const desiredPrereqs = new Set(desiredRel.prereqs);
+
+                for (const otherId of desiredPrereqs) {
+                    if (!currentPrereqs.has(otherId)) {
+                        const a = await ensureWorking(cardId);
+                        const b = await ensureWorking(otherId);
+                        if (!a.prereqs.includes(otherId)) a.prereqs.push(otherId);
+                        if (!b.dependents.includes(cardId)) b.dependents.push(cardId);
+                        touchedCardIds.add(cardId);
+                        touchedCardIds.add(otherId);
+                    }
+                }
+                for (const otherId of currentPrereqs) {
+                    if (!desiredPrereqs.has(otherId)) {
+                        const a = await ensureWorking(cardId);
+                        const b = await ensureWorking(otherId);
+                        a.prereqs = a.prereqs.filter(id => id !== otherId);
+                        b.dependents = b.dependents.filter(id => id !== cardId);
+                        touchedCardIds.add(cardId);
+                        touchedCardIds.add(otherId);
+                    }
+                }
+            }
+
+            for (const cardId of touchedCardIds) {
+                const w = working.get(cardId);
+                if (!w) continue;
+                await transactionClient.query(
+                    'UPDATE cards SET peers = $1, prereqs = $2, dependents = $3 WHERE card_id = $4',
+                    [w.peers, w.prereqs, w.dependents, cardId]
+                );
+                // Cards touched only as the "other side" of a relationship edit
+                // (not present in the imported rows at all) get an honest entry
+                // in the results array too, so side effects aren't hidden.
+                if (!relResultByCardId.has(cardId)) {
+                    results.push({
+                        card_id: cardId,
+                        status: 'updated',
+                        content_applied: false,
+                        sched_applied: false,
+                        rel_applied: true,
+                    });
+                }
+            }
+        }
+
+        await transactionClient.query('COMMIT');
+
+        const updated = results.filter(r => r.status === 'updated').length;
+        const skipped = results.filter(r => r.status === 'skipped').length;
+        const warnings = results.filter(r => r.sched_warning || r.rel_warning).length;
+
+        return res.json({
+            status: 'success',
+            deck,
+            total_rows: rows.length,
+            updated,
+            skipped,
+            warnings,
+            results,
+        });
+    } catch (error) {
+        await transactionClient.query('ROLLBACK');
+        console.error('Error importing deck:', error);
+        return res.status(500).json({
+            status: 'error',
+            error: 'Failed to import deck',
+            details: error instanceof Error ? error.message : 'Unknown error',
+        });
+    } finally {
+        transactionClient.release();
+    }
 }));
 
 // Permanently delete an entire deck: its cards, its notes, and its review history

@@ -21,10 +21,10 @@ import psycopg2
 from library import bookToIDDict, cleanWord, cleanDiacritics
 
 # ---- what to fix -----------------------------------------------------------
-BOOK = "Genesis"
+BOOK = "Psalms (prose)"
 EDITION = "First Edition"
-CHAPTER = 1
-VERSE = 4
+CHAPTER = 107
+VERSE = 21
 # ---------------------------------------------------------------------------
 
 EDITION_PREFIX = {
