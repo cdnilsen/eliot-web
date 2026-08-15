@@ -1,7 +1,6 @@
 import {transliterateGeez, GeezDiacriticify} from './synapdeck_files/transcribe_geez.js';
 import {transliterateCoptic} from './synapdeck_files/transcribe_coptic.js';
 import {ProcessedCard, processCard, arrayBufferToBase64, prepareTextForPDF, testCharacterRendering, loadGentiumForCanvas, renderTextToCanvas} from './synapdeck_files/synapdeck_lib.js'
-import {transliterateHebrew} from './synapdeck_files/transcribe_hebrew.js';
 import {transliteratePersian} from './synapdeck_files/transcribe_persian.js';
 import { initializeUploadTab } from './card_upload.js';
 import { CardBrowserDeps, initializeBrowserTab, setupBrowseCardsTab, createCardRelationship } from './card_browser.js';
@@ -494,10 +493,13 @@ function initializeTabSwitching() {
 function transcribe(str: string, process: string = "", otherProcess: string = "", optionalBoolean: boolean = true): string {
     let rawSegments: TextSegment[] = parseTaggedText(str, otherProcess);
     
+    // Hebrew is deliberately absent here, same as Syriac: both are transcribed
+    // once via the upload/edit-time transliterate button (card_upload.ts),
+    // producing actual Hebrew/Syriac script that's stored as field_values —
+    // not auto-transcribed on every render like Coptic/Ge'ez/Persian below.
     const processors: Record<string, (text: string) => string> = {
         "Coptic": (text) => transliterateCoptic(text),
         "Ge'ez": (text) => transliterateGeez(text, optionalBoolean),
-        "Hebrew": (text) => transliterateHebrew(text, true),
         "Persian": (text) => transliteratePersian(text)
     };
     
