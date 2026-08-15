@@ -2312,7 +2312,7 @@ function setupShuffleCardsTab(): void {
                 </div>
                 <div class="form-group">
                     <label for="importDeckFile"><strong>File:</strong></label>
-                    <input type="file" id="importDeckFile" class="form-control" accept=".csv,.txt,.tsv">
+                    <input type="file" id="importDeckFile" class="form-control">
                 </div>
                 <div class="form-actions">
                     <button id="importDeckBtn" class="btn btn-primary" disabled>📥 Import Deck</button>
