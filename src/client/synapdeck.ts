@@ -12,7 +12,6 @@ import { createCardRelationshipGraph, CardNode, RelationshipLink } from './CardR
 import { ReviewForecastData, ReviewForecastOptions, updateDeckSelection, loadReviewForecast, createReviewForecastChart, setupReviewForecastTab } from './synapdeck_files/review_chart.js';
 import { addRetrievabilityManagementSection } from './synapdeck_files/retrievability.js';
 import { setupStatsTab } from './synapdeck_files/stats_tab.js';
-import Papa from 'papaparse';
 
 window.loadReviewForecast = loadReviewForecast;
 window.setupReviewForecastTab = setupReviewForecastTab;
@@ -54,6 +53,7 @@ const printFontSizes: { [key: string]: string } = {
 declare global {
     interface Window {
         Chart: any;
+        Papa: any;
         loadReviewForecast: (chartData: ReviewForecastOptions) => Promise<void>;
         setupReviewForecastTab: () => void;
         createReviewForecastChart: (data: ReviewForecastData[], decks: string[], chartData: ReviewForecastOptions) => void;
@@ -2787,8 +2787,9 @@ async function handleImportDeck(): Promise<void> {
     if (outputDiv) outputDiv.innerHTML = '<p class="loading">Reading file...</p>';
 
     try {
+        const Papa = window.Papa;
         const text = await file.text();
-        const parsed = Papa.parse<Record<string, string>>(text, {
+        const parsed = Papa.parse(text, {
             header: true,
             skipEmptyLines: true,
             transformHeader: (header: string) => header.trim()
@@ -2798,9 +2799,9 @@ async function handleImportDeck(): Promise<void> {
             console.warn('Deck import CSV parsing errors:', parsed.errors);
         }
 
-        const headers = (parsed.meta.fields || []).filter(h => !IMPORT_FIXED_COLUMNS.has(h));
+        const headers: string[] = (parsed.meta.fields || []).filter((h: string) => !IMPORT_FIXED_COLUMNS.has(h));
 
-        const rows = parsed.data
+        const rows = (parsed.data as Record<string, string>[])
             .filter(row => (row['card_id'] ?? '').toString().trim() !== '')
             .map(row => {
                 const cardId = parseInt(row['card_id'], 10);
